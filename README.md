@@ -6,7 +6,7 @@ EZM Lite adds a ton of new modules to Zeuses at the click of a button. Simply pl
 
 In addition to new modules, EZM adds new vanilla factions to the Zeus interface. Such as: the Malden Defense Force (non-canon), FIA Plus, Better Civilians, and more to be added in future.
 
-These are specifically built for Arma 3 Public Zeus servers, with everything within the script complying with the BattlEye filters applied to the Official Servers.
+These are specifically built for <strong>Arma 3 Public Zeus servers</strong>, with everything within the script complying with the BattlEye filters applied to the Official Servers.
 
 ## Keybinds
 Zeus Interface Keybinds:
