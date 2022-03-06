@@ -1,4 +1,4 @@
-#Enhanced Zeus Modules
+Enhanced Zeus Modules
 Enhanced Zeus Modules (EZM) was originally created by GamesByChris and M9-SD. With Expung3d doing slight edits and additions. EZM was adapted to be a composition by Expung3d and made into EZM Lite who added many new features and made the scripts available to all.
 
 What It Does
