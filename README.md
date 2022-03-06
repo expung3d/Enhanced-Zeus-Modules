@@ -10,12 +10,14 @@ These are specifically built for Arma 3 Public Zeus servers, with everything wit
 
 ## Keybinds
 Zeus Interface Keybinds:
+
 0. Ctrl + Y: Closes the Zeus interface
 1. Space: Teleports your unit to the middle of your screen
 2. Ctrl + U: Opens a menu to change your unit’s side
 3. Alt + Left Mouse Button: Controls the selected unit
 
 Out-of-Zeus Keybinds:
+
 0. Y: Re-opens the Zeus interface.
 1. H: Holsters weapon.
 
