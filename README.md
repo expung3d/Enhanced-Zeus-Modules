@@ -9,14 +9,14 @@ In addition to new modules, EZM adds new vanilla factions to the Zeus interface.
 These are specifically built for <strong>Arma 3 Public Zeus servers</strong>, with everything within the script complying with the BattlEye filters applied to the Official Servers.
 
 ## Keybinds
-Zeus Interface Keybinds:
+<strong>Zeus Interface Keybinds:</strong>
 
 0. Ctrl + Y: Closes the Zeus interface
 1. Space: Teleports your unit to the middle of your screen
 2. Ctrl + U: Opens a menu to change your unit’s side
 3. Alt + Left Mouse Button: Controls the selected unit
 
-Out-of-Zeus Keybinds:
+<strong>Out-of-Zeus Keybinds:</strong>
 
 0. Y: Re-opens the Zeus interface.
 1. H: Holsters weapon.
