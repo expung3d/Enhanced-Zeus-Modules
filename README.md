@@ -23,3 +23,6 @@ Out-of-Zeus Keybinds:
 
 ## More Information and Full Feature List
 For more information visit the EZM Website: https://www.zamarma.com/
+
+## License
+Enhanced Zeus Modules is licensed under the GNU General Public License ([GPLv3](https://github.com/expung3d/Enhanced-Zeus-Modules/blob/main/LICENSE)).
