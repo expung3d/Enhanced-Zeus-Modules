@@ -8660,7 +8660,7 @@ MAZ_EZM_fnc_initFunction = {
 
 					if (_position == "") exitWith {};
 
-					_positions pushBack _position;
+					_positions pushBack (_building selectionPosition _position);
 				};
 
 				if (count _positions == 0) exitWith {[]};
