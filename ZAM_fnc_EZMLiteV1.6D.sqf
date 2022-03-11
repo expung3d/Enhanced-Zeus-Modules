@@ -1,4 +1,4 @@
-MAZ_EZM_LiteVersion = "V1.6A";
+MAZ_EZM_LiteVersion = "V1.6D";
 MAZ_EZM_autoAdd = profileNamespace getVariable ['MAZ_EZM_autoAddVar',true];
 
 comment "Dialog Creation";
@@ -448,8 +448,9 @@ comment "Dialog Creation";
 
 	MAZ_EZM_fnc_createSliderRow = {
 		params ["_display","_defaultValue","_settings"];
-		_settings params ["_min","_max","_drawRadius","_radiusCenter","_radiusColor"];
+		_settings params ["_min","_max","_isPercent","_drawRadius","_radiusCenter","_radiusColor"];
 		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
+		_rowControlGroup setVariable ["MAZ_EZM_isPercent",_isPercent];
 
 		private _slider = _display ctrlCreate ["RscXSliderH",IDC_ROW_SLIDER,_rowControlGroup];
 		_slider ctrlSetPosition [(["W",10.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,(["W",13.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
@@ -488,22 +489,38 @@ comment "Dialog Creation";
 		_slider sliderSetRange [_min, _max];
 		_slider sliderSetSpeed [-1, -1];
 		_slider sliderSetPosition _defaultValue;
-		_sliderEdit ctrlSetText (str _defaultValue);
+		if(_isPercent) then {
+			private _text = (str (round (_defaultValue * 100))) + "%";
+			_sliderEdit ctrlSetText _text;
+		} else {
+			_sliderEdit ctrlSetText (str _defaultValue);
+		};
 
 		_slider ctrlAddEventHandler ["sliderPosChanged", {
 			params ["_ctrlSlider", "_value"];
 			private _controlGroup = ctrlParentControlsGroup _ctrlSlider;
+			private _isPercent = _controlGroup getVariable ["MAZ_EZM_isPercent",false];
 			private _ctrlEdit = _controlGroup controlsGroupCtrl IDC_ROW_EDIT;
-			private _roundedValue = round _value;
-			_ctrlEdit ctrlSetText format ["%1",_roundedValue];
+			if(_isPercent) then {
+				private _text = (str (round (_value * 100))) + "%";
+				_ctrlEdit ctrlSetText _text;
+			} else {
+				private _roundedValue = round _value;
+				_ctrlEdit ctrlSetText format ["%1",_roundedValue];
+			};
 		}];
 
 		_sliderEdit ctrlAddEventHandler ["keyUp",{
 			params ["_displayOrControl", "_key", "_shift", "_ctrl", "_alt"];
 			private _num = parseNumber (ctrlText _displayOrControl);
 			private _ctrlGroup = ctrlParentControlsGroup _displayOrControl;
+			private _isPercent = _ctrlGroup getVariable ["MAZ_EZM_isPercent",false];
 			private _sliderCtrl = _ctrlGroup controlsGroupCtrl IDC_ROW_SLIDER;
-			_sliderCtrl sliderSetPosition _num;
+			if(_isPercent) then {
+				_sliderCtrl sliderSetPosition (_num/100);
+			} else {
+				_sliderCtrl sliderSetPosition _num;
+			};
 		}];
 
 		_rowControlGroup setVariable ["controlValue",{
@@ -614,40 +631,28 @@ comment "Dialog Creation";
 	};
 
 	MAZ_EZM_fnc_changeDisplayHeights = {
-		params ["_display",["_maxHeight",safeZoneH - (["H",4] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)]];
+		params ["_display"];
 		private _ctrlContent = _display displayCtrl IDC_CONTENT;
-
 		ctrlPosition _ctrlContent params ["_posX","","_posW","_posH"];
 
-		if(_posH > _maxHeight) then {
-			_posH = _maxHeight;
-
-			_ctrlContent ctrlSetPositionH _posH;
-
-			if(_hasScrollbars) then {
-				_ctrlContent ctrlSetPositionX (_posX - (["W",0.25] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
-				_ctrlContent ctrlSetPositionW (_posW + (["W",0.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
-			};
-		};
-
-		_ctrlContent ctrlSetPositionY (0.5 - _posH / 2);
+		_ctrlContent ctrlSetPositionY (0.5 - (_posH / 2));
 		_ctrlContent ctrlCommit 0;
 
 		private _ctrlTitle = _display displayCtrl IDC_TITLE;
-		_ctrlTitle ctrlSetPositionY (0.5 - _posH /2 - (["H",1.6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
+		_ctrlTitle ctrlSetPositionY (0.5 - (_posH / 2) - (["H",1.6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 		_ctrlTitle ctrlCommit 0;
 
 		private _ctrlBG = _display displayCtrl IDC_BACKGROUND;
-		_ctrlBG ctrlSetPositionY (0.5 - _posH / 2 - (["H",0.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
+		_ctrlBG ctrlSetPositionY (0.5 - (_posH / 2) - (["H",0.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 		_ctrlBG ctrlSetPositionH (_posH + (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 		_ctrlBG ctrlCommit 0;
 
 		private _ctrlOkBtn = _display displayCtrl IDC_CONFIRM;
-		_ctrlOkBtn ctrlSetPositionY (0.5 + _posH / 2 + (["H",0.6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
+		_ctrlOkBtn ctrlSetPositionY (0.5 + (_posH / 2) + (["H",0.6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 		_ctrlOkBtn ctrlCommit 0;
 
 		private _ctrlCancelBtn = _display displayCtrl IDC_CANCEL;
-		_ctrlCancelBtn ctrlSetPositionY (0.5 + _posH / 2 + (["H",0.6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
+		_ctrlCancelBtn ctrlSetPositionY (0.5 + (_posH / 2) + (["H",0.6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 		_ctrlCancelBtn ctrlCommit 0;
 	};
 
@@ -746,15 +751,19 @@ comment "Dialog Creation";
 						["_max",1,[0]],
 						["_default",0,[0]],
 						["_radiusCenter",objNull,[objNull,[]], 3],
-						["_radiusColor",[1,1,1,0.7],[[]], 4]
+						["_radiusColor",[1,1,1,0.7],[[]], 4],
+						["_isPercent",false,[false]]
 					];
 
 					_defaultValue = _default;
 					_controlType = MAZ_EZM_fnc_createSliderRow;
 
 					private _drawRadius = _subType == "RADIUS" && {_radiusCenter isNotEqualTo objNull};
+					if(_isPercent) then {
+						_radiusCenter = objNull;
+					};
 
-					_settings = [_min,_max,_drawRadius,_radiusCenter,_radiusColor];
+					_settings = [_min,_max,_isPercent,_drawRadius,_radiusCenter,_radiusColor];
 				};
 				case "TOOLBOX": {
 					_value params [["_default",0,[0,false]],["_strings",[],[[]]]];
@@ -899,7 +908,7 @@ comment "Attributes Dialog Creation";
 		_background ctrlSetBackgroundColor [0,0,0,0.7];
 		_background ctrlCommit 0;
 
-		private _contentGroup = _display ctrlCreate ["RscControlsGroupNoScrollbars",IDC_ATTRIBS_CONTENT];
+		private _contentGroup = _display ctrlCreate ["RscControlsGroup",IDC_ATTRIBS_CONTENT];
 		_contentGroup ctrlSetPositionX (["X",7] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_contentGroup ctrlSetPositionW (["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_contentGroup ctrlCommit 0;
@@ -963,15 +972,22 @@ comment "Attributes Dialog Creation";
 
 	MAZ_EZM_createAttributesRowBase = {
 		params ["_display","_label"];
+		_text = _label;
+		_tooltip = "";
+		if(_label isEqualType []) then {
+			_text = _label # 0;
+			_tooltip = _label # 1;
+		};
 		private _contentGroup = _display displayCtrl IDC_ATTRIBS_CONTENT;
 		private _controlsGroup = _display ctrlCreate ["RscControlsGroupNoScrollbars",IDC_ATTRIBS_ROW_GROUP,_contentGroup];
 		_controlsGroup ctrlSetPosition [0,0,(["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_controlsGroup ctrlCommit 0;
 
-		private _rowLabel = _display ctrlCreate ["RscStructuredText",IDC_ATTRIBS_LABEL,_controlsGroup];
+		private _rowLabel = _display ctrlCreate ["RscText",IDC_ATTRIBS_LABEL,_controlsGroup];
 		_rowLabel ctrlSetPosition [0,0,(["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_rowLabel ctrlSetBackgroundColor [0,0,0,0.6];
-		_rowLabel ctrlSetStructuredText parseText (format ["%1",_label]);
+		_rowLabel ctrlSetText (format ["%1",_text]);
+		_rowLabel ctrlSetTooltip _tooltip;
 		_rowLabel ctrlCommit 0;
 
 		private _rowBG = _display ctrlCreate ["RscPicture",IDC_ATTRIBS_ROW_BG,_controlsGroup];
@@ -1346,35 +1362,35 @@ comment "Attributes Dialog Creation";
 	};
 
 	MAZ_EZM_fnc_changeAttribsDisplayHeights = {
-		params ["_display",["_hasScrollbars",false],["_maxHeight",safeZoneH - (["H",4] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)]];
+		params ["_display", "_maxHeight"];
 		private _ctrlContent = _display displayCtrl IDC_ATTRIBS_CONTENT;
+		if(_maxHeight == -1) then {
+			_maxHeight = 30;
+		};
+		_maxHeight = ["H",_maxHeight] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
 
 		ctrlPosition _ctrlContent params ["_posX","","_posW","_posH"];
 
 		if(_posH > _maxHeight) then {
 			_posH = _maxHeight;
-
 			_ctrlContent ctrlSetPositionH _posH;
 
-			if(_hasScrollbars) then {
-				_ctrlContent ctrlSetPositionX (_posX - (["W",0.25] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
-				_ctrlContent ctrlSetPositionW (_posW + (["W",0.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
-			};
+			_ctrlContent ctrlSetPositionX (_posX - (["W",0.25] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
+			_ctrlContent ctrlSetPositionW (_posW + (["W",0.6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 		};
-
-		_ctrlContent ctrlSetPositionY (0.5 - _posH / 2);
+		_ctrlContent ctrlSetPositionY (0.5 - (_posH / 2));
 		_ctrlContent ctrlCommit 0;
 
 		private _ctrlTitle = _display displayCtrl IDC_ATTRIBS_TITLE;
-		_ctrlTitle ctrlSetPositionY (0.5 - _posH /2 - (["H",1.6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
+		_ctrlTitle ctrlSetPositionY (0.5 - (_posH / 2) - (["H",1.6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 		_ctrlTitle ctrlCommit 0;
 
 		private _ctrlBG = _display displayCtrl IDC_ATTRIBS_BG;
-		_ctrlBG ctrlSetPositionY (0.5 - _posH / 2 - (["H",0.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
+		_ctrlBG ctrlSetPositionY (0.5 - (_posH / 2) - (["H",0.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 		_ctrlBG ctrlSetPositionH (_posH + (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 		_ctrlBG ctrlCommit 0;
 
-		private _buttonHeight = (0.5 + _posH / 2 + (["H",0.6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
+		private _buttonHeight = (0.5 + (_posH / 2) + (["H",0.6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 
 		private _ctrlOkBtn = _display displayCtrl IDC_ATTRIBS_CONFIRM;
 		_ctrlOkBtn ctrlSetPositionY _buttonHeight;
@@ -1397,14 +1413,16 @@ comment "Attributes Dialog Creation";
 			["_dialogData",[],[[]]],
 			["_onCancel",{},[{}]],
 			["_onConfirm",{},[{}]],
-			["_args",[]]
+			["_args",[]],
+			["_maxHeight",-1,[-1]]
 		];
 
 		private _dialogInfo = [];
 		{
+			copyToClipboard (str _x);
 			_x params [
 				["_typeData","",[""]],
-				["_label","",[""]],
+				["_label","",["",[]]],
 				["_settings",[],[[]]]
 			];
 
@@ -1524,7 +1542,7 @@ comment "Attributes Dialog Creation";
 		_displayContent ctrlSetPositionH (_yOffset - (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 		_displayContent ctrlCommit 0;
 
-		[_display,false] call MAZ_EZM_fnc_changeAttribsDisplayHeights;
+		[_display,_maxHeight] call MAZ_EZM_fnc_changeAttribsDisplayHeights;
 
 		_display setVariable ["MAZ_EZM_attributesDialogInfo",[_display,_controls,_args]];
 	};
@@ -1791,65 +1809,86 @@ comment "Attributes Dialog Creation";
 
 	MAZ_EZM_createPlayerAttributesDialog = {
 		params ["_entity"];
-		[format ["EDIT %1",toUpper (name _entity)],[
-			[
-				"ICONS",
-				"Rank:",
+		if(dialog) then {
+			closeDialog 2;
+		};
+		[_entity] spawn {
+			params ["_entity"];
+			sleep 0.1;
+			
+			[format ["EDIT %1",toUpper (name _entity)],[
 				[
-					rank _entity,
+					"ICONS",
+					"Rank:",
 					[
-						"PRIVATE",
-						"CORPORAL",
-						"SERGEANT",
-						"LIEUTENANT",
-						"CAPTAIN",
-						"MAJOR",
-						"COLONEL"
-					],[
-						"A3\ui_f\data\GUI\cfg\Ranks\private_gs.paa",
-						"A3\ui_f\data\GUI\cfg\Ranks\corporal_gs.paa",
-						"A3\ui_f\data\GUI\cfg\Ranks\sergeant_gs.paa",
-						"A3\ui_f\data\GUI\cfg\Ranks\lieutenant_gs.paa",
-						"A3\ui_f\data\GUI\cfg\Ranks\captain_gs.paa",
-						"A3\ui_f\data\GUI\cfg\Ranks\major_gs.paa",
-						"A3\ui_f\data\GUI\cfg\Ranks\colonel_gs.paa"
-					],[
-						"",
-						"",
-						"",
-						"",
-						"",
-						"",
-						""
-					],[
-						[11,0.5],
-						[13,0.5],
-						[15,0.5],
-						[17,0.5],
-						[19,0.5],
-						[21,0.5],
-						[23,0.5]
-					],[
-						1.5,1.5,1.5,1.5,1.5,1.5,1.5
+						rank _entity,
+						[
+							"PRIVATE",
+							"CORPORAL",
+							"SERGEANT",
+							"LIEUTENANT",
+							"CAPTAIN",
+							"MAJOR",
+							"COLONEL"
+						],[
+							"A3\ui_f\data\GUI\cfg\Ranks\private_gs.paa",
+							"A3\ui_f\data\GUI\cfg\Ranks\corporal_gs.paa",
+							"A3\ui_f\data\GUI\cfg\Ranks\sergeant_gs.paa",
+							"A3\ui_f\data\GUI\cfg\Ranks\lieutenant_gs.paa",
+							"A3\ui_f\data\GUI\cfg\Ranks\captain_gs.paa",
+							"A3\ui_f\data\GUI\cfg\Ranks\major_gs.paa",
+							"A3\ui_f\data\GUI\cfg\Ranks\colonel_gs.paa"
+						],[
+							"",
+							"",
+							"",
+							"",
+							"",
+							"",
+							""
+						],[
+							[11,0.5],
+							[13,0.5],
+							[15,0.5],
+							[17,0.5],
+							[19,0.5],
+							[21,0.5],
+							[23,0.5]
+						],[
+							1.5,1.5,1.5,1.5,1.5,1.5,1.5
+						]
 					]
-				]
-			],
-			[
-				"RESPAWN",
-				"Respawn on Player For:",
+				],
 				[
-					_entity getVariable ["MAZ_EZM_respawnType",4],
-					_entity
+					"RESPAWN",
+					"Respawn on Player For:",
+					[
+						_entity getVariable ["MAZ_EZM_respawnType",4],
+						_entity
+					]
+				],
+				[ 
+					"NEWBUTTON", 
+					"HEAL", 
+					[ 
+						"Heals the player and revives them if possible.", 
+						{
+							params ["_display","_args"];
+							_display closeDisplay 0;
+							[_args] spawn MAZ_EZM_fnc_healAndReviveModule;
+						}, 
+						_entity
+					] 
 				]
-			]
-		],{
-			params ["_display","_values","_args"];
-			_display closeDisplay 1;
-		},{
-			params ["_display","_values","_args"];
-			[_args,_values] call MAZ_EZM_applyAttributeChangesToPlayer;
-			_display closeDisplay 0;
-		},_entity] call MAZ_EZM_createAttributesDialog;
+			],{
+				params ["_display","_values","_args"];
+				_display closeDisplay 1;
+			},{
+				params ["_display","_values","_args"];
+				[_args,_values] call MAZ_EZM_applyAttributeChangesToPlayer;
+				_display closeDisplay 0;
+			},_entity] call MAZ_EZM_createAttributesDialog;
+		};
 	};
 
 	MAZ_EZM_applyAttributeChangesToGroup = {
@@ -2058,6 +2097,79 @@ comment "Attributes Dialog Creation";
 
 	};
 
+	MAZ_EZM_applyDamagesToVehicle = {
+		params ["_vehicle","_damagesData"];
+		private _damages = getAllHitPointsDamage _vehicle;
+		_damages params ["_hitPoints","_sections","_damage"];
+		{
+			_vehicle setHitPointDamage [(_hitpoints select _forEachIndex),_x];
+		}forEach _damagesData;
+	};
+
+	MAZ_EZM_createDamageDialog = {
+		params ["_vehicle"];
+		private _damages = getAllHitPointsDamage _vehicle;
+		_damages params ["_hitPoints","_sections","_damage"];
+		private _dialogData = [];
+		{
+			_dialogData pushBack [
+				"SLIDEREDIT",
+				_x,
+				[[_damage select _forEachIndex,2] call BIS_fnc_cutDecimals,0,1,true]
+			];
+		}forEach _hitPoints;
+
+		[format ["EDIT DAMAGE %1",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _vehicle >> "displayName"))],
+		_dialogData,
+		{
+			params ["_display","_values","_args"];
+			_display closeDisplay 1;
+		},{
+			params ["_display","_values","_args"];
+			_display closeDisplay 0;
+			[_args,_values] call MAZ_EZM_applyDamagesToVehicle;
+		},_vehicle,25] call MAZ_EZM_createAttributesDialog;
+	};
+
+	MAZ_EZM_createVehicleRespawn = {
+		params ["_vehicle","_values"];
+		_values params ["_respawnDelay","_abandonDelay","_numOfRespawns","_distAbandon"];
+		[_vehicle,round _respawnDelay,round _abandonDelay,round _numOfRespawns,{},0,2,1,true,true,round _distAbandon,true] call BIS_fnc_moduleRespawnVehicle;
+	};
+
+	MAZ_EZM_createVehicleRespawnDialog = {
+		params ["_vehicle"];
+		[format ["CREATE RESPAWNING %1",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _vehicle >> "displayName"))],[
+			[
+				"SLIDEREDIT",
+				"Respawn Delay:",
+				[15,10,60,false]
+			],
+			[
+				"SLIDEREDIT",
+				["Deserted Delay:","How long it takes to respawn when abandoned (no crew)."],
+				[600,600,1800,false]
+			],
+			[
+				"SLIDEREDIT",
+				["Number of Respawns:","How many times the vehicle can respawn (-1 is infinite)."],
+				[-1,-1,30,false]
+			],
+			[
+				"SLIDEREDIT",
+				["Dist from Players Deserted:","How far players must be before the vehicle can be considered abandonded."],
+				[3000,3000,12000,false]
+			]
+		],{
+			params ["_display","_values","_args"];
+			_display closeDisplay 1;
+		},{
+			params ["_display","_values","_args"];
+			[_args,_values] call MAZ_EZM_createVehicleRespawn;
+			_display closeDisplay 0;
+		},_vehicle] call MAZ_EZM_createAttributesDialog;
+	};
+
 	MAZ_EZM_applyAttributeChangesToLandVehicle = {
 		params ["_vehicle","_attributes"];
 		_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],"_respawn"];
@@ -2120,7 +2232,7 @@ comment "Attributes Dialog Creation";
 						[false,true],
 						["A3\ui_f\data\igui\cfg\actions\engine_off_ca.paa","A3\ui_f\data\igui\cfg\actions\engine_on_ca.paa"],
 						["Turn engine off","Turn engine on"],
-						[[15,0.5],[19,0.5]],
+						[[15,0.4],[19,0.4]],
 						[1.75,1.75],
 						2.5
 					]
@@ -2133,7 +2245,7 @@ comment "Attributes Dialog Creation";
 						[false,true],
 						["A3\ui_f\data\igui\cfg\actions\ico_cpt_land_off_ca.paa","A3\ui_f\data\igui\cfg\actions\ico_cpt_land_on_ca.paa"],
 						["Turn lights off","Turn lights on"],
-						[[15,0.5],[19,0.5]],
+						[[15,0.4],[19,0.4]],
 						[1.75,1.75],
 						2.5
 					]
@@ -2145,6 +2257,32 @@ comment "Attributes Dialog Creation";
 						_vehicle getVariable ["MAZ_EZM_respawnType",4],
 						_vehicle
 					]
+				],
+				[ 
+					"NEWBUTTON", 
+					"DAMAGE", 
+					[ 
+						"Edit the vehicle's damage in specific hit points.", 
+						{
+							params ["_display","_args"];
+							_display closeDisplay 0;
+							[_args] spawn MAZ_EZM_createDamageDialog;
+						}, 
+						_vehicle
+					] 
+				],
+				[ 
+					"NEWBUTTON", 
+					"RESPAWN", 
+					[ 
+						"Set the vehicle to respawn at it's position.", 
+						{
+							params ["_display","_args"];
+							_display closeDisplay 0;
+							[_args] spawn MAZ_EZM_createVehicleRespawnDialog;
+						}, 
+						_vehicle
+					] 
 				],
 				[ 
 					"NEWBUTTON", 
@@ -2231,7 +2369,7 @@ comment "Attributes Dialog Creation";
 						[false,true],
 						["A3\ui_f\data\igui\cfg\actions\engine_off_ca.paa","A3\ui_f\data\igui\cfg\actions\engine_on_ca.paa"],
 						["Turn engine off","Turn engine on"],
-						[[15,0.5],[19,0.5]],
+						[[15,0.4],[19,0.4]],
 						[1.75,1.75],
 						2.5
 					]
@@ -2244,7 +2382,7 @@ comment "Attributes Dialog Creation";
 						[false,true],
 						["A3\ui_f\data\igui\cfg\actions\ico_cpt_land_off_ca.paa","A3\ui_f\data\igui\cfg\actions\ico_cpt_land_on_ca.paa"],
 						["Turn lights off","Turn lights on"],
-						[[15,0.5],[19,0.5]],
+						[[15,0.4],[19,0.4]],
 						[1.75,1.75],
 						2.5
 					]
@@ -2257,7 +2395,7 @@ comment "Attributes Dialog Creation";
 						[false,true],
 						["A3\ui_f\data\igui\cfg\actions\ico_cpt_col_off_ca.paa","A3\ui_f\data\igui\cfg\actions\ico_cpt_col_on_ca.paa"],
 						["Turn anti-collision lights off","Turn anti-collision lights on"],
-						[[15,0.5],[19,0.5]],
+						[[15,0.4],[19,0.4]],
 						[1.75,1.75],
 						2.5
 					]
@@ -2269,6 +2407,32 @@ comment "Attributes Dialog Creation";
 						_vehicle getVariable ["MAZ_EZM_respawnType",4],
 						_vehicle
 					]
+				],
+				[ 
+					"NEWBUTTON", 
+					"DAMAGE", 
+					[ 
+						"Edit the vehicle's damage in specific hit points.", 
+						{
+							params ["_display","_args"];
+							_display closeDisplay 0;
+							[_args] spawn MAZ_EZM_createDamageDialog;
+						}, 
+						_vehicle
+					] 
+				],
+				[ 
+					"NEWBUTTON", 
+					"RESPAWN", 
+					[ 
+						"Set the vehicle to respawn at it's position.", 
+						{
+							params ["_display","_args"];
+							_display closeDisplay 0;
+							[_args] spawn MAZ_EZM_createVehicleRespawnDialog;
+						}, 
+						_vehicle
+					] 
 				],
 				[ 
 					"NEWBUTTON", 
@@ -2297,6 +2461,7 @@ comment "Attributes Dialog Creation";
 		_attribs params ["_text","_markerColor","_markerDir"];
 		_marker setMarkerText _text;
 		_marker setMarkerColor _markerColor;
+		MAZ_EZM_markerColorDefault = _markerColor;
 		_marker setMarkerDir _markerDir;
 	};
 
@@ -2474,7 +2639,7 @@ MAZ_EZM_createUnitForZeus = {
 	private _zeusLogic = getAssignedCuratorLogic player;
 	private _isGameMod = false;
 	private _zeusIndex = allCurators find _zeusLogic;
-	private _grp = createGroup west;
+	private _grp = createGroup [west,true];
 	private _zeusObject = _grp createUnit ["B_officer_F",[0,0,0],[],0,"CAN_COLLIDE"];
 	_grp selectLeader _zeusObject;
 	_zeusObject setPosWorld _pos;
@@ -2525,6 +2690,30 @@ MAZ_EZM_createUnitForZeus = {
 MAZ_EZM_fnc_runZeusModule = {
 	params ["_curator", "_entity"];
 	private _entityType = typeOf _entity;
+
+	private _objectiveModules = [
+		"ModuleObjectiveAttackDefend_F",
+		"ModuleObjectiveSector_F",
+		"ModuleObjective_F",
+		"ModuleObjectiveGetIn_F",
+		"ModuleObjectiveMove_F",
+		"ModuleObjectiveNeutralize_F",
+		"ModuleObjectiveProtect_F",
+		"ModuleObjectiveRaceCP_F",
+		"ModuleObjectiveRaceFinish_F",
+		"ModuleObjectiveRaceStart_F"
+	];
+	if(_entityType in _objectiveModules) exitWith {
+		[_entity] spawn {
+			params ["_entity"];
+			waitUntil {dialog};
+			[player] joinSilent (createGroup [sideLogic,true]);
+			closeDialog 2;
+			waitUntil {!dialog};
+			playSound "addItemFailed";
+			systemChat "[ Enhanced Zeus Modules ] : You must be side LOGIC to edit an objective! You've been changed to this side, re-open the module.";
+		};
+	};
 
 	if(_entityType isKindOf "CAManBase") then {[_entity] call MAZ_EZM_fnc_autoResupplyAI};
 	
@@ -3114,12 +3303,6 @@ MAZ_EZM_fnc_initFunction = {
 				sleep 6.5;
 				titleFadeOut 1;
 			};
-			MAZ_EZM_patreonSupporters = [
-				["Antsherfui","$10"],
-				["Key","$3"],
-				["Northgate","$25"],
-				["Chubbs","$3"]
-			] sort true;
 		};
 
 		MAZ_EZM_fnc_autoResupplyAI = {
@@ -3162,9 +3345,9 @@ MAZ_EZM_fnc_initFunction = {
 						],
 						[
 							"Remove Animation",
-							"Standing; Hands on hip",
-							"Standing; Shield Eyes",
-							"Standing; Listen to Radio",
+							"Standing: Hands on hip",
+							"Standing: Shield Eyes",
+							"Standing: Listen to Radio",
 							"Standing: Bent over",
 							"Standing: Hands on Back",
 							"Crouch: Detained",
@@ -3180,10 +3363,21 @@ MAZ_EZM_fnc_initFunction = {
 						],
 						0
 					]
+				],
+				[
+					"TOOLBOX:YESNO",
+					["Combat Animation:","When the AI takes fire it will quit the animation with this enabled."],
+					[true]
 				]
 			],{
 				params ["_values","_args","_display"];
-				private _anim = _values select 0;
+				_values params ["_anim","_isCombat"];
+				if(_args getVariable ["MAZ_EZM_animDone",-420] != -420) then {
+					_args removeEventHandler ["AnimDone",_args getVariable "MAZ_EZM_animDone"];
+				};
+				if(_args getVariable ["MAZ_EZM_combatAnim",-420] != -420) then {
+					_args removeEventHandler ["Suppressed",_args getVariable "MAZ_EZM_combatAnim"];
+				};
 				if(_anim == "") then {
 					[_args,"AmovPercMstpSnonWnonDnon"] remoteExec ["switchMove"];
 					_args setBehaviour "AWARE";
@@ -3195,6 +3389,23 @@ MAZ_EZM_fnc_initFunction = {
 					[_args,"Move"]remoteExec ["disableAI",0];
 					[_args,"Anim"]remoteExec ["disableAI",0];
 					[_args,_anim] remoteExec ['switchMove',0];
+					_args setVariable ["MAZ_EZM_animDone",
+						_args addEventhandler ["AnimDone",{
+							params ["_unit","_anim"];
+							[_args,_anim] remoteExec ['switchMove',0];
+						}],true
+					];
+					if(_isCombat) then {
+						_args setVariable ["MAZ_EZM_combatAnim",
+							_args addEventHandler ["Suppressed", {
+								params ["_unit", "_distance", "_shooter", "_instigator", "_ammoObject", "_ammoClassName", "_ammoConfig"];
+								[_unit,"AmovPercMstpSnonWnonDnon"] remoteExec ["switchMove"];
+								_unit setBehaviour "COMBAT";
+								[_unit,"Move"]remoteExec ["enableAI",0];
+								[_unit,"Anim"]remoteExec ["enableAI",0];
+							}],true
+						];
+					};
 					systemChat "[ Enhanced Zeus Modules ] : Animation set.";
 				};
 				playSound 'addItemOk';
@@ -3338,9 +3549,9 @@ MAZ_EZM_fnc_initFunction = {
 
 				if (_nearestBuildings isEqualTo []) exitWith { false };
 				_group setbehaviour "AWARE";
-				
+
 				private _houseIndex = 0;
-				
+
 				private _buildingPoses = [_houseIndex,_nearestBuildings] call _fnc_getHousePositions;
 
 				private _units = (units _group) select {!isNull _x && alive _x};
@@ -4769,8 +4980,7 @@ MAZ_EZM_fnc_initFunction = {
 			};
 
 			private _moveWaypoint = _group addWaypoint [_endPos,0];
-			_moveWaypoint setWaypointType "MOVE";
-			_moveWaypoint setWaypointType "SENTRY";
+			_moveWaypoint setWaypointType "SAD";
 			_moveWaypoint setWaypointCombatMode "YELLOW";
 			_moveWaypoint setWaypointBehaviour "AWARE";
 			_moveWaypoint setWaypointSpeed "FULL";
@@ -5501,7 +5711,14 @@ MAZ_EZM_fnc_initFunction = {
 		MAZ_EZM_fnc_newHelicrashMission = {
 			MAZ_EZM_fnc_crashSetPosition = {
 				params ["_crater"];
-				private _crashLocations = [[4426,14856.8,0],[4798.99,12639.2,0],[4877.75,20329.2,0],[5231.58,14871.2,0],[5578.27,17465.8,0],[6163.38,19324.6,0],[6449.08,13172.7,0],[6543.98,11516.5,0],[6718.32,19145.1,0],[7752.5,15274.9,0],[8158.96,20422.5,0],[8397.1,12966.5,0],[8819.66,11798.1,0],[8791.14,14868,0],[8870,18726,0],[9221.45,22106.7,0],[9279.24,16893.5,0],[9595.95,18836.4,0],[10056.8,8474.84,0],[10412.4,15523.6,0],[10447,12258,0],[10673.2,8163.02,0],[10643.5,16961,0],[10664,14861.2,0],[10905,13319,0],[11107.4,20417.6,0],[11265.5,6763.46,0],[11418.7,8021.57,0],[11555.3,9178.9,0],[11652.9,16580.6,0],[11822.7,21807.9,0],[11970.8,17921.5,0],[12292.4,8427.08,0],[12290.6,14908.5,0],[12272.3,16782.4,0],[12707.5,20893,0],[12818,19687,0],[13025.3,21797.8,0],[13788.3,18012.9,0],[14277.1,22192.4,0],[14352.3,21860.1,0],[14630.3,21582.1,0],[15139,18725,0],[16196.8,20505.8,0],[16511,9939,0],[16633,16039,0],[16757.5,18699.3,0],[16823,17206,0],[17268,17010,0],[17489,12283,0],[17680,15862.8,0],[18060.6,17167.3,0],[18200,10589,0],[18449.8,7986.42,0],[18442.5,14388.5,0],[18836.6,11992,0],[18850.1,17212,0],[19274,14905,0],[19455.6,7522.52,0],[19433,15434,0],[19616.9,8790.04,0],[19673.1,18544.6,0],[19896.6,6270.58,0],[20087,11211,0],[20075.9,19464.4,0],[20148.9,17218,0],[20283.4,13243.4,0],[20763,14738,0],[20747.2,18601.4,0],[20799.7,19459.5,0],[20959.8,10528.6,0],[20940.1,16583.9,0],[21099,13434,0],[21290.6,19486.8,0],[21491.1,8666.78,0],[21628.6,21366.1,0],[21746.5,16236.1,0],[21844.3,7684.46,0],[21975.9,18559.1,0],[21993,15601.4,0],[22062.4,21577.7,0],[22049.4,20284.7,0],[22190.1,15193,0],[22280.9,20129.4,0],[22604.7,22341.4,0],[22693.9,22075.5,0],[23106.8,21565.2,0],[23538.1,20580.1,0],[23755.2,22248.2,0],[23718.1,23545.8,0],[23900.7,23003.5,0],[24009.6,21359.9,0],[24143.3,23747.1,0],[24365,22093,0],[24527.1,23024.5,0],[24692.7,20078,0],[24708,21195.1,0],[24721.8,23393,0],[24952,20877,0],[25226,19954,0],[25563.3,19567.9,0],[25551.8,22500.9,0],[25574.9,20376.8,0],[25687,21512,0],[25765,22222,0],[26024.9,19984.3,0],[26259.4,20418.7,0],[26685.8,21184.4,0],[27493.4,21481.1,0],[27631.7,23592.4,0],[27672.3,23252.4,0],[27887.2,22497.3,0]];
+				private _crashLocations = switch (worldName) do {
+					case "Altis": {[[4426,14856.8,0],[4798.99,12639.2,0],[4877.75,20329.2,0],[5231.58,14871.2,0],[5578.27,17465.8,0],[6163.38,19324.6,0],[6449.08,13172.7,0],[6543.98,11516.5,0],[6718.32,19145.1,0],[7752.5,15274.9,0],[8158.96,20422.5,0],[8397.1,12966.5,0],[8819.66,11798.1,0],[8791.14,14868,0],[8870,18726,0],[9221.45,22106.7,0],[9279.24,16893.5,0],[9595.95,18836.4,0],[10056.8,8474.84,0],[10412.4,15523.6,0],[10447,12258,0],[10673.2,8163.02,0],[10643.5,16961,0],[10664,14861.2,0],[10905,13319,0],[11107.4,20417.6,0],[11265.5,6763.46,0],[11418.7,8021.57,0],[11555.3,9178.9,0],[11652.9,16580.6,0],[11822.7,21807.9,0],[11970.8,17921.5,0],[12292.4,8427.08,0],[12290.6,14908.5,0],[12272.3,16782.4,0],[12707.5,20893,0],[12818,19687,0],[13025.3,21797.8,0],[13788.3,18012.9,0],[14277.1,22192.4,0],[14352.3,21860.1,0],[14630.3,21582.1,0],[15139,18725,0],[16196.8,20505.8,0],[16511,9939,0],[16633,16039,0],[16757.5,18699.3,0],[16823,17206,0],[17268,17010,0],[17489,12283,0],[17680,15862.8,0],[18060.6,17167.3,0],[18200,10589,0],[18449.8,7986.42,0],[18442.5,14388.5,0],[18836.6,11992,0],[18850.1,17212,0],[19274,14905,0],[19455.6,7522.52,0],[19433,15434,0],[19616.9,8790.04,0],[19673.1,18544.6,0],[19896.6,6270.58,0],[20087,11211,0],[20075.9,19464.4,0],[20148.9,17218,0],[20283.4,13243.4,0],[20763,14738,0],[20747.2,18601.4,0],[20799.7,19459.5,0],[20959.8,10528.6,0],[20940.1,16583.9,0],[21099,13434,0],[21290.6,19486.8,0],[21491.1,8666.78,0],[21628.6,21366.1,0],[21746.5,16236.1,0],[21844.3,7684.46,0],[21975.9,18559.1,0],[21993,15601.4,0],[22062.4,21577.7,0],[22049.4,20284.7,0],[22190.1,15193,0],[22280.9,20129.4,0],[22604.7,22341.4,0],[22693.9,22075.5,0],[23106.8,21565.2,0],[23538.1,20580.1,0],[23755.2,22248.2,0],[23718.1,23545.8,0],[23900.7,23003.5,0],[24009.6,21359.9,0],[24143.3,23747.1,0],[24365,22093,0],[24527.1,23024.5,0],[24692.7,20078,0],[24708,21195.1,0],[24721.8,23393,0],[24952,20877,0],[25226,19954,0],[25563.3,19567.9,0],[25551.8,22500.9,0],[25574.9,20376.8,0],[25687,21512,0],[25765,22222,0],[26024.9,19984.3,0],[26259.4,20418.7,0],[26685.8,21184.4,0],[27493.4,21481.1,0],[27631.7,23592.4,0],[27672.3,23252.4,0],[27887.2,22497.3,0]]};
+					case "Stratis": {[[1928.22,3534.36,0],[1977.5,2723.25,0],[2068.9,5612.03,0],[2112.91,3835.67,0],[2684.1,1259.8,0],[2678.56,4478.38,0],[2729.22,2977.94,0],[2792.35,1755.79,0],[2726.1,5830.9,0],[2986.6,1872.88,0],[2947.12,6035.31,0],[3356.14,2910.95,0],[3449.37,5377.28,0],[3559.39,4898.91,0],[3782.19,5584.72,0],[4081.06,4566.71,0],[4282.01,3705.89,0],[4231.02,6768.26,0],[4388.32,4428.61,0],[4617.95,5293.65,0],[5025.48,5905.11,0],[5207.32,5032.42,0],[5333.03,5230.53,0],[5585.59,4669.99,0],[6464.77,5312.47,0],[6559.19,5070.86,0]]};
+					case "Tanoa": {[[1994.01,3318.69,0],[1977.91,6149.22,0],[2406.13,13314,0],[2635.34,11693.8,0],[2731.29,5743.97,0],[2963.1,9292.33,0],[3372.5,6528.03,0],[3857.02,13448.1,0],[4714.84,3566.41,0],[4802.19,5109.05,0],[5260.83,8748.35,0],[5282.02,11607.9,0],[5605.38,11187.2,0],[5791.82,4161.52,0],[6055.39,10381.1,0],[6247.1,9359.79,0],[6535.95,12748.7,0],[6761.22,7269.57,0],[6948.91,13296,0],[7036.33,4106.12,0],[7567.5,8102.3,0],[7562.46,12551.3,0],[8366.63,9835.1,0],[8726.58,4350.14,0],[8913.88,13772,0],[9096.26,10198.7,0],[9312.51,7382.55,0],[9419.4,4160.3,0],[9858.19,13305.3,0],[9896.49,12066.1,0],[10543.3,6618.74,0],[10684.3,8703.72,0],[10962.4,9778.89,0],[11013.3,3984.29,0],[11271.9,5088.14,0],[11439.7,12379.6,0],[11757,10253.7,0],[11901.4,3219.96,0],[11915.4,12982.1,0],[12167.1,2558.17,0],[12507.7,8126.96,0],[12495.4,8120.56,0],[12621.3,12159.2,0],[12885.6,4726.58,0],[13547.7,12353.7,0]]};
+					case "Malden": {[[1173.52,553.341,0],[2574.27,3384.17,0],[2583.97,4498.49,0],[3166.79,6499.55,0],[3384.68,5855.92,0],[3499.89,8463.32,0],[3660.96,5224.26,0],[3726.6,3343.97,0],[3967.86,7360.91,0],[4135.1,6178.93,0],[4183.96,6838.41,0],[4356.08,2664.51,0],[4574.04,3726.52,0],[4478.59,9502.34,0],[4739.8,9874.42,0],[5078.69,7370.66,0],[5215.15,4752.49,0],[5228.77,6113.76,0],[5353.05,4125.18,0],[5374.87,4474.32,0],[5363.94,8711.72,0],[5543.19,11192.8,0],[5657.82,7003.13,0],[5907.66,3348.21,0],[5972.87,9644.25,0],[6004.93,6552.75,0],[6192.93,8605.72,0],[6206.64,10717,0],[6595.55,3999.55,0],[6853.07,5497.6,0],[6971.02,4776.37,0],[6925.04,11188.2,0],[6952.59,9921.21,0],[7005.67,8298.7,0],[7173.55,5916.48,0],[7332.62,6976.11,0],[7553.26,10731,0],[7803.76,4451.71,0],[7788.3,7683.12,0],[8138.48,3109.62,0],[8146.16,10031.8,0],[8280.43,2937.81,0],[8327.22,5660.38,0],[8526.92,3246.26,0]]};
+					case "Enoch": {[[3094.28,6975.88,0],[3042.18,5372.35,0],[3208.97,2258.87,0],[3439.1,8982.46,0],[3434.31,11016.1,0],[3642.56,8689.51,0],[4137.82,7578.32,0],[4179.18,10347.8,0],[4541.4,4743.86,0],[5256.73,2160.37,0],[5130.52,10421.7,0],[5598.42,8704.12,0],[5911.77,7912.09,0],[6130.03,8106.55,0],[6426.88,10990.5,0],[6881.97,1203.95,0],[7293.8,2718.96,0],[7628.54,5652.17,0],[7887.01,9806.89,0],[7930.4,10720.5,0],[8132.23,11082.9,0],[8272.61,8822.85,0],[8424.41,10082,0],[8940.26,6589.97,0],[9107.57,1685.31,0],[9033.24,4388.54,0],[9284.32,11058,0],[9731.2,7845.74,0],[9889.61,8624.03,0],[10400.6,6797.57,0],[11122.2,2492.39,0],[11305.6,9583.08,0]]};
+					case "VR": {[[7520.18,7513.92,0]]};
+				};
 				private _position = selectRandom _crashLocations;
 				_crater setPosATL _position;
 				_crater setVectorUp surfaceNormal position _crater;
@@ -5694,6 +5911,138 @@ MAZ_EZM_fnc_initFunction = {
 		};
 
 		MAZ_EZM_fnc_newConvoyMission = {
+
+			private _fnc_getUnitTypes = {
+				params [
+					"_side"
+				];
+				private _return = [];
+				switch (_side) do {
+					case west: {
+						switch (worldName) do {
+							case "Stratis";
+							case "Malden";
+							case "Altis": {
+								_return = [
+									"B_Soldier_A_F",
+									"B_Soldier_AR_F",
+									"B_Medic_F",
+									"B_Soldier_GL_F",
+									"B_Soldier_M_F",
+									"B_Soldier_F",
+									"B_Soldier_LAT_F",
+									"B_Soldier_LAT2_F"
+								];
+							};
+							case "Tanoa": {
+								_return = [
+									"B_T_Soldier_A_F",
+									"B_T_Soldier_AR_F",
+									"B_T_Medic_F",
+									"B_T_Soldier_GL_F",
+									"B_T_Soldier_M_F",
+									"B_T_Soldier_F",
+									"B_T_Soldier_LAT_F",
+									"B_T_Soldier_LAT2_F"
+								];
+							};
+							case "Enoch": {
+								_return = [
+									"B_W_Soldier_A_F",
+									"B_W_Soldier_AR_F",
+									"B_W_Medic_F",
+									"B_W_Soldier_GL_F",
+									"B_W_Soldier_M_F",
+									"B_W_Soldier_F",
+									"B_W_Soldier_LAT_F",
+									"B_W_Soldier_LAT2_F"
+								];
+							};
+						};
+					};
+					case east: {
+						switch (worldName) do {
+							case "Stratis";
+							case "Malden";
+							case "Altis": {
+								_return = [
+									"O_Soldier_A_F",
+									"O_Soldier_AR_F",
+									"O_Medic_F",
+									"O_Soldier_GL_F",
+									"O_Soldier_M_F",
+									"O_Soldier_F",
+									"O_Soldier_LAT_F"
+								];
+							};
+							case "Tanoa": {
+								_return = [
+									"O_T_Soldier_A_F",
+									"O_T_Soldier_AR_F",
+									"O_T_Medic_F",
+									"O_T_Soldier_GL_F",
+									"O_T_Soldier_M_F",
+									"O_T_Soldier_F",
+									"O_T_Soldier_LAT_F"
+								];
+							};
+							case "Enoch": {
+								_return = [
+									"O_R_JTAC_F",
+									"O_R_Soldier_AR_F",
+									"O_R_Medic_F",
+									"O_R_Soldier_GL_F",
+									"O_R_Soldier_M_F",
+									"O_R_Soldier_LAT_F"
+								]
+							};
+						};
+					};
+					case independent: {
+						switch (worldName) do {
+							case "Stratis";
+							case "Malden";
+							case "Altis": {
+								_return = [
+									"I_Soldier_A_F",
+									"I_Soldier_AR_F",
+									"I_Medic_F",
+									"I_Soldier_GL_F",
+									"I_Soldier_M_F",
+									"I_Soldier_F",
+									"I_Soldier_LAT_F",
+									"I_Soldier_LAT2_F"
+								];
+							};
+							case "Tanoa": {
+								_return = [
+									"I_C_Soldier_Para_7_F",
+									"I_C_Soldier_Para_3_F",
+									"I_C_Soldier_Para_4_F",
+									"I_C_Soldier_Para_6_F",
+									"I_C_Soldier_Para_8_F",
+									"I_C_Soldier_Para_1_F",
+									"I_C_Soldier_Para_5_F"
+								];
+							};
+							case "Enoch": {
+								_return = [
+									"I_E_Soldier_A_F",
+									"I_E_Soldier_AR_F",
+									"I_E_Medic_F",
+									"I_E_Soldier_GL_F",
+									"I_E_Soldier_M_F",
+									"I_E_Soldier_F",
+									"I_E_Soldier_LAT_F",
+									"I_E_Soldier_LAT2_F"
+								];
+							};
+						};
+					};
+				};
+				_return
+			};
+
 			MAZ_EZM_fnc_getConvoyInfo = {
 				params ["_convoyType"];
 				private _returnInfo = [];
@@ -5703,7 +6052,7 @@ MAZ_EZM_fnc_initFunction = {
 						_returnInfo pushBack [
 							"O_APC_Wheeled_02_rcws_v2_F",
 							"O_Truck_03_ammo_F",
-							"O_LSV_02_armed_F"
+							"O_APC_Wheeled_02_rcws_v2_F"
 						];
 
 						comment "Starting location";
@@ -5743,9 +6092,6 @@ MAZ_EZM_fnc_initFunction = {
 
 						comment "Convoy Side";
 						_returnInfo pushBack east;
-
-						comment "Unit Type";
-						_returnInfo pushBack "CSAT";
 					};
 					case 1: {
 						comment "Vehicle Types";
@@ -5794,9 +6140,6 @@ MAZ_EZM_fnc_initFunction = {
 
 						comment "Convoy Side";
 						_returnInfo pushBack independent;
-
-						comment "Unit Type";
-						_returnInfo pushBack "AAF";
 					};
 					case 2: {
 						comment "Vehicle Types";
@@ -5842,9 +6185,49 @@ MAZ_EZM_fnc_initFunction = {
 
 						comment "Convoy Side";
 						_returnInfo pushBack east;
+					};
+					case 3: {
+						comment "Vehicle Types";
+						_returnInfo pushBack [
+							"I_APC_Wheeled_03_cannon_F",
+							"I_Truck_02_ammo_F",
+							"I_APC_Wheeled_03_cannon_F",
+							selectRandom ["I_MRAP_03_hmg_F","I_MRAP_03_gmg_F"]
+						];
 
-						comment "Unit Type";
-						_returnInfo pushBack "CSAT";
+						comment "Starting location";
+						_returnInfo pushBack [3260.870,12509.276];
+
+						comment "Starting locations";
+						_returnInfo pushBack [
+							[3254.868,12504.7],
+							[3237.267,12498.41],
+							[3220.510,12492.701],
+							[3203.243,12486.627]
+						];
+						
+						comment "Starting direction";
+						_returnInfo pushBack [72.490,72.509,72.572,72.178];
+
+						comment "Waypoints";
+						_returnInfo pushBack [
+							[9289.280,15856.197],
+							[17870.432,18199.361]
+						];
+
+						comment "Ending location";
+						_returnInfo pushBack [17870.432,18199.361];
+
+						comment "Marker Locations";
+						_returnInfo pushBack [
+							[6299.041,15151.183],
+							[9218.906,15837.3],
+							[14542.193,16940.186],
+							[17211.178,17898.922]
+						];
+
+						comment "Convoy Side";
+						_returnInfo pushBack independent;
 					};
 				};
 				_returnInfo;
@@ -5852,75 +6235,40 @@ MAZ_EZM_fnc_initFunction = {
 
 			MAZ_EZM_fnc_createVehicleUnitConvoy = {
 				params ["_group","_unitType"];
-				private _unitLoadouts = [];
-				switch (_unitType) do {
-					case "CSAT": {
-						_unitLoadouts = [
-							[["arifle_Katiba_F","","acc_pointer_IR","optic_ACO_grn",["30Rnd_65x39_caseless_green",30],[],""],[],[],["U_O_CombatUniform_ocamo",[["FirstAidKit",5]]],["V_HarnessO_brn",[["HandGrenade",2,1],["SmokeShell",2,1],["SmokeShellGreen",1,1],["30Rnd_65x39_caseless_green",11,30]]],[],"H_HelmetLeaderO_ocamo","",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch","O_NVGoggles_hex_F"]],
-							[["arifle_AK12U_F","","acc_pointer_IR","optic_ACO_grn",["30Rnd_762x39_AK12_Mag_F",30],[],""],[],[],["U_O_CombatUniform_ocamo",[["FirstAidKit",5]]],["V_HarnessO_brn",[["HandGrenade",2,1],["SmokeShell",2,1],["SmokeShellGreen",1,1],["30Rnd_762x39_AK12_Mag_F",5,30]]],[],"H_HelmetLeaderO_ocamo","",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch","O_NVGoggles_hex_F"]],
-							[["arifle_CTAR_hex_F","","acc_pointer_IR","optic_Arco",["30Rnd_580x42_Mag_F",30],[],""],[],[],["U_O_CombatUniform_ocamo",[["FirstAidKit",5]]],["V_HarnessO_brn",[["HandGrenade",2,1],["SmokeShell",2,1],["SmokeShellGreen",1,1],["30Rnd_580x42_Mag_F",5,30]]],[],"H_HelmetLeaderO_ocamo","",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch","O_NVGoggles_hex_F"]],
-							[["srifle_DMR_01_F","","","optic_DMS",["10Rnd_762x54_Mag",10],[],""],[],[],["U_O_CombatUniform_ocamo",[["FirstAidKit",5]]],["V_HarnessO_brn",[["HandGrenade",2,1],["SmokeShell",2,1],["SmokeShellGreen",1,1],["10Rnd_762x54_Mag",5,10]]],[],"H_HelmetLeaderO_ocamo","",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch","O_NVGoggles_hex_F"]],
-							[["LMG_Zafir_F","","","optic_Holosight",["150Rnd_762x54_Box",150],[],""],[],[],["U_O_CombatUniform_ocamo",[["FirstAidKit",5]]],["V_HarnessO_brn",[["HandGrenade",2,1],["SmokeShell",2,1],["SmokeShellGreen",1,1],["150Rnd_762x54_Box",1,150]]],[],"H_HelmetLeaderO_ocamo","",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch","O_NVGoggles_hex_F"]],
-							[["arifle_Katiba_GL_F","","acc_pointer_IR","optic_ACO_grn",["30Rnd_65x39_caseless_green",30],["1Rnd_HE_Grenade_shell",1],""],[],[],["U_O_CombatUniform_ocamo",[["FirstAidKit",5]]],["V_HarnessO_brn",[["HandGrenade",2,1],["SmokeShell",2,1],["SmokeShellGreen",1,1],["30Rnd_65x39_caseless_green",6,30],["1Rnd_HE_Grenade_shell",5,1]]],[],"H_HelmetLeaderO_ocamo","",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch","O_NVGoggles_hex_F"]]
-						];
-					};
-					case "AAF": {
-						_unitLoadouts = [
-							[["arifle_Mk20_F","","acc_pointer_IR","optic_MRCO",["30Rnd_556x45_Stanag",30],[],""],[],["hgun_ACPC2_F","","","",["9Rnd_45ACP_Mag",9],[],""],["U_I_CombatUniform_shortsleeve",[["FirstAidKit",4],["SmokeShell",2,1]]],["V_PlateCarrierIA2_dgtl",[["NVGoggles_INDEP",1],["HandGrenade",2,1],["30Rnd_556x45_Stanag",9,30],["9Rnd_45ACP_Mag",1,9]]],[],"H_HelmetIA","G_Combat_Goggles_tna_F",["","","","",[],[],""],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch",""]],
-							[["srifle_EBR_F","","acc_pointer_IR","optic_MRCO",["20Rnd_762x51_Mag",20],[],""],[],["hgun_ACPC2_F","","","",["9Rnd_45ACP_Mag",9],[],""],["U_I_CombatUniform_shortsleeve",[["FirstAidKit",4],["SmokeShell",2,1]]],["V_PlateCarrierIA2_dgtl",[["NVGoggles_INDEP",1],["HandGrenade",2,1],["9Rnd_45ACP_Mag",1,9],["20Rnd_762x51_Mag",4,20]]],[],"H_HelmetIA","G_Combat_Goggles_tna_F",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch",""]],
-							[["arifle_Mk20_F","","acc_pointer_IR","optic_MRCO",["30Rnd_556x45_Stanag",30],[],""],[],["hgun_ACPC2_F","","","",["9Rnd_45ACP_Mag",9],[],""],["U_I_CombatUniform_shortsleeve",[["FirstAidKit",4],["SmokeShell",2,1]]],["V_PlateCarrierIA2_dgtl",[["NVGoggles_INDEP",1],["HandGrenade",2,1],["9Rnd_45ACP_Mag",1,9],["30Rnd_556x45_Stanag",5,30]]],["B_AssaultPack_dgtl",[["Medikit",1],["FirstAidKit",5]]],"H_HelmetIA","G_Combat_Goggles_tna_F",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch",""]],
-							[["LMG_Mk200_F","","acc_pointer_IR","optic_MRCO",["200Rnd_65x39_cased_Box",200],[],""],[],["hgun_ACPC2_F","","","",["9Rnd_45ACP_Mag",9],[],""],["U_I_CombatUniform_shortsleeve",[["FirstAidKit",4],["SmokeShell",2,1]]],["V_PlateCarrierIA2_dgtl",[["NVGoggles_INDEP",1],["HandGrenade",2,1],["9Rnd_45ACP_Mag",1,9],["200Rnd_65x39_cased_Box",1,200]]],["B_AssaultPack_dgtl",[["200Rnd_65x39_cased_Box",1,200]]],"H_HelmetIA","G_Combat_Goggles_tna_F",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch",""]],
-							[["arifle_TRG21_F","","acc_pointer_IR","optic_MRCO",["30Rnd_556x45_Stanag",30],[],""],[],["hgun_ACPC2_F","","","",["9Rnd_45ACP_Mag",9],[],""],["U_I_CombatUniform_shortsleeve",[["FirstAidKit",4],["SmokeShell",2,1]]],["V_PlateCarrierIA2_dgtl",[["NVGoggles_INDEP",1],["HandGrenade",2,1],["9Rnd_45ACP_Mag",1,9],["30Rnd_556x45_Stanag",5,30]]],[],"H_HelmetIA","G_Combat_Goggles_tna_F",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch",""]],
-							[["arifle_Mk20_GL_F","","acc_pointer_IR","optic_MRCO",["30Rnd_556x45_Stanag",30],["1Rnd_HE_Grenade_shell",1],""],[],["hgun_ACPC2_F","","","",["9Rnd_45ACP_Mag",9],[],""],["U_I_CombatUniform_shortsleeve",[["FirstAidKit",4],["SmokeShell",2,1]]],["V_PlateCarrierIA2_dgtl",[["NVGoggles_INDEP",1],["HandGrenade",2,1],["30Rnd_556x45_Stanag",5,30],["1Rnd_HE_Grenade_shell",5,1]]],[],"H_HelmetIA","G_Combat_Goggles_tna_F",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch",""]]
-						];
-					};
-					case "LDF": {
-						_unitLoadouts = [
-							[["arifle_MSBS65_F","muzzle_snds_H","acc_pointer_IR","optic_ico_01_f",["30Rnd_65x39_caseless_msbs_mag",30],[],""],[],[],["U_I_E_Uniform_01_sweater_F",[["FirstAidKit",3]]],["V_CarrierRigKBT_01_light_Olive_F",[["30Rnd_65x39_caseless_msbs_mag",6,30],["HandGrenade",2,1],["SmokeShell",2,1]]],[],"H_HelmetHBK_F","G_Tactical_Clear",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch","O_NVGoggles_grn_F"]],
-							[["arifle_MSBS65_Mark_F","","acc_pointer_IR","optic_Hamr_khk_F",["30Rnd_65x39_caseless_msbs_mag",30],[],""],[],[],["U_I_E_Uniform_01_sweater_F",[["FirstAidKit",3],["30Rnd_65x39_caseless_msbs_mag",1,30]]],["V_CarrierRigKBT_01_light_Olive_F",[["HandGrenade",2,1],["SmokeShell",2,1],["30Rnd_65x39_caseless_msbs_mag",5,30]]],[],"H_HelmetHBK_ear_F","G_Tactical_Clear",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch","O_NVGoggles_grn_F"]],
-							[["LMG_Mk200_black_F","","acc_pointer_IR","optic_Hamr",["200Rnd_65x39_cased_Box",200],[],""],[],[],["U_I_E_Uniform_01_sweater_F",[["FirstAidKit",3]]],["V_CarrierRigKBT_01_light_Olive_F",[["HandGrenade",2,1],["SmokeShell",2,1],["200Rnd_65x39_cased_Box",2,200]]],["B_AssaultPack_eaf_F",[]],"H_HelmetHBK_headset_F","G_Tactical_Clear",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch","O_NVGoggles_grn_F"]],
-							[["arifle_MSBS65_GL_F","","acc_pointer_IR","optic_Hamr_khk_F",["30Rnd_65x39_caseless_msbs_mag",30],["1Rnd_HE_Grenade_shell",1],""],[],[],["U_I_E_Uniform_01_sweater_F",[["FirstAidKit",3],["30Rnd_65x39_caseless_msbs_mag",1,30],["1Rnd_HE_Grenade_shell",1,1]]],["V_CarrierRigKBT_01_heavy_EAF_F",[["HandGrenade",2,1],["SmokeShell",2,1],["30Rnd_65x39_caseless_msbs_mag",5,30],["1Rnd_HE_Grenade_shell",4,1]]],[],"H_HelmetHBK_headset_F","G_Tactical_Clear",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch","O_NVGoggles_grn_F"]],
-							[["arifle_MSBS65_F","muzzle_snds_H","acc_pointer_IR","optic_ico_01_f",["30Rnd_65x39_caseless_msbs_mag",30],[],""],[],[],["U_I_E_Uniform_01_sweater_F",[["FirstAidKit",3]]],["V_CarrierRigKBT_01_light_Olive_F",[["30Rnd_65x39_caseless_msbs_mag",6,30],["HandGrenade",2,1],["SmokeShell",2,1]]],["B_AssaultPack_eaf_F",[["Medikit",1],["FirstAidKit",5]]],"H_HelmetHBK_F","G_Tactical_Clear",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch","O_NVGoggles_grn_F"]]
-						];
-					};
-				};
-				private _sidePrefix = "";
-				switch (side _group) do {
-					case east: {_sidePrefix = "O_";};
-					case independent: {_sidePrefix = "I_";};
-					default { };
-				};
-				private _soldier = _group createUnit [format ["%1Soldier_F",_sidePrefix],[23405.7,17895.8,0],[],0,"CAN_COLLIDE"];
+				private _soldier = _group createUnit [_unitType,[23405.7,17895.8,0],[],0,"CAN_COLLIDE"];
 				_soldier setVectorDirAndUp [[0,1,0],[0,0,1]];
-				_soldier setUnitLoadout (selectRandom _unitLoadouts);
 				_soldier setUnitPos "UP";
 				_soldier;
 			};
 
 			MAZ_EZM_fnc_createConvoyVehicle = {
-				params ["_type","_vehPos","_vehDir","_group","_loadoutSet"];
+				params ["_type","_vehPos","_vehDir","_group"];
 				private _veh = createVehicle [_type,_vehPos,[],0,"None"];
 				_veh setDir _vehDir;
-				private _vehDriver = [_group,_loadoutSet] call MAZ_EZM_fnc_createVehicleUnitConvoy;
+				private _unitType = selectRandom ([side _group] call _fnc_getUnitTypes);
+				private _vehDriver = [_group,_unitType] call MAZ_EZM_fnc_createVehicleUnitConvoy;
 				_vehDriver moveInDriver _veh;
 				_vehDriver limitSpeed 57;
 				_vehDriver setSkill ["courage",1];
 				_vehDriver setSkill ["commanding",1];
 				if(_type isKindOf "Truck_F") then {
-					private _vehCargo = [_group,_loadoutSet] call MAZ_EZM_fnc_createVehicleUnitConvoy;
+					_unitType = selectRandom ([side _group] call _fnc_getUnitTypes);
+					private _vehCargo = [_group,_unitType] call MAZ_EZM_fnc_createVehicleUnitConvoy;
 					_vehCargo moveInCargo _veh;
 				} else {
-					private _vehGunner = [_group,_loadoutSet] call MAZ_EZM_fnc_createVehicleUnitConvoy;
+					_unitType = selectRandom ([side _group] call _fnc_getUnitTypes);
+					private _vehGunner = [_group,_unitType] call MAZ_EZM_fnc_createVehicleUnitConvoy;
 					_vehGunner moveInGunner _veh;
 					if (_veh emptyPositions "commander" > 0) then {
-						private _vehCommander = [_group,_loadoutSet] call MAZ_EZM_fnc_createVehicleUnitConvoy;
+						_unitType = selectRandom ([side _group] call _fnc_getUnitTypes);
+						private _vehCommander = [_group,_unitType] call MAZ_EZM_fnc_createVehicleUnitConvoy;
 						_vehCommander moveInCommander _veh;
 					};
 				};
 				_veh;
 			};
 
-			private _convoyType = selectRandom [0,1,2];
+			private _convoyType = selectRandom [3];
 			private _convoyInfo = [_convoyType] call MAZ_EZM_fnc_getConvoyInfo;
 			
 			private _vehTypes = _convoyInfo select 0;
@@ -5931,7 +6279,6 @@ MAZ_EZM_fnc_initFunction = {
 			private _endPos = _convoyInfo select 5;
 			private _markerLocations = _convoyInfo select 6;
 			private _convoySide = _convoyInfo select 7;
-			private _loadoutSet = _convoyInfo select 8;
 
 			private _convoyGroup = createGroup _convoySide;
 			private _vehicles = [];
@@ -5939,7 +6286,7 @@ MAZ_EZM_fnc_initFunction = {
 				private _vehType = _vehTypes select _i;
 				private _vehPos = _startLocations select _i;
 				private _vehDir = _startDirs select _i;
-				private _return = [_vehType,_vehPos,_vehDir,_convoyGroup,_loadoutSet] call MAZ_EZM_fnc_createConvoyVehicle;
+				private _return = [_vehType,_vehPos,_vehDir,_convoyGroup] call MAZ_EZM_fnc_createConvoyVehicle;
 				_vehicles pushBack _return;
 			};
 
@@ -6094,14 +6441,12 @@ MAZ_EZM_fnc_initFunction = {
 		};
 
 		MAZ_EZM_fnc_createRandomHelicrashModule = {
-			if(worldName != "Altis") exitWith {playSound "addItemFailed";systemChat "[ Enhanced Zeus Modules ] : Currently only configured for Altis! You can create your own by contacting Expung3d!"};
 			MAZ_EZM_autoHelicrash = true;
 			publicVariable 'MAZ_EZM_autoHelicrash';
 			[] call MAZ_EZM_fnc_newHelicrashMission;
 		};
 
 		MAZ_EZM_fnc_turnOffRandomHelicrashModule = {
-			if(worldName != "Altis") exitWith {playSound "addItemFailed";systemChat "[ Enhanced Zeus Modules ] : Currently only configured for Altis!"};
 			MAZ_EZM_autoHelicrash = false;
 			publicVariable 'MAZ_EZM_autoHelicrash';
 			playSound "addItemOk";
@@ -6121,6 +6466,347 @@ MAZ_EZM_fnc_initFunction = {
 			publicVariable 'MAZ_EZM_autoConvoy';
 			playSound "addItemOk";
 			systemChat "[ Enhanced Zeus Modules ] : Automated Convoy Missions disabled.";
+		};
+
+		MAZ_EZM_fnc_createGarrisonTownDialog = {
+			["Garrison Town",[
+				[
+					"EDIT",
+					["Town Name:","Enter a town name, like 'Kavala' or 'Athira'."],
+					["None"]
+				],
+				[
+					"SIDES",
+					"Side of Garrison:",
+					east
+				],
+				[
+					"SLIDER",
+					"Percent of Garrison:",
+					[0.1,0.4,0.2,objNull,[0,0,0,0],true]
+				],
+				[
+					"SLIDER",
+					"Number of Patrols",
+					[2,4,3]
+				]
+			],{
+				params ["_values","_args","_display"];
+				_values params ["_town","_side","_garrPercent","_patrols"];
+				private _locationNames = [];
+				{	
+					private _lct = _forEachIndex;
+					{	
+						_locationNames pushBack (toUpper (text _x));
+					} forEach nearestLocations [getArray (configFile >> "CfgWorlds" >> worldName >> "centerPosition"), [_x], worldSize];	
+				} forEach ["NameVillage", "NameCity", "NameCityCapital"];
+				if(!(toUpper _town in _locationNames) && ((toUpper _town) != "NONE" && (toUpper _town) != "")) exitWith {playSound "addItemFailed"; systemChat "[ Enhanced Zeus Modules ] : No such town!"};
+				private _sideNew = [[_side]] call MAZ_EZM_fnc_getSidesFromString;
+				_sideNew = _sideNew # 0;
+				[_town,_sideNew,_garrPercent,_patrols] spawn MAZ_EZM_fnc_garrisonTown; 
+				_display closeDisplay 1;
+			},{
+				params ["_values","_args","_display"];
+				_display closeDisplay 2;
+			},[]] call MAZ_EZM_fnc_createDialog;
+		};
+
+		MAZ_EZM_fnc_garrisonGroup = {
+			params [
+				["_group",grpNull,[grpNull]]
+			];
+			if(isNull _group) exitWith {};
+
+			private _leader = leader _group;
+			private _previousBehaviour = behaviour _leader;
+
+			private _arrayShuffle = {
+				private _array = _this select 0;
+				private _count = count _array;
+				private _arrayN = [];
+				private _arrayT = [];
+				private _c = 0;
+				private _r = 0;
+
+				while {_c < _count} do
+				{
+					while {_r in _arrayT} do
+					{_r = floor (random _count);
+					};
+					_arrayT pushBack _r;
+					_arrayN set [_c, _array select _r];
+					_c = _c + 1;
+				};
+
+				_arrayN
+			};
+
+			private _fnc_getHousePositions = {
+				params ["_index","_houses"];
+				private _nearestBuilding = _houses select _index;
+				if(isNil "_nearestBuilding") exitWith {};
+				private _positionsInBuilding = [_nearestBuilding] call BIS_fnc_buildingPositions;
+				_positionsInBuilding = [_positionsInBuilding] call _arrayShuffle;
+				_positionsInBuilding
+			};
+
+			private _fnc_orderToPositions = {
+				params ["_units","_positions","_houseIndex"];
+				private _newUnits = _units;
+				{
+					private _unit = objNull;
+					if((count _units) -1 >= _forEachIndex) then {
+						private _unit = _units select _forEachIndex;
+						_unit setPos _x;
+						_newUnits = _newUnits - [_unit];
+						_unit forceSpeed 0;
+					};
+				}forEach _positions;
+				if((count _buildingPoses) < (count _units)) then {
+					_houseIndex = _houseIndex + 1;
+					_buildingPoses = [_houseIndex,_nearestBuildings] call _fnc_getHousePositions;
+					[_newUnits,_buildingPoses,_houseIndex] call _fnc_orderToPositions;
+				};
+			};
+
+			{
+				deleteWaypoint [_group,_forEachIndex];
+			}forEach (waypoints _group);
+
+			private _nearestBuildings = nearestObjects [getPos _leader, ["building"], 50, true];
+
+			if (_nearestBuildings isEqualTo []) exitWith { false };
+			_group setbehaviour "AWARE";
+
+			private _houseIndex = 0;
+			private _buildingPoses = [_houseIndex,_nearestBuildings] call _fnc_getHousePositions;
+
+			private _units = (units _group) select {!isNull _x && alive _x};
+
+			[_units,_buildingPoses,_houseIndex] call _fnc_orderToPositions;
+
+			true
+		};
+
+		MAZ_EZM_fnc_garrisonTown = {
+			params [
+				["_town","NONE",[""]],
+				["_side",east,[east]],
+				["_percentGarrison",0.2,[0.2]],
+				["_numOfPatrols",selectRandom [2,3,4],[3]]
+			];
+			copyToClipboard (str _side);
+			if(_side isEqualTo civilian) exitWith {false};
+
+			private ["_position","_sizeTown"];
+			_town = toUpper _town;
+			private _locations = [];
+			{	
+				{	
+					_locations pushBack [toUpper (text _x), locationPosition _x,size _x];
+				} forEach nearestLocations [getArray (configFile >> "CfgWorlds" >> worldName >> "centerPosition"), [_x], worldSize];	
+			} forEach ["NameVillage", "NameCity", "NameCityCapital"];
+			if(_town == "NONE" || _town == "") then {
+				_position = [] call MAZ_EZM_fnc_getScreenPosition;
+				_sizeTown = 200;
+			} else {
+				private _index = _locations findIf {(_x select 0) == _town};
+				_townData = _locations select _index;
+				_town = _townData select 0;
+				_position = _townData select 1;
+				(_townData select 2) params ["_x","_y"];
+				_sizeTown = (_x max _y) * 0.75;
+			};
+			private _townAlert = format ["%1 IS UNDER ATTACK",toUpper _town];
+			if(toUpper _town == "NONE") then {
+				_townAlert = "A TOWN IS UNDER ATTACK";
+			};
+
+			private _fnc_getUnitTypes = {
+				params [
+					"_side"
+				];
+				private _return = [];
+				switch (_side) do {
+					case west: {
+						switch (worldName) do {
+							case "Stratis";
+							case "Malden";
+							case "Altis": {
+								_return = [
+									"B_Soldier_A_F",
+									"B_Soldier_AR_F",
+									"B_Medic_F",
+									"B_Soldier_GL_F",
+									"B_Soldier_M_F",
+									"B_Soldier_F",
+									"B_Soldier_LAT_F",
+									"B_Soldier_LAT2_F"
+								];
+							};
+							case "Tanoa": {
+								_return = [
+									"B_T_Soldier_A_F",
+									"B_T_Soldier_AR_F",
+									"B_T_Medic_F",
+									"B_T_Soldier_GL_F",
+									"B_T_Soldier_M_F",
+									"B_T_Soldier_F",
+									"B_T_Soldier_LAT_F",
+									"B_T_Soldier_LAT2_F"
+								];
+							};
+							case "Enoch": {
+								_return = [
+									"B_W_Soldier_A_F",
+									"B_W_Soldier_AR_F",
+									"B_W_Medic_F",
+									"B_W_Soldier_GL_F",
+									"B_W_Soldier_M_F",
+									"B_W_Soldier_F",
+									"B_W_Soldier_LAT_F",
+									"B_W_Soldier_LAT2_F"
+								];
+							};
+						};
+					};
+					case east: {
+						switch (worldName) do {
+							case "Stratis";
+							case "Malden";
+							case "Altis": {
+								_return = [
+									"O_Soldier_A_F",
+									"O_Soldier_AR_F",
+									"O_Medic_F",
+									"O_Soldier_GL_F",
+									"O_Soldier_M_F",
+									"O_Soldier_F",
+									"O_Soldier_LAT_F"
+								];
+							};
+							case "Tanoa": {
+								_return = [
+									"O_T_Soldier_A_F",
+									"O_T_Soldier_AR_F",
+									"O_T_Medic_F",
+									"O_T_Soldier_GL_F",
+									"O_T_Soldier_M_F",
+									"O_T_Soldier_F",
+									"O_T_Soldier_LAT_F"
+								];
+							};
+							case "Enoch": {
+								_return = [
+									"O_R_JTAC_F",
+									"O_R_Soldier_AR_F",
+									"O_R_Medic_F",
+									"O_R_Soldier_GL_F",
+									"O_R_Soldier_M_F",
+									"O_R_Soldier_LAT_F"
+								]
+							};
+						};
+					};
+					case independent: {
+						switch (worldName) do {
+							case "Stratis";
+							case "Malden";
+							case "Altis": {
+								_return = [
+									"I_Soldier_A_F",
+									"I_Soldier_AR_F",
+									"I_Medic_F",
+									"I_Soldier_GL_F",
+									"I_Soldier_M_F",
+									"I_Soldier_F",
+									"I_Soldier_LAT_F",
+									"I_Soldier_LAT2_F"
+								];
+							};
+							case "Tanoa": {
+								_return = [
+									"I_C_Soldier_Para_7_F",
+									"I_C_Soldier_Para_3_F",
+									"I_C_Soldier_Para_4_F",
+									"I_C_Soldier_Para_6_F",
+									"I_C_Soldier_Para_8_F",
+									"I_C_Soldier_Para_1_F",
+									"I_C_Soldier_Para_5_F"
+								];
+							};
+							case "Enoch": {
+								_return = [
+									"I_E_Soldier_A_F",
+									"I_E_Soldier_AR_F",
+									"I_E_Medic_F",
+									"I_E_Soldier_GL_F",
+									"I_E_Soldier_M_F",
+									"I_E_Soldier_F",
+									"I_E_Soldier_LAT_F",
+									"I_E_Soldier_LAT2_F"
+								];
+							};
+						};
+					};
+				};
+				_return
+			};
+			private _unitTypes = [_side] call _fnc_getUnitTypes;
+			private _buildings = nearestTerrainObjects [_position,["BUILDING","HOUSE"],_sizeTown];
+			private _units = [];
+			{
+				if((random 1) < _percentGarrison) then {
+					private _randomNumOfUnits = [2,5] call BIS_fnc_randomInt;
+					private _grp = createGroup [_side,true];
+					for "_i" from 1 to _randomNumOfUnits do {
+						private _unitType = selectRandom _unitTypes;
+						private _unit = _grp createUnit [_unitType,_x,[],0,"CAN_COLLIDE"];
+						_unit setSkill 0.4;
+						_unit setUnitPos "UP";
+						_units pushBack _unit;
+					};
+					[_grp] call MAZ_EZM_fnc_garrisonGroup;
+				};
+			}forEach _buildings;
+
+			for "_i" from 0 to _numOfPatrols do {
+				private _randPos = [[[_position,150]]] call BIS_fnc_randomPos;
+				private _nearRoads = _randPos nearRoads 150;
+				private _nearRoad = getPos (selectRandom _nearRoads);
+				private _randomNumOfUnits = [4,6] call BIS_fnc_randomInt;
+
+				private _grp = createGroup [_side,true];
+				for "_j" from 1 to _randomNumOfUnits do {
+					private _unitType = selectRandom _unitTypes;
+					private _unit = _grp createUnit [_unitType, _nearRoad,[],0,"CAN_COLLIDE"];
+					_unit setSkill 0.4;
+					_unit setUnitPos "UP";
+					_units pushBack _unit;
+				};
+
+				for "_j" from 0 to 5 do {
+					private _waypoint = _grp addWaypoint [getPos (selectRandom _nearRoads),0];
+					_waypoint setWaypointType "MOVE";
+					_waypoint setWaypointBehaviour "SAFE";
+					_waypoint setWaypointSpeed "LIMITED";
+				};
+				private _waypoint = _grp addWaypoint [_nearRoad,0];
+				_waypoint setWaypointType "CYCLE";
+				_waypoint setWaypointBehaviour "SAFE";
+				_waypoint setWaypointSpeed "LIMITED";
+			};
+
+			[[_units],{
+				params ["_objs"];
+				{
+					_x addCuratorEditableObjects [_objs,true];
+				} foreach allCurators;
+			}] remoteExec ["Spawn",2];
+
+			["TaskAssignedIcon",["A3\UI_F\Data\Map\Markers\Military\warning_CA.paa",_townAlert]] remoteExec ['BIS_fnc_showNotification',0];
+
+			true
 		};
 
 	comment "Clean Up";
@@ -6747,13 +7433,18 @@ MAZ_EZM_fnc_initFunction = {
 			private _isFound = false;
 			private _return = _message;
 			private _badWords = [
-				"shit",
-				"fuck",
-				"cunt",
-				"fag",
-				"gay",
-				"zam"
+				["s","h","i","t"] joinString "",
+				["n","i","g","g","e"] joinString "",
+				["n","i","g","g","a"] joinString "",
+				["n","i","g","g","e","r"] joinString "",
+				["n","i","g","g"] joinString "",
+				["f","u","c","k"] joinString "",
+				["c","u","n","t"] joinString "",
+				["f","a","g"] joinString "",
+				["g","a","y"] joinString "",
+				["z","a","m"] joinString ""
 			];
+
 			{
 				if(((toLower _return) find _x) != -1) then {
 					_isFound = true;
@@ -10797,6 +11488,15 @@ MAZ_EZM_editZeusInterface = {
 					"a3\ui_f\data\map\markers\military\objective_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
+				[
+					MAZ_zeusModulesTree,
+					MAZ_AutoMissionTree,
+					"Auto Garrison Town",
+					"Automatically garrisons a named town or the town where the module is placed.",
+					"MAZ_EZM_fnc_createGarrisonTownDialog",
+					"a3\modules_f_curator\data\portraitobjectiveneutralize_ca.paa"
+				] call MAZ_EZM_fnc_zeusAddModule;
+
 			comment "Clean Up Stuff";
 				MAZ_CleanUpTree = [
 					MAZ_zeusModulesTree,
@@ -12041,6 +12741,19 @@ MAZ_EZM_editZeusLogic = {
 			true
 		}]
 	];
+	if((_zeusLogic getVariable ["MAZ_zeusEH_markerPlaced",-200]) != -200) then {
+		_zeusLogic removeEventHandler ['CuratorMarkerPlaced',(_zeusLogic getVariable 'MAZ_zeusEH_markerPlaced')];
+	};
+	_zeusLogic setVariable [
+		"MAZ_zeusEH_markerPlaced",
+		_zeusLogic addEventhandler ["CuratorMarkerPlaced",{
+			params ["_curator", "_marker"];
+			if(isNil "MAZ_EZM_markerColorDefault") then {
+				MAZ_EZM_markerColorDefault = "Default";
+			};
+			_marker setMarkerColor MAZ_EZM_markerColorDefault;
+		}]
+	];
 };
 
 MAZ_EZM_addZeusKeybinds_312 = {
@@ -12279,7 +12992,21 @@ MAZ_EZM_fnc_initMainLoop = {
 
 comment "
 	Change Log:
- - Lost track of changes, many dialog changes, system changes, removed redundancies, fixed some broken aspects
+ - Added more filters to the messages filter
+ - Added EDC Compatibility
+ - Added Advanced Damage to vehicles
+ - Added Automated Respawns on Vehicles
+ - Added Auto-Garrison Town
+ - Added Percent to Slider Dialogs
+ - Added support for all vanilla maps with automated helicrashes
+ - Added New Convoy to automated convoys
+ - Added combat animations (ambient animations that cancel when taking fire)
+ - Changed positions of automated helicrashes
+ - Changed reinforcements waypoint from MOVE/SENTRY to Seek and Destroy
+ - Fixed issue where extra long dialogs would extend beyond the screen
+ - Fixed issue where shortened dialogs didn't have a scrollbar
+ - Fixed typo where some animation display names had a ; instead of a : separator
+ - Adjusted vertical spacing of icons
 ";
 
 comment "
