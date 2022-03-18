@@ -1,4 +1,4 @@
-MAZ_EZM_LiteVersion = "V1.6D";
+MAZ_EZM_LiteVersion = "V1.7A";
 MAZ_EZM_autoAdd = profileNamespace getVariable ['MAZ_EZM_autoAddVar',true];
 
 comment "Dialog Creation";
@@ -861,8 +861,6 @@ comment "Dialog Creation";
 		IDC_SIDES_INDEPENDENT = 252;
 		IDC_SIDES_CIVILIAN = 253;
 
-		IDCS_ROW_COLOR = [IDC_ROW_COLOR_RED,IDC_ROW_COLOR_GREEN,IDC_ROW_COLOR_BLUE,IDC_ROW_COLOR_ALPHA];
-		IDCS_ROW_COLOR_EDIT = [IDC_ROW_COLOR_RED_EDIT,IDC_ROW_COLOR_GREEN_EDIT,IDC_ROW_COLOR_BLUE_EDIT,IDC_ROW_COLOR_ALPHA_EDIT];
 		IDCS_ROW_VECTOR = [IDC_ROW_VECTOR_X,IDC_ROW_VECTOR_Y,IDC_ROW_VECTOR_Z];
 	};
 	[] call MAZ_defineIDCS;
@@ -2690,7 +2688,7 @@ MAZ_EZM_createUnitForZeus = {
 MAZ_EZM_fnc_runZeusModule = {
 	params ["_curator", "_entity"];
 	private _entityType = typeOf _entity;
-
+	
 	private _objectiveModules = [
 		"ModuleObjectiveAttackDefend_F",
 		"ModuleObjectiveSector_F",
@@ -2701,17 +2699,24 @@ MAZ_EZM_fnc_runZeusModule = {
 		"ModuleObjectiveProtect_F",
 		"ModuleObjectiveRaceCP_F",
 		"ModuleObjectiveRaceFinish_F",
-		"ModuleObjectiveRaceStart_F"
+		"ModuleObjectiveRaceStart_F",
+		"ModuleCASBomb_F",
+		"ModuleCASGunMissile_F",
+		"ModuleCASMissile_F",
+		"ModuleCASGun_F"
 	];
-	if(_entityType in _objectiveModules) exitWith {
+	if(_entityType in _objectiveModules && !(side player == sideLogic)) exitWith {
 		[_entity] spawn {
 			params ["_entity"];
 			waitUntil {dialog};
+			private _oldGroup = group player;
 			[player] joinSilent (createGroup [sideLogic,true]);
 			closeDialog 2;
 			waitUntil {!dialog};
-			playSound "addItemFailed";
-			systemChat "[ Enhanced Zeus Modules ] : You must be side LOGIC to edit an objective! You've been changed to this side, re-open the module.";
+			_entity call BIS_fnc_showCuratorAttributes;
+			waitUntil {dialog};
+			waitUntil {!dialog};
+			[player] joinSilent _oldGroup;
 		};
 	};
 
@@ -3378,6 +3383,9 @@ MAZ_EZM_fnc_initFunction = {
 				if(_args getVariable ["MAZ_EZM_combatAnim",-420] != -420) then {
 					_args removeEventHandler ["Suppressed",_args getVariable "MAZ_EZM_combatAnim"];
 				};
+				if(_args getVariable ["MAZ_EZM_removeAnimEH",-420] != -420) then {
+					_args removeEventHandler ["Killed",_args getVariable "MAZ_EZM_removeAnimEH"];
+				};
 				if(_anim == "") then {
 					[_args,"AmovPercMstpSnonWnonDnon"] remoteExec ["switchMove"];
 					_args setBehaviour "AWARE";
@@ -3392,7 +3400,7 @@ MAZ_EZM_fnc_initFunction = {
 					_args setVariable ["MAZ_EZM_animDone",
 						_args addEventhandler ["AnimDone",{
 							params ["_unit","_anim"];
-							[_args,_anim] remoteExec ['switchMove',0];
+							[_args,_anim] remoteExec ['switchMove'];
 						}],true
 					];
 					if(_isCombat) then {
@@ -3406,6 +3414,17 @@ MAZ_EZM_fnc_initFunction = {
 							}],true
 						];
 					};
+					_args setVariable ["MAZ_EZM_removeAnimEH",
+						_args addEventhandler ["Killed",{
+							params ["_unit", "_killer", "_instigator", "_useEffects"];
+							if(_unit getVariable ["MAZ_EZM_animDone",-420] != -420) then {
+								_unit removeEventHandler ["AnimDone",_unit getVariable "MAZ_EZM_animDone"];
+							};
+							if(_unit getVariable ["MAZ_EZM_combatAnim",-420] != -420) then {
+								_unit removeEventHandler ["Suppressed",_unit getVariable "MAZ_EZM_combatAnim"];
+							};
+						}],true
+					];
 					systemChat "[ Enhanced Zeus Modules ] : Animation set.";
 				};
 				playSound 'addItemOk';
@@ -6064,7 +6083,7 @@ MAZ_EZM_fnc_initFunction = {
 							[10801.449,10578.907],
 							[10799.197,10537.174]
 						];
-						
+
 						comment "Starting direction";
 						_returnInfo pushBack [0,0,0];
 
@@ -8603,7 +8622,7 @@ MAZ_EZM_fnc_initFunction = {
 						["MAZ_updateDoorsEachFrame","onEachFrame"] call BIS_fnc_removeStackedEventHandler;
 						{ctrlDelete _x} forEach _controls;
 					};
-
+					
 					{
 						private _control = _controls select _forEachIndex;
 
@@ -8657,9 +8676,7 @@ MAZ_EZM_fnc_initFunction = {
 
 				for "_doorID" from 1 to 24 do {
 					_position = getText(_cfg >> format["OpenDoor_%1",_doorID] >> "position");
-
 					if (_position == "") exitWith {};
-
 					_positions pushBack (_building selectionPosition _position);
 				};
 
@@ -9566,6 +9583,7 @@ MAZ_EZM_fnc_initFunction = {
 		MAZ_EZM_fnc_removeAllClothing = {
 			params ["_unit"];
 			_unit setUnitLoadout [[],[],[],[],[],[],"","",["","","","",[],[],""],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch",""]];
+			removeGoggles _unit;
 		};
 
 	comment "Better Civilians";
@@ -9969,6 +9987,80 @@ MAZ_EZM_fnc_initFunction = {
 				_vehicle
 			};
 
+		comment "Groups";
+
+			MAZ_EZM_MDF_fnc_createRifleSquadModule = {
+				private _squadLead = call MAZ_EZM_MDF_fnc_createSquadLeadModule;
+				private _grp = group _squadLead;
+				{
+					private _unit = call (missionNamespace getVariable _x);
+					[_unit] joinSilent _grp;
+				}forEach [
+					'MAZ_EZM_MDF_fnc_createRiflemanModule',
+					'MAZ_EZM_MDF_fnc_createRiflemanATModule',
+					'MAZ_EZM_MDF_fnc_createMarksmanModule',
+					'MAZ_EZM_MDF_fnc_createGrenadierModule',
+					'MAZ_EZM_MDF_fnc_createAutoriflemanModule',
+					'MAZ_EZM_MDF_fnc_createAmmoBearerModule',
+					'MAZ_EZM_MDF_fnc_createMedicModule'
+				];
+				_grp setBehaviour "AWARE";
+			};
+
+			MAZ_EZM_MDF_fnc_createATSquadModule = {
+				private _squadLead = call MAZ_EZM_MDF_fnc_createSquadLeadModule;
+				private _grp = group _squadLead;
+				{
+					private _unit = call (missionNamespace getVariable _x);
+					[_unit] joinSilent _grp;
+				}forEach [
+					'MAZ_EZM_MDF_fnc_createRiflemanATModule',
+					'MAZ_EZM_MDF_fnc_createRiflemanATModule',
+					'MAZ_EZM_MDF_fnc_createRiflemanModule'
+				];
+				_grp setBehaviour "AWARE";
+			};
+
+			MAZ_EZM_MDF_fnc_createAASquadModule = {
+				private _squadLead = call MAZ_EZM_MDF_fnc_createSquadLeadModule;
+				private _grp = group _squadLead;
+				{
+					private _unit = call (missionNamespace getVariable _x);
+					[_unit] joinSilent _grp;
+				}forEach [
+					'MAZ_EZM_MDF_fnc_createMissileSpecAAModule',
+					'MAZ_EZM_MDF_fnc_createMissileSpecAAModule',
+					'MAZ_EZM_MDF_fnc_createRiflemanModule'
+				];
+				_grp setBehaviour "AWARE";
+			};
+
+			MAZ_EZM_MDF_fnc_createSentrySquadModule = {
+				private _squadLead = call MAZ_EZM_MDF_fnc_createGrenadierModule;
+				private _grp = group _squadLead;
+				{
+					private _unit = call (missionNamespace getVariable _x);
+					[_unit] joinSilent _grp;
+				}forEach [
+					'MAZ_EZM_MDF_fnc_createRiflemanModule'
+				];
+				_grp setBehaviour "AWARE";
+			};
+
+			MAZ_EZM_MDF_fnc_createPatrolSquadModule = {
+				private _squadLead = call MAZ_EZM_MDF_fnc_createSquadLeadModule;
+				private _grp = group _squadLead;
+				{
+					private _unit = call (missionNamespace getVariable _x);
+					[_unit] joinSilent _grp;
+				}forEach [
+					'MAZ_EZM_MDF_fnc_createAutoriflemanModule',
+					'MAZ_EZM_MDF_fnc_createRiflemanModule',
+					'MAZ_EZM_MDF_fnc_createRiflemanLATModule'
+				];
+				_grp setBehaviour "AWARE";
+			};
+
 		comment "Helicopters";
 
 			MAZ_EZM_MDF_fnc_createHummingbirdModule = {
@@ -10025,7 +10117,7 @@ MAZ_EZM_fnc_initFunction = {
 
 			MAZ_EZM_MDF_fnc_addMDFIdentitiesToUnit = {
 				params ["_unit"];
-				sleep 2;
+				sleep 0.5;
 				private _frenchVoice = [
 					"Male01FRE",
 					"Male02FRE",
@@ -10547,7 +10639,7 @@ MAZ_EZM_fnc_initFunction = {
 				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
 
 				private _grp = createGroup [independent,true];
-				private _unit = _grp createUnit ["I_Soldier_F",_pos,[],0,"CAN_COLLIDE"];
+				private _unit = _grp createUnit ["I_Soldier_AA_F",_pos,[],0,"CAN_COLLIDE"];
 				_grp setBehaviour "SAFE";
 				_unit setRank "PRIVATE";
 				_unit setUnitPos "UP";
@@ -10815,6 +10907,8 @@ MAZ_EZM_fnc_initFunction = {
 
 				removeVest _unit;
 				removeHeadgear _unit;
+
+				_unit
 			};
 
 			MAZ_EZM_MDF_fnc_createUAVOpModule = {
@@ -10885,6 +10979,1737 @@ MAZ_EZM_fnc_initFunction = {
 				_driver moveInDriver _vehicle;
 
 				_vehicle
+			};
+
+	comment "FIA+";
+
+		comment "AWC Nyx";
+
+		    MAZ_EZM_FIAP_fnc_createAANyxModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				private _vehicle = createVehicle ["I_LT_01_AA_F",_pos,[],0,"CAN_COLLIDE"];
+				[[_vehicle],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[
+					_vehicle,
+					["Indep_Olive",1], 
+					["showTools",1,"showCamonetHull",1,"showBags",1,"showSLATHull",0]
+				] call BIS_fnc_initVehicle;
+
+				_vehicle disableTIEquipment true;
+
+				private _driver = [] call MAZ_EZM_FIAP_fnc_createCrewmanModule;
+				_driver moveInDriver _vehicle;
+
+				private _gunner = [] call MAZ_EZM_FIAP_fnc_createCrewmanModule;
+				_gunner moveInGunner _vehicle;
+
+				private _grp = createGroup [east,true];
+				[_driver,_gunner] joinSilent _grp;
+				_grp selectLeader _gunner;
+
+				_vehicle
+			};
+
+			MAZ_EZM_FIAP_fnc_create20mmNyxModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				private _vehicle = createVehicle ["I_LT_01_cannon_F",_pos,[],0,"CAN_COLLIDE"];
+				[[_vehicle],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[
+					_vehicle,
+					["Indep_Olive",1], 
+					["showTools",1,"showCamonetHull",1,"showBags",1,"showSLATHull",0]
+				] call BIS_fnc_initVehicle;
+
+				_vehicle disableTIEquipment true;
+
+				private _driver = [] call MAZ_EZM_FIAP_fnc_createCrewmanModule;
+				_driver moveInDriver _vehicle;
+
+				private _gunner = [] call MAZ_EZM_FIAP_fnc_createCrewmanModule;
+				_gunner moveInGunner _vehicle;
+
+				private _grp = createGroup [east,true];
+				[_driver,_gunner] joinSilent _grp;
+				_grp selectLeader _gunner;
+
+				_vehicle
+			};
+
+		comment "APCs";
+
+			MAZ_EZM_FIAP_fnc_createGorgonModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				private _vehicle = createVehicle ["I_APC_Wheeled_03_cannon_F",_pos,[],0,"CAN_COLLIDE"];
+				[[_vehicle],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				_camo = selectRandom ["Guerilla_01","Guerilla_02","Guerilla_03"];
+
+				[
+					_vehicle,
+					[_camo,1], 
+					["showCamonetHull",1,"showBags",1,"showBags2",1,"showTools",1,"showSLATHull",0]
+				] call BIS_fnc_initVehicle;
+
+				_vehicle disableTIEquipment true;
+               
+                private _driver = [] call MAZ_EZM_FIAP_fnc_createCrewmanModule;
+				_driver moveInDriver _vehicle;
+
+				private _gunner = [] call MAZ_EZM_FIAP_fnc_createCrewmanModule;
+				_gunner moveInGunner _vehicle;
+
+				private _commander = [] call MAZ_EZM_FIAP_fnc_createCrewmanModule;
+				_commander moveInCommander _vehicle;
+
+				private _grp = createGroup [east,true];
+				[_driver,_gunner,_commander] joinSilent _grp;
+				_grp selectLeader _commander;
+
+				_vehicle
+			};
+
+			MAZ_EZM_FIAP_fnc_createGorgon20mmModule = {
+
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				private _vehicle = createVehicle ["I_APC_Wheeled_03_cannon_F",_pos,[],0,"CAN_COLLIDE"];
+				private _turret = createVehicle ["I_LT_01_cannon_F",_pos,[],0,"CAN_COLLIDE"];
+
+				_vehicle animate ["HideTurret",1];
+
+				[[_vehicle],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[[_turret],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				_turret attachTo [_vehicle,[0.63,0,-0.1]];
+                _turret allowDamage true;
+
+				[
+					_vehicle,
+					["Guerilla_01",1], 
+					["showCamonetHull",1,"showBags",0,"showBags2",0,"showTools",0,"showSLATHull",0]
+				] call BIS_fnc_initVehicle;
+
+				[
+					_turret,
+					["Indep_Olive",1], 
+					["showTools",0,"showCamonetHull",0,"showBags",0,"showSLATHull",0]
+				] call BIS_fnc_initVehicle;
+
+				_turret disableTIEquipment true;
+
+				_turret addMagazineTurret ["60Rnd_20mm_HE_shells",[0,2]];
+
+				_turret setObjectTexture [0, ""];
+
+				_turret removeWeaponTurret ["LMG_coax_ext", [0]];
+
+				_vehicle lockTurret [[0], true];
+				_vehicle lockTurret [[1,1], true];
+				_turret  lockDriver true;
+				_vehicle lockTurret [[1], true];
+				_turret lockTurret [[1,1], true];
+
+                _unit = _this select 0;
+				_vehicle addEventHandler ["Killed", {
+		        _unit = _this select 0;
+		        _attachedStuff = attachedObjects _unit;
+		        
+				{
+			       detach _x;
+			       deleteVehicle _x;
+		        } forEach _attachedStuff;
+	            
+				}];
+               
+                private _driver = [] call MAZ_EZM_FIAP_fnc_createCrewmanModule;
+				_driver moveInDriver _vehicle;
+				_driver setUnloadInCombat [false, false];
+
+				private _commander = [] call MAZ_EZM_FIAP_fnc_createCrewmanModule;
+				_commander moveInCommander _vehicle;
+				_commander setUnloadInCombat [false, false];
+
+				private _gunner = [] call MAZ_EZM_FIAP_fnc_createCrewmanModule;
+				_gunner moveInCommander _turret;
+				_gunner setUnloadInCombat [false, false];
+
+				private _grp = createGroup [east,true];
+				[_driver,_gunner] joinSilent _grp;
+				_grp selectLeader _driver;
+
+				_vehicle
+
+			};
+		
+		comment "Cars";
+ 
+	     	MAZ_EZM_FIAP_fnc_createOffroadModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				private _vehicle = createVehicle ["I_G_Offroad_01_F",_pos,[],0,"CAN_COLLIDE"];
+				
+				[[_vehicle],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+            	[
+					_vehicle,
+					["Green",1], 
+					["HideDoor1",0,"HideDoor2",0,"HideDoor3",0,"HideBackpacks",0,"HideBumper1",1,"HideBumper2",0,"HideConstruction",0,"hidePolice",1,"HideServices",1,"BeaconsStart",0,"BeaconsServicesStart",0]
+				] call BIS_fnc_initVehicle;
+
+				[_vehicle,[0, selectrandom ["a3\soft_f_enoch\offroad_01\data\offroad_01_ext_grn_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_01_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_02_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_03_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_04_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_05_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_06_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_07_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_08_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_09_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_10_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_11_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_12_co.paa"]]] remoteExec ['setObjectTexture',0,_vehicle];
+               
+				
+				private _driver = [] call MAZ_EZM_FIAP_fnc_createRiflemanModule;
+				_driver moveInDriver _vehicle;
+
+				private _grp = createGroup [east,true];
+				[_driver,_gunner] joinSilent _grp;
+				_grp selectLeader _driver;
+
+				_vehicle
+			};
+
+			MAZ_EZM_FIAP_fnc_createOffroadHMGModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				private _vehicle = createVehicle ["I_G_Offroad_01_armed_F",_pos,[],0,"CAN_COLLIDE"];
+				[[_vehicle],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[
+					_vehicle,
+					["Green",1], 
+					["Hide_Shield",0,"Hide_Rail",1,"HideDoor1",0,"HideDoor2",0,"HideDoor3",0,"HideBackpacks",0,"HideBumper1",1,"HideBumper2",0,"HideConstruction",0]
+				] call BIS_fnc_initVehicle;
+
+				[_vehicle,[0, selectrandom ["a3\soft_f_enoch\offroad_01\data\offroad_01_ext_grn_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_01_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_02_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_03_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_04_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_05_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_06_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_07_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_08_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_09_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_10_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_11_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_12_co.paa"]]] remoteExec ['setObjectTexture',0,_vehicle];
+               				
+				private _driver = [] call MAZ_EZM_FIAP_fnc_createRiflemanModule;
+				_driver moveInDriver _vehicle;
+
+				private _gunner = [] call MAZ_EZM_FIAP_fnc_createRiflemanModule;
+				_gunner moveInGunner _vehicle;
+
+				private _grp = createGroup [east,true];
+				[_driver,_gunner] joinSilent _grp;
+				_grp selectLeader _driver;
+
+				_vehicle
+			};
+
+			MAZ_EZM_FIAP_fnc_createOffroadATModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				private _vehicle = createVehicle ["I_G_Offroad_01_AT_F",_pos,[],0,"CAN_COLLIDE"];
+				[[_vehicle],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[
+					_vehicle,
+					["Green",1], 
+					["HideDoor1",0,"HideDoor2",0,"HideDoor3",0,"HideBackpacks",0,"HideBumper1",1,"HideBumper2",0,"HideConstruction",0]
+				] call BIS_fnc_initVehicle;
+
+				[_vehicle,[0, selectrandom ["a3\soft_f_enoch\offroad_01\data\offroad_01_ext_grn_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_01_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_02_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_03_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_04_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_05_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_06_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_07_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_08_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_09_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_10_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_11_co.paa","a3\soft_f_bootcamp\offroad_01\data\offroad_01_ext_ig_12_co.paa"]]] remoteExec ['setObjectTexture',0,_vehicle];
+               
+				
+				private _driver = [] call MAZ_EZM_FIAP_fnc_createRiflemanModule;
+				_driver moveInDriver _vehicle;
+
+				private _gunner = [] call MAZ_EZM_FIAP_fnc_createRiflemanModule;
+				_gunner moveInGunner _vehicle;
+
+				private _grp = createGroup [east,true];
+				[_driver,_gunner] joinSilent _grp;
+				_grp selectLeader _driver;
+
+				_vehicle
+			};
+
+			MAZ_EZM_FIAP_fnc_createJeepModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				private _vehicle = createVehicle ["I_C_Offroad_02_unarmed_F",_pos,[],0,"CAN_COLLIDE"];
+				[[_vehicle],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[
+					_vehicle,
+					["Olive",1], 
+					["hideLeftDoor",0,"hideRightDoor",0,"hideRearDoor",0,"hideBullbar",0,"hideFenders",0,"hideHeadSupportRear",0,"hideHeadSupportFront",0,"hideRollcage",1,"hideSeatsRear",0,"hideSpareWheel",1]
+				] call BIS_fnc_initVehicle;
+				
+				private _driver = [] call MAZ_EZM_FIAP_fnc_createRiflemanModule;
+				_driver moveInDriver _vehicle;
+
+				private _grp = createGroup [east,true];
+				[_driver] joinSilent _grp;
+				
+
+				_vehicle
+			};
+
+			MAZ_EZM_FIAP_fnc_createJeepLMGModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				private _vehicle = createVehicle ["I_C_Offroad_02_LMG_F",_pos,[],0,"CAN_COLLIDE"];
+				[[_vehicle],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[
+					_vehicle,
+					["Olive",1], 
+					["hideLeftDoor",0,"hideRightDoor",0,"hideRearDoor",0,"hideBullbar",0,"hideFenders",0,"hideHeadSupportRear",0,"hideHeadSupportFront",0,"hideRollcage",1,"hideSeatsRear",0,"hideSpareWheel",1]
+				] call BIS_fnc_initVehicle;
+				
+				private _driver = [] call MAZ_EZM_FIAP_fnc_createRiflemanModule;
+				_driver moveInDriver _vehicle;
+
+				private _gunner = [] call MAZ_EZM_FIAP_fnc_createRiflemanModule;
+				_gunner moveInGunner _vehicle;
+
+				private _grp = createGroup [east,true];
+				[_driver,_gunner] joinSilent _grp;
+				_grp selectLeader _driver;
+
+				_vehicle
+			};
+
+			MAZ_EZM_FIAP_fnc_createJeepATModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				private _vehicle = createVehicle ["I_C_Offroad_02_AT_F",_pos,[],0,"CAN_COLLIDE"];
+				[[_vehicle],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[
+					_vehicle,
+					["Olive",1], 
+					["hideLeftDoor",0,"hideRightDoor",0,"hideRearDoor",0,"hideBullbar",0,"hideFenders",0,"hideHeadSupportRear",0,"hideHeadSupportFront",0,"hideRollcage",1,"hideSeatsRear",0,"hideSpareWheel",1]
+				] call BIS_fnc_initVehicle;
+				
+				private _driver = [] call MAZ_EZM_FIAP_fnc_createRiflemanModule;
+				_driver moveInDriver _vehicle;
+
+				private _gunner = [] call MAZ_EZM_FIAP_fnc_createRiflemanModule;
+				_gunner moveInGunner _vehicle;
+
+				private _grp = createGroup [east,true];
+				[_driver,_gunner] joinSilent _grp;
+				_grp selectLeader _driver;
+
+				_vehicle
+			};
+
+			MAZ_EZM_FIAP_fnc_createQuadbikeModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				private _vehicle = createVehicle ["I_G_Quadbike_01_F",_pos,[],0,"CAN_COLLIDE"];
+				[[_vehicle],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				_bikehelmets = selectRandom ["H_RacingHelmet_3_F","H_RacingHelmet_1_black_F","H_RacingHelmet_4_F"];
+				
+				private _driver = [] call MAZ_EZM_FIAP_fnc_createRiflemanModule;
+				_driver moveInDriver _vehicle;
+
+				[_driver] call MAZ_EZM_FIAP_fnc_addFIAPBackpack;
+
+				_driver addHeadgear _bikehelmets;
+
+				private _grp = createGroup [east,true];
+				[_driver] joinSilent _grp;
+				_grp selectLeader _driver;
+
+				_vehicle
+			};
+
+		comment "Vans";
+        
+		    MAZ_EZM_FIAP_fnc_createVanModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				private _vehicle = createVehicle ["I_G_Van_02_vehicle_F",_pos,[],0,"CAN_COLLIDE"];
+				
+				[[_vehicle],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[
+					_vehicle,
+					["FIA3",1], 
+					["Enable_Cargo",1,"Door_1_source",0,"Door_2_source",0,"Door_3_source",0,"Door_4_source",0,"Hide_Door_1_source",0,"Hide_Door_2_source",0,"Hide_Door_3_source",0,"Hide_Door_4_source",0,"lights_em_hide",0,"ladder_hide",0,"spare_tyre_holder_hide",1,"spare_tyre_hide",1,"reflective_tape_hide",1,"roof_rack_hide",0,"LED_lights_hide",1,"sidesteps_hide",1,"rearsteps_hide",0,"side_protective_frame_hide",0,"front_protective_frame_hide",0,"beacon_front_hide",1,"beacon_rear_hide",1]
+				] call BIS_fnc_initVehicle;
+				
+				private _driver = [] call MAZ_EZM_FIAP_fnc_createRiflemanModule;
+				_driver moveInDriver _vehicle;
+
+				private _grp = createGroup [east,true];
+				[_driver] joinSilent _grp;
+				_grp selectLeader _driver;
+
+				{
+					[_vehicle,[_forEachIndex,_x]] remoteExec ['setObjectTexture',0,_vehicle];
+				}forEach ["a3\soft_f_orange\van_02\data\van_body_fia_02_co.paa","a3\soft_f_orange\van_02\data\van_wheel_co.paa","a3\soft_f_orange\van_02\data\van_glass_fia_02_unfinished_ca.paa","a3\soft_f_orange\van_02\data\van_body_fia_03_co.paa"];
+				
+
+				_vehicle
+			};
+
+			MAZ_EZM_FIAP_fnc_createVanTransportModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				private _vehicle = createVehicle ["I_G_Van_02_transport_F",_pos,[],0,"CAN_COLLIDE"];
+				
+				[[_vehicle],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[
+					_vehicle,
+					["FIA3",1], 
+					["Door_1_source",0,"Door_2_source",0,"Door_3_source",0,"Door_4_source",0,"Hide_Door_1_source",0,"Hide_Door_2_source",0,"Hide_Door_3_source",0,"Hide_Door_4_source",0,"lights_em_hide",0,"ladder_hide",0,"spare_tyre_holder_hide",1,"spare_tyre_hide",1,"reflective_tape_hide",1,"roof_rack_hide",0,"LED_lights_hide",1,"sidesteps_hide",1,"rearsteps_hide",1,"side_protective_frame_hide",0,"front_protective_frame_hide",0,"beacon_front_hide",1,"beacon_rear_hide",1]
+				] call BIS_fnc_initVehicle;
+				
+				private _driver = [] call MAZ_EZM_FIAP_fnc_createRiflemanModule;
+				_driver moveInDriver _vehicle;
+
+				{
+					[_vehicle,[_forEachIndex,_x]] remoteExec ['setObjectTexture',0,_vehicle];
+				}forEach ["a3\soft_f_orange\van_02\data\van_body_fia_03_co.paa","a3\soft_f_orange\van_02\data\van_wheel_co.paa","a3\soft_f_orange\van_02\data\van_glass_fia_02_unfinished_ca.paa","a3\soft_f_orange\van_02\data\van_body_fia_03_co.paa"];
+				private _grp = createGroup [east,true];
+				[_driver] joinSilent _grp;
+				_grp selectLeader _driver;
+
+				_vehicle
+			};
+
+			MAZ_EZM_FIAP_fnc_createMedicalVanModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				private _vehicle = createVehicle ["I_E_Van_02_medevac_F",_pos,[],0,"CAN_COLLIDE"];
+				
+				[[_vehicle],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[
+					_vehicle,
+					["FIA3",1], 
+					["Door_1_source",0,"Door_2_source",0,"Door_3_source",0,"Door_4_source",0,"Hide_Door_1_source",0,"Hide_Door_2_source",0,"Hide_Door_3_source",0,"Hide_Door_4_source",0,"lights_em_hide",0,"ladder_hide",0,"spare_tyre_holder_hide",1,"spare_tyre_hide",1,"reflective_tape_hide",1,"roof_rack_hide",0,"LED_lights_hide",1,"sidesteps_hide",1,"rearsteps_hide",1,"side_protective_frame_hide",0,"front_protective_frame_hide",0,"beacon_front_hide",0,"beacon_rear_hide",0]
+				] call BIS_fnc_initVehicle;
+				
+				private _driver = [] call MAZ_EZM_FIAP_fnc_createMedicModule;
+				_driver moveInDriver _vehicle;
+
+				private _grp = createGroup [east,true];
+				[_driver] joinSilent _grp;
+				_grp selectLeader _driver;
+
+				{
+					[_vehicle,[_forEachIndex,_x]] remoteExec ['setObjectTexture',0,_vehicle];
+				}forEach ["a3\soft_f_orange\van_02\data\van_body_fia_03_co.paa","a3\soft_f_orange\van_02\data\van_wheel_co.paa","a3\soft_f_orange\van_02\data\van_glass_fia_02_unfinished_ca.paa","a3\soft_f_orange\van_02\data\van_body_fia_03_co.paa"];
+				_vehicle
+			};
+
+
+		comment "Trucks";
+
+			MAZ_EZM_FIAP_fnc_createZamakAmmoModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				private _vehicle = createVehicle ["I_Truck_02_ammo_F",_pos,[],0,"CAN_COLLIDE"];
+				[[_vehicle],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				{
+					[_vehicle,[_forEachIndex,_x]] remoteExec ['setObjectTexture',0,_vehicle];
+				}forEach ["a3\soft_f_beta\truck_02\data\truck_02_kab_blue_co.paa","a3\soft_f_beta\truck_02\data\truck_02_repair_green_co.paa","a3\soft_f_beta\truck_02\data\truck_02_int_co.paa"];
+
+				private _driver = [] call MAZ_EZM_FIAP_fnc_createRiflemanModule;
+				_driver moveInDriver _vehicle;
+
+				_vehicle
+			};
+
+			MAZ_EZM_FIAP_fnc_createZamakFuelModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				private _vehicle = createVehicle ["I_Truck_02_fuel_F",_pos,[],0,"CAN_COLLIDE"];
+				[[_vehicle],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				{
+					[_vehicle,[_forEachIndex,_x]] remoteExec ['setObjectTexture',0,_vehicle];
+				}forEach ["a3\soft_f_beta\truck_02\data\truck_02_kab_blue_co.paa","a3\soft_f_beta\truck_02\data\truck_02_fuel_co.paa","a3\soft_f_beta\truck_02\data\truck_02_int_co.paa"];
+
+				private _driver = [] call MAZ_EZM_FIAP_fnc_createRiflemanModule;
+				_driver moveInDriver _vehicle;
+
+				_vehicle
+			};
+
+			MAZ_EZM_FIAP_fnc_createZamakMedicalModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				private _vehicle = createVehicle ["I_Truck_02_medical_F",_pos,[],0,"CAN_COLLIDE"];
+				[[_vehicle],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				{
+					[_vehicle,[_forEachIndex,_x]] remoteExec ['setObjectTexture',0,_vehicle];
+				}forEach ["a3\soft_f_beta\truck_02\data\truck_02_kab_blue_co.paa","a3\soft_f_beta\truck_02\data\truck_02_kuz_olive_co.paa","a3\soft_f_beta\truck_02\data\truck_02_int_co.paa"];
+
+				private _driver = [] call MAZ_EZM_FIAP_fnc_createRiflemanModule;
+				_driver moveInDriver _vehicle;
+
+				_vehicle
+			};
+
+			MAZ_EZM_FIAP_fnc_createZamakRepairModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				private _vehicle = createVehicle ["I_Truck_02_box_F",_pos,[],0,"CAN_COLLIDE"];
+				[[_vehicle],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				{
+					[_vehicle,[_forEachIndex,_x]] remoteExec ['setObjectTexture',0,_vehicle];
+				}forEach ["a3\soft_f_beta\truck_02\data\truck_02_kab_blue_co.paa","a3\soft_f_beta\truck_02\data\truck_02_repair_green_co.paa","a3\soft_f_beta\truck_02\data\truck_02_int_co.paa"];
+
+				private _driver = [] call MAZ_EZM_FIAP_fnc_createRiflemanModule;
+				_driver moveInDriver _vehicle;
+
+				_vehicle
+			};
+
+			MAZ_EZM_FIAP_fnc_createZamakTransportModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				private _vehicle = createVehicle ["I_Truck_02_transport_F",_pos,[],0,"CAN_COLLIDE"];
+				[[_vehicle],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				{
+					[_vehicle,[_forEachIndex,_x]] remoteExec ['setObjectTexture',0,_vehicle];
+				}forEach ["a3\soft_f_beta\truck_02\data\truck_02_kab_blue_co.paa","a3\soft_f_beta\truck_02\data\truck_02_kuz_olive_co.paa","a3\soft_f_beta\truck_02\data\truck_02_int_co.paa"];
+
+				private _driver = [] call MAZ_EZM_FIAP_fnc_createRiflemanModule;
+				_driver moveInDriver _vehicle;
+
+				_vehicle
+			};
+
+			MAZ_EZM_FIAP_fnc_createZamakCoveredTransportModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				private _vehicle = createVehicle ["I_Truck_02_covered_F",_pos,[],0,"CAN_COLLIDE"];
+				[[_vehicle],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				{
+					[_vehicle,[_forEachIndex,_x]] remoteExec ['setObjectTexture',0,_vehicle];
+				}forEach ["a3\soft_f_beta\truck_02\data\truck_02_kab_blue_co.paa","a3\soft_f_beta\truck_02\data\truck_02_kuz_olive_co.paa","a3\soft_f_beta\truck_02\data\truck_02_int_co.paa"];
+
+				private _driver = [] call MAZ_EZM_FIAP_fnc_createRiflemanModule;
+				_driver moveInDriver _vehicle;
+
+				_vehicle
+			};
+
+			MAZ_EZM_FIAP_fnc_createTruckModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				private _vehicle = createVehicle ["O_G_Van_01_transport_F",_pos,[],0,"CAN_COLLIDE"];
+				[[_vehicle],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				{
+					[_vehicle,[_forEachIndex,_x]] remoteExec ['setObjectTexture',0,_vehicle];
+				}forEach ["Van_01_adds_IG_01_CO.paa","Van_02_adds_IG_01_CO.paa","Van_03_adds_IG_01_CO.paa","Van_04_adds_IG_01_CO.paa","Van_05_adds_IG_01_CO.paa","Van_06_adds_IG_01_CO.paa","Van_07_adds_IG_01_CO.paa","Van_01_adds_IG_08_CO.paa"];
+
+				private _driver = [] call MAZ_EZM_FIAP_fnc_createRiflemanModule;
+				_driver moveInDriver _vehicle;
+
+				_vehicle
+			};
+
+			MAZ_EZM_FIAP_fnc_createFuelTruckModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				private _vehicle = createVehicle ["O_G_Van_01_fuel_F",_pos,[],0,"CAN_COLLIDE"];
+				[[_vehicle],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				{
+					[_vehicle,[_forEachIndex,_x]] remoteExec ['setObjectTexture',0,_vehicle];
+				}forEach ["van_01_tank_ig_03_co.paa","van_01_tank_ig_02_co.paa","van_01_tank_ig_01_co.paa"];
+
+				private _driver = [] call MAZ_EZM_FIAP_fnc_createRiflemanModule;
+				_driver moveInDriver _vehicle;
+
+				_vehicle
+			};
+
+		comment "Drones";
+            
+			MAZ_EZM_FIAP_fnc_createDarterModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				private _vehicle = createVehicle ["I_UAV_01_F",_pos,[],0,"CAN_COLLIDE"];
+				[[_vehicle],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				private _aiGroup = createGroup [opfor,true];
+				private _oldGroup = createVehicleCrew _vehicle;
+				private _leader = leader _oldGroup;
+				{
+					[_x] joinSilent _aiGroup;
+				}forEach units _oldGroup;
+				_aiGroup selectLeader _leader;
+
+				_vehicle
+			};
+
+		comment "Identity";
+
+			MAZ_EZM_FIAP_fnc_addFIAPIdentitiesToUnit = {
+				params ["_unit"];
+				sleep 0.5;
+				private _greekVoice = [
+					"Male01GRE",
+					"Male02GRE",
+					"Male03GRE",
+					"Male04GRE",
+					"Male05GRE",
+					"Male06GRE"
+				];
+				private _FIAPHeads = [
+					"GreekHead_A3_11",
+					"GreekHead_A3_12",
+					"GreekHead_A3_13",
+					"GreekHead_A3_14",
+					"LivonianHead_2",
+					"LivonianHead_3",
+					"LivonianHead_4",
+					"LivonianHead_5",
+					"LivonianHead_6",
+					"LivonianHead_7",
+					"LivonianHead_8",
+					"LivonianHead_9",
+					"LivonianHead_10",
+					"RussianHead_1",
+					"RussianHead_2",
+					"RussianHead_3",
+					"RussianHead_4",
+					"RussianHead_5",
+					"GreekHead_A3_02",
+					"GreekHead_A3_04",
+					"GreekHead_A3_01",
+					"GreekHead_A3_05",
+					"GreekHead_A3_06",
+					"GreekHead_A3_07",
+					"GreekHead_A3_08",
+					"GreekHead_A3_09"
+				];
+
+				[_unit,(selectRandom _greekVoice)] remoteExec ['setSpeaker',0,_unit];
+				[_unit,(selectRandom _FIAPHeads)] remoteExec ['setFace',0,_unit];
+			};
+
+		comment "Weapons";
+
+            MAZ_EZM_FIAP_fnc_addFIAPWeaponToUnit = {
+				params ["_unit"];
+				
+				private _556Ammo = "30Rnd_556x45_Stanag";
+			    private _545Ammo = "30Rnd_545x39_Mag_F";
+				private _762Ammo = "30Rnd_762x39_Mag_F";
+				private _pWeapon = selectRandom [ ["arifle_AKM_FL_F", _762Ammo], ["arifle_Mk20C_F", _556Ammo], ["arifle_Mk20_F", _556Ammo], ["arifle_AKS_F", _545Ammo], ["arifle_TRG20_F", _556Ammo], ["arifle_TRG21_F", _556Ammo] ];
+                
+				for "_i" from 0 to 5 do { _unit addMagazine (_pWeapon select 1); };
+
+				_unit addWeapon (_pWeapon select 0);
+			};
+
+        comment "Backpacks";
+
+		    MAZ_EZM_FIAP_fnc_addFIAPBackpack = {
+				params ["_unit"];
+				private _randomBackpack = selectRandom ["B_Messenger_Coyote_F","B_FieldPack_cbr","B_FieldPack_oli","B_TacticalPack_rgr","B_TacticalPack_blk","B_CivilianBackpack_01_Everyday_Black_F","B_CivilianBackpack_01_Everyday_Black_F"];
+				_unit addBackpackGlobal _randomBackpack;
+			};
+
+		comment "Goggles";
+
+			MAZ_EZM_FIAP_fnc_addFIAPGogglesToUnit = {
+				params ["_unit"];
+				private _FIAPGoggles = ["","","G_Shades_Black","G_Shades_Red","G_Aviator","G_Balaclava_oli","G_Bandanna_oli"];
+				_unit addGoggles (selectRandom _FIAPGoggles);
+			};
+
+        comment "Uniforms";
+		    
+			MAZ_EZM_FIAP_fnc_addFIAPUniformToUnit = {
+				params ["_unit"];
+				private _FIAPUniforms = ["U_C_Mechanic_01_F","U_I_C_Soldier_Para_4_F","U_I_C_Soldier_Bandit_3_F","U_BG_Guerilla1_1","U_BG_Guerilla1_1","U_IG_Guerilla2_3","U_IG_leader","U_IG_Guerrilla_6_1"];
+				private _FIAPVests = ["V_PlateCarrierIA2_dgtl","V_PlateCarrierIA1_dgtl","V_CarrierRigKBT_01_Olive_F","V_I_G_resistanceLeader_F"];
+				private _FIAPHeadgear = ["","","H_BandMask_blk","H_HeadSet_black_F","H_HeadBandage_stained_F","H_Hat_Safari_sand_F","H_Booniehat_mgrn","H_PASGT_basic_olive_F","H_Watchcap_blk","H_Watchcap_camo","H_Shemag_olive_hs","H_Bandanna_gry","H_Bandanna_khk_hs","H_Cap_oli_hs","H_Cap_blk_Raven","H_HelmetIA","H_Cap_blk","H_Booniehat_dgtl","H_Cap_oli","H_Booniehat_oli"];
+				private _FIAPGoggles = ["","","G_Shades_Black","G_Shades_Red","G_Aviator","G_Balaclava_oli","G_Bandanna_oli"];
+				
+			    _unit forceAddUniform (selectRandom _FIAPUniforms);
+				_unit addVest (selectRandom _FIAPVests);
+				_unit addHeadgear (selectRandom _FIAPHeadgear);
+				_unit addGoggles (selectRandom _FIAPGoggles);
+
+				switch (uniform _unit) do {
+					case "U_C_Mechanic_01_F": {
+						private _textureTop = selectRandom ["a3\characters_f_gamma\civil\data\c_cloth1_brown.paa","a3\characters_f_exp\syndikat\data\u_i_c_soldier_bandit_3_f_1_co.paa","a3\characters_f_enoch\uniforms\data\i_l_uniform_01_deserter_1_co.paa","a3\characters_f_orange\uniforms\data\c_cloth1_olive_co.paa","a3\characters_f_exp\syndikat\data\u_i_c_soldier_para_1_f_1_co.paa","A3\Characters_F\Civil\Data\c_cloth1_bandit_co.paa","A3\Characters_F\Civil\Data\c_cloth1_kabeiroi_co.paa","a3\characters_f_gamma\Civil\Data\c_cloth1_black.paa","a3\characters_f\civil\data\poor_co.paa","a3\characters_f_orange\uniforms\data\c_mechanic_01_camo1_co.paa"];
+						private _textureBottom = selectRandom ["a3\characters_f_orange\uniforms\data\c_mechanic_01_camo2_co.paa","a3\characters_f_gamma\guerrilla\data\ig_guerrilla3_1_co.paa","a3\characters_f_enoch\uniforms\data\i_l_uniform_01_tshirt_black_2_co.paa","a3\characters_f_enoch\uniforms\data\i_l_uniform_01_tshirt_skull_2_co.paa","a3\characters_f_enoch\uniforms\data\i_l_uniform_01_tshirt_sport_2_co.paa","a3\characters_f_orange\uniforms\data\c_idap_man_jeansb_co.paa"];
+						[[_unit,_textureTop,_textureBottom],{
+							params ["_unit","_top","_bottom"];
+							_unit setObjectTexture [0, _top];
+							_unit setObjectTexture [1, _bottom];
+						}] remoteExec ['spawn',0,_unit];
+						
+					};
+					case "U_I_C_Soldier_Para_4_F": {
+						private _textureTop = selectRandom ["a3\characters_f_enoch\uniforms\data\i_e_soldier_01_tanktop_co.paa","a3\characters_f_exp\syndikat\data\u_i_c_soldier_bandit_5_f_1_co.paa"];
+						private _textureBottom = selectRandom ["a3\characters_f_bootcamp\guerrilla\data\ig_guerrilla_6_1_co.paa","A3\characters_f_exp\Syndikat\Data\U_I_C_Soldier_Para_4_F_2_co.paa","a3\characters_f_beta\indep\data\ia_soldier_01_clothing_co.paa"];
+						[[_unit,_textureTop,_textureBottom],{
+							params ["_unit","_top","_bottom"];
+							_unit setObjectTexture [0, _top];
+							_unit setObjectTexture [1, _bottom];
+						}] remoteExec ['spawn',0,_unit];
+					};
+					case "U_BG_Guerilla1_1": {
+						private _textureTop = selectRandom ["a3\characters_f_gamma\civil\data\c_cloth1_brown.paa","a3\characters_f_exp\syndikat\data\u_i_c_soldier_bandit_3_f_1_co.paa","a3\characters_f_enoch\uniforms\data\i_l_uniform_01_deserter_1_co.paa","a3\characters_f_orange\uniforms\data\c_cloth1_olive_co.paa","a3\characters_f_exp\syndikat\data\u_i_c_soldier_para_1_f_1_co.paa","A3\Characters_F\Civil\Data\c_cloth1_bandit_co.paa","A3\Characters_F\Civil\Data\c_cloth1_kabeiroi_co.paa","a3\characters_f_gamma\Civil\Data\c_cloth1_black.paa"];
+						private _textureBottom = selectRandom ["a3\characters_f_bootcamp\guerrilla\data\ig_guerrilla_6_1_co.paa","A3\characters_f_exp\Syndikat\Data\U_I_C_Soldier_Para_4_F_2_co.paa","a3\characters_f_beta\indep\data\ia_soldier_01_clothing_co.paa"];
+						[[_unit,_textureTop,_textureBottom],{
+							params ["_unit","_top","_bottom"];
+							_unit setObjectTexture [0, _top];
+							_unit setObjectTexture [1, _bottom];
+						}] remoteExec ['spawn',0,_unit];
+					};
+					case "U_I_C_Soldier_Bandit_3_F": {
+						private _textureTop = selectRandom ["a3\characters_F_exp\syndikat\data\U_I_C_Soldier_Bandit_2_F_2_co.paa","a3\characters_f_exp\syndikat\data\u_i_c_soldier_bandit_3_f_1_co.paa"];
+						private _textureBottom = selectRandom ["a3\characters_f_orange\uniforms\data\c_mechanic_01_camo2_co.paa","a3\characters_f_gamma\guerrilla\data\ig_guerrilla3_1_co.paa","a3\characters_f_enoch\uniforms\data\i_l_uniform_01_tshirt_black_2_co.paa","a3\characters_f_enoch\uniforms\data\i_l_uniform_01_tshirt_skull_2_co.paa","a3\characters_f_enoch\uniforms\data\i_l_uniform_01_tshirt_sport_2_co.paa","a3\characters_f_orange\uniforms\data\c_idap_man_jeansb_co.paa"];
+						[[_unit,_textureTop,_textureBottom],{
+							params ["_unit","_top","_bottom"];
+							_unit setObjectTexture [0, _top];
+							_unit setObjectTexture [1, _bottom];
+						}] remoteExec ['spawn',0,_unit];
+					};
+                    case "U_IG_Guerilla2_3": {
+						private _textureTop = selectRandom ["a3\characters_f_gamma\guerrilla\data\ig_guerrilla2_1_co.paa","a3\characters_f_gamma\guerrilla\data\ig_guerrilla2_2_co.paa","a3\characters_f_gamma\guerrilla\data\ig_guerrilla2_3_co.paa"];
+						
+						[[_unit,_textureTop],{
+							params ["_unit","_top"];
+							_unit setObjectTexture [0, _top];
+						}] remoteExec ['spawn',0,_unit];
+					};
+				};
+			};
+
+		comment "Units";
+
+			MAZ_EZM_FIAP_fnc_createAmmoBearerModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+
+				private _grp = createGroup [east,true];
+				private _unit = _grp createUnit ["O_G_Soldier_F",_pos,[],0,"CAN_COLLIDE"];
+				
+				
+				_unit setUnitPos "UP";
+
+				[[_unit],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+                [_unit] call MAZ_EZM_fnc_removeAllClothing;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPUniformToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPIdentitiesToUnit;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPWeaponToUnit;
+                [_unit] call MAZ_EZM_FIAP_fnc_addFIAPBackpack;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPGogglesToUnit;
+	
+				for "_i" from 0 to 2 do {
+					_unit addItem "FirstAidKit";
+				};
+				for "_i" from 0 to 1 do {
+					_unit addMagazine "9Rnd_45ACP_Mag";
+				};
+				
+				_unit addWeapon "hgun_ACPC2_F"; 
+				
+				_unit addMagazine "HandGrenade";  
+
+				_unit
+			};
+
+			MAZ_EZM_FIAP_fnc_createAutoriflemanModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+
+				private _grp = createGroup [east,true];
+				private _unit = _grp createUnit ["O_G_Soldier_AR_F",_pos,[],0,"CAN_COLLIDE"];
+				
+				
+				_unit setUnitPos "UP";
+
+				[[_unit],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPUniformToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPIdentitiesToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPGogglesToUnit;
+
+				_M556Ammo    = selectRandom ["200Rnd_556x45_Box_Red_F", "200Rnd_556x45_Box_Tracer_Red_F"];
+			    _M65Ammo    = selectRandom ["200Rnd_65x39_cased_Box_Red", "200Rnd_65x39_cased_Box_Tracer_Red"];
+                _pMachineGun	= selectRandom [ ["LMG_Mk200_black_F",_M65Ammo],["LMG_03_F",_M556Ammo] ];
+                
+				for "_i" from 1 to 2 do { _unit addMagazine (_pMachineGun select 1);};
+
+				_unit addWeapon (_pMachineGun select 0);
+
+                for "_i" from 0 to 2 do {
+					_unit addItem "FirstAidKit";
+				};
+				for "_i" from 0 to 1 do {
+					_unit addMagazine "9Rnd_45ACP_Mag";
+				};
+				
+				_unit addWeapon "hgun_ACPC2_F"; 
+				
+				_unit addMagazine "HandGrenade";  
+
+				_unit
+			};
+
+			MAZ_EZM_FIAP_fnc_createCombatMedicModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+
+				private _grp = createGroup [east,true];
+				private _unit = _grp createUnit ["O_G_medic_F",_pos,[],0,"CAN_COLLIDE"];
+				
+				
+				_unit setUnitPos "UP";
+
+				[[_unit],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPUniformToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPIdentitiesToUnit;
+                [_unit] call MAZ_EZM_FIAP_fnc_addFIAPWeaponToUnit;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPBackpack;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPGogglesToUnit;
+			
+				for "_i" from 0 to 1 do {
+					_unit addMagazine "9Rnd_45ACP_Mag";
+				};
+				
+				_unit addWeapon "hgun_ACPC2_F"; 
+				
+				_unit addMagazine "HandGrenade";  
+
+				_unit addMagazine "SmokeShell";
+
+				
+				_unit addItemToBackpack "Medikit";
+				for "_i" from 0 to 4 do {
+					_unit addItemToBackpack "FirstAidKit";
+				};
+
+				_unit
+			};
+
+			MAZ_EZM_FIAP_fnc_createMedicModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+
+				private _grp = createGroup [east,true];
+				private _unit = _grp createUnit ["O_G_medic_F",_pos,[],0,"CAN_COLLIDE"];
+				
+				
+				_unit setUnitPos "UP";
+
+				[[_unit],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPUniformToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPIdentitiesToUnit;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPBackpack;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPGogglesToUnit;
+				
+				_unit addMagazine "HandGrenade";  
+
+				_unit addMagazine "SmokeShell";
+
+				_unit addVest "V_CarrierRigKBT_01_olive_F";
+
+				_unit addHeadgear "H_PASGT_basic_olive_F";
+
+				_unit addItemToBackpack "Medikit";
+				for "_i" from 0 to 4 do {
+					_unit addItemToBackpack "FirstAidKit";
+				};
+
+				_unit
+			};
+
+			MAZ_EZM_FIAP_fnc_createCrewmanModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+
+				private _grp = createGroup [east,true];
+				private _unit = _grp createUnit ["O_G_engineer_F",_pos,[],0,"CAN_COLLIDE"];
+				_grp setBehaviour "AWARE";
+				
+				_unit setUnitPos "UP";
+
+				[[_unit],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPUniformToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPIdentitiesToUnit;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPWeaponToUnit;
+
+				removeHeadgear _unit;
+				removevest _unit;
+				removeheadgear _unit;
+				_unit addHeadgear "H_Tank_black_F";
+				_unit addVest "V_TacVest_oli";
+				_unit addItemToVest "ToolKit";
+			
+				for "_i" from 0 to 2 do {
+					_unit addItem "FirstAidKit";
+				};
+				for "_i" from 0 to 1 do {
+					_unit addMagazine "9Rnd_45ACP_Mag";
+				};
+				
+				_unit addWeapon "hgun_ACPC2_F"; 
+				
+				_unit addMagazine "HandGrenade";  
+
+				_unit
+			};
+
+			MAZ_EZM_FIAP_fnc_createEngineerModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+
+				private _grp = createGroup [east,true];
+				private _unit = _grp createUnit ["O_G_engineer_F",_pos,[],0,"CAN_COLLIDE"];
+				
+				
+				_unit setUnitPos "UP";
+
+				[[_unit],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPUniformToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPIdentitiesToUnit;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPWeaponToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPGogglesToUnit;
+
+				
+				for "_i" from 0 to 2 do {
+					_unit addItem "FirstAidKit";
+				};
+				for "_i" from 0 to 1 do {
+					_unit addMagazine "9Rnd_45ACP_Mag";
+				};
+				
+				_unit addWeapon "hgun_ACPC2_F"; _unit addMagazine "HandGrenade";  
+
+				_unit
+			};
+
+			MAZ_EZM_FIAP_fnc_createSquadLeadModule = {
+				
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+
+				private _grp = createGroup [east,true];
+				private _unit = _grp createUnit ["O_G_Soldier_SL_F",_pos,[],0,"CAN_COLLIDE"];
+				
+				_unit setUnitPos "UP";
+
+				[[_unit],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPUniformToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPIdentitiesToUnit;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPWeaponToUnit;
+
+                _OfficerHeadgear = selectRandom ["H_Beret_blk","H_MilCap_dgtl",""];
+
+				for "_i" from 0 to 4 do { _unit addMagazine "30Rnd_556x45_Stanag"; };
+
+				for "_i" from 0 to 2 do {
+					_unit addItem "FirstAidKit";
+				};
+
+				for "_i" from 0 to 1 do {
+					_unit addMagazine "9Rnd_45ACP_Mag";
+				};
+
+				for "_i" from 0 to 5 do {
+					_unit addMagazine "1Rnd_HE_Grenade_shell";
+				};
+
+				for "_i" from 0 to 1 do {
+					_unit addMagazine "1Rnd_Smoke_Grenade_shell";
+				};
+				
+				_unit addWeapon "hgun_ACPC2_F"; 
+				
+				_unit addMagazine "HandGrenade";  
+
+				_unit addWeapon "Binocular";
+
+				_unit addHeadgear _OfficerHeadgear;
+
+				removeGoggles _unit;	
+
+				_unit		
+			};
+
+			MAZ_EZM_FIAP_fnc_createGrenadierModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+
+				private _grp = createGroup [east,true];
+				private _unit = _grp createUnit ["O_G_Soldier_GL_F",_pos,[],0,"CAN_COLLIDE"];
+				
+				
+				_unit setUnitPos "UP";
+
+				[[_unit],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPUniformToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPIdentitiesToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPGogglesToUnit;
+
+				_pGrenadier = selectRandom ["arifle_Mk20_GL_plain_F","arifle_Mk20_GL_F","arifle_TRG21_GL_F"];
+
+				for "_i" from 0 to 4 do { _unit addMagazine "30Rnd_556x45_Stanag"; };
+
+				_unit addWeapon _pGrenadier;
+
+				for "_i" from 0 to 2 do {
+					_unit addItem "FirstAidKit";
+				};
+
+				for "_i" from 0 to 1 do {
+					_unit addMagazine "9Rnd_45ACP_Mag";
+				};
+
+				for "_i" from 0 to 5 do {
+					_unit addMagazine "1Rnd_HE_Grenade_shell";
+				};
+
+				for "_i" from 0 to 1 do {
+					_unit addMagazine "1Rnd_Smoke_Grenade_shell";
+				};
+				
+				_unit addWeapon "hgun_ACPC2_F"; 
+				
+				_unit addMagazine "HandGrenade";  
+
+				_unit
+			};
+
+			MAZ_EZM_FIAP_fnc_createHeliCrewModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+
+				private _grp = createGroup [east,true];
+				private _unit = _grp createUnit ["O_G_engineer_F",_pos,[],0,"CAN_COLLIDE"];
+				
+				
+				_unit setUnitPos "UP";
+
+				[[_unit],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPUniformToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPIdentitiesToUnit;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPWeaponToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPGogglesToUnit;
+
+				removeHeadgear _unit;
+				_unit addHeadgear "H_CrewHelmetHeli_I";
+				removeVest _unit;
+				_unit addVest "V_TacVest_oli";
+
+				for "_i" from 0 to 2 do {
+					_unit addItem "FirstAidKit";
+				};
+				for "_i" from 0 to 1 do {
+					_unit addMagazine "9Rnd_45ACP_Mag";
+				};
+				
+				_unit addWeapon "hgun_ACPC2_F"; 
+				
+				_unit addMagazine "HandGrenade";  
+
+				_unit
+			};
+
+			MAZ_EZM_FIAP_fnc_createHeliPilotModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+
+				private _grp = createGroup [east,true];
+				private _unit = _grp createUnit ["O_G_engineer_F",_pos,[],0,"CAN_COLLIDE"];
+				
+				
+				_unit setUnitPos "UP";
+
+				[[_unit],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;
+				
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPUniformToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPIdentitiesToUnit;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPWeaponToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPGogglesToUnit;
+
+				removeHeadgear _unit;
+				_unit addHeadgear "H_PilotHelmetHeli_I";
+				removeVest _unit;
+				_unit addVest "V_TacVest_oli";
+
+				
+				for "_i" from 0 to 2 do {
+					_unit addItem "FirstAidKit";
+				};
+				for "_i" from 0 to 1 do {
+					_unit addMagazine "9Rnd_45ACP_Mag";
+				};
+				
+				_unit addWeapon "hgun_ACPC2_F"; 
+				
+				_unit addMagazine "HandGrenade";  
+
+				_unit
+			};
+
+			MAZ_EZM_FIAP_fnc_createMarksmanModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+
+				private _grp = createGroup [east,true];
+				private _unit = _grp createUnit ["O_G_Soldier_M_F",_pos,[],0,"CAN_COLLIDE"];
+				
+				
+				_unit setUnitPos "UP";
+
+				[[_unit],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPUniformToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPIdentitiesToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPGogglesToUnit;
+
+                _pSniper	= selectRandom [ "srifle_DMR_06_camo_F","srifle_DMR_06_olive_F","srifle_DMR_06_hunter_F"];
+                
+				for "_i" from 0 to 4 do { _unit addMagazine "20Rnd_762x51_Mag"; };
+
+				_unit addWeapon _pSniper;
+
+				for "_i" from 0 to 2 do {
+					_unit addItem "FirstAidKit";
+				};
+				for "_i" from 0 to 1 do {
+					_unit addMagazine "9Rnd_45ACP_Mag";
+				};
+				
+				_unit addWeapon "hgun_ACPC2_F"; 
+				
+				_unit addMagazine "HandGrenade";  
+
+				_unit
+			};
+
+			MAZ_EZM_FIAP_fnc_createMissileSpecAAModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+
+				private _grp = createGroup [east,true];
+				private _unit = _grp createUnit ["O_G_Soldier_F",_pos,[],0,"CAN_COLLIDE"];
+				
+				
+				_unit setUnitPos "UP";
+
+				[[_unit],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPUniformToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPIdentitiesToUnit;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPWeaponToUnit;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPBackpack;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPGogglesToUnit;
+
+				
+				for "_i" from 0 to 2 do {
+					_unit addItem "FirstAidKit";
+				};
+				for "_i" from 0 to 1 do {
+					_unit addMagazine "9Rnd_45ACP_Mag";
+				};
+				
+	            _unit addWeapon "hgun_ACPC2_F"; 
+				
+				_unit addMagazine "HandGrenade";  
+
+				for "_i" from 0 to 1 do {
+					_unit addMagazine "Titan_AA";
+				};
+				
+				_unit addWeapon "launch_I_Titan_F";
+
+				_unit
+			};
+
+			MAZ_EZM_FIAP_fnc_createRiflemanModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+
+				private _grp = createGroup [east,true];
+				private _unit = _grp createUnit ["O_G_Soldier_F",_pos,[],0,"CAN_COLLIDE"];
+				
+				
+				_unit setUnitPos "UP";
+
+				[[_unit],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;
+			    [_unit] call MAZ_EZM_FIAP_fnc_addFIAPUniformToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPIdentitiesToUnit;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPWeaponToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPGogglesToUnit;
+
+				
+				for "_i" from 0 to 2 do {
+					_unit addItem "FirstAidKit";
+				};
+				for "_i" from 0 to 1 do {
+					_unit addMagazine "9Rnd_45ACP_Mag";
+				};
+				
+				_unit addWeapon "hgun_ACPC2_F"; 
+				
+				_unit addMagazine "HandGrenade";  
+
+				_unit
+			};
+
+			MAZ_EZM_FIAP_fnc_createRiflemanATModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+
+				private _grp = createGroup [east,true];
+				private _unit = _grp createUnit ["O_G_Soldier_LAT_F",_pos,[],0,"CAN_COLLIDE"];
+				
+				
+				_unit setUnitPos "UP";
+
+				[[_unit],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;
+				
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPUniformToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPIdentitiesToUnit;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPWeaponToUnit;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPBackpack;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPGogglesToUnit;
+
+                _pRPG   = selectRandom ["RPG32_F", "RPG32_F"];
+			    _pRPG7    = selectRandom ["RPG7_F", "RPG7_F"];
+                _pAT	= selectRandom [ ["launch_RPG32_green_F",_pRPG],["launch_RPG32_camo_F",_pRPG],["launch_RPG7_F",_pRPG7] ];
+                
+				for "_i" from 1 to 3 do { _unit addMagazine (_pAT select 1);};
+
+				_unit addWeapon (_pAT select 0);
+				
+				for "_i" from 0 to 2 do {
+					_unit addItem "FirstAidKit";
+				};
+				for "_i" from 0 to 1 do {
+					_unit addMagazine "9Rnd_45ACP_Mag";
+				};
+				
+				_unit addWeapon "hgun_ACPC2_F"; 
+				
+				_unit addMagazine "HandGrenade";
+
+				_unit
+			};
+
+			MAZ_EZM_FIAP_fnc_createRiflemanLATModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+
+				private _grp = createGroup [east,true];
+				private _unit = _grp createUnit ["O_G_Soldier_LAT_F",_pos,[],0,"CAN_COLLIDE"];
+				
+				
+				_unit setUnitPos "UP";
+
+				[[_unit],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;
+				
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPUniformToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPIdentitiesToUnit;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPWeaponToUnit;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPBackpack;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPGogglesToUnit;
+
+				
+				for "_i" from 0 to 2 do {
+					_unit addItem "FirstAidKit";
+				};
+				for "_i" from 0 to 1 do {
+					_unit addMagazine "9Rnd_45ACP_Mag";
+				};
+				for "_i" from 0 to 1 do {
+					_unit addMagazine "MRAWS_HEAT_F";
+				};
+				
+	            _unit addWeapon "hgun_ACPC2_F"; 
+				
+				_unit addMagazine "HandGrenade";  
+				_unit addWeapon "launch_MRAWS_sand_rail_F";
+				_unit addMagazine "MRAWS_HEAT_F";
+
+				_unit
+			};
+
+			MAZ_EZM_FIAP_fnc_createRadiomanModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+
+				private _grp = createGroup [east,true];
+				private _unit = _grp createUnit ["O_G_Soldier_F",_pos,[],0,"CAN_COLLIDE"];
+				
+				
+				_unit setUnitPos "UP";
+
+				[[_unit],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;
+				
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPUniformToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPIdentitiesToUnit;
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPWeaponToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPGogglesToUnit;
+
+				
+				for "_i" from 0 to 2 do {
+					_unit addItem "FirstAidKit";
+				};
+				for "_i" from 0 to 1 do {
+					_unit addMagazine "9Rnd_45ACP_Mag";
+				};
+				
+				_unit addWeapon "hgun_ACPC2_F"; 
+				
+				_unit addMagazine "HandGrenade";  
+
+				_unit addMagazine "SmokeShell";
+
+				_unit addBackpack "B_RadioBag_01_black_F";
+				[_unit,{
+					(unitbackpack _this) setObjectTexture [0,"A3\characters_f_exp\Syndikat\Data\U_I_C_Soldier_Para_4_F_2_co.paa"];
+				}] remoteExec ['spawn',0,_unit];
+
+				_unit
+			};
+
+			MAZ_EZM_FIAP_fnc_createSurvivorModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+
+				private _grp = createGroup [east,true];
+				private _unit = _grp createUnit ["O_G_Soldier_F",_pos,[],0,"CAN_COLLIDE"];
+				
+				_unit setUnitPos "UP";
+
+				[[_unit],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;
+				
+				[_unit] call MAZ_EZM_FIAP_fnc_addFIAPUniformToUnit;
+				[_unit] spawn MAZ_EZM_FIAP_fnc_addFIAPIdentitiesToUnit;
+
+				removeVest _unit;
+				removeHeadgear _unit;
+
+				_unit
+			};
+
+        comment "Groups";
+			
+            MAZ_EZM_FIAP_fnc_createSquadModule = {
+				private _squadLead = call MAZ_EZM_FIAP_fnc_createSquadLeadModule;
+				private _grp = group _squadLead;
+				{
+					private _unit = call (missionNamespace getVariable _x);
+					[_unit] joinSilent _grp;
+				}forEach [
+					'MAZ_EZM_FIAP_fnc_createAmmoBearerModule',
+					'MAZ_EZM_FIAP_fnc_createCombatMedicModule',
+					'MAZ_EZM_FIAP_fnc_createRiflemanModule',
+					'MAZ_EZM_FIAP_fnc_createMarksmanModule',
+					'MAZ_EZM_FIAP_fnc_createRiflemanATModule',
+					'MAZ_EZM_FIAP_fnc_createGrenadierModule',
+					'MAZ_EZM_FIAP_fnc_createAutoriflemanModule',
+					'MAZ_EZM_FIAP_fnc_createRiflemanModule'
+				];
+				_grp setBehaviour "AWARE";
+			};
+
+			MAZ_EZM_FIAP_fnc_createPatrolModule = {
+				private _squadLead = call MAZ_EZM_FIAP_fnc_createSquadLeadModule;
+				private _grp = group _squadLead;
+				{
+					private _unit = call (missionNamespace getVariable _x);
+					[_unit] joinSilent _grp;
+				}forEach [
+					'MAZ_EZM_FIAP_fnc_createCombatMedicModule',
+					'MAZ_EZM_FIAP_fnc_createRiflemanModule',
+					'MAZ_EZM_FIAP_fnc_createMarksmanModule',
+					'MAZ_EZM_FIAP_fnc_createRiflemanModule'
+				];
+				_grp setBehaviour "AWARE";
+			};
+
+			MAZ_EZM_FIAP_fnc_createSentryModule = {
+				private _squadLead = call MAZ_EZM_FIAP_fnc_createSquadLeadModule;
+				private _grp = group _squadLead;
+				{
+					private _unit = call (missionNamespace getVariable _x);
+					[_unit] joinSilent _grp;
+				}forEach [
+					'MAZ_EZM_FIAP_fnc_createRiflemanModule'
+				];
+				_grp setBehaviour "AWARE";
+			};
+
+			MAZ_EZM_FIAP_fnc_createAntiAirTeamModule = {
+				private _squadLead = call MAZ_EZM_FIAP_fnc_createSquadLeadModule;
+				private _grp = group _squadLead;
+				{
+					private _unit = call (missionNamespace getVariable _x);
+					[_unit] joinSilent _grp;
+				}forEach [
+					'MAZ_EZM_FIAP_fnc_createAmmoBearerModule',
+					'MAZ_EZM_FIAP_fnc_createMissileSpecAAModule'
+				];
+				_grp setBehaviour "AWARE";
+			};
+
+			MAZ_EZM_FIAP_fnc_createAntiTankTeamModule = {
+				private _squadLead = call MAZ_EZM_FIAP_fnc_createSquadLeadModule;
+				private _grp = group _squadLead;
+				{
+					private _unit = call (missionNamespace getVariable _x);
+					[_unit] joinSilent _grp;
+				}forEach [
+					'MAZ_EZM_FIAP_fnc_createAmmoBearerModule',
+					'MAZ_EZM_FIAP_fnc_createRiflemanATModule'
+				];
+				_grp setBehaviour "AWARE";
+			};
+
+			MAZ_EZM_FIAP_fnc_createSniperTeamModule = {
+				private _squadLead = call MAZ_EZM_FIAP_fnc_createSquadLeadModule;
+				private _grp = group _squadLead;
+				{
+					private _unit = call (missionNamespace getVariable _x);
+					[_unit] joinSilent _grp;
+				}forEach [
+					'MAZ_EZM_FIAP_fnc_createRiflemanModule'
+				];
+				_grp setBehaviour "AWARE";
+			};
+		
+	comment "CTRG+";
+
+		comment "Appearance";
+
+			MAZ_EZM_CTRGP_fnc_addCTRGPUniformToUnit = {
+				params ["_unit"];
+				private _CTRGPUniforms = ["U_B_CTRG_1","U_B_CTRG_3","U_B_CTRG_2","U_B_CTRG_Soldier_2_Arid_F"];
+				private _CTRGPVests = ["V_PlateCarrierL_CTRG","V_PlateCarrierH_CTRG"];
+				private _CTRGPHeadgear = ["H_Bandanna_cbr","H_Bandanna_khk_hs","H_Bandanna_khk","H_Watchcap_blk","H_Watchcap_cbr","H_Watchcap_khk","H_Booniehat_khk_hs","H_Booniehat_khk","H_Cap_blk","H_Cap_oli","H_Cap_oli_hs","H_Cap_tan","H_Cap_khaki_specops_UK","H_HelmetB_black","H_HelmetB_camo","H_HelmetB_light_snakeskin","H_Cap_headphones"];
+				private _CTRGPGoggles = ["","G_AirPurifyingRespirator_01_F","G_Aviator","G_Bandanna_beast","G_Bandanna_khk","G_Shades_Black","G_Shades_Blue","G_Shades_Green","G_Spectacles","G_Balaclava_TI_blk_F","G_Tactical_Clear","G_Tactical_Black","G_Spectacles_Tinted"];
+				
+			    _unit forceAddUniform (selectRandom _CTRGPUniforms);
+				_unit addVest (selectRandom _CTRGPVests);
+				_unit addHeadgear (selectRandom _CTRGPHeadgear);
+				_unit addGoggles (selectRandom _CTRGPGoggles);
+			};
+
+			MAZ_EZM_CTRGP_fnc_addCTRGIdentitiesToUnit = {
+				params ["_unit"];
+				sleep 0.5;
+				private _britishVoice = [
+					"Male01ENGB",
+					"Male02ENGB",
+					"Male03ENGB",
+					"Male04ENGB",
+					"Male05ENGB"
+				];
+				private _whiteHeads = [
+					"WhiteHead_01",
+					"WhiteHead_02",
+					"WhiteHead_03",
+					"WhiteHead_04",
+					"WhiteHead_05",
+					"WhiteHead_06",
+					"WhiteHead_07",
+					"WhiteHead_08",
+					"WhiteHead_09",
+					"WhiteHead_10",
+					"WhiteHead_11",
+					"WhiteHead_12",
+					"WhiteHead_13",
+					"WhiteHead_14",
+					"WhiteHead_15",
+					"WhiteHead_16",
+					"WhiteHead_17",
+					"WhiteHead_18",
+					"WhiteHead_19",
+					"WhiteHead_20",
+					"WhiteHead_21",
+					"WhiteHead_23",
+					"WhiteHead_24",
+					"WhiteHead_25",
+					"WhiteHead_26",
+					"WhiteHead_27",
+					"WhiteHead_28",
+					"WhiteHead_29",
+					"WhiteHead_30",
+					"WhiteHead_31",
+					"WhiteHead_32"
+				];
+
+				[_unit,(selectRandom _britishVoice)] remoteExec ['setSpeaker',0,_unit];
+				[_unit,(selectRandom _whiteHeads)] remoteExec ['setFace',0,_unit];
+				if(goggles _unit == "G_Combat") then {
+					removeGoggles _unit;
+				};
+			};
+
+			MAZ_EZM_CTRGP_fnc_addCTRGPWeaponToUnit = {
+				params ["_unit"];
+				
+				private _556Ammo = "30Rnd_556x45_Stanag";
+				private _556Box = "200Rnd_556x45_Box_F";
+				private _65Ammo = "30Rnd_65x39_caseless_black_mag";
+				private _762Ammo = "20Rnd_762x51_Mag";
+				private _pWeapon = selectRandom [["arifle_MX_Black_F", _65Ammo], ["arifle_MXM_Black_F", _65Ammo], ["arifle_SPAR_01_blk_F", _556Ammo]];
+                
+				for "_i" from 0 to 5 do { _unit addMagazine (_pWeapon select 1); };
+
+				private _optic = selectRandom ["optic_MRCO","optic_Holosight_blk_F","optic_ACO","optic_HAMR"];
+				_unit addWeapon (_pWeapon select 0);
+				_unit addPrimaryWeaponItem _optic;
+				_unit addPrimaryWeaponItem "acc_pointer_IR";
+			};
+
+		comment "Men";
+
+			MAZ_EZM_CTRGP_fnc_createRiflemanModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+
+				private _grp = createGroup [west,true];
+				private _unit = _grp createUnit ["B_Soldier_F",_pos,[],0,"CAN_COLLIDE"];
+				
+				_unit setUnitPos "UP";
+
+				[[_unit],{
+					params ["_objs"];
+					{
+						_x addCuratorEditableObjects [[_objs],true];
+					} foreach allCurators;
+				}] remoteExec ["Spawn",2];
+
+                [_unit] call MAZ_EZM_fnc_removeAllClothing;
+				[_unit] call MAZ_EZM_CTRGP_fnc_addCTRGPUniformToUnit;
+				[_unit] spawn MAZ_EZM_CTRGP_fnc_addCTRGIdentitiesToUnit;
+				[_unit] call MAZ_EZM_CTRGP_fnc_addCTRGPWeaponToUnit;
+	
+				for "_i" from 0 to 2 do {
+					_unit addItem "FirstAidKit";
+				};
+				for "_i" from 0 to 1 do {
+					_unit addMagazine "11Rnd_45ACP_Mag";
+				};
+				
+				_unit addWeapon "hgun_Pistol_heavy_01_F"; 
+				_unit addHandgunItem "optic_MRD";
+				
+				_unit addMagazine "HandGrenade";
+				_unit addMagazine "HandGrenade";
+
+				_unit
 			};
 
 	comment "End";
@@ -11449,7 +13274,7 @@ MAZ_EZM_editZeusInterface = {
 					"Automatic Missions",
 					"a3\ui_f\data\map\markers\military\objective_ca.paa",
 					[1,1,1,1],
-					"Automated Missions - Only configured for Altis"
+					"Automated Missions that can be spawned on different maps."
 				] call MAZ_EZM_fnc_zeusAddCategory;
 				
 				[
@@ -12191,7 +14016,7 @@ MAZ_EZM_editZeusInterface = {
 				
 				MAZ_BetterCivsTree = [
 					MAZ_UnitsTree_CIVILIAN,
-					"[EZM]  Better Civilians",
+					"Better Civilians",
 					"a3\ui_f\data\gui\rsc\rscdisplaymain\menu_multiplayer_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddCategory;
 
@@ -12395,6 +14220,65 @@ MAZ_EZM_editZeusInterface = {
 						"Creates a MDF Greyhawk.",
 						"MAZ_EZM_MDF_fnc_createGreyhawkModule",
 						"\A3\Drones_F\Air_F_Gamma\UAV_02\Data\UI\Map_UAV_02_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+
+				comment "Groups";
+
+					MAZ_MDFGroupsTree = [
+						MAZ_UnitsTree_INDEP,
+						MAZ_MDFTree,
+						"Groups",
+						'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\meet_ca.paa'
+					] call MAZ_EZM_fnc_zeusAddSubCategory;
+
+					[
+						MAZ_UnitsTree_INDEP,
+						MAZ_MDFTree,
+						MAZ_MDFGroupsTree,
+						"Air-Defense Squad",
+						"Creates a MDF Air-Defense Squad.",
+						"MAZ_EZM_MDF_fnc_createAASquadModule",
+						""
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+
+					[
+						MAZ_UnitsTree_INDEP,
+						MAZ_MDFTree,
+						MAZ_MDFGroupsTree,
+						"Anti-Tank Squad",
+						"Creates a MDF Anti-Tank Squad.",
+						"MAZ_EZM_MDF_fnc_createATSquadModule",
+						""
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+
+					[
+						MAZ_UnitsTree_INDEP,
+						MAZ_MDFTree,
+						MAZ_MDFGroupsTree,
+						"Patrol Squad",
+						"Creates a MDF Patrol Squad.",
+						"MAZ_EZM_MDF_fnc_createPatrolSquadModule",
+						""
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+
+					[
+						MAZ_UnitsTree_INDEP,
+						MAZ_MDFTree,
+						MAZ_MDFGroupsTree,
+						"Rifle Squad",
+						"Creates a MDF Rifle Squad.",
+						"MAZ_EZM_MDF_fnc_createRifleSquadModule",
+						""
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+
+					[
+						MAZ_UnitsTree_INDEP,
+						MAZ_MDFTree,
+						MAZ_MDFGroupsTree,
+						"Sentry Squad",
+						"Creates a MDF Sentry Squad.",
+						"MAZ_EZM_MDF_fnc_createSentrySquadModule",
+						""
 					] call MAZ_EZM_fnc_zeusAddModule_INDEP;
 
 				comment "Helicopters";
@@ -12632,6 +14516,569 @@ MAZ_EZM_editZeusInterface = {
 						"MAZ_EZM_MDF_fnc_createGryphonModule",
 						"\A3\Air_F_Jets\Plane_Fighter_04\Data\UI\Fighter04_icon_ca.paa"
 					] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+
+			
+			comment "FIA+";
+
+				private _count = MAZ_UnitsTree_OPFOR tvCount [2];
+				for "_i" from 0 to (_count - 1) do {
+					MAZ_UnitsTree_OPFOR tvDelete [2,0];
+				};
+
+				MAZ_FIAPTree = 2;
+				MAZ_UnitsTree_OPFOR tvSetText [[MAZ_FIAPTree],"FIA+"];
+				MAZ_UnitsTree_OPFOR tvSetPictureRight [[MAZ_FIAPTree], "\A3\Data_F\Flags\flag_FIA_CO.paa"];
+				MAZ_UnitsTree_OPFOR tvSetTooltip [[MAZ_FIAPTree], "A remastered version of the FIA faction."];
+
+				comment "APCs";
+					
+					MAZ_FIAPAPCsTree = [
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						"APCs",
+						""
+					] call MAZ_EZM_fnc_zeusAddSubCategory;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPAPCsTree,
+						"AFV-4 Gorgon",
+						"Creates a FIA Gorgon.",
+						"MAZ_EZM_FIAP_fnc_createGorgonModule",
+						"\A3\armor_f_gamma\APC_Wheeled_03\Data\UI\map_APC_Wheeled_03_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPAPCsTree,
+						"20mm AFV-4 Gorgon",
+						"Creates a FIA 20mm Gorgon.",
+						"MAZ_EZM_FIAP_fnc_createGorgon20mmModule",
+						"\A3\armor_f_gamma\APC_Wheeled_03\Data\UI\map_APC_Wheeled_03_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+				comment "Cars";
+
+					MAZ_FIAPCarsTree = [
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						"Cars",
+						""
+					] call MAZ_EZM_fnc_zeusAddSubCategory;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPCarsTree,
+						"Offroad",
+						"Creates a FIA Offroad.",
+						"MAZ_EZM_FIAP_fnc_createOffroadModule",
+						"\A3\soft_f\Offroad_01\Data\UI\map_offroad_01_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPCarsTree,
+						"Offroad (AT)",
+						"Creates a FIA Offroad (AT).",
+						"MAZ_EZM_FIAP_fnc_createOffroadATModule",
+						"\A3\Soft_F_Gamma\Offroad_01\Data\UI\map_offroad_armed_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPCarsTree,
+						"Offroad (HMG)",
+						"Creates a FIA Offroad (HMG).",
+						"MAZ_EZM_FIAP_fnc_createOffroadHMGModule",
+						"\A3\Soft_F_Gamma\Offroad_01\Data\UI\map_offroad_armed_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPCarsTree,
+						"Jeep",
+						"Creates a FIA Jeep.",
+						"MAZ_EZM_FIAP_fnc_createJeepModule",
+						"\A3\Soft_F_Exp\Offroad_02\Data\UI\map_Offroad_02_base_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPCarsTree,
+						"Jeep (LMG)",
+						"Creates a FIA Jeep (LMG).",
+						"MAZ_EZM_FIAP_fnc_createJeepLMGModule",
+						"\A3\Soft_F_Exp\Offroad_02\Data\UI\map_Offroad_02_base_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPCarsTree,
+						"Jeep (AT)",
+						"Creates a FIA Jeep (AT).",
+						"MAZ_EZM_FIAP_fnc_createJeepATModule",
+						"\A3\Soft_F_Exp\Offroad_02\Data\UI\map_Offroad_02_base_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPCarsTree,
+						"Quadbike",
+						"Creates a FIA Quadbike",
+						"MAZ_EZM_FIAP_fnc_createQuadbikeModule",
+						"\A3\Soft_F\Quadbike_01\Data\UI\map_Quad_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+				comment "Drones";
+
+					MAZ_FIAPDronesTree = [
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						"Drones",
+						""
+					] call MAZ_EZM_fnc_zeusAddSubCategory;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPDronesTree,
+						"AR-2 Darter",
+						"Creates a FIA Darter.",
+						"MAZ_EZM_FIAP_fnc_createDarterModule",
+						"\A3\Drones_F\Air_F_Gamma\UAV_01\Data\UI\Map_UAV_01_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+				comment "Groups";
+
+					MAZ_FIAPSubCatTree = [
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						"Groups",
+						"\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\meet_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddSubCategory;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPSubCatTree,
+						"Anti-Air Team",
+						"Creates a FIA Anti-Air Team",
+						"MAZ_EZM_FIAP_fnc_createAntiAirTeamModule",
+						""
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPSubCatTree,
+						"Anti-Tank Team",
+						"Creates a FIA Anti-Tank Team",
+						"MAZ_EZM_FIAP_fnc_createAntiTankTeamModule",
+						""
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPSubCatTree,
+						"Squad",
+						"Creates a FIA Squad",
+						"MAZ_EZM_FIAP_fnc_createSquadModule",
+						""
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPSubCatTree,
+						"Patrol",
+						"Creates a FIA Patrol",
+						"MAZ_EZM_FIAP_fnc_createPatrolModule",
+						""
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPSubCatTree,
+						"Sentry",
+						"Creates a FIA Sentry",
+						"MAZ_EZM_FIAP_fnc_createSentryModule",
+						""
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPSubCatTree,
+						"Sniper Team",
+						"Creates a FIA Sniper Team",
+						"MAZ_EZM_FIAP_fnc_createSniperTeamModule",
+						""
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+				comment "Men";
+					
+					MAZ_FIAPMenTree = [
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						"Men",
+						""
+					] call MAZ_EZM_fnc_zeusAddSubCategory;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPMenTree,
+						"Ammo Bearer",
+						"Creates a FIA Ammo Bearer.",
+						"MAZ_EZM_FIAP_fnc_createAmmoBearerModule",
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPMenTree,
+						"Autorifleman",
+						"Creates a FIA Autorifleman.",
+						"MAZ_EZM_FIAP_fnc_createAutoriflemanModule",
+						"\A3\ui_f\data\Map\VehicleIcons\iconManMG_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPMenTree,
+						"Combat Lifesaver",
+						"Creates a FIA Combat Lifesaver.",
+						"MAZ_EZM_FIAP_fnc_createCombatMedicModule",
+						"\A3\ui_f\data\Map\VehicleIcons\iconManMedic_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPMenTree,
+						"Crewman",
+						"Creates a FIA Crewman.",
+						"MAZ_EZM_FIAP_fnc_createCrewmanModule",
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPMenTree,
+						"Engineer",
+						"Creates a FIA Engineer.",
+						"MAZ_EZM_FIAP_fnc_createEngineerModule",
+						"\A3\ui_f\data\Map\VehicleIcons\iconManEngineer_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPMenTree,
+						"Grenadier",
+						"Creates a FIA Grenadier.",
+						"MAZ_EZM_FIAP_fnc_createGrenadierModule",
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPMenTree,
+						"Helicopter Crew",
+						"Creates a FIA Helicopter Crew.",
+						"MAZ_EZM_FIAP_fnc_createHeliCrewModule",
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+					
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPMenTree,
+						"Helicopter Pilot",
+						"Creates a FIA Helicopter Pilot.",
+						"MAZ_EZM_FIAP_fnc_createHeliPilotModule",
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPMenTree,
+						"Marksman",
+						"Creates a FIA Marksman.",
+						"MAZ_EZM_FIAP_fnc_createMarksmanModule",
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPMenTree,
+						"Missile Specialist (AA)",
+						"Creates a FIA Anti-Air Missile Specialist.",
+						"MAZ_EZM_FIAP_fnc_createMissileSpecAAModule",
+						"\A3\ui_f\data\Map\VehicleIcons\iconManAT_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPMenTree,
+						"Rifleman",
+						"Creates a FIA Rifleman.",
+						"MAZ_EZM_FIAP_fnc_createRiflemanModule",
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPMenTree,
+						"Rifleman (AT)",
+						"Creates a FIA Anti-Tank Rifleman.",
+						"MAZ_EZM_FIAP_fnc_createRiflemanATModule",
+						"\A3\ui_f\data\Map\VehicleIcons\iconManAT_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPMenTree,
+						"Rifleman (LAT)",
+						"Creates a FIA Light Anti-Tank Rifleman.",
+						"MAZ_EZM_FIAP_fnc_createRiflemanLATModule",
+						"\A3\ui_f\data\Map\VehicleIcons\iconManAT_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPMenTree,
+						"Squad Leader",
+						"Creates a FIA Squad Leader.",
+						"MAZ_EZM_FIAP_fnc_createSquadLeadModule",
+						"\A3\ui_f\data\Map\VehicleIcons\iconManLeader_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPMenTree,
+						"Radioman",
+						"Creates a FIA Radioman.",
+						"MAZ_EZM_FIAP_fnc_createRadiomanModule",
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPMenTree,
+						"Survivor",
+						"Creates a FIA Survivor.",
+						"MAZ_EZM_FIAP_fnc_createSurvivorModule",
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+				comment "Tanks";
+					
+					MAZ_FIAPTankTree = [
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						"Tanks",
+						""
+					] call MAZ_EZM_fnc_zeusAddSubCategory;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPTankTree,
+						"Anti-Air Nyx",
+						"Creates a FIA Anti-Air Nyx.",
+						"MAZ_EZM_FIAP_fnc_createAANyxModule",
+						"\A3\armor_f_beta\APC_Tracked_01\Data\ui\map_APC_Tracked_01_aa_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPTankTree,
+						"Autocannon Nyx",
+						"Creates a FIA 20mm Nyx.",
+						"MAZ_EZM_FIAP_fnc_create20mmNyxModule",
+						"\A3\armor_f_beta\APC_Tracked_01\Data\ui\map_APC_Tracked_01_aa_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+				comment "Trucks";
+
+					MAZ_FIAPTrucksTree = [
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						"Trucks",
+						""
+					] call MAZ_EZM_fnc_zeusAddSubCategory;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPTrucksTree,
+						"Zamak Ammo",
+						"Creates a FIA Zamak Ammo.",
+						"MAZ_EZM_FIAP_fnc_createZamakAmmoModule",
+						"\A3\soft_f_gamma\Truck_02\data\UI\Map_Truck_02_box_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPTrucksTree,
+						"Zamak Fuel",
+						"Creates a FIA Zamak Fuel.",
+						"MAZ_EZM_FIAP_fnc_createZamakFuelModule",
+						"\A3\soft_f_gamma\Truck_02\data\UI\Map_Truck_02_fuel_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPTrucksTree,
+						"Zamak Medical",
+						"Creates a FIA Medical Zamak.",
+						"MAZ_EZM_FIAP_fnc_createZamakMedicalModule",
+						"\A3\soft_f_gamma\Truck_02\data\UI\Map_Truck_02_medevac_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPTrucksTree,
+						"Zamak Repair",
+						"Creates a FIA Zamak Repair.",
+						"MAZ_EZM_FIAP_fnc_createZamakRepairModule",
+						"\A3\Soft_F_Beta\Truck_02\Data\UI\Map_Truck_02_repair_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPTrucksTree,
+						"Zamak Transport",
+						"Creates a FIA Zamak.",
+						"MAZ_EZM_FIAP_fnc_createZamakTransportModule",
+						"\A3\soft_f_beta\Truck_02\data\UI\Map_Truck_02_dump_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPTrucksTree,
+						"Zamak Transport (Covered)",
+						"Creates a FIA Zamak (Covered).",
+						"MAZ_EZM_FIAP_fnc_createZamakCoveredTransportModule",
+						"\A3\soft_f_beta\Truck_02\data\UI\Map_Truck_02_dump_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPTrucksTree,
+						"Truck",
+						"Creates a FIA Truck.",
+						"MAZ_EZM_FIAP_fnc_createTruckModule",
+						"\A3\soft_f_gamma\van_01\Data\UI\map_van_01_cistern_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPTrucksTree,
+						"Fuel Truck",
+						"Creates a FIA Fuel Truck.",
+						"MAZ_EZM_FIAP_fnc_createFuelTruckModule",
+						"\A3\soft_f_gamma\van_01\Data\UI\map_van_01_cistern_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+				
+				comment "Van";
+
+					MAZ_FIAPVansTree = [
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						"Vans",
+						""
+					] call MAZ_EZM_fnc_zeusAddSubCategory;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPVansTree,
+						"Van",
+						"Creates a FIA Van.",
+						"MAZ_EZM_FIAP_fnc_createVanModule",
+						"\a3\Soft_F_Orange\Van_02\Data\UI\Map_Van_02_vehicle_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPVansTree,
+						"Transport Van",
+						"Creates a FIA Transport Van.",
+						"MAZ_EZM_FIAP_fnc_createVanTransportModule",
+						"\a3\Soft_F_Orange\Van_02\Data\UI\Map_Van_02_vehicle_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_FIAPTree,
+						MAZ_FIAPVansTree,
+						"Medical Van",
+						"Creates a FIA Medical Van.",
+						"MAZ_EZM_FIAP_fnc_createMedicalVanModule",
+						"\a3\Soft_F_Orange\Van_02\Data\UI\Map_Van_02_medevac_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+			comment "CTRG+";
+
+				MAZ_CTRGPTree = 0;
+				MAZ_UnitsTree_BLUFOR tvSetText [[MAZ_CTRGPTree],"CTRG+"];
+				MAZ_UnitsTree_BLUFOR tvSetPictureRight [[MAZ_CTRGPTree], "\A3\Data_F_exp\Flags\flag_CTRG_CO.paa"];
+				MAZ_UnitsTree_BLUFOR tvSetTooltip [[MAZ_CTRGPTree], "A remastered version of the CTRG faction."];
+
+				comment "Men";
+					
+					MAZ_CTRGPMenTree = [
+						MAZ_UnitsTree_BLUFOR,
+						MAZ_CTRGPTree,
+						"Men (Arid)",
+						""
+					] call MAZ_EZM_fnc_zeusAddSubCategory;
+
+					[
+						MAZ_UnitsTree_BLUFOR,
+						MAZ_CTRGPTree,
+						MAZ_CTRGPMenTree,
+						"Rifleman",
+						"Creates a CTRG Rifleman.",
+						"MAZ_EZM_CTRGP_fnc_createRiflemanModule",
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_BLUFOR;
+
+				MAZ_UnitsTree_BLUFOR tvSort [[MAZ_CTRGPTree]];
 
 			comment "End";
 		};
@@ -12989,35 +15436,3 @@ MAZ_EZM_fnc_initMainLoop = {
 	params ["_values","_args","_display"];
 	_display closeDisplay 2;
 },[]] call MAZ_EZM_fnc_createDialog;
-
-comment "
-	Change Log:
- - Added more filters to the messages filter
- - Added EDC Compatibility
- - Added Advanced Damage to vehicles
- - Added Automated Respawns on Vehicles
- - Added Auto-Garrison Town
- - Added Percent to Slider Dialogs
- - Added support for all vanilla maps with automated helicrashes
- - Added New Convoy to automated convoys
- - Added combat animations (ambient animations that cancel when taking fire)
- - Changed positions of automated helicrashes
- - Changed reinforcements waypoint from MOVE/SENTRY to Seek and Destroy
- - Fixed issue where extra long dialogs would extend beyond the screen
- - Fixed issue where shortened dialogs didn't have a scrollbar
- - Fixed typo where some animation display names had a ; instead of a : separator
- - Adjusted vertical spacing of icons
-";
-
-comment "
-Factions to Add:
- - Scimitar
- - FIA+
- - CTRG
-
-Modules:
- - Speak
- - Pylon Editor
- - Artillery Supports
-
-";
