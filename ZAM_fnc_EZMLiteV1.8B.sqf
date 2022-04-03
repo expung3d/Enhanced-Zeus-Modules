@@ -1,4 +1,4 @@
-MAZ_EZM_LiteVersion = "V1.8A";
+MAZ_EZM_LiteVersion = "V1.8B";
 MAZ_EZM_autoAdd = profileNamespace getVariable ['MAZ_EZM_autoAddVar',true];
 
 comment "Dialog Creation";
@@ -3097,7 +3097,7 @@ comment "Context Menu";
 			params ["_pos","_entity"];
 			_entity setDamage 0;
 			if(isPlayer _entity && (lifeState _entity == "INCAPACITATED")) then {
-				["#rev",1,player] call BIS_fnc_reviveOnState;
+				["#rev",1,_entity] call BIS_fnc_reviveOnState;
 			};
 		},
 		{
@@ -3236,6 +3236,53 @@ comment "Context Menu";
 		1,
 		"a3\ui_f\data\gui\rsc\rscdisplayarsenal\spacegarage_ca.paa",
 		[1,1,1,1]
+	] call ZAM_fnc_createNewContextAction;
+	
+	private _garrison = [
+		"Garrison",
+		{
+			params ["_pos","_entity"];
+			[leader _entity] call MAZ_EZM_fnc_garrisonInstantModule;
+		},
+		{
+			if(_this isEqualType grpNull) exitWith {true};
+			false
+		},
+		1,
+		'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\run_ca.paa',
+		[1,1,1,1],
+		[
+			[
+				"Garrison (Instant)",
+				{
+					params ["_pos","_entity"];
+					[leader _entity] call MAZ_EZM_fnc_garrisonInstantModule;
+				},
+				{true},
+				"",
+				[1,1,1,1]
+			],
+			[
+				"Garrison (Search)",
+				{
+					params ["_pos","_entity"];
+					[leader _entity] call MAZ_EZM_fnc_garrisonSearchModule;
+				},
+				{true},
+				"",
+				[1,1,1,1]
+			],
+			[
+				"Un-Garrison",
+				{
+					params ["_pos","_entity"];
+					[leader _entity] call MAZ_EZM_fnc_unGarrisonModule;
+				},
+				{true},
+				"",
+				[1,1,1,1]
+			]
+		]
 	] call ZAM_fnc_createNewContextAction;
 
 	ZAM_EZM_fnc_canMoveIn = {
