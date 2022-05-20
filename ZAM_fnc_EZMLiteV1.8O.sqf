@@ -1,7 +1,9 @@
-MAZ_EZM_LiteVersion = "V1.8H";
+MAZ_EZM_LiteVersion = "V1.8O";
 MAZ_EZM_autoAdd = profileNamespace getVariable ['MAZ_EZM_autoAddVar',true];
 MAZ_EZM_spawnWithCrew = true;
 MAZ_EZM_stanceForAI = "UP";
+uiNamespace setVariable ["MAZ_EZM_activeWarnings",[]];
+uiNamespace setVariable ['MAZ_EZM_missingRespawnWarn',nil];
 
 comment "If being ran from mission file, set _serverEZM to true:";
 private _serverEZM = false;
@@ -2116,10 +2118,11 @@ comment "Attributes Dialog Creation";
 
 	MAZ_EZM_applyAttributeChangesToGroup = {
 		params ["_group","_attributes"];
-		_attributes params ["_name","_skill","_form","_beh","_sped","_stance"];
+		_attributes params ["_name","_skill","_form","_beh","_comMode","_sped","_stance"];
 		_group setGroupIdGlobal [_name];
 		_group setFormation _form;
 		_group setBehaviour _beh;
+		_group setCombatMode _comMode;
 		_group setSpeedMode _sped;
 		{
 			_x setSkill _skill;
@@ -2143,12 +2146,12 @@ comment "Attributes Dialog Creation";
 				], 
 				[
 					"SLIDEREDIT",
-					"Skill:",
+					"Set Skill:",
 					[skill (leader _group),0,1,true]
 				],
 				[
 					"ICONS",
-					"Formation:",
+					"Set Formation:",
 					[
 						formation _group,
 						[
@@ -2249,6 +2252,48 @@ comment "Attributes Dialog Creation";
 				],
 				[
 					"ICONS",
+					"Set Combat Mode:",
+					[
+						combatMode _group,
+						[
+							"BLUE",
+							"GREEN",
+							"WHITE",
+							"YELLOW",
+							"RED"
+						],[
+							"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\safe_ca.paa",
+							"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\aware_ca.paa",
+							"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\aware_ca.paa",
+							"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\combat_ca.paa",
+							"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\combat_ca.paa"
+						],[
+							"Forced Hold Fire",
+							"Do Not Fire Unless Fired Upon, Keep Formation",
+							"Do Not Fire Unless Fired Upon",
+							"Open Fire, Keep Formation",
+							"Open Fire"
+						],[
+							[11,0.3],
+							[14,0.3],
+							[17,0.3],
+							[20,0.3],
+							[23,0.3]
+						],[
+							1.75,1.75,1.75,1.75,1.75
+						],
+						2.5,
+						[
+							[[0,1,0,1],[0,0.5,0,0.7]],
+							[[1,1,0,1],[0.5,0.5,0,0.7]],
+							[[1,1,0,1],[0.5,0.5,0,0.7]],
+							[[1,0,0,1],[0.5,0,0,0.7]],
+							[[1,0,0,1],[0.5,0,0,0.7]]
+						]
+					]
+				],
+				[
+					"ICONS",
 					"Set Speed:",
 					[
 						speedMode _group,
@@ -2276,7 +2321,7 @@ comment "Attributes Dialog Creation";
 				],
 				[
 					"ICONS",
-					"Stance:",
+					"Set Stance:",
 					[
 						unitPos (leader _group),
 						[
@@ -3090,429 +3135,453 @@ comment "Context Menu";
 		player setVariable ["EZM_contextGroupCtrl",_ctrlGroup];
 	};
 
-	private _addEditableObjects = [
-		"Add Editable Objects",
-		{
-			params ["_pos"];
-			private _objects = [_pos,100] call JAM_fnc_getEditableObjs_radius;
-			[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
-		},
-		{true},
-		6,
-		"a3\3den\data\displays\display3den\panelright\customcomposition_add_ca.paa",
-		[1,1,1,1],
-		[
+	if(isNil "MAZ_EZM_action_addEditableObjects") then {
+		MAZ_EZM_action_addEditableObjects = [
+			"Add Editable Objects",
+			{
+				params ["_pos"];
+				private _objects = [_pos,100] call JAM_fnc_getEditableObjs_radius;
+				[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+			},
+			{true},
+			6,
+			"a3\3den\data\displays\display3den\panelright\customcomposition_add_ca.paa",
+			[1,1,1,1],
 			[
-				"50m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,50] call JAM_fnc_getEditableObjs_radius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"100m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,100] call JAM_fnc_getEditableObjs_radius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"250m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,250] call JAM_fnc_getEditableObjs_radius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"500m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,500] call JAM_fnc_getEditableObjs_radius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"1000m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,1000] call JAM_fnc_getEditableObjs_radius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			]
-		]
-	] call ZAM_fnc_createNewContextAction;
-
-	private _teleportHere = [
-		"Teleport Here",
-		{
-			params ["_pos"];
-			player setPos _pos;
-		},
-		{true},
-		5.9,
-		"a3\3den\data\cfgwaypoints\move_ca.paa",
-		[1,1,1,1],
-		[
-			[
-				"Teleport In Vehicle",
-				{
-					params ["_pos","_entity"];
-					private _crewData = fullCrew [_entity,"",true];
-					private _return = false;
-					private _moveInCode = "";
+				[
+					"50m",
 					{
-						_x params ["_unit","_role","_cargoIndex","_turretPath","_personTurret"];
-						if(_return) exitWith {};
-						if(_role != "turret") then {
-							if(isNull _unit || !alive _unit) then {
-								if(!isNull _unit) then {moveOut _unit};
-								_moveInCode = compile (format ["player moveIn%1 _this",_role]);
-								_return = true;
+						params ["_pos"];
+						private _objects = [_pos,50] call JAM_fnc_getEditableObjs_radius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"100m",
+					{
+						params ["_pos"];
+						private _objects = [_pos,100] call JAM_fnc_getEditableObjs_radius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"250m",
+					{
+						params ["_pos"];
+						private _objects = [_pos,250] call JAM_fnc_getEditableObjs_radius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"500m",
+					{
+						params ["_pos"];
+						private _objects = [_pos,500] call JAM_fnc_getEditableObjs_radius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"1000m",
+					{
+						params ["_pos"];
+						private _objects = [_pos,1000] call JAM_fnc_getEditableObjs_radius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				]
+			]
+		] call ZAM_fnc_createNewContextAction;
+	};
+
+	if(isNil "MAZ_EZM_action_teleportHere") then {
+		MAZ_EZM_action_teleportHere = [
+			"Teleport Here",
+			{
+				params ["_pos"];
+				player setPos _pos;
+			},
+			{true},
+			5.9,
+			"a3\3den\data\cfgwaypoints\move_ca.paa",
+			[1,1,1,1],
+			[
+				[
+					"Teleport In Vehicle",
+					{
+						params ["_pos","_entity"];
+						private _crewData = fullCrew [_entity,"",true];
+						private _return = false;
+						private _moveInCode = "";
+						{
+							_x params ["_unit","_role","_cargoIndex","_turretPath","_personTurret"];
+							if(_return) exitWith {};
+							if(_role != "turret") then {
+								if(isNull _unit || !alive _unit) then {
+									if(!isNull _unit) then {moveOut _unit};
+									_moveInCode = compile (format ["player moveIn%1 _this",_role]);
+									_return = true;
+								};
+							} else {
+								if(isNull _unit || !alive _unit) then {
+									if(!isNull _unit) then {moveOut _unit};
+									_moveInCode = compile (format ["player moveIn%1 [_this,%2]",_role,_turretPath]);
+									_return = true;
+								};
 							};
-						} else {
-							if(isNull _unit || !alive _unit) then {
-								if(!isNull _unit) then {moveOut _unit};
-								_moveInCode = compile (format ["player moveIn%1 [_this,%2]",_role,_turretPath]);
-								_return = true;
-							};
+						}forEach _crewData;
+						_entity call _moveInCode;
+					},
+					{
+						private _return = false;
+						if(_this isEqualType grpNull) exitWith {_return};
+						if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles" && ([_this] call ZAM_EZM_fnc_canMoveIn)) then {
+							_return = true;
 						};
-					}forEach _crewData;
-					_entity call _moveInCode;
-				},
-				{
-					private _return = false;
-					if(_this isEqualType grpNull) exitWith {_return};
-					if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles" && ([_this] call ZAM_EZM_fnc_canMoveIn)) then {
-						_return = true;
-					};
 
-					_return
-				},
-				"",
-				[1,1,1,1]
+						_return
+					},
+					"",
+					[1,1,1,1]
+				]
 			]
-		]
-	] call ZAM_fnc_createNewContextAction;
+		] call ZAM_fnc_createNewContextAction;
+	};
 
-	private _remoteControl = [
-		"Remote Control",
-		{
-			params ["_pos","_entity"];
-			private _logic = createVehicle ["Land_HelipadEmpty_F",[0,0,0],[],0,"CAN_COLLIDE"];
-			[_logic,_entity,true] spawn MAZ_EZM_BIS_fnc_remoteControlUnit;
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this && !(isPlayer _this)) then {
-				_return = true;
-			};
+	if(isNil "MAZ_EZM_action_remoteControl") then {
+		MAZ_EZM_action_remoteControl = [
+			"Remote Control",
+			{
+				params ["_pos","_entity"];
+				private _logic = createVehicle ["Land_HelipadEmpty_F",[0,0,0],[],0,"CAN_COLLIDE"];
+				[_logic,_entity,true] spawn MAZ_EZM_BIS_fnc_remoteControlUnit;
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this && !(isPlayer _this)) then {
+					_return = true;
+				};
 
-			_return
-		},
-		5,
-		"\a3\Modules_F_Curator\Data\portraitRemoteControl_ca.paa",
-		[1,1,1,1]
-	] call ZAM_fnc_createNewContextAction;
+				_return
+			},
+			5,
+			"\a3\Modules_F_Curator\Data\portraitRemoteControl_ca.paa",
+			[1,1,1,1]
+		] call ZAM_fnc_createNewContextAction;
+	};
 
-	private _suppressiveFire = [
-		"Suppressive Fire",
-		{
-			params ["_pos","_entity"];
-			[_entity] spawn MAZ_EZM_fnc_suppressiveFireModule;
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this && !(isPlayer _this)) then {
-				_return = true;
-			};
+	if(isNil "MAZ_EZM_action_suppressiveFire") then {
+		MAZ_EZM_action_suppressiveFire = [
+			"Suppressive Fire",
+			{
+				params ["_pos","_entity"];
+				[_entity] spawn MAZ_EZM_fnc_suppressiveFireModule;
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this && !(isPlayer _this)) then {
+					_return = true;
+				};
 
-			_return
-		},
-		5,
-		"a3\static_f_oldman\hmg_02\data\ui\icon_hmg_02_ca.paa",
-		[1,1,1,1]
-	] call ZAM_fnc_createNewContextAction;
+				_return
+			},
+			5,
+			"a3\static_f_oldman\hmg_02\data\ui\icon_hmg_02_ca.paa",
+			[1,1,1,1]
+		] call ZAM_fnc_createNewContextAction;
+	};
 
-	private _editLoadout = [
-		"Edit Loadout",
-		{
-			params ["_pos","_entity"];
-			["Preload"] call BIS_fnc_arsenal;
-			["Open",[true,nil,_entity]] call BIS_fnc_arsenal;
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(player == _this) exitWith {!_return};
-			if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this && !(isPlayer _this)) then {
-				_return = true;
-			};
+	if(isNil "MAZ_EZM_action_editLoadout") then {
+		MAZ_EZM_action_editLoadout = [
+			"Edit Loadout",
+			{
+				params ["_pos","_entity"];
+				["Preload"] call BIS_fnc_arsenal;
+				["Open",[true,nil,_entity]] call BIS_fnc_arsenal;
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(player == _this) exitWith {!_return};
+				if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this && !(isPlayer _this)) then {
+					_return = true;
+				};
 
-			_return
-		},
-		4,
-		"a3\ui_f\data\igui\cfg\actions\gear_ca.paa",
-		[1,1,1,1],
-		[
+				_return
+			},
+			4,
+			"a3\ui_f\data\igui\cfg\actions\gear_ca.paa",
+			[1,1,1,1],
 			[
-				"Change Loadout",
-				{
-					params ["_pos","_entity"];
-					["Preload"] call BIS_fnc_arsenal;
-					["Open",[true,nil,_entity]] call BIS_fnc_arsenal;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"Reset Loadout",
-				{
-					params ["_pos","_entity"];
-					_entity setUnitLoadout (getUnitLoadout (configFile >> "CfgVehicles" >> typeOf _entity));
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"Copy Loadout",
-				{
-					params ["_pos","_entity"];
-					MAZ_EZM_copiedUnitLoadout = getUnitLoadout _entity;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"Paste Loadout",
-				{
-					params ["_pos","_entity"];
-					_entity setUnitLoadout MAZ_EZM_copiedUnitLoadout;
-				},
-				{
-					(!isNil "MAZ_EZM_copiedUnitLoadout")
-				},
-				"",
-				[1,1,1,1]
-			]
-		]
-	] call ZAM_fnc_createNewContextAction;
-
-	private _healUnit = [
-		"Heal Unit",
-		{
-			params ["_pos","_entity"];
-			_entity setDamage 0;
-			if(isPlayer _entity && (lifeState _entity == "INCAPACITATED")) then {
-				["#rev",1,_entity] call BIS_fnc_reviveOnState;
-			};
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this) then {
-				_return = true;
-			};
-
-			_return
-		},
-		3,
-		"a3\ui_f\data\map\vehicleicons\pictureheal_ca.paa",
-		[1,1,1,1]
-	] call ZAM_fnc_createNewContextAction;
-
-	private _repairVehicle = [
-		"Repair",
-		{
-			params ["_pos","_entity"];
-			_entity setDamage 0;
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles") then {
-				_return = true;
-			};
-
-			_return
-		},
-		2,
-		"a3\ui_f\data\igui\cfg\cursors\iconrepairvehicle_ca.paa",
-		[1,1,1,1]
-	] call ZAM_fnc_createNewContextAction;
-
-	private _refuelVehicle = [
-		"Refuel",
-		{
-			params ["_pos","_entity"];
-			[_entity,1] remoteExec ['setFuel'];
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles") then {
-				_return = true;
-			};
-
-			_return
-		},
-		2,
-		"a3\ui_f\data\igui\cfg\actions\refuel_ca.paa",
-		[1,1,1,1]
-	] call ZAM_fnc_createNewContextAction;
-
-	private _rearmVehicle = [
-		"Rearm",
-		{
-			params ["_pos","_entity"];
-			[_entity,1] remoteExec ['setVehicleAmmo'];
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles") then {
-				_return = true;
-			};
-
-			_return
-		},
-		2,
-		"a3\ui_f\data\igui\cfg\simpletasks\types\rearm_ca.paa",
-		[1,1,1,1]
-	] call ZAM_fnc_createNewContextAction;
-
-	private _editPylons = [
-		"Edit Pylons",
-		{
-			params ["_pos","_entity"];
-			[_entity] spawn ZAM_EZM_fnc_editVehiclePylons;
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			private _pylons = (configFile >> "CfgVehicles" >> typeOf _this >> "Components" >> "TransportPylonsComponent" >> "Pylons") call BIS_fnc_getCfgSubClasses; 
-			if(count _pylons == 0) exitWith {false}; 
-			true
-		},
-		1,
-		"a3\ui_f\data\igui\cfg\actions\gear_ca.paa",
-		[1,1,1,1],
-		[
-			[
-				"Change Pylons",
-				{
-					params ["_pos","_entity"];
-					[_entity] spawn ZAM_EZM_fnc_editVehiclePylons;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"Reset Pylons",
-				{
-					params ["_pos","_entity"];
-					private _pylons = (configFile >> "CfgVehicles" >> typeOf _entity >> "Components" >> "TransportPylonsComponent" >> "Pylons") call BIS_fnc_getCfgSubClasses;
+				[
+					"Change Loadout",
 					{
-						private _pylon = _x;
-						private _pylonDefaultMag = getText (configfile >> "CfgVehicles" >> typeOf _entity >> "Components" >> "TransportPylonsComponent" >> "Pylons" >> _pylon >> "attachment");
-						private _pylonMaxAmmo = getNumber (configFile >> "CfgMagazines" >> _pylonDefaultMag >> "count");
-						_entity setPylonLoadout [_pylon,_pylonDefaultMag];
-						_entity setAmmoOnPylon [_pylon,_pylonMaxAmmo];
-					}forEach _pylons;
-				},
-				{true},
-				"",
-				[1,1,1,1]
+						params ["_pos","_entity"];
+						["Preload"] call BIS_fnc_arsenal;
+						["Open",[true,nil,_entity]] call BIS_fnc_arsenal;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"Reset Loadout",
+					{
+						params ["_pos","_entity"];
+						_entity setUnitLoadout (getUnitLoadout (configFile >> "CfgVehicles" >> typeOf _entity));
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"Copy Loadout",
+					{
+						params ["_pos","_entity"];
+						MAZ_EZM_copiedUnitLoadout = getUnitLoadout _entity;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"Paste Loadout",
+					{
+						params ["_pos","_entity"];
+						_entity setUnitLoadout MAZ_EZM_copiedUnitLoadout;
+					},
+					{
+						(!isNil "MAZ_EZM_copiedUnitLoadout")
+					},
+					"",
+					[1,1,1,1]
+				]
 			]
-		]
-	] call ZAM_fnc_createNewContextAction;
+		] call ZAM_fnc_createNewContextAction;
+	};
 
-	private _garageEdit = [
-		"Edit Appearance",
-		{
-			params ["_pos","_entity"];
-			[_entity] spawn ZAM_fnc_createGarageInterface;
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(typeOf _entity isKindOf "AllVehicles" && !(typeOf _entity isKindOf "Animal") && !(typeOf _entity isKindOf "CAManBase")) then {_return = true};
-			_return
-		},
-		1,
-		"a3\ui_f\data\gui\rsc\rscdisplayarsenal\spacegarage_ca.paa",
-		[1,1,1,1]
-	] call ZAM_fnc_createNewContextAction;
+	if(isNil "MAZ_EZM_action_healUnit") then {
+		MAZ_EZM_action_healUnit = [
+			"Heal Unit",
+			{
+				params ["_pos","_entity"];
+				_entity setDamage 0;
+				if(isPlayer _entity && (lifeState _entity == "INCAPACITATED")) then {
+					["#rev",1,_entity] call BIS_fnc_reviveOnState;
+				};
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this) then {
+					_return = true;
+				};
 
-	private _garrison = [
-		"Garrison",
-		{
-			params ["_pos","_entity"];
-			[leader _entity] call MAZ_EZM_fnc_garrisonInstantModule;
-		},
-		{
-			if(_this isEqualType grpNull) exitWith {true};
-			false
-		},
-		1,
-		'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\run_ca.paa',
-		[1,1,1,1],
-		[
+				_return
+			},
+			3,
+			"a3\ui_f\data\map\vehicleicons\pictureheal_ca.paa",
+			[1,1,1,1]
+		] call ZAM_fnc_createNewContextAction;
+	};
+
+	if(isNil "MAZ_EZM_action_repairVehicle") then {
+		MAZ_EZM_action_repairVehicle = [
+			"Repair",
+			{
+				params ["_pos","_entity"];
+				_entity setDamage 0;
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles") then {
+					_return = true;
+				};
+
+				_return
+			},
+			2,
+			"a3\ui_f\data\igui\cfg\cursors\iconrepairvehicle_ca.paa",
+			[1,1,1,1]
+		] call ZAM_fnc_createNewContextAction;
+	};
+
+	if(isNil "MAZ_EZM_action_refuelVehicle") then {
+		MAZ_EZM_action_refuelVehicle = [
+			"Refuel",
+			{
+				params ["_pos","_entity"];
+				[_entity,1] remoteExec ['setFuel'];
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles") then {
+					_return = true;
+				};
+
+				_return
+			},
+			2,
+			"a3\ui_f\data\igui\cfg\actions\refuel_ca.paa",
+			[1,1,1,1]
+		] call ZAM_fnc_createNewContextAction;
+	};
+
+	if(isNil "MAZ_EZM_action_rearmVehicle") then {
+		MAZ_EZM_action_rearmVehicle = [
+			"Rearm",
+			{
+				params ["_pos","_entity"];
+				[_entity,1] remoteExec ['setVehicleAmmo'];
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles") then {
+					_return = true;
+				};
+
+				_return
+			},
+			2,
+			"a3\ui_f\data\igui\cfg\simpletasks\types\rearm_ca.paa",
+			[1,1,1,1]
+		] call ZAM_fnc_createNewContextAction;
+	};
+
+	if(isNil "MAZ_EZM_action_editPylons") then {
+		MAZ_EZM_action_editPylons = [
+			"Edit Pylons",
+			{
+				params ["_pos","_entity"];
+				[_entity] spawn ZAM_EZM_fnc_editVehiclePylons;
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				private _pylons = (configFile >> "CfgVehicles" >> typeOf _this >> "Components" >> "TransportPylonsComponent" >> "Pylons") call BIS_fnc_getCfgSubClasses; 
+				if(count _pylons == 0) exitWith {false}; 
+				true
+			},
+			1,
+			"a3\ui_f\data\igui\cfg\actions\gear_ca.paa",
+			[1,1,1,1],
 			[
-				"Garrison (Instant)",
-				{
-					params ["_pos","_entity"];
-					[leader _entity] call MAZ_EZM_fnc_garrisonInstantModule;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"Garrison (Search)",
-				{
-					params ["_pos","_entity"];
-					[leader _entity] call MAZ_EZM_fnc_garrisonSearchModule;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"Un-Garrison",
-				{
-					params ["_pos","_entity"];
-					[leader _entity] call MAZ_EZM_fnc_unGarrisonModule;
-				},
-				{true},
-				"",
-				[1,1,1,1]
+				[
+					"Change Pylons",
+					{
+						params ["_pos","_entity"];
+						[_entity] spawn ZAM_EZM_fnc_editVehiclePylons;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"Reset Pylons",
+					{
+						params ["_pos","_entity"];
+						private _pylons = (configFile >> "CfgVehicles" >> typeOf _entity >> "Components" >> "TransportPylonsComponent" >> "Pylons") call BIS_fnc_getCfgSubClasses;
+						{
+							private _pylon = _x;
+							private _pylonDefaultMag = getText (configfile >> "CfgVehicles" >> typeOf _entity >> "Components" >> "TransportPylonsComponent" >> "Pylons" >> _pylon >> "attachment");
+							private _pylonMaxAmmo = getNumber (configFile >> "CfgMagazines" >> _pylonDefaultMag >> "count");
+							_entity setPylonLoadout [_pylon,_pylonDefaultMag];
+							_entity setAmmoOnPylon [_pylon,_pylonMaxAmmo];
+						}forEach _pylons;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				]
 			]
-		]
-	] call ZAM_fnc_createNewContextAction;
+		] call ZAM_fnc_createNewContextAction;
+	};
+
+	if(isNil "MAZ_EZM_action_garageEdit") then {
+		MAZ_EZM_action_garageEdit = [
+			"Edit Appearance",
+			{
+				params ["_pos","_entity"];
+				[_entity] spawn ZAM_fnc_createGarageInterface;
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(typeOf _entity isKindOf "AllVehicles" && !(typeOf _entity isKindOf "Animal") && !(typeOf _entity isKindOf "CAManBase")) then {_return = true};
+				_return
+			},
+			1,
+			"a3\ui_f\data\gui\rsc\rscdisplayarsenal\spacegarage_ca.paa",
+			[1,1,1,1]
+		] call ZAM_fnc_createNewContextAction;
+	};
+
+	if(isNil "MAZ_EZM_action_garrison") then {
+		MAZ_EZM_action_garrison = [
+			"Garrison",
+			{
+				params ["_pos","_entity"];
+				[leader _entity] call MAZ_EZM_fnc_garrisonInstantModule;
+			},
+			{
+				if(_this isEqualType grpNull) exitWith {true};
+				false
+			},
+			1,
+			'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\run_ca.paa',
+			[1,1,1,1],
+			[
+				[
+					"Garrison (Instant)",
+					{
+						params ["_pos","_entity"];
+						[leader _entity] call MAZ_EZM_fnc_garrisonInstantModule;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"Garrison (Search)",
+					{
+						params ["_pos","_entity"];
+						[leader _entity] call MAZ_EZM_fnc_garrisonSearchModule;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"Un-Garrison",
+					{
+						params ["_pos","_entity"];
+						[leader _entity] call MAZ_EZM_fnc_unGarrisonModule;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				]
+			]
+		] call ZAM_fnc_createNewContextAction;
+	};
 
 	ZAM_EZM_fnc_canMoveIn = {
 		params ["_vehicle"];
@@ -4157,8 +4226,7 @@ uiNamespace setVariable ['JAM_EZM_displayTextColorRGBA', JAM_EZM_displayTextColo
 
 JAM_GUIfnc_setZeusTransparency = {
 	params [['_alpha', 1]];
-	with uiNamespace do 
-	{
+	with uiNamespace do {
 		private _display = findDisplay 312;
 			
 		_display setVariable ['trimColor', EZM_trimColor];
@@ -6445,407 +6513,436 @@ MAZ_EZM_fnc_initFunction = {
 			["Full Arsenal Created.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
 
-		JAM_EZM_fnc_createAIOArsenalModule = {
-			params [['_entity', objnull]];
-			M9SD_AIO_shouldCreateBox = false;
-			if (isNull _entity) then {
-				M9SD_AIO_shouldCreateBox = true;
-			};
-			_pos = screenToWorld getMousePosition;
-			M9SD_AIO_SupplyBox = objnull;
-			if (M9SD_AIO_shouldCreateBox) then {
-				M9SD_AIO_SupplyBox = createVehicle ["B_supplyCrate_F", _pos, [], 0, "CAN_COLLIDE"];
-				M9SD_AIO_SupplyBox setVehicleVarName "M9SD_AIO_SupplyBox";
-				M9SD_AIO_SupplyBox allowdamage false;;
-				M9SD_AIO_HelipadLight = createVehicle["PortableHelipadLight_01_green_F", _pos, [], 0, "CAN_COLLIDE"];
-				M9SD_AIO_HelipadLight = [M9SD_AIO_HelipadLight] call BIS_fnc_replaceWithSimpleObject;
-				M9SD_AIO_HelipadLight setVehicleVarName "M9SD_AIO_HelipadLight";
-				M9SD_AIO_HelipadLight attachTo[M9SD_AIO_SupplyBox, [0, 0, 0.5]];;
-				
-				M9SD_AIO_glowLight1 = createVehicle ['#lightpoint', _pos,[],0,'CAN_COLLIDE'];
-				M9SD_AIO_glowLight1 attachto [M9SD_AIO_SupplyBox,[0,0,0.5]];
-				
-				_fnc =  { 
-					if (!hasInterface) exitWith {}; 
-					params ['_light','_vic']; 
-					if (!isNull _light) then 
-					{ 
-						_light setLightBrightness 0.14; 
-						_color = [0.1,1,0.1];
-						_light setLightAmbient _color; 
-						_light setLightColor _color; 
-					}; 
-				};
-				M9SD_AIO_REfnc_initArsenalLight = ['b2', _fnc]; 
-				publicVariable 'M9SD_AIO_REfnc_initArsenalLight'; 
-				
-				[ 
-					[ 
-						M9SD_AIO_glowLight1,  
-						Tesla_testVehicle 
-					], 
-					{ 
-						_this spawn (M9SD_AIO_REfnc_initArsenalLight select 1); 
-					} 
-				] remoteExec ['spawn', 0, M9SD_AIO_glowLight1];
-				
-				
-				[[M9SD_AIO_SupplyBox, M9SD_AIO_HelipadLight, M9SD_AIO_glowLight1], {
-					params['_M9SD_AIO_SupplyBox', '_M9SD_AIO_HelipadLight', '_M9SD_AIO_glowLight1'];
-					waitUntil {
-						sleep 1;
-						(!alive _M9SD_AIO_SupplyBox)
-					};
-					deleteVehicle _M9SD_AIO_SupplyBox;
-					deleteVehicle _M9SD_AIO_HelipadLight;
-					deleteVehicle _M9SD_AIO_glowLight1;
-				}] remoteExec['spawn', 2];
-				clearWeaponCargoGlobal M9SD_AIO_SupplyBox;
-				clearBackpackCargoGlobal M9SD_AIO_SupplyBox;
-				clearMagazineCargoGlobal M9SD_AIO_SupplyBox;
-				clearItemCargoGlobal M9SD_AIO_SupplyBox;
-			} else {
-				M9SD_AIO_SupplyBox = _entity;
-			};
-			if (isNull M9SD_AIO_SupplyBox) exitWith {};
 
-			["AmmoboxInit", [M9SD_AIO_SupplyBox, true]] call BIS_fnc_arsenal;
-			publicVariable 'M9SD_AIO_SupplyBox';
-			M9SD_fnc_addSmallArsenalActions = {
-				params[['_supplyCrate', objNull]];
-				if (isNull _supplyCrate) exitWith {};
-				if (_supplyCrate getVariable['M9SD_hasArsenalActions', false]) exitWith {};
-				_supplyCrate setVariable['M9SD_hasArsenalActions', true, true];
-				if (isNil 'M9SD_AIOArsenal_JIPCount') then {
-					M9SD_AIOArsenal_JIPCount = 0;
+		if (M9SD_serverEZM) then 
+		{
+			JAM_EZM_fnc_createAIOArsenalModule = 
+			{
+				params [['_entity', objnull]];
+				M9SD_AIO_shouldCreateBox = false;
+				if (isNull _entity) then {
+					M9SD_AIO_shouldCreateBox = true;
 				};
-				M9SD_AIOArsenal_JIPCount = M9SD_AIOArsenal_JIPCount + 1;
-				publicVariable 'M9SD_AIOArsenal_JIPCount';
-				private _uniqueJIP = format['M9SD_JIP_AIOArsenalActions_%1', M9SD_AIOArsenal_JIPCount];
-				[
-					[_supplyCrate, _uniqueJIP], {
-						if (!hasInterface) exitWith {};
-						params[['_supplyCrate', objNull], ['_uniqueJIP', '']];
-						if (isNull _supplyCrate) exitWith {
-							remoteExec['', _uniqueJIP]
+				_pos = screenToWorld getMousePosition;
+				M9SD_AIO_SupplyBox = objnull;
+				if (M9SD_AIO_shouldCreateBox) then 
+				{
+					M9SD_AIO_SupplyBox = createVehicle ["B_supplyCrate_F", _pos, [], 0, "CAN_COLLIDE"];
+					M9SD_AIO_SupplyBox setVehicleVarName "M9SD_AIO_SupplyBox";
+					M9SD_AIO_SupplyBox allowdamage false;;
+					M9SD_AIO_HelipadLight = createVehicle["PortableHelipadLight_01_green_F", _pos, [], 0, "CAN_COLLIDE"];
+					M9SD_AIO_HelipadLight = [M9SD_AIO_HelipadLight] call BIS_fnc_replaceWithSimpleObject;
+					M9SD_AIO_HelipadLight setVehicleVarName "M9SD_AIO_HelipadLight";
+					M9SD_AIO_HelipadLight attachTo[M9SD_AIO_SupplyBox, [0, 0, 0.5]];;
+					
+					M9SD_AIO_glowLight1 = createVehicle ['#lightpoint', _pos,[],0,'CAN_COLLIDE'];
+					M9SD_AIO_glowLight1 attachto [M9SD_AIO_SupplyBox,[0,0,0.5]];
+					
+					_fnc =  { 
+						if (!hasInterface) exitWith {}; 
+						params ['_light','_vic']; 
+						if (!isNull _light) then 
+						{ 
+							_light setLightBrightness 0.14; 
+							_color = [0.1,1,0.1];
+							_light setLightAmbient _color; 
+							_light setLightColor _color; 
+						}; 
+					};
+					M9SD_AIO_REfnc_initArsenalLight = ['b2', _fnc]; 
+					publicVariable 'M9SD_AIO_REfnc_initArsenalLight'; 
+					
+					[ 
+						[ 
+							M9SD_AIO_glowLight1,  
+							Tesla_testVehicle 
+						], 
+						{ 
+							_this spawn (M9SD_AIO_REfnc_initArsenalLight select 1); 
+						} 
+					] remoteExec ['spawn', 0, M9SD_AIO_glowLight1];
+					
+					
+					[[M9SD_AIO_SupplyBox, M9SD_AIO_HelipadLight, M9SD_AIO_glowLight1], {
+						params['_M9SD_AIO_SupplyBox', '_M9SD_AIO_HelipadLight', '_M9SD_AIO_glowLight1'];
+						waitUntil {
+							sleep 1;
+							(!alive _M9SD_AIO_SupplyBox)
 						};
-						_supplyCrate addAction[
-							"<t color='#FFFFFF' size='1.2'><img image='a3\ui_f\data\logos\a_64_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Full Arsenal</t>", {
-								playSound['beep_target', true];
-								playSound['beep_target', false];
-								['Preload'] call BIS_fnc_arsenal;
-								comment "['Open', [true]] call BIS_fnc_arsenal; <-- WTF IS THE DIFFERENCE?";
-								['Open', true] spawn BIS_fnc_arsenal;
-								0 = [] spawn {
-									for '_i'
-									from 1 to 12 do {
-										(format['arsenalNotification%1', _i]) cutFadeOut 0;
-									};
-									'arsenalNotification1'
-									cutText["<br/><t color='#00ff00' size='2.1' shadow='2' font='puristaMedium'>AIO Arsenal</t>", "PLAIN DOWN", -1, true, true];
-									uiSleep 1;
-									if !(isNull findDisplay - 1) then {
-										'arsenalNotification2'
-										cutFadeOut 0;
-										'arsenalNotification2'
-										cutText["<br/><br/><br/><t color='#00a6ff' size='1.2' shadow='2' font='puristaSemiBold'>by <t color='#00c9ff'>M9-SD</t>", "PLAIN DOWN", -1, true, true];
-									};
-									uiSleep 7;
-									'arsenalNotification1'
-									cutFadeOut 2.1;
-									'arsenalNotification2'
-									cutFadeOut 2.1;
-								};
-								private _arsenalAnims = [{
-									player playActionNow "Salute";
-								}, {
-									[player, 'acts_civilidle_1'] remoteExec['switchMove'];
-								}, {
-									[player, 'acts_civilListening_2'] remoteExec['switchMove'];
-								}, {
-									[player, 'acts_commenting_on_fight_loop'] remoteExec['switchMove'];
-								}, {
-									[player, 'acts_gallery_visitor_01'] remoteExec['switchMove'];
-								}, {
-									[player, 'acts_gallery_visitor_02'] remoteExec['switchMove'];
-								}, {
-									[player, 'acts_hilltop_calibration_loop'] remoteExec['switchMove'];
-								}, {
-									[player, 'acts_kore_talkingoverradio_loop'] remoteExec['switchMove'];
-								}, {
-									[player, 'acts_staticPose_photo'] remoteExec['switchMove'];
-								}, {
-									player playActionNow 'gear';
-								}, {
-									[player, 'Acts_Taking_Cover_From_Jets'] remoteExec['switchMove'];
-								}, {
-									[player, 'Acts_standingSpeakingUnarmed'] remoteExec['switchMove'];
-								}, {
-									player playMoveNow 'acts_Mentor_Freeing_Player';
-								}, {
-									[player, 'acts_kore_talkingOverRadio_In'] remoteExec['switchMove'];
-								}, {
-									[player, 'acts_kore_idleNoWeapon_In'] remoteExec['switchMove'];
-								}, {
-									[player, 'Acts_JetsOfficerSpilling'] remoteExec['switchMove'];
-								}, {
-									player playMoveNow 'Acts_Hilltop_Calibration_Pointing_Left';
-								}, {
-									player playMoveNow 'Acts_Hilltop_Calibration_Pointing_Right';
-								}, {
-									[player, 'Acts_Grieving'] remoteExec['switchMove'];
-								}];
-								private _arsenalAnimsAdd =
-								switch (currentWeapon player) do {
-									case '':{
-											[]
-										};
-									case (primaryWeapon player):{
-											[{
-												[player, 'acts_briefing_SA_loop'] remoteExec['switchMove'];
-											}, {
-												[player, 'acts_getAttention_loop'] remoteExec['switchMove'];
-											}, {
-												[player, 'acts_millerIdle'] remoteExec['switchMove'];
-											}, {
-												player playMoveNow 'Acts_SupportTeam_Right_ToKneelLoop';
-											}, {
-												player playMoveNow 'Acts_SupportTeam_Left_ToKneelLoop';
-											}, {
-												player playMoveNow 'Acts_SupportTeam_Front_ToKneelLoop';
-											}, {
-												player playMoveNow 'Acts_SupportTeam_Back_ToKneelLoop';
-											}, {
-												[player, 'Acts_starGazer'] remoteExec['switchMove'];
-											}, {
-												player playMoveNow 'acts_RU_briefing_Turn';
-											}, {
-												player playMoveNow 'acts_RU_briefing_point';
-											}, {
-												player playMoveNow 'acts_RU_briefing_point_tl';
-											}, {
-												player playMoveNow 'acts_RU_briefing_move';
-											}, {
-												[player, 'acts_rifle_operations_zeroing'] remoteExec['switchMove'];
-											}, {
-												player playMoveNow 'acts_rifle_operations_right';
-											}, {
-												player playMoveNow 'acts_rifle_operations_left';
-											}, {
-												player playMoveNow 'acts_rifle_operations_front';
-											}, {
-												player playMoveNow 'acts_rifle_operations_checking_chamber';
-											}, {
-												player playMoveNow 'acts_rifle_operations_barrel';
-											}, {
-												player playMoveNow 'acts_rifle_operations_back';
-											}, {
-												player playMoveNow 'acts_pointing_up';
-											}, {
-												player playMoveNow 'acts_pointing_down';
-											}, {
-												player playMoveNow 'acts_peering_up';
-											}, {
-												player playMoveNow 'acts_peering_down';
-											}, {
-												player playMoveNow 'acts_peering_front';
-											}, {
-												[player, 'Acts_Helping_Wake_Up_1'] remoteExec['switchMove'];
-											}]
-										};
-									case (handgunWeapon player):{
-											[{
-												[player, 'acts_examining_device_player'] remoteExec['switchMove'];
-											}, {
-												[player, 'acts_executioner_standingloop'] remoteExec['switchMove'];
-											}, {
-												player playMoveNow 'Acts_ViperMeeting_A_End';
-											}, {
-												player playMoveNow 'Acts_UGV_Jamming_Loop';
-											}, {
-												player playMoveNow 'Acts_starterPistol_Fire';
-											}]
-										};
-									default {
-										[]
-									};
-								};
-								_arsenalAnims = _arsenalAnims + _arsenalAnimsAdd;
-								private _playAnim = selectRandom _arsenalAnims;
-								call _playAnim;
-								if !(isNil "M9SD_EH_ResetPlayerAnimsOnArsenalClosed") then {
-									(findDisplay 46) displayRemoveEventHandler['keyDown', M9SD_EH_ResetPlayerAnimsOnArsenalClosed];
-								};
-								M9SD_EH_ResetPlayerAnimsOnArsenalClosed = (findDisplay 46) displayAddEventHandler['keyDown', {
-									params["_displayOrControl", "_key", "_shift", "_ctrl", "_alt"];
-									private _w = 17;
-									private _a = 30;
-									private _s = 31;
-									private _d = 32;
-									private _keys = [_w, _a, _s, _d];
-									if (_key in _keys) then {
-										comment
-											" 
-										playSound['addItemOK', true];
-										playSound['addItemOK', false];
-										"; 
-										if !(isNil "M9SD_EH_ResetPlayerAnimsOnArsenalClosed") then {
-											(findDisplay 46) displayRemoveEventHandler['keyDown', M9SD_EH_ResetPlayerAnimsOnArsenalClosed];
-										};
-										player enableSimulation true;
-										player playActionNow '';
-										player playMoveNow '';
-										player switchMove '';
-										if (isMultiplayer) then {
-											[player, ''] remoteExec['switchMove']
+						deleteVehicle _M9SD_AIO_SupplyBox;
+						deleteVehicle _M9SD_AIO_HelipadLight;
+						deleteVehicle _M9SD_AIO_glowLight1;
+					}] remoteExec['spawn', 2];
+					clearWeaponCargoGlobal M9SD_AIO_SupplyBox;
+					clearBackpackCargoGlobal M9SD_AIO_SupplyBox;
+					clearMagazineCargoGlobal M9SD_AIO_SupplyBox;
+					clearItemCargoGlobal M9SD_AIO_SupplyBox;
+				} else {
+					M9SD_AIO_SupplyBox = _entity;
+				};
+				if (isNull M9SD_AIO_SupplyBox) exitWith {};
+
+				["AmmoboxInit", [M9SD_AIO_SupplyBox, true]] call BIS_fnc_arsenal;
+				publicVariable 'M9SD_AIO_SupplyBox';
+				M9SD_fnc_addSmallArsenalActions = {
+					params[['_supplyCrate', objNull]];
+					if (isNull _supplyCrate) exitWith {};
+					if (_supplyCrate getVariable['M9SD_hasArsenalActions', false]) exitWith {};
+					_supplyCrate setVariable['M9SD_hasArsenalActions', true, true];
+					if (isNil 'M9SD_AIOArsenal_JIPCount') then {
+						M9SD_AIOArsenal_JIPCount = 0;
+					};
+					M9SD_AIOArsenal_JIPCount = M9SD_AIOArsenal_JIPCount + 1;
+					publicVariable 'M9SD_AIOArsenal_JIPCount';
+					private _uniqueJIP = format['M9SD_JIP_AIOArsenalActions_%1', M9SD_AIOArsenal_JIPCount];
+					[
+						[_supplyCrate, _uniqueJIP], {
+							if (!hasInterface) exitWith {};
+							params[['_supplyCrate', objNull], ['_uniqueJIP', '']];
+							if (isNull _supplyCrate) exitWith {
+								remoteExec['', _uniqueJIP]
+							};
+							_supplyCrate addAction[
+								"<t color='#FFFFFF' size='1.2'><img image='a3\ui_f\data\logos\a_64_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Full Arsenal</t>", {
+									playSound['beep_target', true];
+									playSound['beep_target', false];
+									['Preload'] call BIS_fnc_arsenal;
+									comment "['Open', [true]] call BIS_fnc_arsenal; <-- WTF IS THE DIFFERENCE?";
+									['Open', true] spawn BIS_fnc_arsenal;
+									0 = [] spawn {
+										for '_i'
+										from 1 to 12 do {
+											(format['arsenalNotification%1', _i]) cutFadeOut 0;
 										};
 										'arsenalNotification1'
-										cutFadeOut 0;
-										'arsenalNotification2'
-										cutFadeOut 0;
-										comment
-											" 
-										playSound['hintCollapse', true];
-										playSound['hintCollapse', false];
-										"; 
-									};
-								}];
-								playSound['hintExpand', true];
-								playSound['hintExpand', false];
-							}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
-						];
-						_supplyCrate addAction[
-							"<t color='#FFFFFF' size='1.2'><img image='\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\rearm_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Quick Rearm</t>", {
-								playSound['hintExpand', true];
-								playSound['hintExpand', false];
-								player playActionNow 'putdown';
-								comment "player action ['rearm', arsenal];";
-								comment "reload player;";
-								0 = [] spawn {
-									for '_i'
-									from 1 to 11 do {
-										(format['arsenalNotification%1', _i]) cutFadeOut 0;
-									};
-									'arsenalNotification7'
-									cutFadeOut 0;
-									'arsenalNotification7'
-									cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Rearming...</t>", "PLAIN DOWN", -1, true, true];
-									uiSleep 1.4;
-									'arsenalNotification7'
-									cutFadeOut 0;
-									'arsenalNotification7'
-									cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Rearmed.</t>", "PLAIN DOWN", -1, true, true];
-									uiSleep 3.5;
-									'arsenalNotification7'
-									cutFadeOut 0.35;
-								};
-								comment "Put mags in weapons";
-								private _primaryMagsLoaded = primaryWeaponMagazine player;
-								private _secondaryMagsLoaded = secondaryWeaponMagazine player;
-								private _handgunMagsLoaded = handgunMagazine player;
-								if (_primaryMagsLoaded isEqualTo[]) then {
-									private _weapon = primaryWeapon player;
-									if (_weapon != '') then {
-										private _magazines = getArray(configFile / "CfgWeapons" / _weapon / "magazines");
-										private _magazineClass = _magazines# 0;
-										player addPrimaryWeaponItem _magazineClass;
-									};
-								};
-								if (_secondaryMagsLoaded isEqualTo[]) then {
-									private _weapon = secondaryWeapon player;
-									if (_weapon != '') then {
-										private _magazines = getArray(configFile / "CfgWeapons" / _weapon / "magazines");
-										private _magazineClass = _magazines# 0;
-										player addSecondaryWeaponItem _magazineClass;
-									};
-								};
-								if (_handgunMagsLoaded isEqualTo[]) then {
-									private _weapon = handgunWeapon player;
-									if (_weapon != '') then {
-										private _magazines = getArray(configFile / "CfgWeapons" / _weapon / "magazines");
-										private _magazineClass = _magazines# 0;
-										player addHandgunItem _magazineClass;
-									};
-								};
-								comment "Refill magazines";
-								_primaryMagsLoaded = primaryWeaponMagazine player;
-								_secondaryMagsLoaded = secondaryWeaponMagazine player;
-								_handgunMagsLoaded = handgunMagazine player; {
-									player addPrimaryWeaponItem _x;
-								}
-								forEach _primaryMagsLoaded; {
-									player addSecondaryWeaponItem _x;
-								}
-								forEach _secondaryMagsLoaded; {
-									player addHandgunItem _x;
-								}
-								forEach _handgunMagsLoaded;
-								private _allMags = [];
-								private _allUniqueMags = []; {
-									private _magData = _x;
-									private _cName = _x# 0;
-									private _rCount = _x# 1;
-									private _isLoaded = _x# 2;
-									private _mType = _x# 3;
-									private _mLocation = _x# 4;
-									comment "private _maxAmmo = getNumber (configfile >> 'CfgMagazines' >> _cName >> 'count');";
-									_allMags pushBack _cName;
-									_allUniqueMags pushBackUnique _cName;
-								}
-								forEach(magazinesAmmoFull player); {
-									private _thisMag = _x;
-									private _mCount = 0; {
-										if (_thisMag == _x) then {
-											_mCount = _mCount + 1;
+										cutText["<br/><t color='#00ff00' size='2.1' shadow='2' font='puristaMedium'>AIO Arsenal</t>", "PLAIN DOWN", -1, true, true];
+										uiSleep 1;
+										if !(isNull findDisplay - 1) then {
+											'arsenalNotification2'
+											cutFadeOut 0;
+											'arsenalNotification2'
+											cutText["<br/><br/><br/><t color='#00a6ff' size='1.2' shadow='2' font='puristaSemiBold'>by <t color='#00c9ff'>M9-SD</t>", "PLAIN DOWN", -1, true, true];
 										};
+										uiSleep 7;
+										'arsenalNotification1'
+										cutFadeOut 2.1;
+										'arsenalNotification2'
+										cutFadeOut 2.1;
+									};
+									private _arsenalAnims = [{
+										player playActionNow "Salute";
+									}, {
+										[player, 'acts_civilidle_1'] remoteExec['switchMove'];
+									}, {
+										[player, 'acts_civilListening_2'] remoteExec['switchMove'];
+									}, {
+										[player, 'acts_commenting_on_fight_loop'] remoteExec['switchMove'];
+									}, {
+										[player, 'acts_gallery_visitor_01'] remoteExec['switchMove'];
+									}, {
+										[player, 'acts_gallery_visitor_02'] remoteExec['switchMove'];
+									}, {
+										[player, 'acts_hilltop_calibration_loop'] remoteExec['switchMove'];
+									}, {
+										[player, 'acts_kore_talkingoverradio_loop'] remoteExec['switchMove'];
+									}, {
+										[player, 'acts_staticPose_photo'] remoteExec['switchMove'];
+									}, {
+										player playActionNow 'gear';
+									}, {
+										[player, 'Acts_Taking_Cover_From_Jets'] remoteExec['switchMove'];
+									}, {
+										[player, 'Acts_standingSpeakingUnarmed'] remoteExec['switchMove'];
+									}, {
+										player playMoveNow 'acts_Mentor_Freeing_Player';
+									}, {
+										[player, 'acts_kore_talkingOverRadio_In'] remoteExec['switchMove'];
+									}, {
+										[player, 'acts_kore_idleNoWeapon_In'] remoteExec['switchMove'];
+									}, {
+										[player, 'Acts_JetsOfficerSpilling'] remoteExec['switchMove'];
+									}, {
+										player playMoveNow 'Acts_Hilltop_Calibration_Pointing_Left';
+									}, {
+										player playMoveNow 'Acts_Hilltop_Calibration_Pointing_Right';
+									}, {
+										[player, 'Acts_Grieving'] remoteExec['switchMove'];
+									}];
+									private _arsenalAnimsAdd =
+									switch (currentWeapon player) do {
+										case '':{
+												[]
+											};
+										case (primaryWeapon player):{
+												[{
+													[player, 'acts_briefing_SA_loop'] remoteExec['switchMove'];
+												}, {
+													[player, 'acts_getAttention_loop'] remoteExec['switchMove'];
+												}, {
+													[player, 'acts_millerIdle'] remoteExec['switchMove'];
+												}, {
+													player playMoveNow 'Acts_SupportTeam_Right_ToKneelLoop';
+												}, {
+													player playMoveNow 'Acts_SupportTeam_Left_ToKneelLoop';
+												}, {
+													player playMoveNow 'Acts_SupportTeam_Front_ToKneelLoop';
+												}, {
+													player playMoveNow 'Acts_SupportTeam_Back_ToKneelLoop';
+												}, {
+													[player, 'Acts_starGazer'] remoteExec['switchMove'];
+												}, {
+													player playMoveNow 'acts_RU_briefing_Turn';
+												}, {
+													player playMoveNow 'acts_RU_briefing_point';
+												}, {
+													player playMoveNow 'acts_RU_briefing_point_tl';
+												}, {
+													player playMoveNow 'acts_RU_briefing_move';
+												}, {
+													[player, 'acts_rifle_operations_zeroing'] remoteExec['switchMove'];
+												}, {
+													player playMoveNow 'acts_rifle_operations_right';
+												}, {
+													player playMoveNow 'acts_rifle_operations_left';
+												}, {
+													player playMoveNow 'acts_rifle_operations_front';
+												}, {
+													player playMoveNow 'acts_rifle_operations_checking_chamber';
+												}, {
+													player playMoveNow 'acts_rifle_operations_barrel';
+												}, {
+													player playMoveNow 'acts_rifle_operations_back';
+												}, {
+													player playMoveNow 'acts_pointing_up';
+												}, {
+													player playMoveNow 'acts_pointing_down';
+												}, {
+													player playMoveNow 'acts_peering_up';
+												}, {
+													player playMoveNow 'acts_peering_down';
+												}, {
+													player playMoveNow 'acts_peering_front';
+												}, {
+													[player, 'Acts_Helping_Wake_Up_1'] remoteExec['switchMove'];
+												}]
+											};
+										case (handgunWeapon player):{
+												[{
+													[player, 'acts_examining_device_player'] remoteExec['switchMove'];
+												}, {
+													[player, 'acts_executioner_standingloop'] remoteExec['switchMove'];
+												}, {
+													player playMoveNow 'Acts_ViperMeeting_A_End';
+												}, {
+													player playMoveNow 'Acts_UGV_Jamming_Loop';
+												}, {
+													player playMoveNow 'Acts_starterPistol_Fire';
+												}]
+											};
+										default {
+											[]
+										};
+									};
+									_arsenalAnims = _arsenalAnims + _arsenalAnimsAdd;
+									private _playAnim = selectRandom _arsenalAnims;
+									call _playAnim;
+									if !(isNil "M9SD_EH_ResetPlayerAnimsOnArsenalClosed") then {
+										(findDisplay 46) displayRemoveEventHandler['keyDown', M9SD_EH_ResetPlayerAnimsOnArsenalClosed];
+									};
+									M9SD_EH_ResetPlayerAnimsOnArsenalClosed = (findDisplay 46) displayAddEventHandler['keyDown', {
+										params["_displayOrControl", "_key", "_shift", "_ctrl", "_alt"];
+										private _w = 17;
+										private _a = 30;
+										private _s = 31;
+										private _d = 32;
+										private _keys = [_w, _a, _s, _d];
+										if (_key in _keys) then {
+											comment
+												" 
+											playSound['addItemOK', true];
+											playSound['addItemOK', false];
+											"; 
+											if !(isNil "M9SD_EH_ResetPlayerAnimsOnArsenalClosed") then {
+												(findDisplay 46) displayRemoveEventHandler['keyDown', M9SD_EH_ResetPlayerAnimsOnArsenalClosed];
+											};
+											player enableSimulation true;
+											player playActionNow '';
+											player playMoveNow '';
+											player switchMove '';
+											if (isMultiplayer) then {
+												[player, ''] remoteExec['switchMove']
+											};
+											'arsenalNotification1'
+											cutFadeOut 0;
+											'arsenalNotification2'
+											cutFadeOut 0;
+											comment
+												" 
+											playSound['hintCollapse', true];
+											playSound['hintCollapse', false];
+											"; 
+										};
+									}];
+									playSound['hintExpand', true];
+									playSound['hintExpand', false];
+								}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
+							];
+							
+							
+							
+							_supplyCrate addAction[
+								"<t color='#FFFFFF' size='1.2'><img image='\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\rearm_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Quick Rearm</t>", {
+									playSound['hintExpand', true];
+									playSound['hintExpand', false];
+									player playActionNow 'putdown';
+									comment "player action ['rearm', arsenal];";
+									comment "reload player;";
+									0 = [] spawn {
+										for '_i'
+										from 1 to 11 do {
+											(format['arsenalNotification%1', _i]) cutFadeOut 0;
+										};
+										'arsenalNotification7'
+										cutFadeOut 0;
+										'arsenalNotification7'
+										cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Rearming...</t>", "PLAIN DOWN", -1, true, true];
+										uiSleep 1.4;
+										'arsenalNotification7'
+										cutFadeOut 0;
+										'arsenalNotification7'
+										cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Rearmed.</t>", "PLAIN DOWN", -1, true, true];
+										uiSleep 3.5;
+										'arsenalNotification7'
+										cutFadeOut 0.35;
+									};
+									comment "Put mags in weapons";
+									private _primaryMagsLoaded = primaryWeaponMagazine player;
+									private _secondaryMagsLoaded = secondaryWeaponMagazine player;
+									private _handgunMagsLoaded = handgunMagazine player;
+									if (_primaryMagsLoaded isEqualTo[]) then {
+										private _weapon = primaryWeapon player;
+										if (_weapon != '') then {
+											private _magazines = getArray(configFile / "CfgWeapons" / _weapon / "magazines");
+											private _magazineClass = _magazines# 0;
+											player addPrimaryWeaponItem _magazineClass;
+										};
+									};
+									if (_secondaryMagsLoaded isEqualTo[]) then {
+										private _weapon = secondaryWeapon player;
+										if (_weapon != '') then {
+											private _magazines = getArray(configFile / "CfgWeapons" / _weapon / "magazines");
+											private _magazineClass = _magazines# 0;
+											player addSecondaryWeaponItem _magazineClass;
+										};
+									};
+									if (_handgunMagsLoaded isEqualTo[]) then {
+										private _weapon = handgunWeapon player;
+										if (_weapon != '') then {
+											private _magazines = getArray(configFile / "CfgWeapons" / _weapon / "magazines");
+											private _magazineClass = _magazines# 0;
+											player addHandgunItem _magazineClass;
+										};
+									};
+									comment "Refill magazines";
+									_primaryMagsLoaded = primaryWeaponMagazine player;
+									_secondaryMagsLoaded = secondaryWeaponMagazine player;
+									_handgunMagsLoaded = handgunMagazine player; {
+										player addPrimaryWeaponItem _x;
 									}
-									forEach _allMags;
-									for '_i'
-									from 1 to _mCount do {
-										player removeMagazine _thisMag;
-									};
-									for '_i'
-									from 1 to _mCount do {
+									forEach _primaryMagsLoaded; {
+										player addSecondaryWeaponItem _x;
+									}
+									forEach _secondaryMagsLoaded; {
+										player addHandgunItem _x;
+									}
+									forEach _handgunMagsLoaded;
+									private _allMags = [];
+									private _allUniqueMags = []; {
+										private _magData = _x;
+										private _cName = _x# 0;
+										private _rCount = _x# 1;
+										private _isLoaded = _x# 2;
+										private _mType = _x# 3;
+										private _mLocation = _x# 4;
+										comment "private _maxAmmo = getNumber (configfile >> 'CfgMagazines' >> _cName >> 'count');";
+										_allMags pushBack _cName;
+										_allUniqueMags pushBackUnique _cName;
+									}
+									forEach(magazinesAmmoFull player); {
+										private _thisMag = _x;
+										private _mCount = 0; {
+											if (_thisMag == _x) then {
+												_mCount = _mCount + 1;
+											};
+										}
+										forEach _allMags;
+										for '_i'
+										from 1 to _mCount do {
+											player removeMagazine _thisMag;
+										};
+										for '_i'
+										from 1 to _mCount do {
+											player addMagazine _thisMag;
+										};
+										comment "Add +1 mag";
 										player addMagazine _thisMag;
+									}
+									forEach _allUniqueMags;
+									comment "Add Magazines";
+									comment "TODO: How can I only add the mags if there is available space and fatigue?";
+									comment "For now I will add 1 of each mag.";
+									comment "Add FAK";
+									if !('FirstAidKit' in (items player)) then {
+										if ((getFatigue player) <= 0.9) then {
+											player addItem 'FirstAidKit';
+										};
 									};
-									comment "Add +1 mag";
-									player addMagazine _thisMag;
-								}
-								forEach _allUniqueMags;
-								comment "Add Magazines";
-								comment "TODO: How can I only add the mags if there is available space and fatigue?";
-								comment "For now I will add 1 of each mag.";
-								comment "Add FAK";
-								if !('FirstAidKit' in (items player)) then {
-									if ((getFatigue player) <= 0.9) then {
-										player addItem 'FirstAidKit';
+									comment "Add Smoke";
+									if !('SmokeShell' in (magazines player)) then {
+										if ((getFatigue player) <= 0.9) then {
+											player addMagazine 'SmokeShell';
+										};
 									};
-								};
-								comment "Add Smoke";
-								if !('SmokeShell' in (magazines player)) then {
-									if ((getFatigue player) <= 0.9) then {
-										player addMagazine 'SmokeShell';
+									comment "Add Grenade";
+									if !('HandGrenade' in (magazines player)) then {
+										if ((getFatigue player) <= 0.9) then {
+											player addMagazine 'HandGrenade';
+										};
 									};
-								};
-								comment "Add Grenade";
-								if !('HandGrenade' in (magazines player)) then {
-									if ((getFatigue player) <= 0.9) then {
-										player addMagazine 'HandGrenade';
-									};
-								};
-							}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
-						];
-						_supplyCrate addAction[
-							"<t color='#FFFFFF' size='1.2'><img image='\A3\ui_f\data\map\diary\icons\taskCustom_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Copy Loadout</t>", {
-								playSound['beep_target', true];
-								playSound['beep_target', false];
-								player playmovenow 'AinvPknlMstpSnonWnonDnon_1';
-								if (false) then {
-									private _nearMen = nearestObjects[player, ['Man'], 21];
-									if ((count _nearMen) <= 1) exitWith {
-										playSound['AddItemFailed', true];
-										playSound['AddItemFailed', false];
-										0 = [] spawn {
+								}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
+							];
+							
+								
+							_supplyCrate addAction[
+								"<t color='#FFFFFF' size='1.2'><img image='\A3\ui_f\data\map\diary\icons\taskCustom_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Copy Loadout</t>", {
+									playSound['beep_target', true];
+									playSound['beep_target', false];
+									player playmovenow 'AinvPknlMstpSnonWnonDnon_1';
+									if (false) then {
+										private _nearMen = nearestObjects[player, ['Man'], 21];
+										if ((count _nearMen) <= 1) exitWith {
+											playSound['AddItemFailed', true];
+											playSound['AddItemFailed', false];
+											0 = [] spawn {
+												for '_i'
+												from 1 to 12 do {
+													(format['arsenalNotification%1', _i]) cutFadeOut 0;
+												};
+												'arsenalNotification8'
+												cutFadeOut 0;
+												'arsenalNotification8'
+												cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>ERROR:<br/>No unit is close enough.</t>", "PLAIN DOWN", -1, true, true];
+												uiSleep 3.5;
+												'arsenalNotification8'
+												cutFadeOut 0.35;
+											};
+										};
+										private _nearestMan = _nearMen# 1;
+										private _loadout = getUnitLoadout _nearestMan;
+										player setUnitLoadout _loadout;
+										private _unitName = name _nearestMan;
+										private _notifText = format["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Nearest unitâ€™s loadout copied:<br/><br/><t color='#FFFFFF' font='puristaSemiBold'>â€œ%1â€</t>", _unitName];
+										0 = _notifText spawn {
 											for '_i'
 											from 1 to 12 do {
 												(format['arsenalNotification%1', _i]) cutFadeOut 0;
@@ -6853,672 +6950,1326 @@ MAZ_EZM_fnc_initFunction = {
 											'arsenalNotification8'
 											cutFadeOut 0;
 											'arsenalNotification8'
-											cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>ERROR:<br/>No unit is close enough.</t>", "PLAIN DOWN", -1, true, true];
+											cutText[_this, "PLAIN DOWN", -1, true, true];
 											uiSleep 3.5;
 											'arsenalNotification8'
 											cutFadeOut 0.35;
 										};
-									};
-									private _nearestMan = _nearMen# 1;
-									private _loadout = getUnitLoadout _nearestMan;
-									player setUnitLoadout _loadout;
-									private _unitName = name _nearestMan;
-									private _notifText = format["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Nearest unitâ€™s loadout copied:<br/><br/><t color='#FFFFFF' font='puristaSemiBold'>â€œ%1â€</t>", _unitName];
-									0 = _notifText spawn {
-										for '_i'
-										from 1 to 12 do {
-											(format['arsenalNotification%1', _i]) cutFadeOut 0;
-										};
-										'arsenalNotification8'
-										cutFadeOut 0;
-										'arsenalNotification8'
-										cutText[_this, "PLAIN DOWN", -1, true, true];
-										uiSleep 3.5;
-										'arsenalNotification8'
-										cutFadeOut 0.35;
-									};
-									playSound['hintExpand', true];
-									playSound['hintExpand', false];
-								} else {
-									[] spawn {
-										with uinamespace do {
-											disableSerialization;
-											comment "_display = (findDisplay 46) createDisplay 'RscDisplayEmpty';";
-											createDialog 'RscDisplayEmpty';
-											_display = findDisplay - 1;
-											missionNamespace setVariable['LP_loadout_01', getUnitLoadout player];
-											missionNamespace setVariable['LP_loadoutApplied', false];
-											showChat true;
-											_display displayAddEventHandler['Unload', {
-												params["_display", "_exitCode"];
-												[] spawn {
-													if (missionNamespace getVariable['LP_loadoutApplied', false]) exitWith {};
-													player setUnitLoadout(missionNamespace getVariable['LP_loadout_01', getUnitLoadout player]);
-												};
-												playSound['hintExpand', true];
-												playSound['hintExpand', false];
-											}];
-											
-											player switchCamera 'external';
-											
-											_ctrl = _display ctrlCreate['IGUIBack', -1];
-											_ctrl ctrlSetPosition[0.159687 * safezoneW + safezoneX, 0.313 * safezoneH + safezoneY, 0.128906 * safezoneW, 0.363 * safezoneH];
-											_ctrl ctrlSetBackgroundColor[0.0, 0.0, 0, 0.8];
-											_ctrl ctrlSetFade 1;
-											_ctrl ctrlCommit 0;
-											_ctrl ctrlSetFade 0;
-											_ctrl ctrlCommit 1;
-											_ctrl = _display ctrlCreate['RscStructuredText', -1];
-											_ctrl ctrlSetPosition[0.159687 * safezoneW + safezoneX, 0.269 * safezoneH + safezoneY, 0.128906 * safezoneW, 0.033 * safezoneH];
-											_ctrl ctrlSetBackgroundColor[0.8, 0.5, 0.1, 1];
-											_ctrl ctrlSetStructuredText parseText format["<t size='%1' shadow='2'>%2<t/>", safezoneH * 0.5 * 1.5, "  Loadout Previewer"];
-											_ctrl ctrlSetFade 1;
-											_ctrl ctrlCommit 0;
-											_ctrl ctrlSetFade 0;
-											_ctrl ctrlCommit 1;
-											_ctrl = _display ctrlCreate['RscButtonMenu', -1];
-											_ctrl ctrlSetPosition[0.267969 * safezoneW + safezoneX, 0.269 * safezoneH + safezoneY, 0.020625 * safezoneW, 0.033 * safezoneH];
-											_ctrl ctrlSetBackgroundColor[0.0, 0.0, 0.0, 0.0];
-											_ctrl ctrlSetStructuredText parseText format["<t size='%1' align='center' shadow='0'>%2<t/>", safezoneH * 0.5 * 1.5, "X"];
-											_ctrl ctrlAddEventHandler['ButtonClick', {
-												params['_ctrl'];
-												_disp = ctrlParent _ctrl;
+										playSound['hintExpand', true];
+										playSound['hintExpand', false];
+									} else {
+										[] spawn {
+											with uinamespace do {
+												disableSerialization;
+												comment "_display = (findDisplay 46) createDisplay 'RscDisplayEmpty';";
+												createDialog 'RscDisplayEmpty';
+												_display = findDisplay - 1;
+												missionNamespace setVariable['LP_loadout_01', getUnitLoadout player];
 												missionNamespace setVariable['LP_loadoutApplied', false];
-												_disp closeDisplay 0;
-											}];
-											_ctrl ctrlSetFade 1;
-											_ctrl ctrlCommit 0;
-											_ctrl ctrlSetFade 0;
-											_ctrl ctrlCommit 1;
-											_ctrl = _display ctrlCreate['RscListbox', -1];
-											_ctrl ctrlSetPosition[0.164844 * safezoneW + safezoneX, 0.324 * safezoneH + safezoneY, 0.118594 * safezoneW, 0.297 * safezoneH];
-											_tooltip = "Click to preview loadout"; {
-												_name = name _x;
-												_index = _ctrl lbAdd _name;
-												_ctrl lbSetTooltip[_index, format["Click to preview %1's loadout", _name]];
-											}
-											forEach allPlayers;
-											_ctrl ctrlAddEventHandler['LBSelChanged', {
-												params["_control", "_selectedIndex"];
-												_name = _control lbText _selectedIndex; {
-													if (name _x == _name) then {
-														player setUnitLoadout(getUnitLoadout _x);
+												showChat true;
+												_display displayAddEventHandler['Unload', {
+													params["_display", "_exitCode"];
+													[] spawn {
+														if (missionNamespace getVariable['LP_loadoutApplied', false]) exitWith {};
+														player setUnitLoadout(missionNamespace getVariable['LP_loadout_01', getUnitLoadout player]);
 													};
+													playSound['hintExpand', true];
+													playSound['hintExpand', false];
+												}];
+												
+												player switchCamera 'external';
+												
+												_ctrl = _display ctrlCreate['IGUIBack', -1];
+												_ctrl ctrlSetPosition[0.159687 * safezoneW + safezoneX, 0.313 * safezoneH + safezoneY, 0.128906 * safezoneW, 0.363 * safezoneH];
+												_ctrl ctrlSetBackgroundColor[0.0, 0.0, 0, 0.8];
+												_ctrl ctrlSetFade 1;
+												_ctrl ctrlCommit 0;
+												_ctrl ctrlSetFade 0;
+												_ctrl ctrlCommit 1;
+												_ctrl = _display ctrlCreate['RscStructuredText', -1];
+												_ctrl ctrlSetPosition[0.159687 * safezoneW + safezoneX, 0.269 * safezoneH + safezoneY, 0.128906 * safezoneW, 0.033 * safezoneH];
+												_ctrl ctrlSetBackgroundColor[0.8, 0.5, 0.1, 1];
+												_ctrl ctrlSetStructuredText parseText format["<t size='%1' shadow='2'>%2<t/>", safezoneH * 0.5 * 1.5, "  Loadout Previewer"];
+												_ctrl ctrlSetFade 1;
+												_ctrl ctrlCommit 0;
+												_ctrl ctrlSetFade 0;
+												_ctrl ctrlCommit 1;
+												_ctrl = _display ctrlCreate['RscButtonMenu', -1];
+												_ctrl ctrlSetPosition[0.267969 * safezoneW + safezoneX, 0.269 * safezoneH + safezoneY, 0.020625 * safezoneW, 0.033 * safezoneH];
+												_ctrl ctrlSetBackgroundColor[0.0, 0.0, 0.0, 0.0];
+												_ctrl ctrlSetStructuredText parseText format["<t size='%1' align='center' shadow='0'>%2<t/>", safezoneH * 0.5 * 1.5, "X"];
+												_ctrl ctrlAddEventHandler['ButtonClick', {
+													params['_ctrl'];
+													_disp = ctrlParent _ctrl;
+													missionNamespace setVariable['LP_loadoutApplied', false];
+													_disp closeDisplay 0;
+												}];
+												_ctrl ctrlSetFade 1;
+												_ctrl ctrlCommit 0;
+												_ctrl ctrlSetFade 0;
+												_ctrl ctrlCommit 1;
+												_ctrl = _display ctrlCreate['RscListbox', -1];
+												_ctrl ctrlSetPosition[0.164844 * safezoneW + safezoneX, 0.324 * safezoneH + safezoneY, 0.118594 * safezoneW, 0.297 * safezoneH];
+												_tooltip = "Click to preview loadout"; {
+													_name = name _x;
+													_index = _ctrl lbAdd _name;
+													_ctrl lbSetTooltip[_index, format["Click to preview %1's loadout", _name]];
 												}
 												forEach allPlayers;
-											}];
-											_ctrl ctrlSetFade 1;
-											_ctrl ctrlCommit 0;
-											_ctrl ctrlSetFade 0;
-											_ctrl ctrlCommit 1;
-											_ctrl lbSetCurSel 0;
-											_ctrl = _display ctrlCreate['RscButtonMenu', -1];
-											_ctrl ctrlSetPosition[0.164844 * safezoneW + safezoneX, 0.632 * safezoneH + safezoneY, 0.118594 * safezoneW, 0.033 * safezoneH];
-											_ctrl ctrlSetBackgroundColor[1, 0.6, 0.0, 1];
-											_ctrl ctrlSetStructuredText parseText format["<t size='%1' color='#000000' align='center'>%2<t/>", safezoneH * 0.5 * 1.5, "APPLY LOADOUT"];
-											_ctrl ctrlAddEventHandler['ButtonClick', {
-												params['_ctrl'];
-												_disp = ctrlParent _ctrl;
-												missionNamespace setVariable['LP_loadoutApplied', true];
-												_disp closeDisplay 0;
-												playSound['beep_target', true];
-												playSound['beep_target', false];
-												player playActionNow 'putdown';
-											}];
-											_ctrl ctrlSetFade 1;
-											_ctrl ctrlCommit 0;
-											_ctrl ctrlSetFade 0;
-											_ctrl ctrlCommit 1;
-										};;
-									};
-								};
-							}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
-						];
-						_supplyCrate addAction[
-							"<t color='#FFFFFF' size='1.2'><img image='a3\ui_f\data\igui\cfg\actions\obsolete\ui_action_gear_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Empty Loadout</t>", {
-								playSound['beep_target', true];
-								playSound['beep_target', false];
-								player playmovenow 'AinvPknlMstpSnonWnonDnon_1';
-								removeAllWeapons player;
-								removeAllItems player;
-								removeAllAssignedItems player;
-								removeUniform player;
-								removeVest player;
-								removeBackpack player;
-								removeHeadgear player;
-								removeGoggles player;
-								0 = [] spawn {
-									for '_i'
-									from 1 to 12 do {
-										(format['arsenalNotification%1', _i]) cutFadeOut 0;
-									};
-									'arsenalNotification4'
-									cutFadeOut 0;
-									'arsenalNotification4'
-									cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Loadout removed.</t>", "PLAIN DOWN", -1, true, true];
-									uiSleep 3.5;
-									'arsenalNotification4'
-									cutFadeOut 0.35;
-								};
-								playSound['hintExpand', true];
-								playSound['hintExpand', false];
-							}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
-						];
-						_supplyCrate addAction[
-							"<t color='#FFFFFF' size='1.2'><img image='a3\3den\data\displays\Display3DEN\ToolBar\save_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Save Respawn Loadout</t>", {
-								playSound['beep_target', true];
-								playSound['beep_target', false];
-								player playActionNow 'putdown';
-								[player, [missionnamespace, "M9SD_arsenalRespawnLoadout"]] call BIS_fnc_saveInventory;
-								if (!isNil "M9SD_EH_arsenalRespawnLoadout") then {
-									player removeEventHandler["Respawn", M9SD_EH_arsenalRespawnLoadout];
-								};
-								M9SD_EH_arsenalRespawnLoadout = player addEventHandler[
-									"Respawn", {
-										0 = [] spawn {
-											waitUntil {
-												(alive player)
-											};
-											sleep 0.07;
-											[player, [missionnamespace, "M9SD_arsenalRespawnLoadout"]] call BIS_fnc_loadInventory;
+												_ctrl ctrlAddEventHandler['LBSelChanged', {
+													params["_control", "_selectedIndex"];
+													_name = _control lbText _selectedIndex; {
+														if (name _x == _name) then {
+															player setUnitLoadout(getUnitLoadout _x);
+														};
+													}
+													forEach allPlayers;
+												}];
+												_ctrl ctrlSetFade 1;
+												_ctrl ctrlCommit 0;
+												_ctrl ctrlSetFade 0;
+												_ctrl ctrlCommit 1;
+												_ctrl lbSetCurSel 0;
+												_ctrl = _display ctrlCreate['RscButtonMenu', -1];
+												_ctrl ctrlSetPosition[0.164844 * safezoneW + safezoneX, 0.632 * safezoneH + safezoneY, 0.118594 * safezoneW, 0.033 * safezoneH];
+												_ctrl ctrlSetBackgroundColor[1, 0.6, 0.0, 1];
+												_ctrl ctrlSetStructuredText parseText format["<t size='%1' color='#000000' align='center'>%2<t/>", safezoneH * 0.5 * 1.5, "APPLY LOADOUT"];
+												_ctrl ctrlAddEventHandler['ButtonClick', {
+													params['_ctrl'];
+													_disp = ctrlParent _ctrl;
+													missionNamespace setVariable['LP_loadoutApplied', true];
+													_disp closeDisplay 0;
+													playSound['beep_target', true];
+													playSound['beep_target', false];
+													player playActionNow 'putdown';
+												}];
+												_ctrl ctrlSetFade 1;
+												_ctrl ctrlCommit 0;
+												_ctrl ctrlSetFade 0;
+												_ctrl ctrlCommit 1;
+											};;
 										};
-									}
-								];
-								0 = [] spawn {
-									for '_i'
-									from 1 to 12 do {
-										(format['arsenalNotification%1', _i]) cutFadeOut 0;
 									};
-									'arsenalNotification6'
-									cutFadeOut 0;
-									'arsenalNotification6'
-									cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Respawn loadout set.</t>", "PLAIN DOWN", -1, true, true];
-									uiSleep 3.5;
-									'arsenalNotification6'
-									cutFadeOut 0.35;
-								};
-								playSound['hintExpand', true];
-								playSound['hintExpand', false];
-							}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
-						];
-						_supplyCrate addAction[
-							"<t color='#FFFFFF' size='1.2'><img image='a3\3den\data\displays\Display3DEN\ToolBar\open_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Load Respawn Loadout</t>", {
-								playSound['beep_target', true];
-								playSound['beep_target', false];
-								player playActionNow 'putdown';
-								if (isNil 'M9SD_EH_arsenalRespawnLoadout') then {
-									playSound['AddItemFailed', true];
-									playSound['AddItemFailed', false];
+								}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
+							];
+							_supplyCrate addAction[
+								"<t color='#FFFFFF' size='1.2'><img image='a3\ui_f\data\igui\cfg\actions\obsolete\ui_action_gear_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Empty Loadout</t>", {
+									playSound['beep_target', true];
+									playSound['beep_target', false];
+									player playmovenow 'AinvPknlMstpSnonWnonDnon_1';
+									removeAllWeapons player;
+									removeAllItems player;
+									removeAllAssignedItems player;
+									removeUniform player;
+									removeVest player;
+									removeBackpack player;
+									removeHeadgear player;
+									removeGoggles player;
 									0 = [] spawn {
 										for '_i'
 										from 1 to 12 do {
 											(format['arsenalNotification%1', _i]) cutFadeOut 0;
 										};
-										'arsenalNotification12'
+										'arsenalNotification4'
 										cutFadeOut 0;
-										'arsenalNotification12'
-										cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>ERROR:<br/>No respawn loadout saved.</t>", "PLAIN DOWN", -1, true, true];
+										'arsenalNotification4'
+										cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Loadout removed.</t>", "PLAIN DOWN", -1, true, true];
 										uiSleep 3.5;
-										'arsenalNotification12'
-										cutFadeOut 0.35;
-									};
-								} else {
-									[player, [missionnamespace, "M9SD_arsenalRespawnLoadout"]] call BIS_fnc_loadInventory;
-									0 = [] spawn {
-										for '_i'
-										from 1 to 12 do {
-											(format['arsenalNotification%1', _i]) cutFadeOut 0;
-										};
-										'arsenalNotification12'
-										cutFadeOut 0;
-										'arsenalNotification12'
-										cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Respawn loadout applied.</t>", "PLAIN DOWN", -1, true, true];
-										uiSleep 3.5;
-										'arsenalNotification12'
+										'arsenalNotification4'
 										cutFadeOut 0.35;
 									};
 									playSound['hintExpand', true];
 									playSound['hintExpand', false];
-								};
-							}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
-						];
-						_supplyCrate addAction[
-							"<t color='#FFFFFF' size='1.2'><img image='\a3\3den\data\Cfg3DEN\History\deleteItems_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Delete Respawn Loadout</t>", {
-								playSound['beep_target', true];
-								playSound['beep_target', false];
-								player playActionNow 'putdown';
-								if (!isNil "M9SD_EH_arsenalRespawnLoadout") then {
-									player removeEventHandler["Respawn", M9SD_EH_arsenalRespawnLoadout];
-								};
-								0 = [] spawn {
-									for '_i'
-									from 1 to 12 do {
-										(format['arsenalNotification%1', _i]) cutFadeOut 0;
+								}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
+							];
+							_supplyCrate addAction[
+								"<t color='#FFFFFF' size='1.2'><img image='a3\3den\data\displays\Display3DEN\ToolBar\save_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Save Respawn Loadout</t>", {
+									playSound['beep_target', true];
+									playSound['beep_target', false];
+									player playActionNow 'putdown';
+									[player, [missionnamespace, "M9SD_arsenalRespawnLoadout"]] call BIS_fnc_saveInventory;
+									if (!isNil "M9SD_EH_arsenalRespawnLoadout") then {
+										player removeEventHandler["Respawn", M9SD_EH_arsenalRespawnLoadout];
 									};
-									'arsenalNotification5'
-									cutFadeOut 0;
-									'arsenalNotification5'
-									cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Respawn loadout disabled.</t>", "PLAIN DOWN", -1, true, true];
-									uiSleep 3.5;
-									'arsenalNotification5'
-									cutFadeOut 0.35;
-								};
-								playSound['hintExpand', true];
-								playSound['hintExpand', false];
-							}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
-						];
-						_supplyCrate addAction[
-							"<t color='#FFFFFF' size='1.2'><img image='\A3\ui_f\data\igui\cfg\cursors\select_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Edit Group Loadouts</t>", {
-								comment "playSound ['beep_target', true]; ";
-								playSound['beep_target', false];
-								if (leader group player == player) then {
-									player playActionNow 'GestureHi';
-									JAM_fnc_openGroupArsenal = {
-										findDisplay 312 closeDisplay 0;
-										findDisplay 49 closeDisplay 0;
-										["Preload"] call BIS_fnc_arsenal;
-										GAthisWorldSize = worldSize;
-										GAthisPosX = random GAthisWorldSize;
-										GAthisPosY = random GAthisWorldSize;
-										GAthisPosZ = 1999;
-										GAthisCenterPos = [GAthisPosX, GAthisPosY, GAthisPosZ];
-										GAthisCenterObj = createSimpleObject['Box_NATO_AmmoVeh_F', GAthisCenterPos, true];
-										GAthisAgent = createAgent[typeOf player, GAthisCenterPos, [], 0, "FORM"];
-										GAthisAgent setVariable['JAM_isEditable', false, true];
-										GAthisAgent setUnitLoadout(getUnitLoadout JAM_groupArsenalTarget);
-										GAthisAgent allowDamage false;
-										GAthisAgent attachTo[GAthisCenterObj, [0, 0, 0.7]];
-										GAthisVR = "Land_VR_Block_04_F"
-										createVehicleLocal GAthisCenterPos;
-										GAthisVR attachTo[GAthisCenterObj, [0, 0, -5.29]];
-										GAthisVR setObjectTexture[0, 'A3\map_vr\data\picturemap_ca.paa'];
-										GAthisVR2 = "Land_VR_Block_04_F"
-										createVehicleLocal GAthisCenterPos;
-										GAthisVR2 attachTo[GAthisCenterObj, [0, 10.37, 3.58]];
-										GAthisVR2 setObjectTexture[0, 'A3\map_vr\data\picturemap_ca.paa'];
-										GAthisVR3 = "Land_VR_Block_04_F"
-										createVehicleLocal GAthisCenterPos;
-										GAthisVR3 attachTo[GAthisCenterObj, [0, -10.37, 3.58]];
-										GAthisVR3 setObjectTexture[0, 'A3\map_vr\data\picturemap_ca.paa'];
-										GAthisVR4 = "Land_VR_Block_04_F"
-										createVehicleLocal GAthisCenterPos;
-										GAthisVR4 attachTo[GAthisCenterObj, [10.37, 0, 3.58]];
-										GAthisVR4 setObjectTexture[0, 'A3\map_vr\data\picturemap_ca.paa'];
-										GAthisVR5 = "Land_VR_Block_04_F"
-										createVehicleLocal GAthisCenterPos;
-										GAthisVR5 attachTo[GAthisCenterObj, [-10.37, 0, 3.58]];
-										GAthisVR5 setObjectTexture[0, 'A3\map_vr\data\picturemap_ca.paa'];
-										GAthisVR6 = "Land_VR_Block_04_F"
-										createVehicleLocal GAthisCenterPos;
-										GAthisVR6 attachTo[GAthisCenterObj, [0, 0, 12.51]];
-										GAthisVR6 setObjectTexture[0, 'A3\map_vr\data\picturemap_ca.paa'];
-										GAthisLight = "Land_PortableLight_single_F"
-										createVehicleLocal GAthisCenterPos;
-										GAthisLight attachTo[GAthisCenterObj, [-4.75, 4.75, 0.3]];
-										GAthisLight setDir 315;
-										GAthisLight setObjectTexture[0, 'A3\map_vr\data\picturemap_ca.paa'];
-										GAthisLight2 = "Land_PortableLight_single_F"
-										createVehicleLocal GAthisCenterPos;
-										GAthisLight2 attachTo[GAthisCenterObj, [4.75, -4.75, 0.3]];
-										GAthisLight2 setDir 135;
-										GAthisLight attachTo[GAthisCenterObj, [-4.75, 4.75, 0.3]];
-										GAthisLight2 attachTo[GAthisCenterObj, [4.75, -4.75, 0.3]];
-										GAthisLight setDir 315;
-										GAthisLight2 setDir 135;
-										if (!isNIl "JAM_EH_groupArsenalClosed") then {
-											[missionNamespace, "ArsenalClosed", JAM_EH_groupArsenalClosed] call BIS_fnc_removeScriptedEventHandler;
+									M9SD_EH_arsenalRespawnLoadout = player addEventHandler[
+										"Respawn", {
+											0 = [] spawn {
+												waitUntil {
+													(alive player)
+												};
+												sleep 0.07;
+												[player, [missionnamespace, "M9SD_arsenalRespawnLoadout"]] call BIS_fnc_loadInventory;
+											};
+										}
+									];
+									0 = [] spawn {
+										for '_i'
+										from 1 to 12 do {
+											(format['arsenalNotification%1', _i]) cutFadeOut 0;
 										};
-										JAM_EH_groupArsenalClosed = [missionNamespace, "ArsenalClosed", {
-											playSound "hintCollapse";
-											systemChat "[Arsenal] : Closed.";
+										'arsenalNotification6'
+										cutFadeOut 0;
+										'arsenalNotification6'
+										cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Respawn loadout set.</t>", "PLAIN DOWN", -1, true, true];
+										uiSleep 3.5;
+										'arsenalNotification6'
+										cutFadeOut 0.35;
+									};
+									playSound['hintExpand', true];
+									playSound['hintExpand', false];
+								}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
+							];
+							_supplyCrate addAction[
+								"<t color='#FFFFFF' size='1.2'><img image='a3\3den\data\displays\Display3DEN\ToolBar\open_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Load Respawn Loadout</t>", {
+									playSound['beep_target', true];
+									playSound['beep_target', false];
+									player playActionNow 'putdown';
+									if (isNil 'M9SD_EH_arsenalRespawnLoadout') then {
+										playSound['AddItemFailed', true];
+										playSound['AddItemFailed', false];
+										0 = [] spawn {
+											for '_i'
+											from 1 to 12 do {
+												(format['arsenalNotification%1', _i]) cutFadeOut 0;
+											};
+											'arsenalNotification12'
+											cutFadeOut 0;
+											'arsenalNotification12'
+											cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>ERROR:<br/>No respawn loadout saved.</t>", "PLAIN DOWN", -1, true, true];
+											uiSleep 3.5;
+											'arsenalNotification12'
+											cutFadeOut 0.35;
+										};
+									} else {
+										[player, [missionnamespace, "M9SD_arsenalRespawnLoadout"]] call BIS_fnc_loadInventory;
+										0 = [] spawn {
+											for '_i'
+											from 1 to 12 do {
+												(format['arsenalNotification%1', _i]) cutFadeOut 0;
+											};
+											'arsenalNotification12'
+											cutFadeOut 0;
+											'arsenalNotification12'
+											cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Respawn loadout applied.</t>", "PLAIN DOWN", -1, true, true];
+											uiSleep 3.5;
+											'arsenalNotification12'
+											cutFadeOut 0.35;
+										};
+										playSound['hintExpand', true];
+										playSound['hintExpand', false];
+									};
+								}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
+							];
+							_supplyCrate addAction[
+								"<t color='#FFFFFF' size='1.2'><img image='\a3\3den\data\Cfg3DEN\History\deleteItems_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Delete Respawn Loadout</t>", {
+									playSound['beep_target', true];
+									playSound['beep_target', false];
+									player playActionNow 'putdown';
+									if (!isNil "M9SD_EH_arsenalRespawnLoadout") then {
+										player removeEventHandler["Respawn", M9SD_EH_arsenalRespawnLoadout];
+									};
+									0 = [] spawn {
+										for '_i'
+										from 1 to 12 do {
+											(format['arsenalNotification%1', _i]) cutFadeOut 0;
+										};
+										'arsenalNotification5'
+										cutFadeOut 0;
+										'arsenalNotification5'
+										cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Respawn loadout disabled.</t>", "PLAIN DOWN", -1, true, true];
+										uiSleep 3.5;
+										'arsenalNotification5'
+										cutFadeOut 0.35;
+									};
+									playSound['hintExpand', true];
+									playSound['hintExpand', false];
+								}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
+							];
+							
+							
+							_supplyCrate addAction[
+								"<t color='#FFFFFF' size='1.2'><img image='\A3\ui_f\data\igui\cfg\cursors\select_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Edit Group Loadouts</t>", {
+									comment "playSound ['beep_target', true]; ";
+									playSound['beep_target', false];
+									if (leader group player == player) then {
+										player playActionNow 'GestureHi';
+										JAM_fnc_openGroupArsenal = {
+											findDisplay 312 closeDisplay 0;
+											findDisplay 49 closeDisplay 0;
+											["Preload"] call BIS_fnc_arsenal;
+											GAthisWorldSize = worldSize;
+											GAthisPosX = random GAthisWorldSize;
+											GAthisPosY = random GAthisWorldSize;
+											GAthisPosZ = 1999;
+											GAthisCenterPos = [GAthisPosX, GAthisPosY, GAthisPosZ];
+											GAthisCenterObj = createSimpleObject['Box_NATO_AmmoVeh_F', GAthisCenterPos, true];
+											GAthisAgent = createAgent[typeOf player, GAthisCenterPos, [], 0, "FORM"];
+											GAthisAgent setVariable['JAM_isEditable', false, true];
+											GAthisAgent setUnitLoadout(getUnitLoadout JAM_groupArsenalTarget);
+											GAthisAgent allowDamage false;
+											GAthisAgent attachTo[GAthisCenterObj, [0, 0, 0.7]];
+											GAthisVR = "Land_VR_Block_04_F"
+											createVehicleLocal GAthisCenterPos;
+											GAthisVR attachTo[GAthisCenterObj, [0, 0, -5.29]];
+											GAthisVR setObjectTexture[0, 'A3\map_vr\data\picturemap_ca.paa'];
+											GAthisVR2 = "Land_VR_Block_04_F"
+											createVehicleLocal GAthisCenterPos;
+											GAthisVR2 attachTo[GAthisCenterObj, [0, 10.37, 3.58]];
+											GAthisVR2 setObjectTexture[0, 'A3\map_vr\data\picturemap_ca.paa'];
+											GAthisVR3 = "Land_VR_Block_04_F"
+											createVehicleLocal GAthisCenterPos;
+											GAthisVR3 attachTo[GAthisCenterObj, [0, -10.37, 3.58]];
+											GAthisVR3 setObjectTexture[0, 'A3\map_vr\data\picturemap_ca.paa'];
+											GAthisVR4 = "Land_VR_Block_04_F"
+											createVehicleLocal GAthisCenterPos;
+											GAthisVR4 attachTo[GAthisCenterObj, [10.37, 0, 3.58]];
+											GAthisVR4 setObjectTexture[0, 'A3\map_vr\data\picturemap_ca.paa'];
+											GAthisVR5 = "Land_VR_Block_04_F"
+											createVehicleLocal GAthisCenterPos;
+											GAthisVR5 attachTo[GAthisCenterObj, [-10.37, 0, 3.58]];
+											GAthisVR5 setObjectTexture[0, 'A3\map_vr\data\picturemap_ca.paa'];
+											GAthisVR6 = "Land_VR_Block_04_F"
+											createVehicleLocal GAthisCenterPos;
+											GAthisVR6 attachTo[GAthisCenterObj, [0, 0, 12.51]];
+											GAthisVR6 setObjectTexture[0, 'A3\map_vr\data\picturemap_ca.paa'];
+											GAthisLight = "Land_PortableLight_single_F"
+											createVehicleLocal GAthisCenterPos;
+											GAthisLight attachTo[GAthisCenterObj, [-4.75, 4.75, 0.3]];
+											GAthisLight setDir 315;
+											GAthisLight setObjectTexture[0, 'A3\map_vr\data\picturemap_ca.paa'];
+											GAthisLight2 = "Land_PortableLight_single_F"
+											createVehicleLocal GAthisCenterPos;
+											GAthisLight2 attachTo[GAthisCenterObj, [4.75, -4.75, 0.3]];
+											GAthisLight2 setDir 135;
+											GAthisLight attachTo[GAthisCenterObj, [-4.75, 4.75, 0.3]];
+											GAthisLight2 attachTo[GAthisCenterObj, [4.75, -4.75, 0.3]];
+											GAthisLight setDir 315;
+											GAthisLight2 setDir 135;
 											if (!isNIl "JAM_EH_groupArsenalClosed") then {
 												[missionNamespace, "ArsenalClosed", JAM_EH_groupArsenalClosed] call BIS_fnc_removeScriptedEventHandler;
 											};
-											_fncDelete = {
-												deleteVehicle GAthisCenterObj;
-												deleteVehicle GAthisAgent;
-												deleteVehicle GAthisVR;
-												deleteVehicle GAthisVR2;
-												deleteVehicle GAthisVR3;
-												deleteVehicle GAthisVR4;
-												deleteVehicle GAthisVR5;
-												deleteVehicle GAthisVR6;
-												deleteVehicle GAthisLight;
-												deleteVehicle GAthisLight2;
-											};
-											_group = group player;
-											if !(leader _group == player) exitWith {
+											JAM_EH_groupArsenalClosed = [missionNamespace, "ArsenalClosed", {
+												playSound "hintCollapse";
+												systemChat "[Arsenal] : Closed.";
+												if (!isNIl "JAM_EH_groupArsenalClosed") then {
+													[missionNamespace, "ArsenalClosed", JAM_EH_groupArsenalClosed] call BIS_fnc_removeScriptedEventHandler;
+												};
+												_fncDelete = {
+													deleteVehicle GAthisCenterObj;
+													deleteVehicle GAthisAgent;
+													deleteVehicle GAthisVR;
+													deleteVehicle GAthisVR2;
+													deleteVehicle GAthisVR3;
+													deleteVehicle GAthisVR4;
+													deleteVehicle GAthisVR5;
+													deleteVehicle GAthisVR6;
+													deleteVehicle GAthisLight;
+													deleteVehicle GAthisLight2;
+												};
+												_group = group player;
+												if !(leader _group == player) exitWith {
+													call _fncDelete;
+													systemChat '[Arsenal] : You are not squad leader. Loadout not applied.';
+												};
+												if ((isNull JAM_groupArsenalTarget)) exitWith {
+													call _fncDelete;
+													systemChat '[Arsenal] : Unit not found. Loadout not applied.';
+												};
+												_groupUnits = units _group;
+												_isUnitInGroup =
+												if (JAM_groupArsenalTarget in _groupUnits) then {
+													true
+												} else {
+													false
+												};
+												if (!(_isUnitInGroup)) exitWith {
+													call _fncDelete;
+													systemChat '[Arsenal] : Unit not in group. Loadout not applied.';
+												};
+												if (!alive JAM_groupArsenalTarget) exitWith {
+													call _fncDelete;
+													systemChat '[Arsenal] : Unit is dead. Loadout not applied.';
+												};
+												if (((vehicle player) distance(vehicle JAM_groupArsenalTarget)) > 20) exitWith {
+													call _fncDelete;
+													systemChat '[Arsenal] : Unit too far away (>20m). Loadout not applied.';
+												};
+												_loadout = getUnitLoadout GAthisAgent;
+												[JAM_groupArsenalTarget, _loadout] remoteExec['setUnitLoadout'];
 												call _fncDelete;
-												systemChat '[Arsenal] : You are not squad leader. Loadout not applied.';
-											};
-											if ((isNull JAM_groupArsenalTarget)) exitWith {
-												call _fncDelete;
-												systemChat '[Arsenal] : Unit not found. Loadout not applied.';
-											};
-											_groupUnits = units _group;
-											_isUnitInGroup =
-											if (JAM_groupArsenalTarget in _groupUnits) then {
-												true
-											} else {
-												false
-											};
-											if (!(_isUnitInGroup)) exitWith {
-												call _fncDelete;
-												systemChat '[Arsenal] : Unit not in group. Loadout not applied.';
-											};
-											if (!alive JAM_groupArsenalTarget) exitWith {
-												call _fncDelete;
-												systemChat '[Arsenal] : Unit is dead. Loadout not applied.';
-											};
-											if (((vehicle player) distance(vehicle JAM_groupArsenalTarget)) > 20) exitWith {
-												call _fncDelete;
-												systemChat '[Arsenal] : Unit too far away (>20m). Loadout not applied.';
-											};
-											_loadout = getUnitLoadout GAthisAgent;
-											[JAM_groupArsenalTarget, _loadout] remoteExec['setUnitLoadout'];
-											call _fncDelete;
-											_text = format['[Arsenal] : Loadout applied to %1.', name JAM_groupArsenalTarget];
-											systemChat _text;
-											_text = format['[Arsenal]\nLoadout applied to %1', name JAM_groupArsenalTarget];
+												_text = format['[Arsenal] : Loadout applied to %1.', name JAM_groupArsenalTarget];
+												systemChat _text;
+												_text = format['[Arsenal]\nLoadout applied to %1', name JAM_groupArsenalTarget];
+												'arsenalNotification'
+												cutFadeOut 0;
+												'arsenalNotification'
+												cutText[_text, "PLAIN DOWN", 0];
+											}] call BIS_fnc_addScriptedEventHandler;
+											["Open", [true, nil, GAthisAgent]] call bis_fnc_arsenal;
+											playsound "hintExpand";
+											systemChat "[Arsenal] : Opened.";
+											showChat true;
+											_text = format["[ This loadout will be applied to %1 ]<br /> <t color='#00ff00' size='2'>-Press ESC to exit Arsenal-</t>", name JAM_groupArsenalTarget];
 											'arsenalNotification'
 											cutFadeOut 0;
 											'arsenalNotification'
-											cutText[_text, "PLAIN DOWN", 0];
-										}] call BIS_fnc_addScriptedEventHandler;
-										["Open", [true, nil, GAthisAgent]] call bis_fnc_arsenal;
-										playsound "hintExpand";
-										systemChat "[Arsenal] : Opened.";
-										showChat true;
-										_text = format["[ This loadout will be applied to %1 ]<br /> <t color='#00ff00' size='2'>-Press ESC to exit Arsenal-</t>", name JAM_groupArsenalTarget];
-										'arsenalNotification'
-										cutFadeOut 0;
-										'arsenalNotification'
-										cutText[_text, "PLAIN DOWN", -1, true, true];
-										_text = format["[Arsenal] : This loadout will be applied to %1.", name JAM_groupArsenalTarget];
-										systemChat _text;
-									};
-									JAM_GUIfnc_openGroupArsenalSelector = {
-										JAM_groupArsenalTarget = objNull;
-										findDisplay 312 closeDisplay 0;
-										findDisplay 49 closeDisplay 0;
-										disableSerialization;
-										with uiNamespace do {
-											_display = findDisplay 46 createDisplay 'RscDisplayEmpty';
-											showChat true;
-											_bkCtrl = _display ctrlCreate['IGUIBack', -1];
-											_bkCtrl ctrlSetPosition[0.427812 * safezoneW + safezoneX, 0.291 * safezoneH + safezoneY, 0.159844 * safezoneW, 0.363 * safezoneH];
-											_bkCtrl ctrlSetBackgroundColor[0, 0.1, 0, 0.75];
-											_bkCtrl ctrlCommit 0;
-											_lbCtrl = _display ctrlCreate['RscListBox', -1];
-											_display setVariable['lbCtrl', _lbCtrl];
-											_lbCtrl ctrlSetPosition[0.432969 * safezoneW + safezoneX, 0.302 * safezoneH + safezoneY, 0.149531 * safezoneW, 0.286 * safezoneH];
-											_pictureColor = [side group player, false] call BIS_fnc_sideColor;
-											if ((isNil '_pictureColor') or(_pictureColor isEqualTo[])) then {
-												_pictureColor = [1, 1, 1, 1];
-											}; {
-												_index = _lbCtrl lbAdd name _x;
-												_lbCtrl lbSetTooltip[_index, 'Select unit'];
-												_lbCtrl lbSetPicture[_index, '\A3\ui_f\data\igui\cfg\cursors\select_ca.paa'];
-												_lbCtrl lbSetPictureRight[_index, '\a3\ui_f\data\map\VehicleIcons\iconMan_ca.paa'];
-												_lbCtrl lbSetPictureRightColor[_index, _pictureColor];
-											}
-											forEach units group player;
-											_lbCtrl ctrlCommit 0;
-											_lbCtrl lbSetCurSel 0;
-											_btnCtrl = _display ctrlCreate['RscButtonMenu', -1];
-											_btnCtrl ctrlSetTooltip 'Edit loadout';
-											_btnCtrl ctrlSetStructuredText parseText("<t valign='middle' align='center' font='PuristaLight' shadow='2' size='" + (str((safeZoneH * 0.5) * 2.2)) + "'><img image='\A3\ui_f\data\logos\arsenal_1024_ca.paa'></img></t>");
-											_btnCtrl ctrlSetPosition[0.432969 * safezoneW + safezoneX, 0.599 * safezoneH + safezoneY, 0.149531 * safezoneW, 0.044 * safezoneH];
-											_btnCtrl ctrlAddEventHandler['ButtonClick', {
-												params["_control"];
-												_parentDisplay = ctrlParent _control;
-												_lbCtrl = _parentDisplay getVariable 'lbCtrl';
-												_index = lbCurSel _lbCtrl;
-												_name = _lbCtrl lbText _index;
-												_unit = objNull;
-												_group = group player;
-												_groupUnits = units _group;
-												_isUnitInGroup = false; {
-													if (name _x == _name) exitWith {
-														_isUnitInGroup = true;
-														_unit = _x;
-													};
+											cutText[_text, "PLAIN DOWN", -1, true, true];
+											_text = format["[Arsenal] : This loadout will be applied to %1.", name JAM_groupArsenalTarget];
+											systemChat _text;
+										};
+										JAM_GUIfnc_openGroupArsenalSelector = {
+											JAM_groupArsenalTarget = objNull;
+											findDisplay 312 closeDisplay 0;
+											findDisplay 49 closeDisplay 0;
+											disableSerialization;
+											with uiNamespace do {
+												_display = findDisplay 46 createDisplay 'RscDisplayEmpty';
+												showChat true;
+												_bkCtrl = _display ctrlCreate['IGUIBack', -1];
+												_bkCtrl ctrlSetPosition[0.427812 * safezoneW + safezoneX, 0.291 * safezoneH + safezoneY, 0.159844 * safezoneW, 0.363 * safezoneH];
+												_bkCtrl ctrlSetBackgroundColor[0, 0.1, 0, 0.75];
+												_bkCtrl ctrlCommit 0;
+												_lbCtrl = _display ctrlCreate['RscListBox', -1];
+												_display setVariable['lbCtrl', _lbCtrl];
+												_lbCtrl ctrlSetPosition[0.432969 * safezoneW + safezoneX, 0.302 * safezoneH + safezoneY, 0.149531 * safezoneW, 0.286 * safezoneH];
+												_pictureColor = [side group player, false] call BIS_fnc_sideColor;
+												if ((isNil '_pictureColor') or(_pictureColor isEqualTo[])) then {
+													_pictureColor = [1, 1, 1, 1];
+												}; {
+													_index = _lbCtrl lbAdd name _x;
+													_lbCtrl lbSetTooltip[_index, 'Select unit'];
+													_lbCtrl lbSetPicture[_index, '\A3\ui_f\data\igui\cfg\cursors\select_ca.paa'];
+													_lbCtrl lbSetPictureRight[_index, '\a3\ui_f\data\map\VehicleIcons\iconMan_ca.paa'];
+													_lbCtrl lbSetPictureRightColor[_index, _pictureColor];
 												}
-												forEach _groupUnits;
-												if ((isNull _unit) or(!(_isUnitInGroup))) exitWith {
-													systemChat '[Arsenal] : Unit not found. Close the menu with ESC and try again.';
-												};
-												if (!alive _unit) exitWith {
-													systemChat '[Arsenal] : Unit is dead. Close the menu with ESC and try again.';
-												};
-												if (((vehicle player) distance(vehicle _unit)) > 20) exitWith {
-													systemChat '[Arsenal] : Unit too far away (>20m). Close the menu with ESC and try again.';
-												};
-												_display closeDisplay 0;
-												JAM_groupArsenalTarget = _unit;
-												[] spawn JAM_fnc_openGroupArsenal;
-											}];
-											_btnCtrl ctrlSetBackgroundColor[0, 0, 0, 0.35];
-											_btnCtrl ctrlCommit 0;
+												forEach units group player;
+												_lbCtrl ctrlCommit 0;
+												_lbCtrl lbSetCurSel 0;
+												_btnCtrl = _display ctrlCreate['RscButtonMenu', -1];
+												_btnCtrl ctrlSetTooltip 'Edit loadout';
+												_btnCtrl ctrlSetStructuredText parseText("<t valign='middle' align='center' font='PuristaLight' shadow='2' size='" + (str((safeZoneH * 0.5) * 2.2)) + "'><img image='\A3\ui_f\data\logos\arsenal_1024_ca.paa'></img></t>");
+												_btnCtrl ctrlSetPosition[0.432969 * safezoneW + safezoneX, 0.599 * safezoneH + safezoneY, 0.149531 * safezoneW, 0.044 * safezoneH];
+												_btnCtrl ctrlAddEventHandler['ButtonClick', {
+													params["_control"];
+													_parentDisplay = ctrlParent _control;
+													_lbCtrl = _parentDisplay getVariable 'lbCtrl';
+													_index = lbCurSel _lbCtrl;
+													_name = _lbCtrl lbText _index;
+													_unit = objNull;
+													_group = group player;
+													_groupUnits = units _group;
+													_isUnitInGroup = false; {
+														if (name _x == _name) exitWith {
+															_isUnitInGroup = true;
+															_unit = _x;
+														};
+													}
+													forEach _groupUnits;
+													if ((isNull _unit) or(!(_isUnitInGroup))) exitWith {
+														systemChat '[Arsenal] : Unit not found. Close the menu with ESC and try again.';
+													};
+													if (!alive _unit) exitWith {
+														systemChat '[Arsenal] : Unit is dead. Close the menu with ESC and try again.';
+													};
+													if (((vehicle player) distance(vehicle _unit)) > 20) exitWith {
+														systemChat '[Arsenal] : Unit too far away (>20m). Close the menu with ESC and try again.';
+													};
+													_display closeDisplay 0;
+													JAM_groupArsenalTarget = _unit;
+													[] spawn JAM_fnc_openGroupArsenal;
+												}];
+												_btnCtrl ctrlSetBackgroundColor[0, 0, 0, 0.35];
+												_btnCtrl ctrlCommit 0;
+											};
+										};
+										[] spawn JAM_GUIfnc_openGroupArsenalSelector;
+										systemChat "[Arsenal] : Select a group member to open the arsenal on.";
+										systemChat "[Arsenal] : Their loadout will be updated when you close the arsenal.";
+										playSound "beep_target";
+									} else {
+										["<t align='center' color='#FFFFFF'><br/>“NOT GROUP LEADER”<br/><br/><t align='center' color='#FFFFFF'>You must be group leader<br/>to edit squad loadouts.<br/><br/><t/>", "Arsenal:", true, false] spawn BIS_fnc_guiMessage;
+										playSound 'AddItemFailed';
+									};
+									comment "playSound ['hintExpand', true]; 
+									playSound['hintExpand', false];
+									";
+								}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
+							];
+							
+							
+							_supplyCrate addAction[
+								"<t color='#FFFFFF' size='1.2'><img image='\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\heal_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Heal</t>", {
+									playSound['beep_target', true];
+									playSound['beep_target', false];
+									player playActionNow 'Medic';
+									[player] call BIS_fnc_reviveEhRespawn;
+									player setDamage 0;
+									player setUnconscious false;
+									player setCaptive false;
+									0 = [] spawn {
+										for '_i'
+										from 1 to 12 do {
+											(format['arsenalNotification%1', _i]) cutFadeOut 0;
+										};
+										'arsenalNotification3'
+										cutFadeOut 0;
+										'arsenalNotification3'
+										cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Healing...</t>", "PLAIN DOWN", -1, true, true];
+										uiSleep 6.33;
+										playSound['hintCollapse', true];
+										playSound['hintCollapse', false];
+										'arsenalNotification3'
+										cutFadeOut 0;
+										'arsenalNotification3'
+										cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Healed.</t>", "PLAIN DOWN", -1, true, true];
+										uiSleep 3.33;
+										'arsenalNotification3'
+										cutFadeOut 0.35;
+									};
+									playSound['hintExpand', true];
+									playSound['hintExpand', false];
+								}, nil, 7777, true, true, "", "((_this == vehicle _this) && (damage _this > 0))", 7
+							];
+						}
+					] remoteExec['call', 0, _uniqueJIP];
+				};
+				[M9SD_AIO_SupplyBox] call M9SD_fnc_addSmallArsenalActions;
+				M9SD_fnc_smallArsenalMarkers = {
+					params[['_supplyCrate', objNull]];
+					if (isNull _supplyCrate) exitWith {};
+					if (_supplyCrate getVariable['M9SD_hasMarkers', false]) exitWith {};
+					_supplyCrate setVariable['M9SD_hasMarkers', true, true];
+					if (isNil 'M9SD_smallArsenals') then {
+						M9SD_smallArsenals = [];
+					};
+					M9SD_smallArsenals pushBackUnique _supplyCrate;
+					publicVariable 'M9SD_smallArsenals';
+					[M9SD_smallArsenals, {
+						if (!hasInterface) exitWith {};
+						waitUntil {
+							!isNil {
+								player
+							} && {!isNull player
+							}
+						};
+						waitUntil {
+							!isNull(findDisplay 46)
+						};
+						if (isNil 'M9SD_smallArsenals') then {
+							M9SD_smallArsenals = _this;
+						};
+						M9SD_smallArsenalIcons_texture = '\a3\3den\data\displays\display3den\entitymenu\arsenal_ca.paa';
+						M9SD_smallArsenalIcons_width = 0.7;
+						M9SD_smallArsenalIcons_height = 0.7;
+						M9SD_smallArsenalIcons_angle = 0;
+						M9SD_smallArsenalIcons_text = 'Virtual Arsenal';
+						M9SD_smallArsenalIcons_shadow = 2;
+						M9SD_smallArsenalIcons_textSize = 0.04;
+						M9SD_smallArsenalIcons_font = 'PuristaSemiBold';
+						M9SD_smallArsenalIcons_textAlign = 'center';
+						M9SD_smallArsenalIcons_drawSideArrows = false;
+						M9SD_smallArsenalIcons_offsetX = 0;
+						M9SD_smallArsenalIcons_offsetY = -0.07;
+						M9SD_smallArsenalIcons_offset = 2.1;
+						if (not(isNil 'M9SD_EH_drawSmallArsenal3D')) then {
+							removeMissionEventHandler['Draw3D', M9SD_EH_drawSmallArsenal3D];
+						};
+						M9SD_EH_drawSmallArsenal3D = addMissionEventHandler['Draw3D', {
+							if (count M9SD_smallArsenals == 0) exitWith {}; {
+								if (!isNull _x) then {
+									if (_x in [cursorTarget, cursorObject]) then {
+										if ((_x distance(vehicle player)) <= 28) then {
+											private _position = getPos _x;
+											_position set[2, (_position# 2) + M9SD_smallArsenalIcons_offset];
+											drawIcon3D
+												[
+													M9SD_smallArsenalIcons_texture, [1, 1, 1, 1],
+													_position,
+													M9SD_smallArsenalIcons_width,
+													M9SD_smallArsenalIcons_height,
+													M9SD_smallArsenalIcons_angle,
+													'',
+													M9SD_smallArsenalIcons_shadow,
+													M9SD_smallArsenalIcons_textSize,
+													M9SD_smallArsenalIcons_font,
+													M9SD_smallArsenalIcons_textAlign,
+													M9SD_smallArsenalIcons_drawSideArrows,
+													M9SD_smallArsenalIcons_offsetX,
+													M9SD_smallArsenalIcons_offsetY
+												];
+											drawIcon3D
+												[
+													'', [0, 1, 0, 1],
+													_position,
+													M9SD_smallArsenalIcons_width,
+													M9SD_smallArsenalIcons_height,
+													M9SD_smallArsenalIcons_angle,
+													M9SD_smallArsenalIcons_text,
+													M9SD_smallArsenalIcons_shadow,
+													M9SD_smallArsenalIcons_textSize,
+													M9SD_smallArsenalIcons_font,
+													M9SD_smallArsenalIcons_textAlign,
+													M9SD_smallArsenalIcons_drawSideArrows,
+													M9SD_smallArsenalIcons_offsetX,
+													M9SD_smallArsenalIcons_offsetY
+												];
 										};
 									};
-									[] spawn JAM_GUIfnc_openGroupArsenalSelector;
-									systemChat "[Arsenal] : Select a group member to open the arsenal on.";
-									systemChat "[Arsenal] : Their loadout will be updated when you close the arsenal.";
-									playSound "beep_target";
-								} else {
-									["<t align='center' color='#FFFFFF'><br/>“NOT GROUP LEADER”<br/><br/><t align='center' color='#FFFFFF'>You must be group leader<br/>to edit squad loadouts.<br/><br/><t/>", "Arsenal:", true, false] spawn BIS_fnc_guiMessage;
-									playSound 'AddItemFailed';
 								};
-								comment "playSound ['hintExpand', true]; 
-								playSound['hintExpand', false];
-								";
-							}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
-						];
-						_supplyCrate addAction[
-							"<t color='#FFFFFF' size='1.2'><img image='\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\heal_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Heal</t>", {
-								playSound['beep_target', true];
-								playSound['beep_target', false];
-								player playActionNow 'Medic';
-								[player] call BIS_fnc_reviveEhRespawn;
-								player setDamage 0;
-								player setUnconscious false;
-								player setCaptive false;
-								0 = [] spawn {
-									for '_i'
-									from 1 to 12 do {
-										(format['arsenalNotification%1', _i]) cutFadeOut 0;
-									};
-									'arsenalNotification3'
-									cutFadeOut 0;
-									'arsenalNotification3'
-									cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Healing...</t>", "PLAIN DOWN", -1, true, true];
-									uiSleep 6.33;
-									playSound['hintCollapse', true];
-									playSound['hintCollapse', false];
-									'arsenalNotification3'
-									cutFadeOut 0;
-									'arsenalNotification3'
-									cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Healed.</t>", "PLAIN DOWN", -1, true, true];
-									uiSleep 3.33;
-									'arsenalNotification3'
-									cutFadeOut 0.35;
-								};
-								playSound['hintExpand', true];
-								playSound['hintExpand', false];
-							}, nil, 7777, true, true, "", "((_this == vehicle _this) && (damage _this > 0))", 7
-						];
-					}
-				] remoteExec['call', 0, _uniqueJIP];
-			};
-			[M9SD_AIO_SupplyBox] call M9SD_fnc_addSmallArsenalActions;
-			M9SD_fnc_smallArsenalMarkers = {
-				params[['_supplyCrate', objNull]];
-				if (isNull _supplyCrate) exitWith {};
-				if (_supplyCrate getVariable['M9SD_hasMarkers', false]) exitWith {};
-				_supplyCrate setVariable['M9SD_hasMarkers', true, true];
-				if (isNil 'M9SD_smallArsenals') then {
-					M9SD_smallArsenals = [];
-				};
-				M9SD_smallArsenals pushBackUnique _supplyCrate;
-				publicVariable 'M9SD_smallArsenals';
-				[M9SD_smallArsenals, {
-					if (!hasInterface) exitWith {};
-					waitUntil {
-						!isNil {
-							player
-						} && {!isNull player
-						}
-					};
-					waitUntil {
-						!isNull(findDisplay 46)
-					};
-					if (isNil 'M9SD_smallArsenals') then {
-						M9SD_smallArsenals = _this;
-					};
-					M9SD_smallArsenalIcons_texture = '\a3\3den\data\displays\display3den\entitymenu\arsenal_ca.paa';
-					M9SD_smallArsenalIcons_width = 0.7;
-					M9SD_smallArsenalIcons_height = 0.7;
-					M9SD_smallArsenalIcons_angle = 0;
-					M9SD_smallArsenalIcons_text = 'Virtual Arsenal';
-					M9SD_smallArsenalIcons_shadow = 2;
-					M9SD_smallArsenalIcons_textSize = 0.04;
-					M9SD_smallArsenalIcons_font = 'PuristaSemiBold';
-					M9SD_smallArsenalIcons_textAlign = 'center';
-					M9SD_smallArsenalIcons_drawSideArrows = false;
-					M9SD_smallArsenalIcons_offsetX = 0;
-					M9SD_smallArsenalIcons_offsetY = -0.07;
-					M9SD_smallArsenalIcons_offset = 2.1;
-					if (not(isNil 'M9SD_EH_drawSmallArsenal3D')) then {
-						removeMissionEventHandler['Draw3D', M9SD_EH_drawSmallArsenal3D];
-					};
-					M9SD_EH_drawSmallArsenal3D = addMissionEventHandler['Draw3D', {
-						if (count M9SD_smallArsenals == 0) exitWith {}; {
-							if (!isNull _x) then {
-								if (_x in [cursorTarget, cursorObject]) then {
-									if ((_x distance(vehicle player)) <= 28) then {
-										private _position = getPos _x;
-										_position set[2, (_position# 2) + M9SD_smallArsenalIcons_offset];
-										drawIcon3D
-											[
-												M9SD_smallArsenalIcons_texture, [1, 1, 1, 1],
-												_position,
-												M9SD_smallArsenalIcons_width,
-												M9SD_smallArsenalIcons_height,
-												M9SD_smallArsenalIcons_angle,
-												'',
-												M9SD_smallArsenalIcons_shadow,
-												M9SD_smallArsenalIcons_textSize,
-												M9SD_smallArsenalIcons_font,
-												M9SD_smallArsenalIcons_textAlign,
-												M9SD_smallArsenalIcons_drawSideArrows,
-												M9SD_smallArsenalIcons_offsetX,
-												M9SD_smallArsenalIcons_offsetY
-											];
-										drawIcon3D
-											[
-												'', [0, 1, 0, 1],
-												_position,
-												M9SD_smallArsenalIcons_width,
-												M9SD_smallArsenalIcons_height,
-												M9SD_smallArsenalIcons_angle,
-												M9SD_smallArsenalIcons_text,
-												M9SD_smallArsenalIcons_shadow,
-												M9SD_smallArsenalIcons_textSize,
-												M9SD_smallArsenalIcons_font,
-												M9SD_smallArsenalIcons_textAlign,
-												M9SD_smallArsenalIcons_drawSideArrows,
-												M9SD_smallArsenalIcons_offsetX,
-												M9SD_smallArsenalIcons_offsetY
-											];
-									};
-								};
-							};
-						}
-						forEach M9SD_smallArsenals;
-					}];
-					waitUntil {
-						!isNull(findDisplay 12 displayCtrl 51)
-					};
-					
-					
-					
-					
-					
-					if (!isNil "M9SD_EH_drawSmallArsenal2D") then {
-						(findDisplay 12 displayCtrl 51) ctrlRemoveEventHandler["Draw", M9SD_EH_drawSmallArsenal2D];
-					};
-					
-					
-					M9SD_AIO_color1 = [0, 1, 0, 1];
-					M9SD_AIO_color2 = [1, 1, 1, 1];
-					M9SD_AIO_iconPath = 'a3\ui_f\data\logos\a_64_ca.paa';
-					
-					M9SD_EH_drawSmallArsenal2D = (findDisplay 12 displayCtrl 51) ctrlAddEventHandler["Draw", 
-					{
-						_map = _this select 0;
-						if (count M9SD_smallArsenals == 0) exitWith {}; 
+							}
+							forEach M9SD_smallArsenals;
+						}];
+						waitUntil {
+							!isNull(findDisplay 12 displayCtrl 51)
+						};
+						
+						
+						
+						
+						
+						if (!isNil "M9SD_EH_drawSmallArsenal2D") then {
+							(findDisplay 12 displayCtrl 51) ctrlRemoveEventHandler["Draw", M9SD_EH_drawSmallArsenal2D];
+						};
+						
+						
+						M9SD_AIO_color1 = [0, 1, 0, 1];
+						M9SD_AIO_color2 = [1, 1, 1, 1];
+						M9SD_AIO_iconPath = 'a3\ui_f\data\logos\a_64_ca.paa';
+						
+						M9SD_EH_drawSmallArsenal2D = (findDisplay 12 displayCtrl 51) ctrlAddEventHandler["Draw", 
 						{
-							if (!isNull _x) then 
+							_map = _this select 0;
+							if (count M9SD_smallArsenals == 0) exitWith {}; 
 							{
-								_pos = _x modelToWorldVisual [0, 0, 0];
-								_iconText =
-								if (((_map ctrlMapWorldToScreen (_x modelToWorldVisual[0, 0, 0])) distance2D getMousePosition) > 0.02) then {
-									""
-								} else {
-									'Virtual Arsenal'
+								if (!isNull _x) then 
+								{
+									_pos = _x modelToWorldVisual [0, 0, 0];
+									_iconText =
+									if (((_map ctrlMapWorldToScreen (_x modelToWorldVisual[0, 0, 0])) distance2D getMousePosition) > 0.02) then {
+										""
+									} else {
+										'Virtual Arsenal'
+									};
+									_map drawIcon
+									[
+										M9SD_AIO_iconPath,
+										M9SD_AIO_color1,
+										_pos,
+										20,
+										20,
+										0,
+										_iconText,
+										1,
+										0.05,
+										"PuristaBold",
+										"left"
+									];
+									_map drawIcon
+									[
+										M9SD_AIO_iconPath,
+										M9SD_AIO_color2,
+										_pos,
+										20,
+										20,
+										0,
+										'',
+										1,
+										0.05,
+										"PuristaSemiBold",
+										"left"
+									];
 								};
-								_map drawIcon
-								[
-									M9SD_AIO_iconPath,
-									M9SD_AIO_color1,
-									_pos,
-									20,
-									20,
-									0,
-									_iconText,
-									1,
-									0.05,
-									"PuristaBold",
-									"left"
-								];
-								_map drawIcon
-								[
-									M9SD_AIO_iconPath,
-									M9SD_AIO_color2,
-									_pos,
-									20,
-									20,
-									0,
-									'',
-									1,
-									0.05,
-									"PuristaSemiBold",
-									"left"
-								];
-							};
-						} forEach M9SD_smallArsenals;
-					}];
-				}] remoteExec['spawn', 0, 'M9SD_JIP_smallArsenalIcons'];
-				comment " 
-				M9SD_smallArsenals = [];
-				publicVariable 'M9SD_smallArsenals';
-				remoteExec['', 'M9SD_JIP_smallArsenalIcons'];
-				"; 
+							} forEach M9SD_smallArsenals;
+						}];
+					}] remoteExec['spawn', 0, 'M9SD_JIP_smallArsenalIcons'];
+					comment " 
+					M9SD_smallArsenals = [];
+					publicVariable 'M9SD_smallArsenals';
+					remoteExec['', 'M9SD_JIP_smallArsenalIcons'];
+					"; 
+				};
+				[M9SD_AIO_SupplyBox] call M9SD_fnc_smallArsenalMarkers;
+				[M9SD_AIO_SupplyBox, false] remoteExec['allowDamage']; 
+				{
+					[_x, false] remoteExec['allowDamage'];
+				}forEach attachedObjects M9SD_AIO_SupplyBox;
+				{
+					[_x, [
+						[M9SD_AIO_SupplyBox], true
+					]] remoteExec['addCuratorEditableObjects', owner _x];
+					[_x, [attachedObjects M9SD_AIO_SupplyBox, true]] remoteExec['addCuratorEditableObjects', owner _x];
+				}forEach allCurators;
+				["AIO Arsenal Created.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 			};
-			[M9SD_AIO_SupplyBox] call M9SD_fnc_smallArsenalMarkers;
-			[M9SD_AIO_SupplyBox, false] remoteExec['allowDamage']; 
+
+		} else 
+		{
+			JAM_EZM_fnc_createAIOArsenalModule = 
 			{
-				[_x, false] remoteExec['allowDamage'];
-			}forEach attachedObjects M9SD_AIO_SupplyBox;
-			{
-				[_x, [
-					[M9SD_AIO_SupplyBox], true
-				]] remoteExec['addCuratorEditableObjects', owner _x];
-				[_x, [attachedObjects M9SD_AIO_SupplyBox, true]] remoteExec['addCuratorEditableObjects', owner _x];
-			}forEach allCurators;
-			["AIO Arsenal Created.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+				comment "
+				playsound 'addItemFailed';
+				systemChat 'Use the version compatible with Official zeus servers!';
+				systemChat 'Composition: AIO Arsenal (Supply Box)';
+				systemChat 'https://steamcommunity.com/sharedfiles/filedetails/?id=2764558652';
+				showChat true;
+				";
+				params [['_entity', objnull]];
+				M9SD_AIO_shouldCreateBox = false;
+				if (isNull _entity) then {
+					M9SD_AIO_shouldCreateBox = true;
+				};
+				_pos = screenToWorld getMousePosition;
+				M9SD_AIO_SupplyBox = objnull;
+				if (M9SD_AIO_shouldCreateBox) then 
+				{
+					M9SD_AIO_SupplyBox = createVehicle ["B_supplyCrate_F", _pos, [], 0, "CAN_COLLIDE"];
+					M9SD_AIO_SupplyBox setVehicleVarName "M9SD_AIO_SupplyBox";
+					M9SD_AIO_SupplyBox allowdamage false;;
+					M9SD_AIO_HelipadLight = createVehicle["PortableHelipadLight_01_green_F", _pos, [], 0, "CAN_COLLIDE"];
+					M9SD_AIO_HelipadLight = [M9SD_AIO_HelipadLight] call BIS_fnc_replaceWithSimpleObject;
+					M9SD_AIO_HelipadLight setVehicleVarName "M9SD_AIO_HelipadLight";
+					M9SD_AIO_HelipadLight attachTo[M9SD_AIO_SupplyBox, [0, 0, 0.5]];;
+					
+					M9SD_AIO_glowLight1 = createVehicle ['#lightpoint', _pos,[],0,'CAN_COLLIDE'];
+					M9SD_AIO_glowLight1 attachto [M9SD_AIO_SupplyBox,[0,0,0.5]];
+					
+					_fnc =  { 
+						if (!hasInterface) exitWith {}; 
+						params ['_light','_vic']; 
+						if (!isNull _light) then 
+						{ 
+							_light setLightBrightness 0.14; 
+							_color = [0.1,1,0.1];
+							_light setLightAmbient _color; 
+							_light setLightColor _color; 
+						}; 
+					};
+					M9SD_AIO_REfnc_initArsenalLight = ['b2', _fnc]; 
+					publicVariable 'M9SD_AIO_REfnc_initArsenalLight'; 
+					
+					[ 
+						[ 
+							M9SD_AIO_glowLight1,  
+							Tesla_testVehicle 
+						], 
+						{ 
+							_this spawn (M9SD_AIO_REfnc_initArsenalLight select 1); 
+						} 
+					] remoteExec ['spawn', 0, M9SD_AIO_glowLight1];
+					
+					
+					[[M9SD_AIO_SupplyBox, M9SD_AIO_HelipadLight, M9SD_AIO_glowLight1], {
+						params['_M9SD_AIO_SupplyBox', '_M9SD_AIO_HelipadLight', '_M9SD_AIO_glowLight1'];
+						waitUntil {
+							sleep 1;
+							(!alive _M9SD_AIO_SupplyBox)
+						};
+						deleteVehicle _M9SD_AIO_SupplyBox;
+						deleteVehicle _M9SD_AIO_HelipadLight;
+						deleteVehicle _M9SD_AIO_glowLight1;
+					}] remoteExec['spawn', 2];
+					clearWeaponCargoGlobal M9SD_AIO_SupplyBox;
+					clearBackpackCargoGlobal M9SD_AIO_SupplyBox;
+					clearMagazineCargoGlobal M9SD_AIO_SupplyBox;
+					clearItemCargoGlobal M9SD_AIO_SupplyBox;
+				} else {
+					M9SD_AIO_SupplyBox = _entity;
+				};
+				if (isNull M9SD_AIO_SupplyBox) exitWith {};
+
+				["AmmoboxInit", [M9SD_AIO_SupplyBox, true]] call BIS_fnc_arsenal;
+				publicVariable 'M9SD_AIO_SupplyBox';
+				M9SD_fnc_addSmallArsenalActions = {
+					params[['_supplyCrate', objNull]];
+					if (isNull _supplyCrate) exitWith {};
+					if (_supplyCrate getVariable['M9SD_hasArsenalActions', false]) exitWith {};
+					_supplyCrate setVariable['M9SD_hasArsenalActions', true, true];
+					if (isNil 'M9SD_AIOArsenal_JIPCount') then {
+						M9SD_AIOArsenal_JIPCount = 0;
+					};
+					M9SD_AIOArsenal_JIPCount = M9SD_AIOArsenal_JIPCount + 1;
+					publicVariable 'M9SD_AIOArsenal_JIPCount';
+					private _uniqueJIP = format['M9SD_JIP_AIOArsenalActions_%1', M9SD_AIOArsenal_JIPCount];
+					[
+						[_supplyCrate, _uniqueJIP], {
+							if (!hasInterface) exitWith {};
+							params[['_supplyCrate', objNull], ['_uniqueJIP', '']];
+							if (isNull _supplyCrate) exitWith {
+								remoteExec['', _uniqueJIP]
+							};
+							_supplyCrate addAction[
+								"<t color='#FFFFFF' size='1.2'><img image='a3\ui_f\data\logos\a_64_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Full Arsenal</t>", {
+									playSound['beep_target', true];
+									playSound['beep_target', false];
+									['Preload'] call BIS_fnc_arsenal;
+									comment "['Open', [true]] call BIS_fnc_arsenal; <-- WTF IS THE DIFFERENCE?";
+									['Open', true] spawn BIS_fnc_arsenal;
+									0 = [] spawn {
+										for '_i'
+										from 1 to 12 do {
+											(format['arsenalNotification%1', _i]) cutFadeOut 0;
+										};
+										'arsenalNotification1'
+										cutText["<br/><t color='#00ff00' size='2.1' shadow='2' font='puristaMedium'>AIO Arsenal</t>", "PLAIN DOWN", -1, true, true];
+										uiSleep 1;
+										if !(isNull findDisplay - 1) then {
+											'arsenalNotification2'
+											cutFadeOut 0;
+											'arsenalNotification2'
+											cutText["<br/><br/><br/><t color='#00a6ff' size='1.2' shadow='2' font='puristaSemiBold'>by <t color='#00c9ff'>M9-SD</t>", "PLAIN DOWN", -1, true, true];
+										};
+										uiSleep 7;
+										'arsenalNotification1'
+										cutFadeOut 2.1;
+										'arsenalNotification2'
+										cutFadeOut 2.1;
+									};
+									private _arsenalAnims = [{
+										player playActionNow "Salute";
+									}, {
+										[player, 'acts_civilidle_1'] remoteExec['switchMove'];
+									}, {
+										[player, 'acts_civilListening_2'] remoteExec['switchMove'];
+									}, {
+										[player, 'acts_commenting_on_fight_loop'] remoteExec['switchMove'];
+									}, {
+										[player, 'acts_gallery_visitor_01'] remoteExec['switchMove'];
+									}, {
+										[player, 'acts_gallery_visitor_02'] remoteExec['switchMove'];
+									}, {
+										[player, 'acts_hilltop_calibration_loop'] remoteExec['switchMove'];
+									}, {
+										[player, 'acts_kore_talkingoverradio_loop'] remoteExec['switchMove'];
+									}, {
+										[player, 'acts_staticPose_photo'] remoteExec['switchMove'];
+									}, {
+										player playActionNow 'gear';
+									}, {
+										[player, 'Acts_Taking_Cover_From_Jets'] remoteExec['switchMove'];
+									}, {
+										[player, 'Acts_standingSpeakingUnarmed'] remoteExec['switchMove'];
+									}, {
+										player playMoveNow 'acts_Mentor_Freeing_Player';
+									}, {
+										[player, 'acts_kore_talkingOverRadio_In'] remoteExec['switchMove'];
+									}, {
+										[player, 'acts_kore_idleNoWeapon_In'] remoteExec['switchMove'];
+									}, {
+										[player, 'Acts_JetsOfficerSpilling'] remoteExec['switchMove'];
+									}, {
+										player playMoveNow 'Acts_Hilltop_Calibration_Pointing_Left';
+									}, {
+										player playMoveNow 'Acts_Hilltop_Calibration_Pointing_Right';
+									}, {
+										[player, 'Acts_Grieving'] remoteExec['switchMove'];
+									}];
+									private _arsenalAnimsAdd =
+									switch (currentWeapon player) do {
+										case '':{
+												[]
+											};
+										case (primaryWeapon player):{
+												[{
+													[player, 'acts_briefing_SA_loop'] remoteExec['switchMove'];
+												}, {
+													[player, 'acts_getAttention_loop'] remoteExec['switchMove'];
+												}, {
+													[player, 'acts_millerIdle'] remoteExec['switchMove'];
+												}, {
+													player playMoveNow 'Acts_SupportTeam_Right_ToKneelLoop';
+												}, {
+													player playMoveNow 'Acts_SupportTeam_Left_ToKneelLoop';
+												}, {
+													player playMoveNow 'Acts_SupportTeam_Front_ToKneelLoop';
+												}, {
+													player playMoveNow 'Acts_SupportTeam_Back_ToKneelLoop';
+												}, {
+													[player, 'Acts_starGazer'] remoteExec['switchMove'];
+												}, {
+													player playMoveNow 'acts_RU_briefing_Turn';
+												}, {
+													player playMoveNow 'acts_RU_briefing_point';
+												}, {
+													player playMoveNow 'acts_RU_briefing_point_tl';
+												}, {
+													player playMoveNow 'acts_RU_briefing_move';
+												}, {
+													[player, 'acts_rifle_operations_zeroing'] remoteExec['switchMove'];
+												}, {
+													player playMoveNow 'acts_rifle_operations_right';
+												}, {
+													player playMoveNow 'acts_rifle_operations_left';
+												}, {
+													player playMoveNow 'acts_rifle_operations_front';
+												}, {
+													player playMoveNow 'acts_rifle_operations_checking_chamber';
+												}, {
+													player playMoveNow 'acts_rifle_operations_barrel';
+												}, {
+													player playMoveNow 'acts_rifle_operations_back';
+												}, {
+													player playMoveNow 'acts_pointing_up';
+												}, {
+													player playMoveNow 'acts_pointing_down';
+												}, {
+													player playMoveNow 'acts_peering_up';
+												}, {
+													player playMoveNow 'acts_peering_down';
+												}, {
+													player playMoveNow 'acts_peering_front';
+												}, {
+													[player, 'Acts_Helping_Wake_Up_1'] remoteExec['switchMove'];
+												}]
+											};
+										case (handgunWeapon player):{
+												[{
+													[player, 'acts_examining_device_player'] remoteExec['switchMove'];
+												}, {
+													[player, 'acts_executioner_standingloop'] remoteExec['switchMove'];
+												}, {
+													player playMoveNow 'Acts_ViperMeeting_A_End';
+												}, {
+													player playMoveNow 'Acts_UGV_Jamming_Loop';
+												}, {
+													player playMoveNow 'Acts_starterPistol_Fire';
+												}]
+											};
+										default {
+											[]
+										};
+									};
+									_arsenalAnims = _arsenalAnims + _arsenalAnimsAdd;
+									private _playAnim = selectRandom _arsenalAnims;
+									call _playAnim;
+									if !(isNil "M9SD_EH_ResetPlayerAnimsOnArsenalClosed") then {
+										(findDisplay 46) displayRemoveEventHandler['keyDown', M9SD_EH_ResetPlayerAnimsOnArsenalClosed];
+									};
+									M9SD_EH_ResetPlayerAnimsOnArsenalClosed = (findDisplay 46) displayAddEventHandler['keyDown', {
+										params["_displayOrControl", "_key", "_shift", "_ctrl", "_alt"];
+										private _w = 17;
+										private _a = 30;
+										private _s = 31;
+										private _d = 32;
+										private _keys = [_w, _a, _s, _d];
+										if (_key in _keys) then {
+											comment
+												" 
+											playSound['addItemOK', true];
+											playSound['addItemOK', false];
+											"; 
+											if !(isNil "M9SD_EH_ResetPlayerAnimsOnArsenalClosed") then {
+												(findDisplay 46) displayRemoveEventHandler['keyDown', M9SD_EH_ResetPlayerAnimsOnArsenalClosed];
+											};
+											player enableSimulation true;
+											player playActionNow '';
+											player playMoveNow '';
+											player switchMove '';
+											if (isMultiplayer) then {
+												[player, ''] remoteExec['switchMove']
+											};
+											'arsenalNotification1'
+											cutFadeOut 0;
+											'arsenalNotification2'
+											cutFadeOut 0;
+											comment
+												" 
+											playSound['hintCollapse', true];
+											playSound['hintCollapse', false];
+											"; 
+										};
+									}];
+									playSound['hintExpand', true];
+									playSound['hintExpand', false];
+								}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
+							];
+							
+							_supplyCrate addAction
+							[
+								"<t color='#FFFFFF' size='1.2'><img image='\A3\ui_f\data\map\diary\icons\taskCustom_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Copy Loadout</t>", 
+								{
+									playSound ['beep_target', true]; 
+									playSound ['beep_target', false]; 
+									player playmovenow 'AinvPknlMstpSnonWnonDnon_1'; 
+									private _nearMen = nearestObjects [player, ['Man'], 21]; 
+									if ((count _nearMen) <= 1) exitWith  
+									{ 
+									 playSound ['AddItemFailed', true]; 
+									 playSound ['AddItemFailed', false]; 
+									 0 = [] spawn  
+									 { 
+									  for '_i' from 1 to 12 do  
+									  { 
+									   (format ['arsenalNotification%1', _i]) cutFadeOut 0; 
+									  }; 
+									  'arsenalNotification8' cutFadeOut 0;  
+									  'arsenalNotification8' cutText ["<t color='#ffd700' font='puristaMedium' shadow='2' size='1.4'>ERROR:<br/>No unit is close enough.</t>", "PLAIN DOWN", -1, true, true]; 
+									  uiSleep 3.5; 
+									  'arsenalNotification8' cutFadeOut 0.35; 
+									 }; 
+									}; 
+									private _nearestMan = _nearMen # 1; 
+									private _loadout = getUnitLoadout _nearestMan; 
+									player setUnitLoadout _loadout; 
+									private _unitName = name _nearestMan; 
+									private _notifText = format ["<t color='#ffd700' font='puristaMedium' shadow='2' size='1.4'>Nearest unit’s loadout copied:<br/><br/><t color='#FFFFFF' font='puristaSemiBold'>“%1”</t>", _unitName]; 
+									0 = _notifText spawn  
+									{ 
+									 for '_i' from 1 to 12 do  
+									 { 
+									  (format ['arsenalNotification%1', _i]) cutFadeOut 0; 
+									 }; 
+									 'arsenalNotification8' cutFadeOut 0;  
+									 'arsenalNotification8' cutText [_this, "PLAIN DOWN", -1, true, true]; 
+									 uiSleep 3.5; 
+									 'arsenalNotification8' cutFadeOut 0.35; 
+									}; 
+									playSound ['hintExpand', true]; 
+									playSound ['hintExpand', false]; 
+								}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
+							];
+							_supplyCrate addAction[
+								"<t color='#FFFFFF' size='1.2'><img image='a3\ui_f\data\igui\cfg\actions\obsolete\ui_action_gear_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Empty Loadout</t>", {
+									playSound['beep_target', true];
+									playSound['beep_target', false];
+									player playmovenow 'AinvPknlMstpSnonWnonDnon_1';
+									removeAllWeapons player;
+									removeAllItems player;
+									removeAllAssignedItems player;
+									removeUniform player;
+									removeVest player;
+									removeBackpack player;
+									removeHeadgear player;
+									removeGoggles player;
+									0 = [] spawn {
+										for '_i'
+										from 1 to 12 do {
+											(format['arsenalNotification%1', _i]) cutFadeOut 0;
+										};
+										'arsenalNotification4'
+										cutFadeOut 0;
+										'arsenalNotification4'
+										cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Loadout removed.</t>", "PLAIN DOWN", -1, true, true];
+										uiSleep 3.5;
+										'arsenalNotification4'
+										cutFadeOut 0.35;
+									};
+									playSound['hintExpand', true];
+									playSound['hintExpand', false];
+								}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
+							];
+							_supplyCrate addAction[
+								"<t color='#FFFFFF' size='1.2'><img image='a3\3den\data\displays\Display3DEN\ToolBar\save_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Save Respawn Loadout</t>", {
+									playSound['beep_target', true];
+									playSound['beep_target', false];
+									player playActionNow 'putdown';
+									[player, [missionnamespace, "M9SD_arsenalRespawnLoadout"]] call BIS_fnc_saveInventory;
+									if (!isNil "M9SD_EH_arsenalRespawnLoadout") then {
+										player removeEventHandler["Respawn", M9SD_EH_arsenalRespawnLoadout];
+									};
+									M9SD_EH_arsenalRespawnLoadout = player addEventHandler[
+										"Respawn", {
+											0 = [] spawn {
+												waitUntil {
+													(alive player)
+												};
+												sleep 0.07;
+												[player, [missionnamespace, "M9SD_arsenalRespawnLoadout"]] call BIS_fnc_loadInventory;
+											};
+										}
+									];
+									0 = [] spawn {
+										for '_i'
+										from 1 to 12 do {
+											(format['arsenalNotification%1', _i]) cutFadeOut 0;
+										};
+										'arsenalNotification6'
+										cutFadeOut 0;
+										'arsenalNotification6'
+										cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Respawn loadout set.</t>", "PLAIN DOWN", -1, true, true];
+										uiSleep 3.5;
+										'arsenalNotification6'
+										cutFadeOut 0.35;
+									};
+									playSound['hintExpand', true];
+									playSound['hintExpand', false];
+								}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
+							];
+							_supplyCrate addAction[
+								"<t color='#FFFFFF' size='1.2'><img image='a3\3den\data\displays\Display3DEN\ToolBar\open_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Load Respawn Loadout</t>", {
+									playSound['beep_target', true];
+									playSound['beep_target', false];
+									player playActionNow 'putdown';
+									if (isNil 'M9SD_EH_arsenalRespawnLoadout') then {
+										playSound['AddItemFailed', true];
+										playSound['AddItemFailed', false];
+										0 = [] spawn {
+											for '_i'
+											from 1 to 12 do {
+												(format['arsenalNotification%1', _i]) cutFadeOut 0;
+											};
+											'arsenalNotification12'
+											cutFadeOut 0;
+											'arsenalNotification12'
+											cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>ERROR:<br/>No respawn loadout saved.</t>", "PLAIN DOWN", -1, true, true];
+											uiSleep 3.5;
+											'arsenalNotification12'
+											cutFadeOut 0.35;
+										};
+									} else {
+										[player, [missionnamespace, "M9SD_arsenalRespawnLoadout"]] call BIS_fnc_loadInventory;
+										0 = [] spawn {
+											for '_i'
+											from 1 to 12 do {
+												(format['arsenalNotification%1', _i]) cutFadeOut 0;
+											};
+											'arsenalNotification12'
+											cutFadeOut 0;
+											'arsenalNotification12'
+											cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Respawn loadout applied.</t>", "PLAIN DOWN", -1, true, true];
+											uiSleep 3.5;
+											'arsenalNotification12'
+											cutFadeOut 0.35;
+										};
+										playSound['hintExpand', true];
+										playSound['hintExpand', false];
+									};
+								}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
+							];
+							_supplyCrate addAction[
+								"<t color='#FFFFFF' size='1.2'><img image='\a3\3den\data\Cfg3DEN\History\deleteItems_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Delete Respawn Loadout</t>", {
+									playSound['beep_target', true];
+									playSound['beep_target', false];
+									player playActionNow 'putdown';
+									if (!isNil "M9SD_EH_arsenalRespawnLoadout") then {
+										player removeEventHandler["Respawn", M9SD_EH_arsenalRespawnLoadout];
+									};
+									0 = [] spawn {
+										for '_i'
+										from 1 to 12 do {
+											(format['arsenalNotification%1', _i]) cutFadeOut 0;
+										};
+										'arsenalNotification5'
+										cutFadeOut 0;
+										'arsenalNotification5'
+										cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Respawn loadout disabled.</t>", "PLAIN DOWN", -1, true, true];
+										uiSleep 3.5;
+										'arsenalNotification5'
+										cutFadeOut 0.35;
+									};
+									playSound['hintExpand', true];
+									playSound['hintExpand', false];
+								}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
+							];
+							
+							
+							_supplyCrate addAction[
+								"<t color='#FFFFFF' size='1.2'><img image='\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\heal_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Heal</t>", {
+									playSound['beep_target', true];
+									playSound['beep_target', false];
+									player playActionNow 'Medic';
+									[player] call BIS_fnc_reviveEhRespawn;
+									player setDamage 0;
+									player setUnconscious false;
+									player setCaptive false;
+									0 = [] spawn {
+										for '_i'
+										from 1 to 12 do {
+											(format['arsenalNotification%1', _i]) cutFadeOut 0;
+										};
+										'arsenalNotification3'
+										cutFadeOut 0;
+										'arsenalNotification3'
+										cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Healing...</t>", "PLAIN DOWN", -1, true, true];
+										uiSleep 6.33;
+										playSound['hintCollapse', true];
+										playSound['hintCollapse', false];
+										'arsenalNotification3'
+										cutFadeOut 0;
+										'arsenalNotification3'
+										cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Healed.</t>", "PLAIN DOWN", -1, true, true];
+										uiSleep 3.33;
+										'arsenalNotification3'
+										cutFadeOut 0.35;
+									};
+									playSound['hintExpand', true];
+									playSound['hintExpand', false];
+								}, nil, 7777, true, true, "", "((_this == vehicle _this) && (damage _this > 0))", 7
+							];
+						}
+					] remoteExec['call', 0, _uniqueJIP];
+				};
+				[M9SD_AIO_SupplyBox] call M9SD_fnc_addSmallArsenalActions;
+				M9SD_fnc_smallArsenalMarkers = {
+					params[['_supplyCrate', objNull]];
+					if (isNull _supplyCrate) exitWith {};
+					if (_supplyCrate getVariable['M9SD_hasMarkers', false]) exitWith {};
+					_supplyCrate setVariable['M9SD_hasMarkers', true, true];
+					if (isNil 'M9SD_smallArsenals') then {
+						M9SD_smallArsenals = [];
+					};
+					M9SD_smallArsenals pushBackUnique _supplyCrate;
+					publicVariable 'M9SD_smallArsenals';
+					[M9SD_smallArsenals, {
+						if (!hasInterface) exitWith {};
+						waitUntil {
+							!isNil {
+								player
+							} && {!isNull player
+							}
+						};
+						waitUntil {
+							!isNull(findDisplay 46)
+						};
+						if (isNil 'M9SD_smallArsenals') then {
+							M9SD_smallArsenals = _this;
+						};
+						M9SD_smallArsenalIcons_texture = '\a3\3den\data\displays\display3den\entitymenu\arsenal_ca.paa';
+						M9SD_smallArsenalIcons_width = 0.7;
+						M9SD_smallArsenalIcons_height = 0.7;
+						M9SD_smallArsenalIcons_angle = 0;
+						M9SD_smallArsenalIcons_text = 'Virtual Arsenal';
+						M9SD_smallArsenalIcons_shadow = 2;
+						M9SD_smallArsenalIcons_textSize = 0.04;
+						M9SD_smallArsenalIcons_font = 'PuristaSemiBold';
+						M9SD_smallArsenalIcons_textAlign = 'center';
+						M9SD_smallArsenalIcons_drawSideArrows = false;
+						M9SD_smallArsenalIcons_offsetX = 0;
+						M9SD_smallArsenalIcons_offsetY = -0.07;
+						M9SD_smallArsenalIcons_offset = 2.1;
+						if (not(isNil 'M9SD_EH_drawSmallArsenal3D')) then {
+							removeMissionEventHandler['Draw3D', M9SD_EH_drawSmallArsenal3D];
+						};
+						M9SD_EH_drawSmallArsenal3D = addMissionEventHandler['Draw3D', {
+							if (count M9SD_smallArsenals == 0) exitWith {}; {
+								if (!isNull _x) then {
+									if (_x in [cursorTarget, cursorObject]) then {
+										if ((_x distance(vehicle player)) <= 28) then {
+											private _position = getPos _x;
+											_position set[2, (_position# 2) + M9SD_smallArsenalIcons_offset];
+											drawIcon3D
+												[
+													M9SD_smallArsenalIcons_texture, [1, 1, 1, 1],
+													_position,
+													M9SD_smallArsenalIcons_width,
+													M9SD_smallArsenalIcons_height,
+													M9SD_smallArsenalIcons_angle,
+													'',
+													M9SD_smallArsenalIcons_shadow,
+													M9SD_smallArsenalIcons_textSize,
+													M9SD_smallArsenalIcons_font,
+													M9SD_smallArsenalIcons_textAlign,
+													M9SD_smallArsenalIcons_drawSideArrows,
+													M9SD_smallArsenalIcons_offsetX,
+													M9SD_smallArsenalIcons_offsetY
+												];
+											drawIcon3D
+												[
+													'', [0, 1, 0, 1],
+													_position,
+													M9SD_smallArsenalIcons_width,
+													M9SD_smallArsenalIcons_height,
+													M9SD_smallArsenalIcons_angle,
+													M9SD_smallArsenalIcons_text,
+													M9SD_smallArsenalIcons_shadow,
+													M9SD_smallArsenalIcons_textSize,
+													M9SD_smallArsenalIcons_font,
+													M9SD_smallArsenalIcons_textAlign,
+													M9SD_smallArsenalIcons_drawSideArrows,
+													M9SD_smallArsenalIcons_offsetX,
+													M9SD_smallArsenalIcons_offsetY
+												];
+										};
+									};
+								};
+							}
+							forEach M9SD_smallArsenals;
+						}];
+						waitUntil {
+							!isNull(findDisplay 12 displayCtrl 51)
+						};
+						
+						
+						
+						
+						
+						if (!isNil "M9SD_EH_drawSmallArsenal2D") then {
+							(findDisplay 12 displayCtrl 51) ctrlRemoveEventHandler["Draw", M9SD_EH_drawSmallArsenal2D];
+						};
+						
+						
+						M9SD_AIO_color1 = [0, 1, 0, 1];
+						M9SD_AIO_color2 = [1, 1, 1, 1];
+						M9SD_AIO_iconPath = 'a3\ui_f\data\logos\a_64_ca.paa';
+						
+						M9SD_EH_drawSmallArsenal2D = (findDisplay 12 displayCtrl 51) ctrlAddEventHandler["Draw", 
+						{
+							_map = _this select 0;
+							if (count M9SD_smallArsenals == 0) exitWith {}; 
+							{
+								if (!isNull _x) then 
+								{
+									_pos = _x modelToWorldVisual [0, 0, 0];
+									_iconText =
+									if (((_map ctrlMapWorldToScreen (_x modelToWorldVisual[0, 0, 0])) distance2D getMousePosition) > 0.02) then {
+										""
+									} else {
+										'Virtual Arsenal'
+									};
+									_map drawIcon
+									[
+										M9SD_AIO_iconPath,
+										M9SD_AIO_color1,
+										_pos,
+										20,
+										20,
+										0,
+										_iconText,
+										1,
+										0.05,
+										"PuristaBold",
+										"left"
+									];
+									_map drawIcon
+									[
+										M9SD_AIO_iconPath,
+										M9SD_AIO_color2,
+										_pos,
+										20,
+										20,
+										0,
+										'',
+										1,
+										0.05,
+										"PuristaSemiBold",
+										"left"
+									];
+								};
+							} forEach M9SD_smallArsenals;
+						}];
+					}] remoteExec['spawn', 0, 'M9SD_JIP_smallArsenalIcons'];
+					comment " 
+					M9SD_smallArsenals = [];
+					publicVariable 'M9SD_smallArsenals';
+					remoteExec['', 'M9SD_JIP_smallArsenalIcons'];
+					"; 
+				};
+				[M9SD_AIO_SupplyBox] call M9SD_fnc_smallArsenalMarkers;
+				[M9SD_AIO_SupplyBox, false] remoteExec['allowDamage']; 
+				{
+					[_x, false] remoteExec['allowDamage'];
+				}forEach attachedObjects M9SD_AIO_SupplyBox;
+				{
+					[_x, [
+						[M9SD_AIO_SupplyBox], true
+					]] remoteExec['addCuratorEditableObjects', owner _x];
+					[_x, [attachedObjects M9SD_AIO_SupplyBox, true]] remoteExec['addCuratorEditableObjects', owner _x];
+				}forEach allCurators;
+				["AIO Arsenal Created.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+			};
+
+			
 		};
+
 
 	comment "Automatic Missions";
 
@@ -8614,6 +9365,10 @@ MAZ_EZM_fnc_initFunction = {
 
 			true
 		};
+
+	comment "Cinematics";
+
+		[]call{private['_1'];_1=[];{_1 pushBack sqrt _x}forEach [8281,1600,1521,13924,7225,6400,9025,2401,2916,10609,9025,5184,9409,6241,4900,13689,9409,3249,4900,11664,9409,11881,4900,14400,14400,3025,2916,10404,5184,1024,3721,1024,15129,100,81,10201,3025,14400,12100,1024,3136,3025,2809,9409,3249,4900,5184,2304,9409,10609,4900,1024,14641,13225,1024,15129,100,81,81,3025,2401,1024,1600,3025,5184,2809,3025,7396,1024,1156,13689,9409,3249,4900,11664,9409,2704,11025,14161,4489,7396,7396,13689,13225,3249,12544,13225,11881,4900,14400,14400,3025,2916,10404,5184,1156,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,12100,3025,2916,14400,1024,1156,13924,11664,11664,13225,11664,3364,1024,2809,13225,1024,2704,11025,14161,1024,7921,13225,3136,2916,14641,1024,3025,2916,1024,3136,3025,2809,9409,3249,4900,5184,2304,9409,10609,4900,1089,1156,3481,15625,3481,100,81,81,9025,5184,4900,14400,14400,3025,2916,10404,5184,4489,11664,11664,9409,4225,1024,3721,1024,8281,8649,3481,100,81,81,15129,100,81,81,81,9025,5184,4900,14400,14400,3025,2916,10404,5184,4489,11664,11664,9409,4225,1024,2304,3136,5184,12100,12544,9409,10609,14884,1024,7396,12544,13689,3136,11664,11881,4900,7396,1024,9025,12321,3481,100,81,81,15625,1024,2401,13225,11664,4900,9409,10609,12100,1024,13689,9409,3249,4900,11664,9409,2704,11025,14161,4489,7396,7396,13689,13225,3249,12544,13225,11881,4900,14400,14400,3025,2916,10404,5184,3481,100,81,81,2304,11664,13225,2401,3025,7396,4900,2809,9409,3249,4900,5184,2304,9409,10609,4900,1024,5184,4900,14400,5041,9409,11664,3025,9409,12544,7396,4900,1024,8281,1156,13924,7225,6400,13689,9409,3249,4900,11664,9409,2704,11025,14161,11881,4900,14400,14400,3025,2916,10404,5184,4489,11664,11664,9409,4225,1156,1936,9025,5184,4900,14400,14400,3025,2916,10404,5184,4489,11664,11664,9409,4225,8649,3481,100,81,81,2304,11664,13225,2401,3025,7396,4900,2809,9409,3249,4900,5184,2304,9409,10609,4900,1024,5184,4900,14400,5041,9409,11664,3025,9409,12544,7396,4900,1024,8281,1156,13924,7225,6400,13689,9409,3249,4900,11664,9409,2704,11025,14161,5929,3025,14400,7396,4900,5929,4900,12321,14400,1156,1936,10609,14400,11664,7396,5929,4900,12321,14400,1024,13689,9409,3249,2704,11025,14161,5929,3025,14400,7396,4900,13924,14641,3025,14400,10816,13225,12321,8649,3481,100,100,81,81,3249,3025,5184,5184,3025,13225,2916,2809,9409,3249,4900,11881,2304,9409,10609,4900,1024,5184,4900,14400,5041,9409,11664,3025,9409,12544,7396,4900,1024,8281,1156,13689,9409,3249,2704,11025,14161,5929,3025,14400,7396,4900,1156,1936,10609,14400,11664,7396,5929,4900,12321,14400,1024,13689,9409,3249,2704,11025,14161,5929,3025,14400,7396,4900,13924,14641,3025,14400,10816,13225,12321,1936,14400,11664,3136,4900,8649,3481,100,81,81,3249,3025,5184,5184,3025,13225,2916,2809,9409,3249,4900,11881,2304,9409,10609,4900,1024,5184,4900,14400,5041,9409,11664,3025,9409,12544,7396,4900,1024,8281,1156,13689,9409,3249,2704,11025,14161,7921,9409,14641,4900,13689,13225,7396,13225,11664,1156,1936,13689,9409,3249,2704,11025,14161,7921,9409,14641,4900,13689,13225,7396,13225,11664,13689,13225,3249,12544,13225,1024,7396,12544,5776,9409,14400,9409,1024,1600,7396,12544,13689,3136,11664,11881,4900,7396,1024,13689,9409,3249,2704,11025,14161,7921,9409,14641,4900,13689,13225,7396,13225,11664,13689,13225,3249,12544,13225,1681,1936,14400,11664,3136,4900,8649,3481,100,81,81,3249,3025,5184,5184,3025,13225,2916,2809,9409,3249,4900,11881,2304,9409,10609,4900,1024,5184,4900,14400,5041,9409,11664,3025,9409,12544,7396,4900,1024,8281,1156,13689,9409,3249,2704,11025,14161,7921,9409,14641,4900,11881,2304,4900,4900,14641,1156,1936,13689,9409,3249,2704,11025,14161,7921,9409,14641,4900,11881,2304,4900,4900,14641,13689,13225,3249,12544,13225,1024,7396,12544,5041,9409,7396,3136,4900,1024,1600,7396,12544,13689,3136,11664,11881,4900,7396,1024,13689,9409,3249,2704,11025,14161,7921,9409,14641,4900,11881,2304,4900,4900,14641,13689,13225,3249,12544,13225,1681,1936,14400,11664,3136,4900,8649,3481,100,81,81,3249,3025,5184,5184,3025,13225,2916,2809,9409,3249,4900,11881,2304,9409,10609,4900,1024,5184,4900,14400,5041,9409,11664,3025,9409,12544,7396,4900,1024,8281,1156,13689,9409,3249,2704,11025,14161,9801,4900,2916,10404,14400,12100,1156,1936,13689,9409,3249,2704,11025,14161,9801,4900,2916,10404,14400,12100,13689,13225,3249,12544,13225,1024,7396,12544,5041,9409,7396,3136,4900,1024,1600,7396,12544,13689,3136,11664,11881,4900,7396,1024,13689,9409,3249,2704,11025,14161,9801,4900,2916,10404,14400,12100,13689,13225,3249,12544,13225,1681,1936,14400,11664,3136,4900,8649,3481,100,81,81,3249,3025,5184,5184,3025,13225,2916,2809,9409,3249,4900,11881,2304,9409,10609,4900,1024,5184,4900,14400,5041,9409,11664,3025,9409,12544,7396,4900,1024,8281,1156,13689,9409,3249,2704,11025,14161,5776,3025,5184,14400,9409,2916,10609,4900,7921,11664,13225,3249,13689,4900,2916,14400,4900,11664,1156,1936,13689,9409,3249,2704,11025,14161,5776,3025,5184,14400,9409,2916,10609,4900,7921,11664,13225,3249,13689,4900,2916,14400,4900,11664,13689,13225,3249,12544,13225,1024,7396,12544,5041,9409,7396,3136,4900,1024,1600,7396,12544,13689,3136,11664,11881,4900,7396,1024,13689,9409,3249,2704,11025,14161,5776,3025,5184,14400,9409,2916,10609,4900,7921,11664,13225,3249,13689,4900,2916,14400,4900,11664,13689,13225,3249,12544,13225,1681,1936,14400,11664,3136,4900,8649,3481,100,81,81,3249,3025,5184,5184,3025,13225,2916,2809,9409,3249,4900,11881,2304,9409,10609,4900,1024,5184,4900,14400,5041,9409,11664,3025,9409,12544,7396,4900,1024,8281,1156,13689,9409,3249,2704,11025,14161,12769,4900,3025,10404,12100,14400,4489,12544,13225,6241,4900,13689,4900,2916,14400,4900,11664,1156,1936,13689,9409,3249,2704,11025,14161,12769,4900,3025,10404,12100,14400,4489,12544,13225,6241,4900,13689,4900,2916,14400,4900,11664,13689,13225,3249,12544,13225,1024,7396,12544,5041,9409,7396,3136,4900,1024,1600,7396,12544,13689,3136,11664,11881,4900,7396,1024,13689,9409,3249,2704,11025,14161,12769,4900,3025,10404,12100,14400,4489,12544,13225,6241,4900,13689,4900,2916,14400,4900,11664,13689,13225,3249,12544,13225,1681,1936,14400,11664,3136,4900,8649,3481,100,81,81,3249,3025,5184,5184,3025,13225,2916,2809,9409,3249,4900,11881,2304,9409,10609,4900,1024,5184,4900,14400,5041,9409,11664,3025,9409,12544,7396,4900,1024,8281,1156,13689,9409,3249,2704,11025,14161,8100,13225,14400,9409,14400,3025,13225,2916,5776,3025,11664,4900,10609,14400,3025,13225,2916,1156,1936,13689,9409,3249,2704,11025,14161,8100,13225,14400,9409,14400,3025,13225,2916,5776,3025,11664,4900,10609,14400,3025,13225,2916,13689,13225,3249,12544,13225,1024,7396,12544,5776,9409,14400,9409,1024,1600,7396,12544,13689,3136,11664,11881,4900,7396,1024,13689,9409,3249,2704,11025,14161,8100,13225,14400,9409,14400,3025,13225,2916,5776,3025,11664,4900,10609,14400,3025,13225,2916,13689,13225,3249,12544,13225,1681,1936,14400,11664,3136,4900,8649,3481,100,81,15625,3481,100,15625,3481,100,100,13924,7225,6400,9025,2401,2916,10609,9025,7396,13225,9409,14641,13689,9409,3249,4900,11664,9409,11881,4900,14400,14400,3025,2916,10404,5184,1024,3721,1024,15129,100,81,10201,3025,14400,12100,1024,3136,3025,2809,9409,3249,4900,5184,2304,9409,10609,4900,1024,14641,13225,1024,15129,100,81,81,3025,2401,1024,1600,3025,5184,2809,3025,7396,1024,1156,13689,9409,3249,4900,11664,9409,2704,11025,14161,4489,7396,7396,13689,13225,3249,12544,13225,11881,4900,14400,14400,3025,2916,10404,5184,1156,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,12100,3025,2916,14400,1024,1156,13924,11664,11664,13225,11664,3364,1024,2809,13225,1024,2704,11025,14161,1024,7921,13225,3136,2916,14641,1024,3025,2916,1024,3136,3025,2809,9409,3249,4900,5184,2304,9409,10609,4900,1089,1156,3481,15625,3481,100,81,81,9025,5184,4900,14400,14400,3025,2916,10404,5184,4489,11664,11664,9409,4225,1024,3721,1024,2304,11664,13225,2401,3025,7396,4900,2809,9409,3249,4900,5184,2304,9409,10609,4900,1024,10404,4900,14400,5041,9409,11664,3025,9409,12544,7396,4900,1024,1156,13924,7225,6400,13689,9409,3249,4900,11664,9409,2704,11025,14161,11881,4900,14400,14400,3025,2916,10404,5184,4489,11664,11664,9409,4225,1156,3481,100,81,81,9025,14400,3025,14400,7396,4900,5929,4900,12321,14400,1024,3721,1024,2304,11664,13225,2401,3025,7396,4900,2809,9409,3249,4900,5184,2304,9409,10609,4900,1024,10404,4900,14400,5041,9409,11664,3025,9409,12544,7396,4900,1024,1156,13924,7225,6400,13689,9409,3249,4900,11664,9409,2704,11025,14161,5929,3025,14400,7396,4900,5929,4900,12321,14400,1156,3481,100,81,81,3025,2401,1024,1600,3025,5184,2809,3025,7396,1024,1156,9025,5184,4900,14400,14400,3025,2916,10404,5184,4489,11664,11664,9409,4225,1156,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,15625,3481,100,81,81,3025,2401,1024,1600,3025,5184,2809,3025,7396,1024,1156,9025,14400,3025,14400,7396,4900,5929,4900,12321,14400,1156,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,15625,3481,100,81,81,15129,100,81,81,81,9025,10609,13225,3249,12544,13225,1024,3721,1024,13689,9409,3249,4900,11664,9409,2704,11025,14161,4489,7396,7396,13689,13225,3249,12544,13225,11881,4900,14400,14400,3025,2916,10404,5184,1024,5184,4900,7396,4900,10609,14400,1024,9025,2401,13225,11664,4900,9409,10609,12100,14161,2916,14641,4900,12321,3481,100,81,81,81,9025,10609,13225,3249,12544,13225,1024,7396,12544,11881,4900,14400,13689,3136,11664,11881,4900,7396,1024,9025,12321,3481,100,81,81,15625,1024,2401,13225,11664,4900,9409,10609,12100,1024,9025,5184,4900,14400,14400,3025,2916,10404,5184,4489,11664,11664,9409,4225,3481,100,81,81,13689,9409,3249,2704,11025,14161,5929,3025,14400,7396,4900,13924,14641,3025,14400,10816,13225,12321,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,1024,9025,14400,3025,14400,7396,4900,5929,4900,12321,14400,3481,100,81,15625,3481,100,15625,3481,100,100,13924,7225,6400,9025,2401,2916,10609,9025,10609,9409,3249,4900,11664,9409,2704,11025,14161,1024,3721,1024,15129,100,81,10201,3025,14400,12100,1024,3136,3025,2809,9409,3249,4900,5184,2304,9409,10609,4900,1024,14641,13225,1024,15129,100,81,81,10609,11664,4900,9409,14400,4900,5776,3025,9409,7396,13225,10404,1024,1156,8100,5184,10609,5776,3025,5184,2304,7396,9409,4225,13924,3249,2304,14400,4225,1156,3481,100,81,81,5184,12100,13225,10201,10609,12100,9409,14400,1024,14400,11664,3136,4900,3481,100,81,81,9025,14641,3025,5184,2304,7396,9409,4225,1024,3721,1024,1600,2401,3025,2916,14641,5776,3025,5184,2304,7396,9409,4225,1024,2025,7056,1681,3481,100,100,81,81,13689,9409,3249,4900,11664,9409,2704,11025,14161,4489,7396,7396,13689,13225,3249,12544,13225,11881,4900,14400,14400,3025,2916,10404,5184,1024,3721,1024,8281,8649,3481,100,81,81,13924,7225,6400,11881,4900,7396,4900,10609,14400,4900,14641,6400,3136,5184,3025,10609,11025,14161,1024,3721,1024,1156,1156,3481,100,100,81,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,10816,9409,10609,14884,10404,11664,13225,3136,2916,14641,1024,7056,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,6084,3025,10609,14400,3136,11664,4900,1156,1936,2025,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,2601,6561,11449,6561,6561,6561,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,7056,6561,4624,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,4624,7056,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,6889,11449,11449,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,1024,1600,1156,1225,1600,9409,11664,10404,12544,1936,4761,1936,4761,1936,2601,1681,10609,13225,7396,13225,11664,1600,7056,1936,7056,1936,7056,1936,7056,1681,1156,1681,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,13689,13225,7396,13225,11664,1024,8281,4356,1936,4356,1936,4356,1936,4356,2116,12996,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,100,81,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,10816,9409,10609,14884,10404,11664,13225,3136,2916,14641,1024,4624,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,6084,3025,10609,14400,3136,11664,4900,1156,1936,2025,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,11449,4356,7056,12996,6889,2601,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,4624,4356,6889,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,7056,6561,6889,4761,5476,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,6889,7056,6889,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,1024,1600,1156,1225,1600,9409,11664,10404,12544,1936,4761,1936,4761,1936,2601,1681,10609,13225,7396,13225,11664,1600,7056,1936,7056,1936,7056,1936,7056,1681,1156,1681,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,13689,13225,7396,13225,11664,1024,8281,4356,1936,4356,1936,4356,1936,4356,2116,5476,12996,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,100,81,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,5929,3025,14400,7396,4900,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,11881,14400,11664,3136,10609,14400,3136,11664,4900,14641,5929,4900,12321,14400,1156,1936,2025,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,2601,6561,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,7056,6889,11449,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,4624,7056,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,4356,4624,4761,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,11881,14400,11664,3136,10609,14400,3136,11664,4900,14641,5929,4900,12321,14400,1024,2304,9409,11664,5184,4900,5929,4900,12321,14400,1024,1600,1156,3600,14400,1024,9409,7396,3025,10404,2916,3721,1521,1849,1156,1521,1156,1849,1521,7396,4900,2401,14400,1521,1849,1156,1521,1156,1849,1521,3844,13689,3025,2916,4900,3249,9409,14400,3025,10609,1024,11881,4900,14400,14400,3025,2916,10404,5184,3600,2209,14400,3844,1156,1681,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,10816,9409,10609,14884,10404,11664,13225,3136,2916,14641,13689,13225,7396,13225,11664,1024,8281,4356,1936,4356,2116,12996,1936,7056,1936,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,100,81,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,5929,3025,14400,7396,4900,1024,13689,9409,11664,14641,1024,2025,1024,14400,4900,12321,14400,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,10816,3136,14400,14400,13225,2916,6400,4900,2916,3136,1156,1936,2025,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,11449,4356,4761,7056,4624,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,4624,4624,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,7056,4761,2601,5476,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,4356,4624,4761,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,1024,1600,1156,5929,3025,14400,7396,4900,1024,13689,9409,11664,14641,1156,1681,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,100,81,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,5929,3025,14400,7396,4900,1024,13689,9409,11664,14641,1024,2025,1024,4900,14641,3025,14400,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,13924,14641,3025,14400,1156,1936,2025,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,11449,4356,4761,7056,4624,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,4624,11449,4761,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,7056,4761,2601,5476,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,4356,11449,4624,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,13689,13225,7396,13225,11664,1024,8281,7056,1936,7056,1936,7056,1936,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,10816,9409,10609,14884,10404,11664,13225,3136,2916,14641,13689,13225,7396,13225,11664,1024,8281,4356,1936,4356,2116,12996,1936,7056,1936,4356,2116,12996,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,81,81,13689,9409,3249,2704,11025,14161,5929,3025,14400,7396,4900,13924,14641,3025,14400,10816,13225,12321,1024,3721,1024,9025,10609,14400,11664,7396,3481,100,100,81,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,7921,9409,14641,4900,1024,13689,13225,7396,13225,11664,1024,2025,1024,14400,4900,12321,14400,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,10816,3136,14400,14400,13225,2916,6400,4900,2916,3136,1156,1936,2025,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,11449,4356,4761,7056,4624,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,2601,4356,11449,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,4356,6561,7056,4761,5476,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,4356,4624,4761,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,1024,1600,1156,7921,9409,14641,4900,1024,13689,13225,7396,13225,11664,1156,1681,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,81,81,100,81,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,7921,9409,14641,4900,1024,11881,2304,4900,4900,14641,1024,2025,1024,14400,4900,12321,14400,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,10816,3136,14400,14400,13225,2916,6400,4900,2916,3136,1156,1936,2025,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,2601,4356,11449,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,4356,6561,7056,4761,5476,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,4356,4624,4761,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,1024,1600,1156,7921,9409,14641,4900,1024,11881,2304,4900,4900,14641,1156,1681,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,100,81,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,7921,9409,14641,4900,1024,13689,13225,7396,13225,11664,1024,2025,1024,10609,13225,3249,12544,13225,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,13689,13225,3249,12544,13225,1156,1936,2025,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,11449,4356,4761,7056,4624,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,2601,2601,4624,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,4356,6561,7056,4761,5476,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,4356,4624,4761,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,13689,13225,7396,13225,11664,1024,8281,7056,1936,7056,1936,7056,1936,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,10816,9409,10609,14884,10404,11664,13225,3136,2916,14641,13689,13225,7396,13225,11664,1024,8281,4356,1936,4356,2116,12996,1936,7056,1936,4356,2116,12996,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,81,81,9025,3025,2916,14641,4900,12321,1024,3721,1024,9025,10609,14400,11664,7396,1024,7396,12544,4489,14641,14641,1024,1156,10816,7396,9409,10609,14884,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,5776,9409,14400,9409,1024,8281,9025,3025,2916,14641,4900,12321,1936,1156,10816,9801,4489,13689,10000,1156,8649,3481,100,81,81,9025,3025,2916,14641,4900,12321,1024,3721,1024,9025,10609,14400,11664,7396,1024,7396,12544,4489,14641,14641,1024,1156,5329,12100,3025,14400,4900,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,5776,9409,14400,9409,1024,8281,9025,3025,2916,14641,4900,12321,1936,1156,5329,12769,14161,5929,13924,1156,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,13689,3136,11664,11881,4900,7396,1024,4356,3481,100,81,81,13689,9409,3249,2704,11025,14161,7921,9409,14641,4900,13689,13225,7396,13225,11664,13689,13225,3249,12544,13225,1024,3721,1024,9025,10609,14400,11664,7396,3481,100,81,81,13689,9409,3249,4900,11664,9409,2704,11025,14161,4489,7396,7396,13689,13225,3249,12544,13225,11881,4900,14400,14400,3025,2916,10404,5184,1024,2304,3136,5184,12100,10816,9409,10609,14884,1024,9025,10609,14400,11664,7396,3481,100,100,81,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,7921,9409,14641,4900,1024,11881,2304,4900,4900,14641,1024,2025,1024,10609,13225,3249,12544,13225,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,13689,13225,3249,12544,13225,1156,1936,2025,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,2601,2601,4624,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,4356,6561,7056,4761,5476,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,4356,4624,4761,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,13689,13225,7396,13225,11664,1024,8281,7056,1936,7056,1936,7056,1936,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,10816,9409,10609,14884,10404,11664,13225,3136,2916,14641,13689,13225,7396,13225,11664,1024,8281,4356,1936,4356,2116,12996,1936,7056,1936,4356,2116,12996,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,81,81,9025,3025,2916,14641,4900,12321,1024,3721,1024,9025,10609,14400,11664,7396,1024,7396,12544,4489,14641,14641,1024,1156,6400,4900,14641,3025,3136,3249,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,5041,9409,7396,3136,4900,1024,8281,9025,3025,2916,14641,4900,12321,1936,12996,4356,8649,3481,100,81,81,9025,3025,2916,14641,4900,12321,1024,3721,1024,9025,10609,14400,11664,7396,1024,7396,12544,4489,14641,14641,1024,1156,7921,9409,5184,14400,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,5041,9409,7396,3136,4900,1024,8281,9025,3025,2916,14641,4900,12321,1936,4624,12996,8649,3481,100,81,81,9025,3025,2916,14641,4900,12321,1024,3721,1024,9025,10609,14400,11664,7396,1024,7396,12544,4489,14641,14641,1024,1156,11881,7396,13225,10201,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,5041,9409,7396,3136,4900,1024,8281,9025,3025,2916,14641,4900,12321,1936,5476,12996,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,13689,3136,11664,11881,4900,7396,1024,4356,3481,100,81,81,13689,9409,3249,2704,11025,14161,7921,9409,14641,4900,11881,2304,4900,4900,14641,13689,13225,3249,12544,13225,1024,3721,1024,9025,10609,14400,11664,7396,3481,100,81,81,13689,9409,3249,4900,11664,9409,2704,11025,14161,4489,7396,7396,13689,13225,3249,12544,13225,11881,4900,14400,14400,3025,2916,10404,5184,1024,2304,3136,5184,12100,10816,9409,10609,14884,1024,9025,10609,14400,11664,7396,3481,100,100,81,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,4489,14641,14641,1024,6400,3136,5184,3025,10609,1024,2025,1024,10816,3136,14400,14400,13225,2916,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,10816,3136,14400,14400,13225,2916,6400,4900,2916,3136,1156,1936,2025,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,11449,4356,4761,7056,4624,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,2601,5476,11449,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,7056,4761,2601,5476,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,4356,11449,4624,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,1024,1600,1156,4489,14641,14641,1024,6400,3136,5184,3025,10609,1156,1681,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,81,81,13689,9409,3249,2704,11025,14161,4489,14641,14641,6400,3136,5184,3025,10609,10816,3136,14400,14400,13225,2916,1024,3721,1024,9025,10609,14400,11664,7396,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,4489,14641,14641,13924,6241,4900,2916,14400,12769,9409,2916,14641,7396,4900,11664,1024,8281,1156,10816,3136,14400,14400,13225,2916,5776,13225,10201,2916,1156,1936,15129,100,81,81,81,2304,9409,11664,9409,3249,5184,8281,1156,9025,12544,3136,14400,14400,13225,2916,1156,8649,3481,100,81,81,81,10201,3025,14400,12100,1024,3136,3025,2809,9409,3249,4900,5184,2304,9409,10609,4900,1024,14641,13225,1024,15129,100,81,81,81,81,9025,14641,3025,5184,2304,7396,9409,4225,1024,3721,1024,1600,2401,3025,2916,14641,5776,3025,5184,2304,7396,9409,4225,1024,2025,7056,1681,3481,100,81,81,81,81,13924,6400,4489,7225,7396,7396,6400,3136,5184,3025,10609,13689,13225,2916,14400,11664,13225,7396,5184,1024,3721,1024,8281,8649,3481,100,81,81,81,81,13924,6400,4489,7225,7396,7396,13689,9409,3249,4900,11664,9409,2704,11025,14161,13689,13225,2916,14400,11664,13225,7396,5184,1024,3721,1024,9409,7396,7396,13689,13225,2916,14400,11664,13225,7396,5184,1024,9025,14641,3025,5184,2304,7396,9409,4225,3481,100,81,81,81,81,15129,9025,12321,1024,10609,14400,11664,7396,11881,12100,13225,10201,1024,2401,9409,7396,5184,4900,3481,15625,1024,2401,13225,11664,4900,9409,10609,12100,1024,13924,6400,4489,7225,7396,7396,13689,9409,3249,4900,11664,9409,2704,11025,14161,13689,13225,2916,14400,11664,13225,7396,5184,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,6084,3025,10609,14400,3136,11664,4900,1156,1936,2025,7056,8649,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,2601,5476,12996,2601,7056,4624,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,4624,2601,11449,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,4624,11449,6561,2601,5476,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,12996,6889,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,1024,1600,1156,1225,1600,9409,11664,10404,12544,1936,4761,1936,4761,1936,2601,1681,10609,13225,7396,13225,11664,1600,7056,1936,7056,1936,7056,1936,7056,1681,1156,1681,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,13689,13225,7396,13225,11664,1024,8281,4356,1936,4356,1936,4356,1936,4356,2116,12996,8649,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,81,81,81,81,13924,6400,4489,7225,7396,7396,6400,3136,5184,3025,10609,13689,13225,2916,14400,11664,13225,7396,5184,1024,2304,3136,5184,12100,10816,9409,10609,14884,1024,9025,10609,14400,11664,7396,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,6084,3025,10609,14400,3136,11664,4900,1156,1936,2025,7056,8649,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,2601,4761,7056,4761,5476,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,4624,11449,4761,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,4624,2601,6889,4624,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,12996,2601,4624,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,1024,1600,1156,1225,1600,9409,11664,10404,12544,1936,4761,1936,4761,1936,2601,1681,10609,13225,7396,13225,11664,1600,7056,1936,7056,1936,7056,1936,7056,1681,1156,1681,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,13689,13225,7396,13225,11664,1024,8281,4356,1936,4356,1936,4356,1936,4356,2116,12996,8649,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,1024,100,81,81,81,81,13924,6400,4489,7225,7396,7396,6400,3136,5184,3025,10609,13689,13225,2916,14400,11664,13225,7396,5184,1024,2304,3136,5184,12100,10816,9409,10609,14884,1024,9025,10609,14400,11664,7396,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,11881,14400,11664,3136,10609,14400,3136,11664,4900,14641,5929,4900,12321,14400,1156,1936,2025,7056,8649,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,2601,5476,12996,2601,7056,4624,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,4624,4356,6889,6561,4624,6889,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,4624,11449,4761,4761,12996,11449,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,4356,4624,4761,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,11881,14400,11664,3136,10609,14400,3136,11664,4900,14641,5929,4900,12321,14400,1024,2304,9409,11664,5184,4900,5929,4900,12321,14400,1024,1600,1156,6400,3136,5184,3025,10609,1024,11881,4900,7396,4900,10609,14400,3025,13225,2916,1156,1681,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,10816,9409,10609,14884,10404,11664,13225,3136,2916,14641,13689,13225,7396,13225,11664,1024,8281,4356,1936,4356,2116,12996,1936,7056,1936,7056,8649,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,81,81,81,81,13924,6400,4489,7225,7396,7396,6400,3136,5184,3025,10609,13689,13225,2916,14400,11664,13225,7396,5184,1024,2304,3136,5184,12100,10816,9409,10609,14884,1024,9025,10609,14400,11664,7396,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,9801,3025,5184,14400,10816,13225,12321,1156,1936,2025,7056,8649,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,2601,4761,4761,11449,2601,5476,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,4624,6889,4624,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,4624,4624,2601,7056,4624,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,11449,2601,11449,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,81,81,81,81,13924,7225,6400,6400,3136,5184,3025,10609,9801,3025,5184,14400,10816,13225,12321,1024,3721,1024,9025,10609,14400,11664,7396,3481,100,81,81,81,81,13924,6400,4489,7225,7396,7396,6400,3136,5184,3025,10609,13689,13225,2916,14400,11664,13225,7396,5184,1024,2304,3136,5184,12100,10816,9409,10609,14884,1024,9025,10609,14400,11664,7396,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,4489,14641,14641,13924,6241,4900,2916,14400,12769,9409,2916,14641,7396,4900,11664,1024,8281,1156,9801,10816,11881,4900,7396,13689,12100,9409,2916,10404,4900,14641,1156,1936,15129,100,81,81,81,81,81,2304,9409,11664,9409,3249,5184,1024,8281,1156,9025,10609,13225,2916,14400,11664,13225,7396,1156,1936,1024,1156,9025,5184,4900,7396,4900,10609,14400,4900,14641,14161,2916,14641,4900,12321,1156,8649,3481,100,81,81,81,81,81,9025,3249,3136,5184,3025,10609,13689,7396,9409,5184,5184,1024,3721,1024,9025,10609,13225,2916,14400,11664,13225,7396,1024,7396,12544,5776,9409,14400,9409,1024,9025,5184,4900,7396,4900,10609,14400,4900,14641,14161,2916,14641,4900,12321,3481,100,81,81,81,81,81,2304,7396,9409,4225,6400,3136,5184,3025,10609,1024,9025,3249,3136,5184,3025,10609,13689,7396,9409,5184,5184,3481,100,81,81,81,81,15625,8649,3481,100,81,81,81,81,9025,9409,7396,7396,6400,3136,5184,3025,10609,13689,7396,9409,5184,5184,4900,5184,1024,3721,1024,1600,10609,13225,2916,2401,3025,10404,7921,3025,7396,4900,1024,3844,3844,1024,1156,13689,2401,10404,6400,3136,5184,3025,10609,1156,1681,1024,10609,9409,7396,7396,1024,10816,14161,11881,9025,2401,2916,10609,9025,10404,4900,14400,13689,2401,10404,11881,3136,12544,13689,7396,9409,5184,5184,4900,5184,3481,100,81,81,81,81,15129,100,81,81,81,81,81,9025,2916,9409,3249,4900,1024,3721,1024,10404,4900,14400,5929,4900,12321,14400,1600,10609,13225,2916,2401,3025,10404,7921,3025,7396,4900,1024,3844,3844,1024,1156,13689,2401,10404,6400,3136,5184,3025,10609,1156,1024,3844,3844,1024,9025,12321,1024,3844,3844,1024,1156,2916,9409,3249,4900,1156,1681,3481,100,81,81,81,81,81,3025,2401,1600,9025,2916,9409,3249,4900,1024,3025,5184,13924,7569,3136,9409,7396,5929,13225,1024,1156,1156,1681,1024,14400,12100,4900,2916,1024,15129,9025,2916,9409,3249,4900,1024,3721,1024,9025,12321,3481,15625,3481,100,81,81,81,81,81,9025,3025,2916,14641,4900,12321,1024,3721,1024,1600,9025,10609,14400,11664,7396,1024,7396,12544,4489,14641,14641,1024,9025,2916,9409,3249,4900,1681,3481,100,81,81,81,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,5776,9409,14400,9409,1024,8281,9025,3025,2916,14641,4900,12321,1936,9025,12321,8649,3481,100,81,81,81,81,15625,1024,2401,13225,11664,4900,9409,10609,12100,1024,9025,9409,7396,7396,6400,3136,5184,3025,10609,13689,7396,9409,5184,5184,4900,5184,3481,100,81,81,81,81,7396,12544,11881,13225,11664,14400,1024,9025,10609,14400,11664,7396,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,10816,3136,14400,14400,13225,2916,6400,4900,2916,3136,1156,1936,2025,7056,8649,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,2601,4761,4761,11449,2601,5476,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,5476,7056,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,4624,4624,2601,7056,4624,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,4356,12996,6889,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,11881,14400,11664,3136,10609,14400,3136,11664,4900,14641,5929,4900,12321,14400,1024,2304,9409,11664,5184,4900,5929,4900,12321,14400,1024,1600,1156,4489,5776,5776,1024,6400,11025,11881,14161,13689,1156,1681,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,81,81,81,81,13924,6400,4489,7225,7396,7396,6400,3136,5184,3025,10609,13689,13225,2916,14400,11664,13225,7396,5184,1024,2304,3136,5184,12100,10816,9409,10609,14884,1024,9025,10609,14400,11664,7396,3481,100,81,81,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,4489,14641,14641,13924,6241,4900,2916,14400,12769,9409,2916,14641,7396,4900,11664,1024,8281,1156,10816,3136,14400,14400,13225,2916,5776,13225,10201,2916,1156,1936,15129,100,81,81,81,81,81,2304,9409,11664,9409,3249,5184,1024,8281,1156,9025,10609,13225,2916,14400,11664,13225,7396,1156,8649,3481,100,81,81,81,81,81,9025,7396,3025,5184,14400,10816,13225,12321,1024,3721,1024,3136,3025,2809,9409,3249,4900,5184,2304,9409,10609,4900,1024,10404,4900,14400,5041,9409,11664,3025,9409,12544,7396,4900,1024,1156,13924,7225,6400,6400,3136,5184,3025,10609,9801,3025,5184,14400,10816,13225,12321,1156,3481,100,81,81,81,81,81,9025,3249,3136,5184,3025,10609,13689,7396,9409,5184,5184,1024,3721,1024,9025,7396,3025,5184,14400,10816,13225,12321,1024,7396,12544,5776,9409,14400,9409,1024,1600,7396,12544,13689,3136,11664,11881,4900,7396,1024,9025,7396,3025,5184,14400,10816,13225,12321,1681,3481,100,81,81,81,81,81,10201,3025,14400,12100,1024,3136,3025,2809,9409,3249,4900,5184,2304,9409,10609,4900,1024,14641,13225,1024,15129,100,81,81,81,81,81,81,13924,7225,6400,11881,4900,7396,4900,10609,14400,4900,14641,6400,3136,5184,3025,10609,11025,14161,1024,3721,1024,9025,3249,3136,5184,3025,10609,13689,7396,9409,5184,5184,3481,100,81,81,81,81,81,81,15129,10609,14400,11664,7396,5776,4900,7396,4900,14400,4900,1024,9025,12321,3481,15625,1024,2401,13225,11664,4900,9409,10609,12100,1024,13924,6400,4489,7225,7396,7396,6400,3136,5184,3025,10609,13689,13225,2916,14400,11664,13225,7396,5184,3481,100,81,81,81,81,81,81,15129,9025,12321,1024,10609,14400,11664,7396,11881,12100,13225,10201,1024,14400,11664,3136,4900,3481,15625,1024,2401,13225,11664,4900,9409,10609,12100,1024,13924,6400,4489,7225,7396,7396,13689,9409,3249,4900,11664,9409,2704,11025,14161,13689,13225,2916,14400,11664,13225,7396,5184,3481,100,81,81,81,81,81,15625,3481,100,81,81,81,81,81,2304,7396,9409,4225,6400,3136,5184,3025,10609,1024,1156,1156,3481,100,81,81,81,81,81,13924,7225,6400,11881,4900,7396,4900,10609,14400,4900,14641,6400,3136,5184,3025,10609,1024,3721,1024,1600,3136,3025,2809,9409,3249,4900,5184,2304,9409,10609,4900,1024,10404,4900,14400,5041,9409,11664,3025,9409,12544,7396,4900,1024,1156,13924,7225,6400,11881,4900,7396,4900,10609,14400,4900,14641,6400,3136,5184,3025,10609,11025,14161,1156,1681,3481,100,81,81,81,81,81,2304,3136,12544,7396,3025,10609,5041,9409,11664,3025,9409,12544,7396,4900,1024,1156,13924,7225,6400,11881,4900,7396,4900,10609,14400,4900,14641,6400,3136,5184,3025,10609,1156,3481,100,81,81,81,81,15625,8649,3481,100,81,81,81,15625,3481,100,81,81,15625,8649,3481,100,100,81,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,9801,4900,2916,10404,14400,12100,1024,13225,2401,1024,13689,3025,2916,4900,3249,9409,14400,3025,10609,1024,2025,1024,14400,4900,12321,14400,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,10816,3136,14400,14400,13225,2916,6400,4900,2916,3136,1156,1936,2025,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,11449,4356,4761,7056,4624,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,11449,2601,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,7056,4761,2601,5476,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,4356,4624,4761,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,1024,1600,1156,9801,4900,2916,10404,14400,12100,1024,13225,2401,1024,13689,3025,2916,4900,3249,9409,14400,3025,10609,1156,1681,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,13225,13225,7396,14400,3025,2304,1024,1156,12769,13225,10201,1024,7396,13225,2916,10404,1024,3025,2916,1024,5184,4900,10609,13225,2916,14641,5184,1024,14400,12100,4900,1024,10609,3025,2916,4900,3249,9409,14400,3025,10609,1024,10201,3025,7396,7396,1024,7396,9409,5184,14400,2116,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,100,81,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,9801,4900,2916,10404,14400,12100,1024,13225,2401,1024,13689,3025,2916,4900,3249,9409,14400,3025,10609,1024,2025,1024,10609,13225,3249,12544,13225,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,13689,13225,3249,12544,13225,1156,1936,2025,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,11449,4356,4761,7056,4624,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,11449,12996,4761,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,7056,4761,2601,5476,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,4356,4624,4761,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,13689,13225,7396,13225,11664,1024,8281,7056,1936,7056,1936,7056,1936,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,10816,9409,10609,14884,10404,11664,13225,3136,2916,14641,13689,13225,7396,13225,11664,1024,8281,4356,1936,4356,2116,12996,1936,7056,1936,4356,2116,12996,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,81,81,9025,3025,2916,14641,4900,12321,1024,3721,1024,9025,10609,14400,11664,7396,1024,7396,12544,4489,14641,14641,1024,1156,7056,4356,5184,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,5041,9409,7396,3136,4900,1024,8281,9025,3025,2916,14641,4900,12321,1936,7056,4356,8649,3481,100,81,81,9025,3025,2916,14641,4900,12321,1024,3721,1024,9025,10609,14400,11664,7396,1024,7396,12544,4489,14641,14641,1024,1156,12996,5184,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,5041,9409,7396,3136,4900,1024,8281,9025,3025,2916,14641,4900,12321,1936,12996,8649,3481,100,81,81,9025,3025,2916,14641,4900,12321,1024,3721,1024,9025,10609,14400,11664,7396,1024,7396,12544,4489,14641,14641,1024,1156,7056,12996,5184,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,5041,9409,7396,3136,4900,1024,8281,9025,3025,2916,14641,4900,12321,1936,7056,12996,8649,3481,100,81,81,9025,3025,2916,14641,4900,12321,1024,3721,1024,9025,10609,14400,11664,7396,1024,7396,12544,4489,14641,14641,1024,1156,2601,4356,5184,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,5041,9409,7396,3136,4900,1024,8281,9025,3025,2916,14641,4900,12321,1936,2601,4356,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,13689,3136,11664,11881,4900,7396,1024,4356,3481,100,81,81,13689,9409,3249,2704,11025,14161,9801,4900,2916,10404,14400,12100,13689,13225,3249,12544,13225,1024,3721,1024,9025,10609,14400,11664,7396,3481,100,81,81,13689,9409,3249,4900,11664,9409,2704,11025,14161,4489,7396,7396,13689,13225,3249,12544,13225,11881,4900,14400,14400,3025,2916,10404,5184,1024,2304,3136,5184,12100,10816,9409,10609,14884,1024,9025,10609,14400,11664,7396,3481,100,100,81,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,5776,3025,5184,14400,9409,2916,10609,4900,1024,7921,11664,13225,3249,1024,13689,4900,2916,14400,4900,11664,1024,2025,1024,14400,4900,12321,14400,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,10816,3136,14400,14400,13225,2916,6400,4900,2916,3136,1156,1936,2025,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,11449,4356,4761,7056,4624,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,7056,4761,2601,5476,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,4356,4624,4761,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,1024,1600,1156,5776,3025,5184,14400,9409,2916,10609,4900,1024,7921,11664,13225,3249,1024,13689,4900,2916,14400,4900,11664,1156,1681,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,100,81,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,5776,3025,5184,14400,9409,2916,10609,4900,1024,7921,11664,13225,3249,1024,13689,4900,2916,14400,4900,11664,1024,2025,1024,10609,13225,3249,12544,13225,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,13689,13225,3249,12544,13225,1156,1936,2025,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,11449,4356,4761,7056,4624,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,12996,4624,4761,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,7056,4761,2601,5476,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,4356,4624,4761,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,13689,13225,7396,13225,11664,1024,8281,7056,1936,7056,1936,7056,1936,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,10816,9409,10609,14884,10404,11664,13225,3136,2916,14641,13689,13225,7396,13225,11664,1024,8281,4356,1936,4356,2116,12996,1936,7056,1936,4356,2116,12996,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,81,81,9025,3025,2916,14641,4900,12321,1024,3721,1024,9025,10609,14400,11664,7396,1024,7396,12544,4489,14641,14641,1024,1156,7056,4356,3249,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,5041,9409,7396,3136,4900,1024,8281,9025,3025,2916,14641,4900,12321,1936,7056,4356,8649,3481,100,81,81,9025,3025,2916,14641,4900,12321,1024,3721,1024,9025,10609,14400,11664,7396,1024,7396,12544,4489,14641,14641,1024,1156,12996,4356,3249,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,5041,9409,7396,3136,4900,1024,8281,9025,3025,2916,14641,4900,12321,1936,12996,4356,8649,3481,100,81,81,9025,3025,2916,14641,4900,12321,1024,3721,1024,9025,10609,14400,11664,7396,1024,7396,12544,4489,14641,14641,1024,1156,7056,4356,4356,3249,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,5041,9409,7396,3136,4900,1024,8281,9025,3025,2916,14641,4900,12321,1936,7056,4356,4356,8649,3481,100,81,81,9025,3025,2916,14641,4900,12321,1024,3721,1024,9025,10609,14400,11664,7396,1024,7396,12544,4489,14641,14641,1024,1156,4624,12996,4356,3249,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,5041,9409,7396,3136,4900,1024,8281,9025,3025,2916,14641,4900,12321,1936,4624,12996,4356,8649,3481,100,81,81,9025,3025,2916,14641,4900,12321,1024,3721,1024,9025,10609,14400,11664,7396,1024,7396,12544,4489,14641,14641,1024,1156,12996,4356,4356,3249,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,5041,9409,7396,3136,4900,1024,8281,9025,3025,2916,14641,4900,12321,1936,12996,4356,4356,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,13689,3136,11664,11881,4900,7396,1024,4356,3481,100,81,81,13689,9409,3249,2704,11025,14161,5776,3025,5184,14400,9409,2916,10609,4900,7921,11664,13225,3249,13689,4900,2916,14400,4900,11664,13689,13225,3249,12544,13225,1024,3721,1024,9025,10609,14400,11664,7396,3481,100,81,81,13689,9409,3249,4900,11664,9409,2704,11025,14161,4489,7396,7396,13689,13225,3249,12544,13225,11881,4900,14400,14400,3025,2916,10404,5184,1024,2304,3136,5184,12100,10816,9409,10609,14884,1024,9025,10609,14400,11664,7396,3481,100,100,81,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,12769,4900,3025,10404,12100,14400,1024,4489,12544,13225,6241,4900,1024,13689,4900,2916,14400,4900,11664,1024,2025,1024,14400,4900,12321,14400,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,10816,3136,14400,14400,13225,2916,6400,4900,2916,3136,1156,1936,2025,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,11449,4356,4761,7056,4624,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,12996,5476,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,7056,4761,2601,5476,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,4356,4624,4761,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,1024,1600,1156,12769,4900,3025,10404,12100,14400,1024,4489,12544,13225,6241,4900,1024,13689,4900,2916,14400,4900,11664,1156,1681,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,100,81,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,12769,4900,3025,10404,12100,14400,1024,4489,12544,13225,6241,4900,1024,13689,4900,2916,14400,4900,11664,1024,2025,1024,10609,13225,3249,12544,13225,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,13689,13225,3249,12544,13225,1156,1936,2025,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,11449,4356,4761,7056,4624,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,12996,6561,4761,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,7056,4761,2601,5476,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,4356,4624,4761,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,13689,13225,7396,13225,11664,1024,8281,7056,1936,7056,1936,7056,1936,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,10816,9409,10609,14884,10404,11664,13225,3136,2916,14641,13689,13225,7396,13225,11664,1024,8281,4356,1936,4356,2116,12996,1936,7056,1936,4356,2116,12996,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,81,81,9025,3025,2916,14641,4900,12321,1024,3721,1024,9025,10609,14400,11664,7396,1024,7396,12544,4489,14641,14641,1024,1156,7056,4356,3249,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,5041,9409,7396,3136,4900,1024,8281,9025,3025,2916,14641,4900,12321,1936,7056,4356,8649,3481,100,81,81,9025,3025,2916,14641,4900,12321,1024,3721,1024,9025,10609,14400,11664,7396,1024,7396,12544,4489,14641,14641,1024,1156,12996,4356,3249,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,5041,9409,7396,3136,4900,1024,8281,9025,3025,2916,14641,4900,12321,1936,12996,4356,8649,3481,100,81,81,9025,3025,2916,14641,4900,12321,1024,3721,1024,9025,10609,14400,11664,7396,1024,7396,12544,4489,14641,14641,1024,1156,7056,4356,4356,3249,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,5041,9409,7396,3136,4900,1024,8281,9025,3025,2916,14641,4900,12321,1936,7056,4356,4356,8649,3481,100,81,81,9025,3025,2916,14641,4900,12321,1024,3721,1024,9025,10609,14400,11664,7396,1024,7396,12544,4489,14641,14641,1024,1156,7056,12996,4356,3249,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,5041,9409,7396,3136,4900,1024,8281,9025,3025,2916,14641,4900,12321,1936,7056,12996,4356,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,13689,3136,11664,11881,4900,7396,1024,4356,3481,100,81,81,13689,9409,3249,2704,11025,14161,12769,4900,3025,10404,12100,14400,4489,12544,13225,6241,4900,13689,4900,2916,14400,4900,11664,13689,13225,3249,12544,13225,1024,3721,1024,9025,10609,14400,11664,7396,3481,100,81,81,13689,9409,3249,4900,11664,9409,2704,11025,14161,4489,7396,7396,13689,13225,3249,12544,13225,11881,4900,14400,14400,3025,2916,10404,5184,1024,2304,3136,5184,12100,10816,9409,10609,14884,1024,9025,10609,14400,11664,7396,3481,100,100,81,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,8100,13225,14400,9409,14400,3025,13225,2916,1024,5776,3025,11664,4900,10609,14400,3025,13225,2916,1024,2025,1024,14400,4900,12321,14400,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,10816,3136,14400,14400,13225,2916,6400,4900,2916,3136,1156,1936,2025,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,11449,4356,4761,7056,4624,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,6889,11449,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,7056,4761,2601,5476,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,4356,4624,4761,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,1024,1600,1156,8100,13225,14400,9409,14400,3025,13225,2916,1024,5776,3025,11664,4900,10609,14400,3025,13225,2916,1156,1681,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,100,81,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,8100,13225,14400,9409,14400,3025,13225,2916,1024,5776,3025,11664,4900,10609,14400,3025,13225,2916,1024,2025,1024,10609,13225,3249,12544,13225,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,13689,13225,3249,12544,13225,1156,1936,2025,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,11449,4356,4761,7056,4624,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,6889,6889,4761,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,7056,4761,2601,5476,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,4356,4624,4761,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,13689,13225,7396,13225,11664,1024,8281,7056,1936,7056,1936,7056,1936,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,10816,9409,10609,14884,10404,11664,13225,3136,2916,14641,13689,13225,7396,13225,11664,1024,8281,4356,1936,4356,2116,12996,1936,7056,1936,4356,2116,12996,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,81,81,9025,3025,2916,14641,4900,12321,1024,3721,1024,9025,10609,14400,11664,7396,1024,7396,12544,4489,14641,14641,1024,1156,13689,7396,13225,10609,14884,10201,3025,5184,4900,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,5776,9409,14400,9409,1024,8281,9025,3025,2916,14641,4900,12321,1936,1156,13689,7396,13225,10609,14884,10201,3025,5184,4900,1156,8649,3481,100,81,81,9025,3025,2916,14641,4900,12321,1024,3721,1024,9025,10609,14400,11664,7396,1024,7396,12544,4489,14641,14641,1024,1156,13689,13225,3136,2916,14400,4900,11664,2025,13689,7396,13225,10609,14884,10201,3025,5184,4900,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,5776,9409,14400,9409,1024,8281,9025,3025,2916,14641,4900,12321,1936,1156,13689,13225,3136,2916,14400,4900,11664,2025,13689,7396,13225,10609,14884,10201,3025,5184,4900,1156,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,7396,12544,11881,4900,14400,13689,3136,11664,11881,4900,7396,1024,4356,3481,100,81,81,13689,9409,3249,2704,11025,14161,8100,13225,14400,9409,14400,3025,13225,2916,5776,3025,11664,4900,10609,14400,3025,13225,2916,13689,13225,3249,12544,13225,1024,3721,1024,9025,10609,14400,11664,7396,3481,100,81,81,13689,9409,3249,4900,11664,9409,2704,11025,14161,4489,7396,7396,13689,13225,3249,12544,13225,11881,4900,14400,14400,3025,2916,10404,5184,1024,2304,3136,5184,12100,10816,9409,10609,14884,1024,9025,10609,14400,11664,7396,3481,100,100,81,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,11881,9409,6241,4900,1024,11881,4900,14400,14400,3025,2916,10404,5184,1024,2025,1024,10816,3136,14400,14400,13225,2916,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,10816,3136,14400,14400,13225,2916,6400,4900,2916,3136,1156,1936,2025,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,11449,4356,4761,7056,4624,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,5476,7056,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,7056,4761,2601,5476,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,4356,11449,4624,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,1024,1600,1156,11881,9409,6241,4900,1024,11881,4900,14400,14400,3025,2916,10404,5184,1156,1681,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,4489,14641,14641,13924,6241,4900,2916,14400,12769,9409,2916,14641,7396,4900,11664,1024,8281,1156,10816,3136,14400,14400,13225,2916,5776,13225,10201,2916,1156,1936,15129,100,81,81,81,10609,9409,7396,7396,1024,13924,7225,6400,9025,2401,2916,10609,9025,5184,9409,6241,4900,13689,9409,3249,4900,11664,9409,11881,4900,14400,14400,3025,2916,10404,5184,3481,100,81,81,81,5184,4225,5184,14400,4900,3249,13689,12100,9409,14400,1024,1156,13689,9409,3249,4900,11664,9409,1024,5184,4900,14400,14400,3025,2916,10404,5184,1024,5184,9409,6241,4900,14641,1156,3481,100,81,81,81,2304,7396,9409,4225,11881,13225,3136,2916,14641,1024,1156,12100,3025,2916,14400,1156,3481,100,81,81,15625,8649,3481,100,100,81,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,6084,11664,4900,6241,3025,4900,10201,1024,2025,1024,10816,3136,14400,14400,13225,2916,1156,3481,100,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,10816,3136,14400,14400,13225,2916,6400,4900,2916,3136,1156,1936,2025,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,11449,4356,4761,7056,4624,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,5476,6889,6889,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,7056,4761,2601,5476,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,4356,11449,4624,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,13689,13225,7396,13225,11664,1024,8281,7056,1936,7056,1936,7056,1936,7056,8649,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,5929,4900,12321,14400,1024,1600,1156,6084,11664,4900,6241,3025,4900,10201,1156,1681,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,81,81,13689,9409,3249,2704,11025,14161,6084,11664,4900,6241,3025,4900,10201,10816,3136,14400,14400,13225,2916,1024,3721,1024,9025,10609,14400,11664,7396,3481,100,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,4489,14641,14641,13924,6241,4900,2916,14400,12769,9409,2916,14641,7396,4900,11664,1024,8281,1156,10816,3136,14400,14400,13225,2916,5776,13225,10201,2916,1156,1936,15129,100,81,81,81,10609,9409,7396,7396,1024,13924,7225,6400,9025,2401,2916,10609,9025,5184,9409,6241,4900,13689,9409,3249,4900,11664,9409,11881,4900,14400,14400,3025,2916,10404,5184,3481,100,81,81,81,8281,15129,15625,1936,8281,8649,1936,14400,11664,3136,4900,8649,1024,10609,9409,7396,7396,1024,13924,7225,6400,9025,2401,2916,10609,9025,5184,14400,9409,11664,14400,13689,3025,2916,4900,3249,9409,14400,3025,10609,11881,4900,7569,3136,4900,2916,10609,4900,2704,7396,13225,12544,9409,7396,3481,100,81,81,81,10609,7396,13225,5184,4900,5776,3025,9409,7396,13225,10404,1024,7056,3481,100,81,81,15625,8649,3481,100,81,15625,3481,100,81,10609,9409,7396,7396,1024,13924,7225,6400,9025,2401,2916,10609,9025,7396,13225,9409,14641,13689,9409,3249,4900,11664,9409,11881,4900,14400,14400,3025,2916,10404,5184,3481,100,15625,3481,100,100,13924,7225,6400,9025,2401,2916,10609,9025,4900,2916,9409,12544,7396,4900,13689,9409,3249,4900,11664,9409,6084,11664,4900,6241,3025,4900,10201,6400,13225,14641,4900,5929,4900,12321,14400,1024,3721,1024,15129,100,81,2304,9409,11664,9409,3249,5184,1024,8281,1156,9025,4900,2916,9409,12544,7396,4900,1156,8649,3481,100,81,10201,3025,14400,12100,1024,3136,3025,2809,9409,3249,4900,5184,2304,9409,10609,4900,1024,14641,13225,1024,15129,100,81,81,3025,2401,1600,9025,4900,2916,9409,12544,7396,4900,1681,1024,14400,12100,4900,2916,1024,100,81,81,15129,100,81,81,81,9025,14641,3025,5184,2304,7396,9409,4225,1024,3721,1024,2401,3025,2916,14641,5776,3025,5184,2304,7396,9409,4225,1024,11449,6889,3481,100,81,81,81,9025,10609,14400,11664,7396,1024,3721,1024,9025,14641,3025,5184,2304,7396,9409,4225,1024,10609,14400,11664,7396,13689,11664,4900,9409,14400,4900,1024,8281,1156,8100,5184,10609,11881,14400,11664,3136,10609,14400,3136,11664,4900,14641,5929,4900,12321,14400,1156,1936,2025,7056,8649,3481,100,81,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,6084,13225,5184,3025,14400,3025,13225,2916,1024,8281,4356,2116,2601,4761,4761,11449,2601,5476,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,9604,1936,4356,2116,6561,4356,6889,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,1024,1849,1024,5184,9409,2401,4900,6724,13225,2916,4900,7744,1936,4356,2116,4624,4624,2601,7056,4624,12996,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,5329,1936,4356,2116,4356,5476,1024,1764,1024,5184,9409,2401,4900,6724,13225,2916,4900,12769,8649,3481,100,81,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,11881,14400,11664,3136,10609,14400,3136,11664,4900,14641,5929,4900,12321,14400,1024,2304,9409,11664,5184,4900,5929,4900,12321,14400,1024,1600,1156,3600,14400,1024,9409,7396,3025,10404,2916,3721,1521,1849,1156,1521,1156,1849,1521,10609,4900,2916,14400,4900,11664,1521,1849,1156,1521,1156,1849,1521,1024,5184,3025,6724,4900,3721,1521,1849,1156,1521,1156,1849,1521,4624,1521,1849,1156,1521,1156,1849,1521,3844,6084,8100,13924,5041,14161,13924,5329,1024,6400,5625,5776,13924,3600,2209,14400,3844,1156,1681,3481,100,81,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,11881,4900,14400,10816,9409,10609,14884,10404,11664,13225,3136,2916,14641,13689,13225,7396,13225,11664,1024,8281,4356,1936,4356,1936,4356,1936,4356,8649,3481,100,81,81,81,9025,10609,14400,11664,7396,1024,10609,14400,11664,7396,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,81,81,81,13924,7225,6400,13689,9409,3249,2704,11025,14161,6084,11664,4900,6241,3025,4900,10201,6400,13225,14641,4900,5929,4900,12321,14400,1024,3721,1024,9025,10609,14400,11664,7396,3481,100,81,81,15625,100,81,81,4900,7396,5184,4900,1024,100,81,81,15129,100,81,81,81,3025,2401,1024,1600,3025,5184,2809,3025,7396,1024,1156,13924,7225,6400,13689,9409,3249,2704,11025,14161,6084,11664,4900,6241,3025,4900,10201,6400,13225,14641,4900,5929,4900,12321,14400,1156,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,15625,3481,100,81,81,81,10609,14400,11664,7396,5776,4900,7396,4900,14400,4900,1024,13924,7225,6400,13689,9409,3249,2704,11025,14161,6084,11664,4900,6241,3025,4900,10201,6400,13225,14641,4900,5929,4900,12321,14400,3481,100,81,81,15625,3481,100,81,15625,3481,100,15625,3481,100,100,13924,7225,6400,9025,2401,2916,10609,9025,5184,4900,14400,13689,9409,3249,4900,11664,9409,5041,4900,10609,14400,13225,11664,14161,2916,2401,13225,2704,7396,13225,12544,9409,7396,1024,3721,1024,15129,100,81,9025,2304,13225,5184,1024,3721,1024,4489,11881,9801,5929,13225,4489,2704,9801,1600,10404,4900,14400,6084,13225,5184,4489,11881,9801,1024,10609,3136,11664,9409,14400,13225,11664,13689,9409,3249,4900,11664,9409,1681,3481,100,81,9025,6241,4900,10609,14400,13225,11664,11025,2304,1024,3721,1024,6241,4900,10609,14400,13225,11664,11025,2304,1024,10609,3136,11664,9409,14400,13225,11664,13689,9409,3249,4900,11664,9409,3481,100,81,9025,6241,4900,10609,14400,13225,11664,5776,3025,11664,1024,3721,1024,6241,4900,10609,14400,13225,11664,5776,3025,11664,1024,10609,3136,11664,9409,14400,13225,11664,13689,9409,3249,4900,11664,9409,3481,100,81,13924,7225,6400,13689,9409,3249,4900,11664,9409,6084,13225,5184,3025,14400,3025,13225,2916,1024,3721,1024,9025,2304,13225,5184,3481,100,81,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,5041,4900,10609,14400,13225,11664,5776,9409,14400,9409,1024,3721,1024,8281,9025,6241,4900,10609,14400,13225,11664,5776,3025,11664,1936,9025,6241,4900,10609,14400,13225,11664,11025,2304,8649,3481,100,81,2304,3136,12544,7396,3025,10609,5041,9409,11664,3025,9409,12544,7396,4900,1024,1156,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,5041,4900,10609,14400,13225,11664,5776,9409,14400,9409,1156,3481,100,81,2304,3136,12544,7396,3025,10609,5041,9409,11664,3025,9409,12544,7396,4900,1024,1156,13924,7225,6400,13689,9409,3249,4900,11664,9409,6084,13225,5184,3025,14400,3025,13225,2916,1156,3481,100,15625,3481,100,100,13924,7225,6400,9025,2401,2916,10609,9025,10609,11664,4900,9409,14400,4900,9801,13225,10609,9409,7396,13689,9409,3249,4900,11664,9409,1024,3721,1024,15129,100,81,3025,2401,1024,1089,1600,12100,9409,5184,14161,2916,14400,4900,11664,2401,9409,10609,4900,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,15625,3481,100,81,9025,10609,9409,3249,1024,3721,1024,1156,10609,9409,3249,4900,11664,9409,1156,1024,10609,9409,3249,13689,11664,4900,9409,14400,4900,1024,8281,4356,1936,4356,1936,4356,8649,3481,100,81,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1024,3721,1024,9025,10609,9409,3249,3481,100,81,9025,10609,9409,3249,1024,5184,4900,14400,6084,13225,5184,1024,13924,7225,6400,13689,9409,3249,4900,11664,9409,6084,13225,5184,3025,14400,3025,13225,2916,3481,100,81,9025,10609,9409,3249,1024,5184,4900,14400,5041,4900,10609,14400,13225,11664,5776,3025,11664,4489,2916,14641,11025,2304,1024,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,5041,4900,10609,14400,13225,11664,5776,9409,14400,9409,3481,100,81,9025,10609,9409,3249,100,15625,3481,100,100,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,10609,11664,4900,9409,14400,4900,9801,13225,10609,9409,7396,13689,9409,3249,4900,11664,9409,1024,3721,1024,8281,1521,1849,1156,1521,1156,1849,1521,8100,13924,1521,1849,1156,1521,1156,1849,1521,1936,1024,13924,7225,6400,9025,2401,2916,10609,9025,10609,11664,4900,9409,14400,4900,9801,13225,10609,9409,7396,13689,9409,3249,4900,11664,9409,8649,3481,100,2304,3136,12544,7396,3025,10609,5041,9409,11664,3025,9409,12544,7396,4900,1024,1521,1849,1156,1521,1156,1849,1521,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,10609,11664,4900,9409,14400,4900,9801,13225,10609,9409,7396,13689,9409,3249,4900,11664,9409,1521,1849,1156,1521,1156,1849,1521,3481,100,100,13924,7225,6400,9025,2401,2916,10609,9025,5184,4900,14400,9801,13225,10609,9409,7396,13689,9409,3249,4900,11664,9409,1024,3721,1024,15129,100,81,3025,2401,1024,1089,1600,12100,9409,5184,14161,2916,14400,4900,11664,2401,9409,10609,4900,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,15625,3481,100,81,3025,2401,1600,3025,5184,2809,3025,7396,1024,1156,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1156,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,15625,3481,100,81,8281,8649,1024,5184,2304,9409,10201,2916,1024,15129,100,81,81,1600,2401,3025,2916,14641,5776,3025,5184,2304,7396,9409,4225,1024,2601,7056,4624,1681,1024,10609,7396,13225,5184,4900,5776,3025,5184,2304,7396,9409,4225,1024,7056,3481,100,81,81,5184,7396,4900,4900,2304,1024,7056,3481,100,81,81,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1024,10609,9409,3249,4900,11664,9409,13924,2401,2401,4900,10609,14400,1024,8281,1156,14161,2916,14400,4900,11664,2916,9409,7396,1156,1936,1156,10816,9409,10609,14884,1156,8649,3481,100,81,81,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1024,10609,9409,3249,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,81,15625,3481,100,15625,3481,100,100,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,5184,4900,14400,9801,13225,10609,9409,7396,13689,9409,3249,4900,11664,9409,1024,3721,1024,8281,1521,1849,1156,1521,1156,1849,1521,8100,13924,1521,1849,1156,1521,1156,1849,1521,1936,1024,13924,7225,6400,9025,2401,2916,10609,9025,5184,4900,14400,9801,13225,10609,9409,7396,13689,9409,3249,4900,11664,9409,8649,3481,100,2304,3136,12544,7396,3025,10609,5041,9409,11664,3025,9409,12544,7396,4900,1024,1521,1849,1156,1521,1156,1849,1521,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,5184,4900,14400,9801,13225,10609,9409,7396,13689,9409,3249,4900,11664,9409,1521,1849,1156,1521,1156,1849,1521,3481,100,100,13924,7225,6400,9025,2401,2916,10609,9025,14641,4900,7396,4900,14400,4900,9801,13225,10609,9409,7396,13689,9409,3249,4900,11664,9409,1024,3721,1024,15129,100,81,3025,2401,1089,1600,12100,9409,5184,14161,2916,14400,4900,11664,2401,9409,10609,4900,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,15625,3481,100,81,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1024,10609,9409,3249,4900,11664,9409,13924,2401,2401,4900,10609,14400,1024,8281,1156,5929,4900,11664,3249,3025,2916,9409,14400,4900,1156,1936,1156,10816,9409,10609,14884,1156,8649,3481,100,81,3025,2401,1024,1089,1600,2304,7396,9409,4225,4900,11664,1024,3025,2916,1024,10609,9409,7396,7396,1024,10816,14161,11881,9025,2401,2916,10609,9025,7396,3025,5184,14400,13689,3136,11664,9409,14400,13225,11664,6084,7396,9409,4225,4900,11664,5184,1681,1024,14400,12100,4900,2916,1024,100,81,15129,100,81,81,10609,3136,11664,9409,14400,13225,11664,13689,9409,3249,4900,11664,9409,1024,10609,9409,3249,4900,11664,9409,13924,2401,2401,4900,10609,14400,1024,8281,1156,14161,2916,14400,4900,11664,2916,9409,7396,1156,1936,1156,10816,9409,10609,14884,1156,8649,3481,100,81,15625,3481,100,81,10609,9409,3249,5776,4900,5184,14400,11664,13225,4225,1024,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,3481,100,81,3025,2401,1600,1089,9409,7396,3025,6241,4900,1024,2304,7396,9409,4225,4900,11664,1681,1024,14400,12100,4900,2916,1024,15129,13225,2304,4900,2916,6400,9409,2304,1024,14400,11664,3136,4900,3481,15625,3481,100,81,8281,8649,1024,5184,2304,9409,10201,2916,1024,15129,100,81,81,1600,2401,3025,2916,14641,5776,3025,5184,2304,7396,9409,4225,1024,2601,7056,4624,1681,1024,10609,7396,13225,5184,4900,5776,3025,5184,2304,7396,9409,4225,1024,7056,3481,100,81,81,5184,7396,4900,4900,2304,1024,7056,3481,100,81,81,13225,2304,4900,2916,13689,3136,11664,9409,14400,13225,11664,14161,2916,14400,4900,11664,2401,9409,10609,4900,3481,100,81,15625,3481,100,15625,3481,100,100,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,14641,4900,7396,4900,14400,4900,9801,13225,10609,9409,7396,13689,9409,3249,4900,11664,9409,1024,3721,1024,8281,1521,1849,1156,1521,1156,1849,1521,8100,13924,1521,1849,1156,1521,1156,1849,1521,1936,1024,13924,7225,6400,9025,2401,2916,10609,9025,14641,4900,7396,4900,14400,4900,9801,13225,10609,9409,7396,13689,9409,3249,4900,11664,9409,8649,3481,100,2304,3136,12544,7396,3025,10609,5041,9409,11664,3025,9409,12544,7396,4900,1024,1521,1849,1156,1521,1156,1849,1521,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,14641,4900,7396,4900,14400,4900,9801,13225,10609,9409,7396,13689,9409,3249,4900,11664,9409,1521,1849,1156,1521,1156,1849,1521,3481,100,100,13924,7225,6400,9025,2401,2916,10609,9025,4900,2916,9409,12544,7396,4900,9801,13225,10609,9409,7396,6084,7396,9409,4225,4900,11664,1024,3721,1024,15129,100,81,2304,9409,11664,9409,3249,5184,8281,1156,9025,4900,2916,9409,12544,7396,4900,1156,8649,3481,100,81,3025,2401,1024,1089,1600,12100,9409,5184,14161,2916,14400,4900,11664,2401,9409,10609,4900,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,15625,3481,100,81,2304,7396,9409,4225,4900,11664,1024,9409,7396,7396,13225,10201,5776,9409,3249,9409,10404,4900,1024,9025,4900,2916,9409,12544,7396,4900,3481,100,81,2304,7396,9409,4225,4900,11664,1024,5184,4900,14400,13689,9409,2304,14400,3025,6241,4900,1024,1089,9025,4900,2916,9409,12544,7396,4900,3481,100,81,3025,2401,1024,1089,1600,1600,6241,4900,12100,3025,10609,7396,4900,1024,2304,7396,9409,4225,4900,11664,1681,1024,3025,5184,13924,7569,3136,9409,7396,5929,13225,1024,2304,7396,9409,4225,4900,11664,1681,1024,14400,12100,4900,2916,1024,100,81,15129,100,81,81,3025,2401,1600,1600,14641,11664,3025,6241,4900,11664,1024,6241,4900,12100,3025,10609,7396,4900,1024,2304,7396,9409,4225,4900,11664,1681,1024,3025,5184,13924,7569,3136,9409,7396,5929,13225,1024,2304,7396,9409,4225,4900,11664,1681,1024,14400,12100,4900,2916,1024,100,81,81,15129,100,81,81,81,6241,4900,12100,3025,10609,7396,4900,1024,2304,7396,9409,4225,4900,11664,1024,4900,2916,9409,12544,7396,4900,11881,3025,3249,3136,7396,9409,14400,3025,13225,2916,1024,9025,4900,2916,9409,12544,7396,4900,3481,100,81,81,15625,3481,100,81,15625,3481,100,15625,3481,100,100,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,4900,2916,9409,12544,7396,4900,9801,13225,10609,9409,7396,6084,7396,9409,4225,4900,11664,1024,3721,1024,8281,1521,1849,1156,1521,1156,1849,1521,8100,13924,1521,1849,1156,1521,1156,1849,1521,1936,1024,13924,7225,6400,9025,2401,2916,10609,9025,4900,2916,9409,12544,7396,4900,9801,13225,10609,9409,7396,6084,7396,9409,4225,4900,11664,8649,3481,100,2304,3136,12544,7396,3025,10609,5041,9409,11664,3025,9409,12544,7396,4900,1024,1521,1849,1156,1521,1156,1849,1521,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,4900,2916,9409,12544,7396,4900,9801,13225,10609,9409,7396,6084,7396,9409,4225,4900,11664,1521,1849,1156,1521,1156,1849,1521,3481,100,100,13924,7225,6400,9025,2401,2916,10609,9025,5184,2304,9409,10201,2916,9801,13225,10609,9409,7396,11881,10609,11664,4900,4900,2916,7921,9409,14641,4900,1024,3721,1024,15129,100,81,2304,9409,11664,9409,3249,5184,1024,8281,1156,9025,12544,13225,11664,14641,4900,11664,6400,13225,14641,4900,1156,1936,1156,9025,2401,9409,14641,4900,6400,13225,14641,4900,1156,8649,3481,100,81,3025,2401,1024,1089,1600,12100,9409,5184,14161,2916,14400,4900,11664,2401,9409,10609,4900,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,15625,3481,100,81,9025,2401,9409,14641,4900,11881,2304,4900,4900,14641,1024,3721,1024,1600,13689,9409,3249,2704,11025,14161,7921,9409,14641,4900,11881,2304,4900,4900,14641,2209,7056,4356,1681,3481,100,81,9025,2401,9409,14641,4900,13689,13225,7396,13225,11664,1024,3721,1024,13689,9409,3249,2704,11025,14161,7921,9409,14641,4900,13689,13225,7396,13225,11664,3481,100,81,9025,12544,13225,11664,14641,4900,11664,12769,9409,2916,14641,7396,4900,1024,3721,1024,4356,1024,5184,2304,9409,10201,2916,1024,15129,15625,3481,100,81,9025,2401,9409,14641,4900,12769,9409,2916,14641,7396,4900,1024,3721,1024,4356,1024,5184,2304,9409,10201,2916,1024,15129,15625,3481,100,81,9025,3025,5184,5776,11664,3025,6241,4900,11664,1024,3721,1024,2401,9409,7396,5184,4900,3481,100,100,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,5776,11664,3025,6241,4900,11664,1024,5625,6241,4900,11664,11664,3025,14641,4900,1156,3481,100,81,3025,2401,1600,1600,9025,12544,13225,11664,14641,4900,11664,6400,13225,14641,4900,1024,3721,3721,1024,7056,1681,1024,1444,1444,1024,1600,9025,2401,9409,14641,4900,6400,13225,14641,4900,1024,3721,3721,1024,7056,1681,1024,1444,1444,1024,1089,1600,6241,4900,12100,3025,10609,7396,4900,1024,2304,7396,9409,4225,4900,11664,1024,3025,5184,13924,7569,3136,9409,7396,5929,13225,1024,2304,7396,9409,4225,4900,11664,1681,1681,1024,14400,12100,4900,2916,1024,100,81,15129,100,81,81,3025,2401,1024,1600,1600,14641,11664,3025,6241,4900,11664,1024,6241,4900,12100,3025,10609,7396,4900,1024,2304,7396,9409,4225,4900,11664,1681,1024,3025,5184,13924,7569,3136,9409,7396,5929,13225,1024,2304,7396,9409,4225,4900,11664,1681,1024,14400,12100,4900,2916,1024,100,81,81,15129,100,81,81,81,9025,2401,9409,14641,4900,11881,2304,4900,4900,14641,1024,3721,1024,4356,2116,7056,3481,100,81,81,81,9025,3025,5184,5776,11664,3025,6241,4900,11664,1024,3721,1024,14400,11664,3136,4900,3481,100,81,81,15625,3481,100,81,15625,3481,100,81,3025,2401,1024,1600,9025,12544,13225,11664,14641,4900,11664,6400,13225,14641,4900,1024,1089,3721,1024,2025,7056,1681,1024,14400,12100,4900,2916,1024,15129,9025,12544,13225,11664,14641,4900,11664,12769,9409,2916,14641,7396,4900,1024,3721,1024,8281,9025,12544,13225,11664,14641,4900,11664,6400,13225,14641,4900,1936,9025,2401,9409,14641,4900,11881,2304,4900,4900,14641,1936,2401,9409,7396,5184,4900,1936,2401,9409,7396,5184,4900,8649,1024,5184,2304,9409,10201,2916,1024,10816,14161,11881,9025,2401,2916,10609,9025,10609,3025,2916,4900,3249,9409,10816,13225,11664,14641,4900,11664,3481,15625,3481,100,81,3025,2401,1024,1600,9025,2401,9409,14641,4900,11881,2304,4900,4900,14641,1024,1089,3721,1024,2025,7056,1681,1024,14400,12100,4900,2916,1024,15129,9025,2401,9409,14641,4900,12769,9409,2916,14641,7396,4900,1024,3721,1024,8281,9025,2401,9409,14641,4900,6400,13225,14641,4900,1936,9025,2401,9409,14641,4900,13689,13225,7396,13225,11664,1936,9025,2401,9409,14641,4900,11881,2304,4900,4900,14641,1936,4356,8649,1024,5184,2304,9409,10201,2916,1024,10816,14161,11881,9025,2401,2916,10609,9025,2401,9409,14641,4900,13924,2401,2401,4900,10609,14400,3481,15625,3481,100,81,3025,2401,1024,1600,9025,3025,5184,5776,11664,3025,6241,4900,11664,1681,1024,14400,12100,4900,2916,1024,15129,5184,7396,4900,4900,2304,1024,2601,3481,1024,8281,14400,11664,3136,4900,8649,1024,10609,9409,7396,7396,1024,1600,13924,7225,6400,7921,2916,10609,4489,11664,11664,9409,4225,1024,5184,4900,7396,4900,10609,14400,1024,11449,1681,3481,15625,3481,100,81,3025,2401,1024,1600,1600,9025,2401,9409,14641,4900,6400,13225,14641,4900,1024,3721,3721,1024,7056,1681,1024,1444,1444,1024,1600,9025,12544,13225,11664,14641,4900,11664,6400,13225,14641,4900,1024,1089,3721,1024,7056,1681,1681,1024,14400,12100,4900,2916,1024,15129,100,81,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,5184,10609,11664,3025,2304,14400,5776,13225,2916,4900,1024,9025,2401,9409,14641,4900,12769,9409,2916,14641,7396,4900,15625,3481,100,81,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13924,7225,6400,11881,4900,7396,4900,10609,14400,4900,14641,6400,3136,5184,3025,10609,1156,15625,3481,100,81,81,5184,7396,4900,4900,2304,1024,7056,3481,100,81,81,1600,9025,2401,9409,14641,4900,11881,2304,4900,4900,14641,2025,7056,1681,1024,2401,9409,14641,4900,6400,3136,5184,3025,10609,1024,7056,3481,100,81,81,2304,7396,9409,4225,6400,3136,5184,3025,10609,1024,13924,7225,6400,11881,4900,7396,4900,10609,14400,4900,14641,6400,3136,5184,3025,10609,3481,100,81,15625,3481,100,81,3025,2401,1600,1600,9025,2401,9409,14641,4900,6400,13225,14641,4900,1024,3721,3721,1024,7056,1681,1024,1444,1444,1024,1600,9025,12544,13225,11664,14641,4900,11664,6400,13225,14641,4900,1024,3721,3721,1024,7056,1681,1681,1024,14400,12100,4900,2916,1024,100,81,15129,100,81,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,5184,10609,11664,3025,2304,14400,5776,13225,2916,4900,1024,9025,2401,9409,14641,4900,12769,9409,2916,14641,7396,4900,15625,3481,100,81,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13924,7225,6400,11881,4900,7396,4900,10609,14400,4900,14641,6400,3136,5184,3025,10609,1156,15625,3481,100,81,81,5184,7396,4900,4900,2304,1024,7056,3481,100,81,81,2304,7396,9409,4225,6400,3136,5184,3025,10609,1024,1521,1849,1156,1521,1156,1849,1521,1521,1849,1156,1521,1156,1849,1521,3481,100,81,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,1600,9025,2401,9409,14641,4900,11881,2304,4900,4900,14641,2025,7056,1681,1024,2401,9409,14641,4900,6400,3136,5184,3025,10609,1024,4356,3481,1156,3481,100,81,15625,3481,100,15625,3481,100,100,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,5184,2304,9409,10201,2916,9801,13225,10609,9409,7396,11881,10609,11664,4900,4900,2916,7921,9409,14641,4900,1024,3721,1024,8281,1521,1849,1156,1521,1156,1849,1521,8100,13924,1521,1849,1156,1521,1156,1849,1521,1936,1024,13924,7225,6400,9025,2401,2916,10609,9025,5184,2304,9409,10201,2916,9801,13225,10609,9409,7396,11881,10609,11664,4900,4900,2916,7921,9409,14641,4900,8649,3481,100,2304,3136,12544,7396,3025,10609,5041,9409,11664,3025,9409,12544,7396,4900,1024,1521,1849,1156,1521,1156,1849,1521,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,5184,2304,9409,10201,2916,9801,13225,10609,9409,7396,11881,10609,11664,4900,4900,2916,7921,9409,14641,4900,1521,1849,1156,1521,1156,1849,1521,3481,100,100,13924,7225,6400,9025,2401,2916,10609,9025,5184,2304,9409,10201,2916,5929,3025,14400,7396,4900,5929,4900,12321,14400,1024,3721,1024,15129,100,81,3025,2401,1024,1089,1600,12100,9409,5184,14161,2916,14400,4900,11664,2401,9409,10609,4900,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,15625,3481,100,81,3025,2401,1600,3025,5184,2809,3025,7396,1024,1156,13689,9409,3249,2704,11025,14161,5929,3025,14400,7396,4900,1156,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,15625,3481,100,81,3025,2401,1600,13689,9409,3249,2704,11025,14161,5929,3025,14400,7396,4900,1024,3025,5184,13924,7569,3136,9409,7396,5929,13225,1024,1156,1156,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,15625,3481,100,81,8281,100,81,81,8281,100,81,81,81,8281,13689,9409,3249,2704,11025,14161,5929,3025,14400,7396,4900,1936,1024,1156,3600,14400,1024,9409,7396,3025,10404,2916,1024,3721,1024,1521,1849,1156,1521,1156,1849,1521,10609,4900,2916,14400,4900,11664,1521,1849,1156,1521,1156,1849,1521,1024,5184,12100,9409,14641,13225,10201,1024,3721,1024,1521,1849,1156,1521,1156,1849,1521,7056,1521,1849,1156,1521,1156,1849,1521,1024,5184,3025,6724,4900,1024,3721,1024,1521,1849,1156,1521,1156,1849,1521,7056,1521,1849,1156,1521,1156,1849,1521,1024,2401,13225,2916,14400,3721,1521,1849,1156,1521,1156,1849,1521,6084,3136,11664,3025,5184,14400,9409,10816,13225,7396,14641,1521,1849,1156,1521,1156,1849,1521,3844,1369,7056,3600,2209,14400,3844,1156,1936,12996,4356,8649,100,81,81,8649,100,81,8649,1024,5184,2304,9409,10201,2916,1024,10816,14161,11881,9025,2401,2916,10609,9025,14400,4225,2304,4900,5929,4900,12321,14400,3481,100,15625,3481,100,100,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,5184,2304,9409,10201,2916,5929,3025,14400,7396,4900,5929,4900,12321,14400,1024,3721,1024,8281,1521,1849,1156,1521,1156,1849,1521,8100,13924,1521,1849,1156,1521,1156,1849,1521,1936,1024,13924,7225,6400,9025,2401,2916,10609,9025,5184,2304,9409,10201,2916,5929,3025,14400,7396,4900,5929,4900,12321,14400,8649,3481,100,2304,3136,12544,7396,3025,10609,5041,9409,11664,3025,9409,12544,7396,4900,1024,1521,1849,1156,1521,1156,1849,1521,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,5184,2304,9409,10201,2916,5929,3025,14400,7396,4900,5929,4900,12321,14400,1521,1849,1156,1521,1156,1849,1521,3481,100,100,2304,11664,3025,6241,9409,14400,4900,1024,9025,2401,2916,10609,1024,3721,1024,15129,100,81,9025,10609,13225,14641,4900,1024,3721,1024,13456,4489,6400,9025,8100,13924,2401,2916,10609,9025,5184,14400,9409,11664,14400,6084,7396,4225,13689,3025,2916,4900,3249,9409,14400,3025,10609,13689,13225,14641,4900,1024,1225,1024,7056,3481,100,81,9025,2304,9409,11664,9409,3249,5184,1024,3721,1024,1600,9025,14400,12100,3025,5184,1024,5184,4900,7396,4900,10609,14400,1024,4356,1681,3481,100,100,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13689,9409,3249,2704,11025,14161,7921,9409,14641,4900,11881,2304,4900,4900,14641,1156,15625,3481,100,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13689,9409,3249,2704,11025,14161,7921,9409,14641,4900,13689,13225,7396,13225,11664,1156,15625,3481,100,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13689,9409,3249,2704,11025,14161,5929,3025,14400,7396,4900,1156,15625,3481,100,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13689,9409,3249,2704,11025,14161,9801,4900,2916,10404,14400,12100,1156,15625,3481,100,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13689,9409,3249,2704,11025,14161,5776,3025,5184,14400,9409,2916,10609,4900,7921,11664,13225,3249,13689,4900,2916,14400,4900,11664,1156,15625,3481,100,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13689,9409,3249,2704,11025,14161,12769,4900,3025,10404,12100,14400,4489,12544,13225,6241,4900,13689,4900,2916,14400,4900,11664,1156,15625,3481,100,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13689,9409,3249,2704,11025,14161,8100,13225,14400,9409,14400,3025,13225,2916,5776,3025,11664,4900,10609,14400,3025,13225,2916,1156,15625,3481,100,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,10609,11664,4900,9409,14400,4900,9801,13225,10609,9409,7396,13689,9409,3249,4900,11664,9409,1156,15625,3481,100,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,5184,4900,14400,9801,13225,10609,9409,7396,13689,9409,3249,4900,11664,9409,1156,15625,3481,100,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,5184,2304,9409,10201,2916,5929,3025,14400,7396,4900,5929,4900,12321,14400,1156,15625,3481,100,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,14641,4900,7396,4900,14400,4900,9801,13225,10609,9409,7396,13689,9409,3249,4900,11664,9409,1156,15625,3481,100,100,81,9025,2401,9409,14641,4900,11881,2304,4900,4900,14641,1024,3721,1024,1600,13689,9409,3249,2704,11025,14161,7921,9409,14641,4900,11881,2304,4900,4900,14641,2209,7056,4356,1681,3481,100,100,81,8281,8281,8649,1936,15129,8281,8649,1024,10609,9409,7396,7396,1024,1600,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,10609,11664,4900,9409,14400,4900,9801,13225,10609,9409,7396,13689,9409,3249,4900,11664,9409,1024,1225,1024,7056,1681,15625,8649,1024,11664,4900,3249,13225,14400,4900,13924,12321,4900,10609,1024,8281,1521,1849,1156,1521,1156,1849,1521,10609,9409,7396,7396,1521,1849,1156,1521,1156,1849,1521,8649,3481,100,100,81,9025,2304,9409,11664,9409,3249,5184,1024,10609,9409,7396,7396,1024,9025,10609,13225,14641,4900,3481,100,100,81,8281,8281,2401,9409,7396,5184,4900,8649,1936,15129,9025,14400,12100,3025,5184,1024,10609,9409,7396,7396,1024,1600,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,4900,2916,9409,12544,7396,4900,9801,13225,10609,9409,7396,6084,7396,9409,4225,4900,11664,1024,1225,1024,7056,1681,15625,8649,1024,11664,4900,3249,13225,14400,4900,13924,12321,4900,10609,1024,8281,1521,1849,1156,1521,1156,1849,1521,10609,9409,7396,7396,1521,1849,1156,1521,1156,1849,1521,8649,3481,100,100,81,8281,8281,4356,1936,4356,8649,1936,15129,9025,14400,12100,3025,5184,1024,5184,2304,9409,10201,2916,1024,1600,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,5184,2304,9409,10201,2916,9801,13225,10609,9409,7396,11881,10609,11664,4900,4900,2916,7921,9409,14641,4900,1024,5184,4900,7396,4900,10609,14400,1024,7056,1681,15625,8649,1024,11664,4900,3249,13225,14400,4900,13924,12321,4900,10609,1024,8281,1521,1849,1156,1521,1156,1849,1521,10609,9409,7396,7396,1521,1849,1156,1521,1156,1849,1521,8649,3481,100,81,100,81,5184,7396,4900,4900,2304,1024,1600,9025,2401,9409,14641,4900,11881,2304,4900,4900,14641,1024,1849,7056,1681,3481,100,100,81,8281,8281,8649,1936,15129,8281,8649,1024,10609,9409,7396,7396,1024,1600,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,5184,4900,14400,9801,13225,10609,9409,7396,13689,9409,3249,4900,11664,9409,1024,1225,1024,7056,1681,15625,8649,1024,11664,4900,3249,13225,14400,4900,13924,12321,4900,10609,1024,8281,1521,1849,1156,1521,1156,1849,1521,10609,9409,7396,7396,1521,1849,1156,1521,1156,1849,1521,8649,3481,100,100,81,8281,8281,2025,7056,1936,7056,8649,1936,15129,9025,14400,12100,3025,5184,1024,5184,2304,9409,10201,2916,1024,1600,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,5184,2304,9409,10201,2916,9801,13225,10609,9409,7396,11881,10609,11664,4900,4900,2916,7921,9409,14641,4900,1024,5184,4900,7396,4900,10609,14400,1024,7056,1681,15625,8649,1024,11664,4900,3249,13225,14400,4900,13924,12321,4900,10609,1024,8281,1521,1849,1156,1521,1156,1849,1521,10609,9409,7396,7396,1521,1849,1156,1521,1156,1849,1521,8649,3481,100,100,81,5184,7396,4900,4900,2304,1024,1600,9025,2401,9409,14641,4900,11881,2304,4900,4900,14641,1024,1849,7056,1681,3481,100,100,81,8281,8281,8649,1936,15129,8281,8649,1024,10609,9409,7396,7396,1024,1600,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,5184,2304,9409,10201,2916,5929,3025,14400,7396,4900,5929,4900,12321,14400,1024,1225,1024,7056,1681,15625,8649,1024,11664,4900,3249,13225,14400,4900,13924,12321,4900,10609,1024,8281,1521,1849,1156,1521,1156,1849,1521,10609,9409,7396,7396,1521,1849,1156,1521,1156,1849,1521,8649,3481,100,100,81,5184,7396,4900,4900,2304,1024,13689,9409,3249,2704,11025,14161,9801,4900,2916,10404,14400,12100,3481,100,100,81,8281,8281,2025,7056,1936,4356,8649,1936,15129,9025,14400,12100,3025,5184,1024,5184,2304,9409,10201,2916,1024,1600,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,5184,2304,9409,10201,2916,9801,13225,10609,9409,7396,11881,10609,11664,4900,4900,2916,7921,9409,14641,4900,1024,5184,4900,7396,4900,10609,14400,1024,7056,1681,15625,8649,1024,11664,4900,3249,13225,14400,4900,13924,12321,4900,10609,1024,8281,1521,1849,1156,1521,1156,1849,1521,10609,9409,7396,7396,1521,1849,1156,1521,1156,1849,1521,8649,3481,100,100,81,5184,7396,4900,4900,2304,1024,1600,9025,2401,9409,14641,4900,11881,2304,4900,4900,14641,1024,1849,7056,1681,3481,100,100,81,8281,8281,8649,1936,15129,8281,8649,1024,10609,9409,7396,7396,1024,1600,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,14641,4900,7396,4900,14400,4900,9801,13225,10609,9409,7396,13689,9409,3249,4900,11664,9409,1024,1225,1024,7056,1681,15625,8649,1024,11664,4900,3249,13225,14400,4900,13924,12321,4900,10609,1024,8281,1521,1849,1156,1521,1156,1849,1521,10609,9409,7396,7396,1521,1849,1156,1521,1156,1849,1521,8649,3481,100,100,81,13924,7225,6400,14161,5184,13689,3025,2916,4900,3249,9409,14400,3025,10609,8100,3136,2916,2916,3025,2916,10404,1024,3721,1024,2401,9409,7396,5184,4900,3481,100,81,2304,3136,12544,7396,3025,10609,5041,9409,11664,3025,9409,12544,7396,4900,1024,1156,13924,7225,6400,14161,5184,13689,3025,2916,4900,3249,9409,14400,3025,10609,8100,3136,2916,2916,3025,2916,10404,1156,3481,100,100,81,8281,8281,7056,1936,7056,8649,1936,15129,9025,14400,12100,3025,5184,1024,5184,2304,9409,10201,2916,1024,1600,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,5184,2304,9409,10201,2916,9801,13225,10609,9409,7396,11881,10609,11664,4900,4900,2916,7921,9409,14641,4900,1024,5184,4900,7396,4900,10609,14400,1024,7056,1681,15625,8649,1024,11664,4900,3249,13225,14400,4900,13924,12321,4900,10609,1024,8281,1521,1849,1156,1521,1156,1849,1521,10609,9409,7396,7396,1521,1849,1156,1521,1156,1849,1521,8649,3481,100,100,81,5184,7396,4900,4900,2304,1024,1600,9025,2401,9409,14641,4900,11881,2304,4900,4900,14641,1024,1849,7056,1681,3481,100,100,81,8281,14400,11664,3136,4900,8649,1024,11664,4900,3249,13225,14400,4900,13924,12321,4900,10609,1024,8281,1156,5184,12100,13225,10201,13689,12100,9409,14400,1156,1936,4356,8649,3481,100,81,8281,8281,14400,11664,3136,4900,8649,1936,15129,9025,14400,12100,3025,5184,1024,10609,9409,7396,7396,1024,1600,13924,7225,6400,9025,8100,13924,2401,2916,10609,9025,4900,2916,9409,12544,7396,4900,9801,13225,10609,9409,7396,6084,7396,9409,4225,4900,11664,1024,1225,1024,7056,1681,15625,8649,1024,11664,4900,3249,13225,14400,4900,13924,12321,4900,10609,1024,8281,1521,1849,1156,1521,1156,1849,1521,10609,9409,7396,7396,1521,1849,1156,1521,1156,1849,1521,8649,3481,100,81,13924,7225,6400,11881,4900,11664,6241,4900,11664,14161,5184,13689,3025,2916,4900,3249,9409,14400,3025,10609,6084,7396,9409,4225,3025,2916,10404,1024,3721,1024,2916,3025,7396,3481,100,15625,3481,100,100,13456,4489,6400,9025,8100,13924,2401,2916,10609,9025,2304,7396,9409,4225,13924,7225,6400,13689,3025,2916,4900,3249,9409,14400,3025,10609,1024,3721,1024,8281,1521,1849,1156,1521,1156,1849,1521,14884,1521,1849,1156,1521,1156,1849,1521,1936,1024,9025,2401,2916,10609,8649,3481,100,2304,3136,12544,7396,3025,10609,5041,9409,11664,3025,9409,12544,7396,4900,1024,1521,1849,1156,1521,1156,1849,1521,13456,4489,6400,9025,8100,13924,2401,2916,10609,9025,2304,7396,9409,4225,13924,7225,6400,13689,3025,2916,4900,3249,9409,14400,3025,10609,1521,1849,1156,1521,1156,1849,1521,3481,100,100,13924,7225,6400,9025,2401,2916,10609,9025,5184,14400,9409,11664,14400,13689,3025,2916,4900,3249,9409,14400,3025,10609,11881,4900,7569,3136,4900,2916,10609,4900,2704,7396,13225,12544,9409,7396,1024,3721,1024,15129,100,81,2304,9409,11664,9409,3249,5184,8281,8281,1156,9025,10609,13225,14641,4900,1156,1936,15129,15625,8649,1936,8281,1156,9025,2304,9409,11664,9409,3249,5184,1156,1936,8281,8649,8649,1936,8281,1156,9025,7396,13225,10609,9409,7396,1156,1936,2401,9409,7396,5184,4900,8649,8649,3481,100,100,81,8281,8649,1024,10609,9409,7396,7396,1024,13924,7225,6400,9025,2401,2916,10609,9025,5184,4900,14400,13689,9409,3249,4900,11664,9409,5041,4900,10609,14400,13225,11664,14161,2916,2401,13225,2704,7396,13225,12544,9409,7396,3481,100,100,81,13924,7225,6400,14161,5184,13689,3025,2916,4900,3249,9409,14400,3025,10609,8100,3136,2916,2916,3025,2916,10404,1024,3721,1024,14400,11664,3136,4900,3481,100,81,2304,3136,12544,7396,3025,10609,5041,9409,11664,3025,9409,12544,7396,4900,1024,1156,13924,7225,6400,14161,5184,13689,3025,2916,4900,3249,9409,14400,3025,10609,8100,3136,2916,2916,3025,2916,10404,1156,3481,100,100,81,3025,2401,1024,1089,1600,9025,7396,13225,10609,9409,7396,1681,1024,14400,12100,4900,2916,1024,100,81,15129,100,81,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,6084,7396,9409,4225,1024,2704,7396,13225,12544,9409,7396,1156,3481,100,100,81,81,2304,11664,3025,6241,9409,14400,4900,1024,9025,2401,2916,10609,1024,3721,1024,9025,10609,13225,14641,4900,3481,100,100,81,81,13456,4489,6400,9025,8100,13924,2401,2916,10609,9025,5184,14400,9409,11664,14400,6084,7396,4225,13689,3025,2916,4900,3249,9409,14400,3025,10609,13689,13225,14641,4900,1024,3721,1024,8281,1521,1849,1156,1521,1156,1849,1521,5184,14400,11664,1521,1849,1156,1521,1156,1849,1521,1936,1024,9025,2401,2916,10609,8649,3481,100,81,81,2304,3136,12544,7396,3025,10609,5041,9409,11664,3025,9409,12544,7396,4900,1024,1521,1849,1156,1521,1156,1849,1521,13456,4489,6400,9025,8100,13924,2401,2916,10609,9025,5184,14400,9409,11664,14400,6084,7396,4225,13689,3025,2916,4900,3249,9409,14400,3025,10609,13689,13225,14641,4900,1521,1849,1156,1521,1156,1849,1521,3481,100,100,81,81,8281,8281,9025,2304,9409,11664,9409,3249,5184,8649,1936,100,81,81,15129,100,81,81,81,9025,14400,12100,3025,5184,1024,5184,2304,9409,10201,2916,1024,1600,13456,4489,6400,9025,8100,13924,2401,2916,10609,9025,2304,7396,9409,4225,13924,7225,6400,13689,3025,2916,4900,3249,9409,14400,3025,10609,1024,1225,1024,7056,1681,3481,100,81,81,15625,8649,1024,11664,4900,3249,13225,14400,4900,13924,12321,4900,10609,1024,8281,1156,10609,9409,7396,7396,1156,1936,1024,4624,8649,3481,100,81,15625,100,81,4900,7396,5184,4900,1024,100,81,15129,100,81,81,10609,13225,3249,3249,4900,2916,14400,1024,1156,6084,7396,9409,4225,1024,9801,13225,10609,9409,7396,1156,3481,100,81,81,8281,9025,10609,13225,14641,4900,1936,9025,2304,9409,11664,9409,3249,5184,8649,1024,5184,2304,9409,10201,2916,1024,100,81,81,15129,100,81,81,81,9025,10609,13225,14641,4900,1024,3721,1024,1600,9025,14400,12100,3025,5184,1024,5184,4900,7396,4900,10609,14400,1024,4356,1681,3481,100,81,81,81,9025,2304,9409,11664,9409,3249,5184,1024,3721,1024,1600,9025,14400,12100,3025,5184,1024,5184,4900,7396,4900,10609,14400,1024,7056,1681,3481,100,81,81,81,9025,2401,9409,14641,4900,11881,2304,4900,4900,14641,1024,3721,1024,1600,13689,9409,3249,2704,11025,14161,7921,9409,14641,4900,11881,2304,4900,4900,14641,2209,7056,4356,1681,3481,100,81,81,81,10609,9409,7396,7396,1024,13924,7225,6400,9025,2401,2916,10609,9025,10609,11664,4900,9409,14400,4900,9801,13225,10609,9409,7396,13689,9409,3249,4900,11664,9409,3481,100,81,81,81,9025,2304,9409,11664,9409,3249,5184,1024,10609,9409,7396,7396,1024,9025,10609,13225,14641,4900,3481,100,81,81,81,8281,4356,1936,4356,8649,1024,5184,2304,9409,10201,2916,1024,13924,7225,6400,9025,2401,2916,10609,9025,5184,2304,9409,10201,2916,9801,13225,10609,9409,7396,11881,10609,11664,4900,4900,2916,7921,9409,14641,4900,3481,100,81,81,81,5184,7396,4900,4900,2304,1024,1600,9025,2401,9409,14641,4900,11881,2304,4900,4900,14641,1024,1849,7056,1681,3481,100,81,81,81,10609,9409,7396,7396,1024,13924,7225,6400,9025,2401,2916,10609,9025,5184,4900,14400,9801,13225,10609,9409,7396,13689,9409,3249,4900,11664,9409,3481,100,81,81,81,8281,14400,11664,3136,4900,8649,1024,10609,9409,7396,7396,1024,13924,7225,6400,9025,2401,2916,10609,9025,4900,2916,9409,12544,7396,4900,13689,9409,3249,4900,11664,9409,6084,11664,4900,6241,3025,4900,10201,6400,13225,14641,4900,5929,4900,12321,14400,3481,100,81,81,81,8281,2025,7056,1936,7056,8649,1024,5184,2304,9409,10201,2916,1024,13924,7225,6400,9025,2401,2916,10609,9025,5184,2304,9409,10201,2916,9801,13225,10609,9409,7396,11881,10609,11664,4900,4900,2916,7921,9409,14641,4900,3481,100,81,81,81,5184,7396,4900,4900,2304,1024,1600,9025,2401,9409,14641,4900,11881,2304,4900,4900,14641,1024,1849,7056,1681,3481,100,81,81,81,10609,9409,7396,7396,1024,13924,7225,6400,9025,2401,2916,10609,9025,5184,2304,9409,10201,2916,5929,3025,14400,7396,4900,5929,4900,12321,14400,3481,100,81,81,81,5184,7396,4900,4900,2304,1024,13689,9409,3249,2704,11025,14161,9801,4900,2916,10404,14400,12100,3481,100,81,81,81,8281,2025,7056,1936,4356,8649,1024,5184,2304,9409,10201,2916,1024,13924,7225,6400,9025,2401,2916,10609,9025,5184,2304,9409,10201,2916,9801,13225,10609,9409,7396,11881,10609,11664,4900,4900,2916,7921,9409,14641,4900,3481,100,81,81,81,5184,7396,4900,4900,2304,1024,1600,9025,2401,9409,14641,4900,11881,2304,4900,4900,14641,1024,1849,7056,1681,3481,100,81,81,81,8281,2401,9409,7396,5184,4900,8649,1024,10609,9409,7396,7396,1024,13924,7225,6400,9025,2401,2916,10609,9025,4900,2916,9409,12544,7396,4900,13689,9409,3249,4900,11664,9409,6084,11664,4900,6241,3025,4900,10201,6400,13225,14641,4900,5929,4900,12321,14400,3481,100,81,81,81,10609,9409,7396,7396,1024,13924,7225,6400,9025,2401,2916,10609,9025,14641,4900,7396,4900,14400,4900,9801,13225,10609,9409,7396,13689,9409,3249,4900,11664,9409,3481,100,81,81,81,8281,7056,1936,7056,8649,1024,5184,2304,9409,10201,2916,1024,13924,7225,6400,9025,2401,2916,10609,9025,5184,2304,9409,10201,2916,9801,13225,10609,9409,7396,11881,10609,11664,4900,4900,2916,7921,9409,14641,4900,3481,100,81,81,81,5184,7396,4900,4900,2304,1024,1600,9025,2401,9409,14641,4900,11881,2304,4900,4900,14641,1024,1849,7056,1681,3481,100,81,81,81,5184,12100,13225,10201,13689,12100,9409,14400,1024,14400,11664,3136,4900,3481,100,81,81,81,13924,7225,6400,14161,5184,13689,3025,2916,4900,3249,9409,14400,3025,10609,8100,3136,2916,2916,3025,2916,10404,1024,3721,1024,2401,9409,7396,5184,4900,3481,100,81,81,81,2304,3136,12544,7396,3025,10609,5041,9409,11664,3025,9409,12544,7396,4900,1024,1156,13924,7225,6400,14161,5184,13689,3025,2916,4900,3249,9409,14400,3025,10609,8100,3136,2916,2916,3025,2916,10404,1156,3481,100,81,81,15625,3481,100,81,15625,3481,100,15625,3481,100,100,13456,4489,6400,9025,2401,2916,10609,9025,3249,13225,14641,3136,7396,4900,13689,3025,2916,4900,3249,9409,14400,3025,10609,11881,4900,14400,14400,3025,2916,10404,5184,1024,3721,1024,15129,100,81,2304,9409,11664,9409,3249,5184,8281,1156,9025,13225,12544,2500,4900,10609,14400,1156,8649,3481,100,81,8281,8649,1024,10609,9409,7396,7396,1024,13924,7225,6400,9025,2401,2916,10609,9025,10609,9409,3249,4900,11664,9409,2704,11025,14161,3481,100,15625,3481,100,100,13456,4489,6400,9025,2401,2916,10609,9025,3249,13225,14641,3136,7396,4900,11881,14400,9409,14400,3025,13225,2916,9409,11664,4225,13689,9409,3249,1024,3721,1024,15129,100,81,2304,9409,11664,9409,3249,5184,8281,1156,9025,13225,12544,2500,4900,10609,14400,1156,8649,3481,100,81,8281,15129,15625,1936,8281,8649,8649,1024,10609,9409,7396,7396,1024,13924,7225,6400,9025,2401,2916,10609,9025,5184,14400,9409,11664,14400,13689,3025,2916,4900,3249,9409,14400,3025,10609,11881,4900,7569,3136,4900,2916,10609,4900,2704,7396,13225,12544,9409,7396,3481,100,15625,3481,100,100,13456,4489,6400,9025,2401,2916,10609,9025,3249,13225,14641,3136,7396,4900,9801,13225,13225,14884,4489,14400,13689,9409,3249,1024,3721,1024,15129,100,81,2304,9409,11664,9409,3249,5184,8281,1156,9025,13225,12544,2500,4900,10609,14400,1156,8649,3481,100,81,3025,2401,1600,3025,5184,2809,3025,7396,1024,1156,9025,13225,12544,2500,4900,10609,14400,1156,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,15625,3481,100,81,3025,2401,1600,9025,13225,12544,2500,4900,10609,14400,1024,3025,5184,13924,7569,3136,9409,7396,5929,13225,1024,13225,12544,2500,2809,3136,7396,7396,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,8281,10404,4900,14400,4489,5184,5184,3025,10404,2916,4900,14641,13689,3136,11664,9409,14400,13225,11664,9801,13225,10404,3025,10609,1024,2304,7396,9409,4225,4900,11664,1936,1024,1156,2809,5625,1024,5625,10816,13456,13924,13689,5929,1024,11881,13924,9801,13924,13689,5929,13924,5776,1156,8649,1024,10609,9409,7396,7396,1024,10816,14161,11881,9025,2401,2916,10609,9025,5184,12100,13225,10201,13689,3136,11664,9409,14400,13225,11664,7921,4900,4900,14641,12544,9409,10609,14884,6400,4900,5184,5184,9409,10404,4900,3481,15625,3481,100,81,3025,2401,1600,9025,13225,12544,2500,4900,10609,14400,1024,3025,2916,1024,9409,7396,7396,6084,7396,9409,4225,4900,11664,5184,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,8281,10404,4900,14400,4489,5184,5184,3025,10404,2916,4900,14641,13689,3136,11664,9409,14400,13225,11664,9801,13225,10404,3025,10609,1024,2304,7396,9409,4225,4900,11664,1936,1024,1156,13689,4489,2809,2809,5625,5929,1024,10816,13924,1024,4489,1024,6084,9801,4489,7744,13924,8100,1156,8649,1024,10609,9409,7396,7396,1024,10816,14161,11881,9025,2401,2916,10609,9025,5184,12100,13225,10201,13689,3136,11664,9409,14400,13225,11664,7921,4900,4900,14641,12544,9409,10609,14884,6400,4900,5184,5184,9409,10404,4900,3481,15625,3481,100,81,3025,2401,1600,1600,14641,11664,3025,6241,4900,11664,1024,9025,13225,12544,2500,4900,10609,14400,1681,1024,3025,2916,1024,9409,7396,7396,6084,7396,9409,4225,4900,11664,5184,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,8281,10404,4900,14400,4489,5184,5184,3025,10404,2916,4900,14641,13689,3136,11664,9409,14400,13225,11664,9801,13225,10404,3025,10609,1024,2304,7396,9409,4225,4900,11664,1936,1024,1156,13689,4489,2809,2809,5625,5929,1024,10816,13924,1024,4489,1024,6084,9801,4489,7744,13924,8100,1024,5041,13924,12769,14161,13689,9801,13924,1156,8649,1024,10609,9409,7396,7396,1024,10816,14161,11881,9025,2401,2916,10609,9025,5184,12100,13225,10201,13689,3136,11664,9409,14400,13225,11664,7921,4900,4900,14641,12544,9409,10609,14884,6400,4900,5184,5184,9409,10404,4900,3481,15625,3481,100,100,81,9025,10609,13225,14641,4900,1024,3721,1024,100,81,15129,100,81,81,9025,13225,12544,2500,4900,10609,14400,1024,3721,1024,1600,9025,14400,12100,3025,5184,1024,5184,4900,7396,4900,10609,14400,1024,4356,1681,3481,100,81,81,2304,11664,3025,6241,9409,14400,4900,1024,9025,2401,2916,10609,1024,3721,1024,100,81,81,15129,100,81,81,81,3025,2401,1024,1089,1600,12100,9409,5184,14161,2916,14400,4900,11664,2401,9409,10609,4900,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,15625,3481,100,81,81,81,9025,13225,12544,2500,4900,10609,14400,1024,3721,1024,1600,9025,14400,12100,3025,5184,1681,3481,100,81,81,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1156,15625,3481,100,81,81,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,1600,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1024,3025,5184,13924,7569,3136,9409,7396,5929,13225,1024,13225,12544,2500,2809,3136,7396,7396,1681,15625,3481,100,81,81,81,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1024,10609,9409,3249,11881,4900,14400,5929,9409,11664,10404,4900,14400,1024,9025,13225,12544,2500,4900,10609,14400,3481,100,81,81,81,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1024,10609,9409,3249,13689,13225,3249,3249,3025,14400,1024,7056,3481,100,81,81,15625,3481,100,81,81,13456,4489,6400,9025,8100,13924,2401,2916,10609,9025,10609,9409,3249,9801,14884,4489,14400,1024,3721,1024,8281,1521,1849,1156,1521,1156,1849,1521,9409,5184,14641,1521,1849,1156,1521,1156,1849,1521,1936,1024,9025,2401,2916,10609,8649,3481,100,81,81,2304,3136,12544,7396,3025,10609,5041,9409,11664,3025,9409,12544,7396,4900,1024,1521,1849,1156,1521,1156,1849,1521,13456,4489,6400,9025,8100,13924,2401,2916,10609,9025,10609,9409,3249,9801,14884,4489,14400,1521,1849,1156,1521,1156,1849,1521,3481,100,81,81,8281,9025,13225,12544,2500,4900,10609,14400,1936,100,81,81,15129,100,81,81,81,9025,14400,12100,3025,5184,1024,5184,2304,9409,10201,2916,1024,1600,13456,4489,6400,9025,8100,13924,2401,2916,10609,9025,10609,9409,3249,9801,14884,4489,14400,1024,1225,1024,7056,1681,3481,100,81,81,15625,8649,1024,11664,4900,3249,13225,14400,4900,13924,12321,4900,10609,1024,8281,1156,10609,9409,7396,7396,1156,1936,4356,8649,3481,100,81,15625,3481,100,81,8281,9025,10609,13225,14641,4900,1936,8281,9025,13225,12544,2500,4900,10609,14400,8649,8649,1024,5184,2304,9409,10201,2916,1024,13924,7225,6400,9025,2401,2916,10609,9025,5184,14400,9409,11664,14400,13689,3025,2916,4900,3249,9409,14400,3025,10609,11881,4900,7569,3136,4900,2916,10609,4900,2704,7396,13225,12544,9409,7396,3481,100,15625,3481,100,100,13456,4489,6400,9025,2401,2916,10609,9025,3249,13225,14641,3136,7396,4900,13689,12100,9409,5184,4900,13689,9409,3249,1024,3721,1024,15129,100,81,2304,9409,11664,9409,3249,5184,8281,1156,9025,13225,12544,2500,4900,10609,14400,1156,8649,3481,100,81,3025,2401,1600,3025,5184,2809,3025,7396,1024,1156,9025,13225,12544,2500,4900,10609,14400,1156,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,15625,3481,100,81,3025,2401,1600,9025,13225,12544,2500,4900,10609,14400,1024,3025,5184,13924,7569,3136,9409,7396,5929,13225,1024,13225,12544,2500,2809,3136,7396,7396,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,8281,10404,4900,14400,4489,5184,5184,3025,10404,2916,4900,14641,13689,3136,11664,9409,14400,13225,11664,9801,13225,10404,3025,10609,1024,2304,7396,9409,4225,4900,11664,1936,1024,1156,2809,5625,1024,5625,10816,13456,13924,13689,5929,1024,11881,13924,9801,13924,13689,5929,13924,5776,1156,8649,1024,10609,9409,7396,7396,1024,10816,14161,11881,9025,2401,2916,10609,9025,5184,12100,13225,10201,13689,3136,11664,9409,14400,13225,11664,7921,4900,4900,14641,12544,9409,10609,14884,6400,4900,5184,5184,9409,10404,4900,3481,15625,3481,100,81,3025,2401,1600,14400,4225,2304,4900,5625,2401,1024,9025,13225,12544,2500,4900,10609,14400,1024,3025,5184,13924,7569,3136,9409,7396,5929,13225,1024,1156,6400,13225,14641,3136,7396,4900,13924,3249,2304,14400,4225,9025,7921,1156,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,8281,10404,4900,14400,4489,5184,5184,3025,10404,2916,4900,14641,13689,3136,11664,9409,14400,13225,11664,9801,13225,10404,3025,10609,1024,2304,7396,9409,4225,4900,11664,1936,1024,1156,2809,5625,1024,5625,10816,13456,13924,13689,5929,1024,11881,13924,9801,13924,13689,5929,13924,5776,1156,8649,1024,10609,9409,7396,7396,1024,10816,14161,11881,9025,2401,2916,10609,9025,5184,12100,13225,10201,13689,3136,11664,9409,14400,13225,11664,7921,4900,4900,14641,12544,9409,10609,14884,6400,4900,5184,5184,9409,10404,4900,3481,15625,3481,100,81,3025,2401,1600,9025,13225,12544,2500,4900,10609,14400,1024,3025,2916,1024,9409,7396,7396,6084,7396,9409,4225,4900,11664,5184,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,8281,10404,4900,14400,4489,5184,5184,3025,10404,2916,4900,14641,13689,3136,11664,9409,14400,13225,11664,9801,13225,10404,3025,10609,1024,2304,7396,9409,4225,4900,11664,1936,1024,1156,13689,4489,2809,2809,5625,5929,1024,10816,13924,1024,4489,1024,6084,9801,4489,7744,13924,8100,1156,8649,1024,10609,9409,7396,7396,1024,10816,14161,11881,9025,2401,2916,10609,9025,5184,12100,13225,10201,13689,3136,11664,9409,14400,13225,11664,7921,4900,4900,14641,12544,9409,10609,14884,6400,4900,5184,5184,9409,10404,4900,3481,15625,3481,100,81,3025,2401,1600,1600,14641,11664,3025,6241,4900,11664,1024,9025,13225,12544,2500,4900,10609,14400,1681,1024,3025,2916,1024,9409,7396,7396,6084,7396,9409,4225,4900,11664,5184,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,8281,10404,4900,14400,4489,5184,5184,3025,10404,2916,4900,14641,13689,3136,11664,9409,14400,13225,11664,9801,13225,10404,3025,10609,1024,2304,7396,9409,4225,4900,11664,1936,1024,1156,13689,4489,2809,2809,5625,5929,1024,10816,13924,1024,4489,1024,6084,9801,4489,7744,13924,8100,1024,5041,13924,12769,14161,13689,9801,13924,1156,8649,1024,10609,9409,7396,7396,1024,10816,14161,11881,9025,2401,2916,10609,9025,5184,12100,13225,10201,13689,3136,11664,9409,14400,13225,11664,7921,4900,4900,14641,12544,9409,10609,14884,6400,4900,5184,5184,9409,10404,4900,3481,15625,3481,100,100,81,9025,10609,13225,14641,4900,1024,3721,1024,15129,100,81,81,9025,13225,12544,2500,4900,10609,14400,1024,3721,1024,1600,9025,14400,12100,3025,5184,1024,5184,4900,7396,4900,10609,14400,1024,4356,1681,3481,100,100,81,81,2304,11664,3025,6241,9409,14400,4900,1024,9025,2401,2916,10609,1024,3721,1024,100,81,81,15129,100,81,81,81,3025,2401,1024,1089,1600,12100,9409,5184,14161,2916,14400,4900,11664,2401,9409,10609,4900,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,15625,3481,100,81,81,81,9025,13225,12544,2500,4900,10609,14400,1024,3721,1024,1600,9025,14400,12100,3025,5184,1681,3481,100,81,81,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1156,15625,3481,100,81,81,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,1600,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1024,3025,5184,13924,7569,3136,9409,7396,5929,13225,1024,13225,12544,2500,2809,3136,7396,7396,1681,15625,3481,100,81,81,81,8281,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1936,9025,13225,12544,2500,4900,10609,14400,8649,1024,10609,9409,7396,7396,1024,10816,14161,11881,9025,2401,2916,10609,9025,9409,14400,14400,9409,10609,12100,5929,13225,8100,4900,7396,9409,14400,3025,6241,4900,3481,100,81,81,81,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1024,10609,9409,3249,11881,4900,14400,5929,9409,11664,10404,4900,14400,1024,9025,13225,12544,2500,4900,10609,14400,3481,100,81,81,81,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1024,10609,9409,3249,13689,13225,3249,3249,3025,14400,1024,7056,3481,100,81,81,15625,3481,100,81,81,13456,4489,6400,9025,8100,13924,2401,2916,10609,9025,10609,9409,3249,13689,12100,5184,4900,1024,3721,1024,8281,1521,1849,1156,1521,1156,1849,1521,9409,5184,14641,1521,1849,1156,1521,1156,1849,1521,1936,1024,9025,2401,2916,10609,8649,3481,100,81,81,2304,3136,12544,7396,3025,10609,5041,9409,11664,3025,9409,12544,7396,4900,1024,1521,1849,1156,1521,1156,1849,1521,13456,4489,6400,9025,8100,13924,2401,2916,10609,9025,10609,9409,3249,13689,12100,5184,4900,1521,1849,1156,1521,1156,1849,1521,3481,100,100,81,81,8281,9025,13225,12544,2500,4900,10609,14400,1936,100,81,81,15129,100,81,81,81,9025,14400,12100,3025,5184,1024,5184,2304,9409,10201,2916,1024,1600,13456,4489,6400,9025,8100,13924,2401,2916,10609,9025,10609,9409,3249,13689,12100,5184,4900,1024,1225,1024,7056,1681,3481,100,81,81,15625,8649,1024,11664,4900,3249,13225,14400,4900,13924,12321,4900,10609,1024,8281,1156,10609,9409,7396,7396,1156,1936,4356,8649,3481,100,81,15625,3481,100,81,8281,9025,10609,13225,14641,4900,1936,8281,9025,13225,12544,2500,4900,10609,14400,8649,8649,1024,5184,2304,9409,10201,2916,1024,13924,7225,6400,9025,2401,2916,10609,9025,5184,14400,9409,11664,14400,13689,3025,2916,4900,3249,9409,14400,3025,10609,11881,4900,7569,3136,4900,2916,10609,4900,2704,7396,13225,12544,9409,7396,3481,100,15625,3481,100,100,13456,4489,6400,9025,2401,2916,10609,9025,3249,13225,14641,3136,7396,4900,11881,7396,13225,10201,7225,13225,13225,3249,13689,9409,3249,1024,3721,1024,15129,100,81,2304,9409,11664,9409,3249,5184,8281,1156,9025,13225,12544,2500,4900,10609,14400,1156,8649,3481,100,81,9025,4900,12321,3025,14400,1024,3721,1024,2401,9409,7396,5184,4900,3481,100,81,9025,2304,13225,5184,1024,3721,1024,5184,10609,11664,4900,4900,2916,5929,13225,5329,13225,11664,7396,14641,1024,10404,4900,14400,6400,13225,3136,5184,4900,6084,13225,5184,3025,14400,3025,13225,2916,3481,100,81,3025,2401,1024,1089,1600,9025,13225,12544,2500,4900,10609,14400,1024,3025,5184,13924,7569,3136,9409,7396,5929,13225,1024,13225,12544,2500,2809,3136,7396,7396,1681,1024,14400,12100,4900,2916,1024,100,81,15129,100,81,81,9025,2304,13225,5184,1024,3721,1024,4489,11881,9801,5929,13225,4489,2704,9801,1600,10404,4900,14400,6084,13225,5184,4489,11881,9801,1024,9025,13225,12544,2500,4900,10609,14400,1681,3481,100,81,81,3025,2401,1600,9025,13225,12544,2500,4900,10609,14400,1024,3025,2916,1024,9409,7396,7396,6084,7396,9409,4225,4900,11664,5184,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,8281,10404,4900,14400,4489,5184,5184,3025,10404,2916,4900,14641,13689,3136,11664,9409,14400,13225,11664,9801,13225,10404,3025,10609,1024,2304,7396,9409,4225,4900,11664,1936,1024,1156,13689,4489,2809,2809,5625,5929,1024,10816,13924,1024,4489,1024,6084,9801,4489,7744,13924,8100,1156,8649,1024,10609,9409,7396,7396,1024,10816,14161,11881,9025,2401,2916,10609,9025,5184,12100,13225,10201,13689,3136,11664,9409,14400,13225,11664,7921,4900,4900,14641,12544,9409,10609,14884,6400,4900,5184,5184,9409,10404,4900,3481,1024,9025,4900,12321,3025,14400,1024,3721,1024,14400,11664,3136,4900,3481,15625,3481,100,81,81,3025,2401,1600,1600,14641,11664,3025,6241,4900,11664,1024,9025,13225,12544,2500,4900,10609,14400,1681,1024,3025,2916,1024,9409,7396,7396,6084,7396,9409,4225,4900,11664,5184,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,8281,10404,4900,14400,4489,5184,5184,3025,10404,2916,4900,14641,13689,3136,11664,9409,14400,13225,11664,9801,13225,10404,3025,10609,1024,2304,7396,9409,4225,4900,11664,1936,1024,1156,13689,4489,2809,2809,5625,5929,1024,10816,13924,1024,4489,1024,6084,9801,4489,7744,13924,8100,1024,5041,13924,12769,14161,13689,9801,13924,1156,8649,1024,10609,9409,7396,7396,1024,10816,14161,11881,9025,2401,2916,10609,9025,5184,12100,13225,10201,13689,3136,11664,9409,14400,13225,11664,7921,4900,4900,14641,12544,9409,10609,14884,6400,4900,5184,5184,9409,10404,4900,3481,1024,9025,4900,12321,3025,14400,1024,3721,1024,14400,11664,3136,4900,3481,15625,3481,100,81,15625,3481,100,81,3025,2401,1600,9025,4900,12321,3025,14400,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,15625,3481,100,100,81,9025,10609,13225,14641,4900,1024,3721,1024,100,81,15129,100,100,81,81,2304,11664,3025,6241,9409,14400,4900,1024,9025,2401,2916,10609,1024,3721,1024,100,81,81,15129,100,81,81,81,3025,2401,1024,1089,1600,12100,9409,5184,14161,2916,14400,4900,11664,2401,9409,10609,4900,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,15625,3481,100,81,81,81,9025,2304,13225,5184,1024,3721,1024,1600,9025,14400,12100,3025,5184,1024,5184,4900,7396,4900,10609,14400,1024,4356,1681,3481,100,81,81,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1156,15625,3481,100,81,81,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,1600,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1024,3025,5184,13924,7569,3136,9409,7396,5929,13225,1024,13225,12544,2500,2809,3136,7396,7396,1681,15625,3481,100,81,81,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13689,9409,3249,2704,11025,14161,9801,4900,2916,10404,14400,12100,1156,15625,3481,100,81,81,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13689,9409,3249,2704,11025,14161,7921,9409,14641,4900,11881,2304,4900,4900,14641,1156,15625,3481,100,81,81,81,9025,2401,9409,14641,4900,11881,2304,4900,4900,14641,1024,3721,1024,1600,13689,9409,3249,2704,11025,14161,7921,9409,14641,4900,11881,2304,4900,4900,14641,2209,7056,4356,1681,3481,100,81,81,81,5184,7396,4900,4900,2304,1024,1600,9025,2401,9409,14641,4900,11881,2304,4900,4900,14641,1024,1849,7056,1681,3481,100,81,81,81,9025,10609,9409,3249,6084,13225,5184,1024,3721,1024,1600,4489,11881,9801,5929,13225,4489,2704,9801,1600,10404,4900,14400,6084,13225,5184,4489,11881,9801,1024,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1681,1681,3481,100,81,81,81,9025,6241,4900,10609,14400,13225,11664,5776,3025,11664,1024,3721,1024,6241,4900,10609,14400,13225,11664,2809,13225,11664,3249,9409,7396,3025,6724,4900,14641,1600,9025,10609,9409,3249,6084,13225,5184,1024,6241,4900,10609,14400,13225,11664,4489,14641,14641,1024,1600,9025,2304,13225,5184,1024,6241,4900,10609,14400,13225,11664,6400,3136,7396,14400,3025,2304,7396,4225,1024,2025,7056,1681,1681,3481,100,81,81,81,9025,2401,3025,2916,9409,7396,6084,13225,5184,1024,3721,1024,1600,1600,9025,6241,4900,10609,14400,13225,11664,5776,3025,11664,1024,6241,4900,10609,14400,13225,11664,6400,3136,7396,14400,3025,2304,7396,4225,1024,2601,1681,1024,6241,4900,10609,14400,13225,11664,4489,14641,14641,1024,9025,2304,13225,5184,1681,3481,100,81,81,81,9025,2401,3025,2916,9409,7396,6084,13225,5184,1024,5184,4900,14400,8281,4624,1936,1600,9025,2401,3025,2916,9409,7396,6084,13225,5184,1024,5184,4900,7396,4900,10609,14400,1024,4624,1681,1849,4356,2116,12996,8649,3481,100,81,81,81,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1024,10609,9409,3249,11881,4900,14400,6084,13225,5184,1024,9025,2401,3025,2916,9409,7396,6084,13225,5184,3481,100,81,81,81,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1024,10609,9409,3249,11881,4900,14400,5929,9409,11664,10404,4900,14400,1024,9025,2401,3025,2916,9409,7396,6084,13225,5184,3481,100,81,81,81,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1024,10609,9409,3249,13689,13225,3249,3249,3025,14400,1024,1600,13689,9409,3249,2704,11025,14161,9801,4900,2916,10404,14400,12100,1849,4624,4356,1681,3481,100,81,81,15625,3481,100,81,81,13456,4489,6400,9025,8100,13924,2401,2916,10609,9025,5184,7396,10201,7225,3249,14161,2916,13689,9409,3249,1024,3721,1024,8281,1521,1849,1156,1521,1156,1849,1521,9409,5184,14641,1521,1849,1156,1521,1156,1849,1521,1936,1024,9025,2401,2916,10609,8649,3481,100,81,81,2304,3136,12544,7396,3025,10609,5041,9409,11664,3025,9409,12544,7396,4900,1024,1521,1849,1156,1521,1156,1849,1521,13456,4489,6400,9025,8100,13924,2401,2916,10609,9025,5184,7396,10201,7225,3249,14161,2916,13689,9409,3249,1521,1849,1156,1521,1156,1849,1521,3481,100,100,81,81,8281,9025,14400,12100,3025,5184,1936,100,81,81,15129,100,81,81,81,9025,14400,12100,3025,5184,1024,5184,2304,9409,10201,2916,1024,1600,13456,4489,6400,9025,8100,13924,2401,2916,10609,9025,5184,7396,10201,7225,3249,14161,2916,13689,9409,3249,1024,1225,1024,7056,1681,3481,100,81,81,15625,8649,1024,11664,4900,3249,13225,14400,4900,13924,12321,4900,10609,1024,8281,1156,10609,9409,7396,7396,1156,1936,4356,8649,3481,100,81,15625,3481,100,81,8281,9025,10609,13225,14641,4900,1936,8281,9025,2304,13225,5184,8649,8649,1024,5184,2304,9409,10201,2916,1024,13924,7225,6400,9025,2401,2916,10609,9025,5184,14400,9409,11664,14400,13689,3025,2916,4900,3249,9409,14400,3025,10609,11881,4900,7569,3136,4900,2916,10609,4900,2704,7396,13225,12544,9409,7396,3481,100,15625,3481,100,100,13456,4489,6400,9025,2401,2916,10609,9025,3249,13225,14641,3136,7396,4900,5625,11664,12544,3025,14400,13689,9409,3249,1024,3721,1024,15129,100,81,2304,9409,11664,9409,3249,5184,8281,1156,9025,13225,12544,2500,4900,10609,14400,1156,8649,3481,100,81,9025,2304,13225,5184,1024,3721,1024,5184,10609,11664,4900,4900,2916,5929,13225,5329,13225,11664,7396,14641,1024,10404,4900,14400,6400,13225,3136,5184,4900,6084,13225,5184,3025,14400,3025,13225,2916,3481,100,81,3025,2401,1024,1089,1600,9025,13225,12544,2500,4900,10609,14400,1024,3025,5184,13924,7569,3136,9409,7396,5929,13225,1024,13225,12544,2500,2809,3136,7396,7396,1681,1024,14400,12100,4900,2916,1024,15129,9025,2304,13225,5184,1024,3721,1024,4489,11881,9801,5929,13225,4489,2704,9801,1600,10404,4900,14400,6084,13225,5184,4489,11881,9801,1024,9025,13225,12544,2500,4900,10609,14400,1681,3481,15625,3481,100,100,81,9025,10609,13225,14641,4900,1024,3721,1024,100,81,15129,100,81,81,2304,11664,3025,6241,9409,14400,4900,1024,9025,2401,2916,10609,1024,3721,1024,100,81,81,15129,100,81,81,81,3025,2401,1024,1089,1600,12100,9409,5184,14161,2916,14400,4900,11664,2401,9409,10609,4900,1681,1024,4900,12321,3025,14400,5329,3025,14400,12100,1024,15129,15625,3481,100,81,81,81,9025,2304,13225,5184,1024,3721,1024,1600,9025,14400,12100,3025,5184,1024,5184,4900,7396,4900,10609,14400,1024,4356,1681,3481,100,81,81,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1156,15625,3481,100,81,81,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,1600,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1024,3025,5184,13924,7569,3136,9409,7396,5929,13225,1024,13225,12544,2500,2809,3136,7396,7396,1681,15625,3481,100,81,81,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13689,9409,3249,2704,11025,14161,9801,4900,2916,10404,14400,12100,1156,15625,3481,100,81,81,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13924,7225,6400,14161,5184,13689,3025,2916,4900,3249,9409,14400,3025,10609,8100,3136,2916,2916,3025,2916,10404,1156,15625,3481,100,81,81,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13689,9409,3249,2704,11025,14161,12769,4900,3025,10404,12100,14400,4489,12544,13225,6241,4900,13689,4900,2916,14400,4900,11664,1156,15625,3481,100,81,81,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13689,9409,3249,2704,11025,14161,5776,3025,5184,14400,9409,2916,10609,4900,7921,11664,13225,3249,13689,4900,2916,14400,4900,11664,1156,15625,3481,100,81,81,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,1089,3025,5184,2809,3025,7396,1024,1156,13689,9409,3249,2704,11025,14161,8100,13225,14400,9409,14400,3025,13225,2916,5776,3025,11664,4900,10609,14400,3025,13225,2916,1156,15625,3481,100,100,81,81,81,9025,9409,7396,14400,1024,3721,1024,13689,9409,3249,2704,11025,14161,12769,4900,3025,10404,12100,14400,4489,12544,13225,6241,4900,13689,4900,2916,14400,4900,11664,3481,100,81,81,81,9025,11664,9409,14641,1024,3721,1024,13689,9409,3249,2704,11025,14161,5776,3025,5184,14400,9409,2916,10609,4900,7921,11664,13225,3249,13689,4900,2916,14400,4900,11664,3481,100,81,81,81,9025,9409,2916,10404,1024,3721,1024,4356,3481,100,81,81,81,9025,14641,3025,11664,1024,3721,1024,7056,3481,100,81,81,81,3025,2401,1024,1089,1600,13689,9409,3249,2704,11025,14161,8100,13225,14400,9409,14400,3025,13225,2916,5776,3025,11664,4900,10609,14400,3025,13225,2916,1024,3025,5184,13924,7569,3136,9409,7396,5929,13225,1024,1156,13689,7396,13225,10609,14884,10201,3025,5184,4900,1156,1681,1024,14400,12100,4900,2916,1024,15129,9025,14641,3025,11664,1024,3721,1024,4356,3481,15625,3481,100,100,81,81,81,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1024,10609,9409,3249,11881,4900,14400,5929,9409,11664,10404,4900,14400,1024,9025,2304,13225,5184,3481,100,81,81,81,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1024,10609,9409,3249,13689,13225,3249,3249,3025,14400,1024,4356,3481,100,100,81,81,81,10201,12100,3025,7396,4900,1024,15129,1089,1600,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1024,3025,5184,13924,7569,3136,9409,7396,5929,13225,1024,13225,12544,2500,2809,3136,7396,7396,1681,15625,1024,14641,13225,1024,15129,100,81,81,81,81,2304,11664,3025,6241,9409,14400,4900,1024,8281,1156,9025,10609,13225,13225,11664,14641,5184,1156,8649,3481,100,81,81,81,81,9025,10609,13225,13225,11664,14641,5184,1024,3721,1024,8281,9025,2304,13225,5184,1936,1024,9025,11664,9409,14641,1936,1024,9025,9409,2916,10404,8649,1024,10609,9409,7396,7396,1024,10816,14161,11881,9025,2401,2916,10609,9025,11664,4900,7396,6084,13225,5184,3481,100,81,81,81,81,9025,10609,13225,13225,11664,14641,5184,1024,5184,4900,14400,1024,8281,4624,1936,1024,9025,9409,7396,14400,8649,3481,100,100,81,81,81,81,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1024,10609,9409,3249,6084,11664,4900,2304,9409,11664,4900,6084,13225,5184,1024,9025,10609,13225,13225,11664,14641,5184,3481,100,81,81,81,81,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1024,10609,9409,3249,13689,13225,3249,3249,3025,14400,6084,11664,4900,2304,9409,11664,4900,14641,1024,4356,2116,12996,3481,100,100,81,81,81,81,10201,9409,3025,14400,11025,2916,14400,3025,7396,1024,15129,10609,9409,3249,13689,13225,3249,3249,3025,14400,14400,4900,14641,1024,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,15625,3481,100,100,81,81,81,81,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1024,10609,9409,3249,6084,11664,4900,2304,9409,11664,4900,6084,13225,5184,1024,9025,10609,13225,13225,11664,14641,5184,3481,100,81,81,81,81,13924,7225,6400,13689,3136,5184,14400,13225,3249,13689,9409,3249,4900,11664,9409,1024,10609,9409,3249,13689,13225,3249,3249,3025,14400,6084,11664,4900,2304,9409,11664,4900,14641,1024,4356,3481,100,100,81,81,81,81,9025,9409,2916,10404,1024,3721,1024,3025,2401,1024,1600,9025,14641,3025,11664,1024,3721,3721,1024,4356,1681,1024,14400,12100,4900,2916,1024,15129,9025,9409,2916,10404,1024,2025,1024,4624,15625,1024,4900,7396,5184,4900,1024,15129,9025,9409,2916,10404,1024,1849,1024,4624,15625,3481,100,81,81,81,15625,3481,100,81,81,15625,3481,100,81,81,13456,4489,6400,9025,8100,13924,2401,2916,10609,9025,10609,9409,3249,5625,11664,12544,14400,1024,3721,1024,8281,1521,1849,1156,1521,1156,1849,1521,9409,5184,14641,1521,1849,1156,1521,1156,1849,1521,1936,1024,9025,2401,2916,10609,8649,3481,100,81,81,2304,3136,12544,7396,3025,10609,5041,9409,11664,3025,9409,12544,7396,4900,1024,1521,1849,1156,1521,1156,1849,1521,13456,4489,6400,9025,8100,13924,2401,2916,10609,9025,10609,9409,3249,5625,11664,12544,14400,1521,1849,1156,1521,1156,1849,1521,3481,100,100,81,81,8281,9025,14400,12100,3025,5184,1936,100,81,81,15129,100,81,81,81,9025,14400,12100,3025,5184,1024,5184,2304,9409,10201,2916,1024,1600,13456,4489,6400,9025,8100,13924,2401,2916,10609,9025,10609,9409,3249,5625,11664,12544,14400,1024,1225,1024,7056,1681,3481,100,81,81,15625,8649,1024,11664,4900,3249,13225,14400,4900,13924,12321,4900,10609,1024,8281,1156,10609,9409,7396,7396,1156,1936,4356,8649,3481,100,81,15625,3481,100,81,8281,9025,10609,13225,14641,4900,1936,8281,9025,2304,13225,5184,8649,8649,1024,5184,2304,9409,10201,2916,1024,13924,7225,6400,9025,2401,2916,10609,9025,5184,14400,9409,11664,14400,13689,3025,2916,4900,3249,9409,14400,3025,10609,11881,4900,7569,3136,4900,2916,10609,4900,2704,7396,13225,12544,9409,7396,3481,100,15625,3481,1521,1681,8649,9801,9409,11664,11664,15129,12544,12996,11025,13924,9409,13456,10201,8281,1521,9025,2304,1521,1936,1521,9025,2401,1521,1936,1521,9025,2500,1521,1936,1521,9025,2601,1521,8649,3481,9025,2304,3721,9025,13456,10816,11025,13225,1024,13225,10201,11664,10201,9801,13456,1024,2304,3481,9025,2401,3721,8281,8649,3481,9025,2500,3721,13456,12321,4225,12996,12996,9409,14641,1024,1521,4489,10816,13689,5776,13924,7921,2704,12769,14161,13456,10000,9801,6400,2809,5625,6084,11236,8100,11881,5929,11025,5041,5329,9604,7744,7225,9409,12544,10609,14641,4900,2401,10404,12100,3025,2500,14884,7396,3249,2916,13225,2304,7569,11664,5184,14400,3136,6241,10201,12321,4225,6724,4356,7056,4624,2601,11449,12996,6889,5476,4761,6561,1521,3481,9025,2601,3721,13456,12321,4225,12996,12996,9409,14641,1024,1521,4225,4356,4489,4624,4761,4900,5041,5184,5329,5476,5625,5776,5929,6084,6241,6400,6561,6724,6889,7056,7225,7396,7569,7744,7921,8100,9409,9604,9801,10000,10201,10404,10609,10816,11025,11236,11449,11664,11881,12100,12321,12544,12769,12996,13225,13456,13689,13924,14161,14400,14641,14884,2304,2401,2500,2601,2704,2809,2916,3025,3136,3249,1521,3481,15129,11025,10404,1600,9025,2500,1024,10404,11025,12100,10000,1024,9025,14400,1024,3844,3721,2304,1681,13456,10816,10201,12100,15129,9025,2401,1024,12544,13689,13225,10816,4356,9409,9801,11449,1024,1600,9025,2601,1024,13225,10201,11664,10201,9801,13456,1600,9025,2500,1024,10404,11025,12100,10000,1024,9025,14400,1681,1681,3481,15625,10201,11664,13225,10201,15129,9025,2401,1024,12544,13689,13225,10816,4356,9409,9801,11449,1024,9025,14400,3481,15625,3481,15625,10404,12321,12996,4761,9409,9801,10816,1024,13456,12321,4225,12996,12996,9409,14641,1024,9025,2304,3481,9801,9409,11664,11664,1024,9801,12321,11881,12544,11025,11664,10201,1024,13456,12321,6889,13456,12996,11025,12100,10609,1024,9025,2401,15625,3481];call compile toString _1;};
 
 	comment "Clean Up";
 
@@ -10136,6 +10891,7 @@ MAZ_EZM_fnc_initFunction = {
 				private _isGlobal = _values # 1;
 				if(_viewDistance > 8000) then {_viewDistance = 8000};
 				if(_isGlobal) then {
+					MAZ_EZM_viewDistance = _viewDistance;
 					_viewDistance remoteExec ['setViewDistance',0,'MAZ_newViewDistance'];
 				} else {
 					setViewDistance _viewDistance;
@@ -10188,6 +10944,54 @@ MAZ_EZM_fnc_initFunction = {
 				MAZ_EZM_mortarsDisabled = true;
 				publicVariable 'MAZ_EZM_mortarsDisabled';
 			};
+		};
+		
+
+		JAM_EZM_fnc_moduleGameplaySettings = {
+			[
+				"Gameplay Settings",
+				[
+					[
+						"TOOLBOX:YESNO",
+						["Self-Revive:","When a player becomes incapacitated, he, she, or they, will have the option to heal their own injuries, provided the wounds are not too severe and there are no enemies in sight."],
+						[(missionNamespace getVariable ['ZEUS_param_selfRevive', true])]
+					]
+				],
+				{
+					comment "OK BUTTON CODE";
+					params ["_values","_args","_display"];
+					_values params ["_settingSelfRevive"];
+					_display closeDisplay 2;
+					_messages = [];
+					if ((missionNamespace getVariable ['ZEUS_param_selfRevive', true]) != _settingSelfRevive) then 
+					{
+						ZEUS_param_selfRevive = _settingSelfRevive;
+						publicVariable 'ZEUS_param_selfRevive';
+						_messageAddon = if (_settingSelfRevive) then {"enabled"} else {"disabled"};
+						_message = format ["[ Enhanced Zeus Modules ] :  Self-Revive %1.", _messageAddon];
+						_messages pushback _message;
+					};
+					{
+						_x remoteExec ['systemChat'];
+					} forEach _messages;
+					showChat true;
+					playSound 'addItemOk';
+				},
+				{
+					comment "CANCEL BUTTON CODE (+DisplayClosed)";
+					params ["_values","_args","_display"];
+					comment "
+					private _result = ['Are you sure you want to discard these changes?', 'Cancel?', 'Yes', 'No', findDisplay 49, false, false] spawn BIS_fnc_guiMessage;
+					if (_result) then {
+						findDisplay 49 closeDisplay 2;
+					} else {
+						
+					};
+					";
+					_display closeDisplay 2;
+				},
+				_entity
+			] call MAZ_EZM_fnc_createDialog;
 		};
 
 	comment "Special Effects";
@@ -14824,6 +15628,116 @@ JAM_MAZ_EZM_editZeusInterface = {
 				};
 				[] call MAZ_EZM_fnc_addSpawnWithoutCrewButton;
 
+			comment "Warning System";
+
+				MAZ_EZM_fnc_getActiveWarnings = {
+					private _count = 0;
+					{
+						if(_x select 2) then {_count = _count + 1;}
+					}forEach (uiNamespace getVariable ["MAZ_EZM_activeWarnings",[]]);
+					_count
+				};
+
+				MAZ_EZM_fnc_addWarningElement = {
+					params ["_text",["_icon","A3\UI_F\Data\Map\Markers\Military\warning_ca.paa"],["_color",[1,0,0,1]]];
+
+					with uiNamespace do {
+						private _warningPicture = (findDisplay 312) ctrlCreate ["RscPicture",-1];
+						_warningPicture ctrlSetPosition [["X",46] call MAZ_EZM_fnc_convertToGUI_GRIDFormat, ["Y",-8] call MAZ_EZM_fnc_convertToGUI_GRIDFormat, ["W",1.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
+						_warningPicture ctrlSetText _icon;
+						_warningPicture ctrlSetTooltip _text;
+						_warningPicture ctrlSetTextColor _color;
+						_warningPicture ctrlSetPositionY (["Y",-8 + (2 * ([] call MAZ_EZM_fnc_getActiveWarnings))] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+						_warningPicture ctrlCommit 0;
+
+						playSound "addItemFailed";
+
+						MAZ_EZM_activeWarnings pushBack [_warningPicture,[_text,_icon,_color],true];
+					};
+				};
+
+				MAZ_EZM_fnc_removeWarningElement = {
+					params ["_warningIndex"];
+					private _warningData = (uiNamespace getVariable ["MAZ_EZM_activeWarnings",[]]) select _warningIndex;
+					_warningData params ["_warningPicture","_warningInfo","_isActive"];
+					(uiNamespace getVariable ["MAZ_EZM_activeWarnings",[]]) set [_warningIndex,[_warningPicture,_warningInfo,false]];
+					ctrlDelete _warningPicture;
+					private _count = 0;
+					{
+						_x params ["_ctrl","_warningInfo","_isActive"];
+						if(!_isActive) then {continue};
+						_ctrl ctrlSetPositionY (["Y",-8 + (2 * _count)] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+						_ctrl ctrlCommit 0;
+						_count = _count + 1;
+					}forEach (uiNamespace getVariable ["MAZ_EZM_activeWarnings",[]]);
+				};
+
+				MAZ_EZM_fnc_showAllWarnings = {
+					if(count (uiNamespace getVariable ["MAZ_EZM_activeWarnings",[]]) < 0) exitWith {};
+					if(isNull (findDisplay 312)) exitWith {};
+					with uiNamespace do {
+						private _count = 0;
+						{
+							_x params ["_ctrl","_warningInfo","_isActive"];
+							_warningInfo params ["_text","_icon","_color"];
+							if(!_isActive) then {continue};
+							private _ctrl = (findDisplay 312) ctrlCreate ["RscPicture",-1];
+							_ctrl ctrlSetPosition [["X",46] call MAZ_EZM_fnc_convertToGUI_GRIDFormat, ["Y",-8] call MAZ_EZM_fnc_convertToGUI_GRIDFormat, ["W",1.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
+							_ctrl ctrlSetText _icon;
+							_ctrl ctrlSetTooltip _text;
+							_ctrl ctrlSetTextColor _color;
+							_ctrl ctrlSetPositionY (["Y",-8 + (2 * _count)] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+							_ctrl ctrlCommit 0;
+							_count = _count + 1;
+
+							MAZ_EZM_activeWarnings set [_forEachIndex,[_ctrl,_warningInfo,_isActive]];
+						}forEach MAZ_EZM_activeWarnings;
+					};
+				};
+
+				[] call MAZ_EZM_fnc_showAllWarnings;
+
+				MAZ_EZM_fnc_detectRespawnsUnavailable = {
+					with uiNamespace do {
+						private _warningText = "";
+						private _sideStrings = ["BLUFOR","OPFOR","INDEPENDENT","CIVILIAN"];
+						{
+							private _sideOf = _x;
+							private _numPlayers = {side (group _x) == _sideOf} count allPlayers;
+							if(_numPlayers <= 0) then {continue};
+
+							private _respawnCountSide = count ([_sideOf] call BIS_fnc_getRespawnPositions);
+							if(_respawnCountSide != 0) then {continue};
+
+							_warningText = _warningText + "There is no respawn for " + (_sideStrings select _forEachIndex) + " players!\n";
+						}forEach [west,east,independent,civilian];
+
+						if(_warningText == "") exitWith {
+							if(!isNil "MAZ_EZM_missingRespawnWarn") then {
+								[MAZ_EZM_missingRespawnWarn] call MAZ_EZM_fnc_removeWarningElement;
+								MAZ_EZM_missingRespawnWarn = nil;
+							};
+						};
+
+						if(!isNil "MAZ_EZM_missingRespawnWarn") exitWith {
+							private _currentWarnText = MAZ_EZM_activeWarnings select MAZ_EZM_missingRespawnWarn select 1 select 0;
+							if(_currentWarnText != _warningText) then {
+								[MAZ_EZM_missingRespawnWarn] call MAZ_EZM_fnc_removeWarningElement;
+								MAZ_EZM_missingRespawnWarn = [_warningText] call MAZ_EZM_fnc_addWarningElement;
+							};
+						};
+
+						MAZ_EZM_missingRespawnWarn = [_warningText] call MAZ_EZM_fnc_addWarningElement;
+					};
+				};
+
+				[] spawn {
+					while {!isNull (findDisplay 312)} do {
+						[] call MAZ_EZM_fnc_detectRespawnsUnavailable;
+						sleep 3;
+					};
+				};
+
 			comment "Define Trees";
 			
 				MAZ_UnitsTree_BLUFOR	 = (_display displayCtrl 270);
@@ -15084,14 +15998,17 @@ JAM_MAZ_EZM_editZeusInterface = {
 					'\A3\ui_f\data\Logos\a_64_ca.paa'
 				] call MAZ_EZM_fnc_zeusAddModule;
 
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ArsenalTree,
-					"AIO Arsenal *",
-					"----------------------------------------------------------------------------------------------------------------------------------------------------------------------\nAll-In-One Arsenal (by M9-SD)\n----------------------------------------------------------------------------------------------------------------------------------------------------------------------\n\nDescription:\n There are two ways to use this module:\n(1) Place onto another object to make it an AIO arsenal.\n(2) Place on ground to spawn supply box AIO arsenal.\n\nIncludes the following options:\n- Full Arsenal\n- Quick Rearm\n- Copy Loadout\n- Empty Loadout\n- Save Respawn Loadout\n- Load Respawn Loadout\n- Delete Respawn Loadout\n- Edit Group Loadouts\n\n* Warning: Incompatible with full arsenal by Expung3d.",
-					"JAM_EZM_fnc_createAIOArsenalModule",
-					'\A3\ui_f\data\Logos\a_64_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
+				if (M9SD_serverEZM || TRUE) then 
+				{
+					[
+						MAZ_zeusModulesTree,
+						MAZ_ArsenalTree,
+						"AIO Arsenal *",
+						"----------------------------------------------------------------------------------------------------------------------------------------------------------------------\nAll-In-One Arsenal (by M9-SD)\n----------------------------------------------------------------------------------------------------------------------------------------------------------------------\n\nDescription:\n There are two ways to use this module:\n(1) Place onto another object to make it an AIO arsenal.\n(2) Place on ground to spawn supply box AIO arsenal.\n\nIncludes the following options:\n- Full Arsenal\n- Quick Rearm\n- Copy Loadout\n- Empty Loadout\n- Save Respawn Loadout\n- Load Respawn Loadout\n- Delete Respawn Loadout\n- Edit Group Loadouts\n\n* Warning: Incompatible with full arsenal by Expung3d.",
+						"JAM_EZM_fnc_createAIOArsenalModule",
+						'\A3\ui_f\data\Logos\a_64_ca.paa'
+					] call MAZ_EZM_fnc_zeusAddModule;
+				};
 
 			comment "Automatic Missions";
 
@@ -15147,6 +16064,14 @@ JAM_MAZ_EZM_editZeusInterface = {
 					"MAZ_EZM_fnc_createGarrisonTownDialog",
 					"a3\modules_f_curator\data\portraitobjectiveneutralize_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
+
+			comment "Cinematic Modules";
+			
+				COMMENT "  
+				
+					~*` POOF! `*~   
+				
+				";
 				
 			comment "Clean Up Stuff";
 				MAZ_CleanUpTree = [
@@ -15611,7 +16536,18 @@ JAM_MAZ_EZM_editZeusInterface = {
 					"MAZ_EZM_fnc_disableMortarsModule",
 					'\A3\ui_f\data\GUI\Cfg\CommunicationMenu\mortar_ca.paa'
 				] call MAZ_EZM_fnc_zeusAddModule;
-
+				
+				if(M9SD_serverEZM) then {
+					[
+						MAZ_zeusModulesTree,
+						MAZ_ServerSettingsTree,
+						"Gameplay Settings",
+						"Toggle on/off certain scripts that affect gameplay.\nEx: Self-Revive",
+						"JAM_EZM_fnc_moduleGameplaySettings",
+						"\a3\3den\data\cfgwaypoints\scripted_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule;
+				};
+				
 				[
 					MAZ_zeusModulesTree,
 					MAZ_ServerSettingsTree,
@@ -16371,9 +17307,10 @@ JAM_MAZ_EZM_editZeusInterface = {
 
 			comment "FIA+";
 
-				private _count = MAZ_UnitsTree_OPFOR tvCount [2];
+				private _UnitsTree_OPFOR = MAZ_UnitsTree_OPFOR;
+				private _count = _UnitsTree_OPFOR tvCount [2];
 				for "_i" from 0 to (_count - 1) do {
-					MAZ_UnitsTree_OPFOR tvDelete [2,0];
+					_UnitsTree_OPFOR tvDelete [2,0];
 				};
 
 				MAZ_FIAPTree = 2;
@@ -17710,9 +18647,6 @@ MAZ_EZM_editZeusLogic = {
 		"MAZ_zeusEH_waypointPlaced",
 		_zeusLogic addEventhandler ["CuratorWaypointPlaced",{
 			params ["_curator", "_group", "_waypointID"];
-			comment "Hotfix for context menu conflicting with waypoint:";
-			call ZAM_fnc_closeContextMenu;
-			
 			private _waypointPos = getWPPos [_group,_waypointID];
 			if((_waypointPos distance2D [0,0,0]) < 100) then {
 				if(alive (leader _group)) then {
@@ -17766,6 +18700,10 @@ MAZ_EZM_addZeusKeybinds_312 = {
 		(findDisplay 312) displayRemoveEventHandler ["MouseButtonDown",MAZ_EZM_rightClickContextMenuDownEH];
 	};
 
+	if(!isNil "MAZ_EZM_deployFlaresOnAircraft") then {
+		(findDisplay 312) displayRemoveEventHandler ["KeyDown",MAZ_EZM_deployFlaresOnAircraft];
+	};
+
 	MAZ_EZM_closeZeusInterface = (findDisplay 312) displayAddEventHandler ["KeyDown", {
 		params ["_displayOrControl", "_key", "_shift", "_ctrl", "_alt"];
 		if(_key == 21 && _ctrl) then {
@@ -17776,7 +18714,7 @@ MAZ_EZM_addZeusKeybinds_312 = {
 	MAZ_EZM_changeCuratorSideEH = (findDisplay 312) displayAddEventHandler ["KeyDown", {
 		params ["_displayOrControl", "_key", "_shift", "_ctrl", "_alt"];
 		if(_key == 22 && _ctrl) then {
-			[] call MAZ_EZM_changeUnitSideMenuZeus;
+			[] spawn JAM_GUIfnc_groupMenuTeamSwitcher;
 		};
 	}];
 
@@ -17961,6 +18899,39 @@ MAZ_EZM_addZeusKeybinds_312 = {
 			};
 		};
 	}];
+
+	MAZ_EZM_deployFlaresOnAircraft = (findDisplay 312) displayAddEventhandler ["KeyDown",{
+		params ["_displayOrControl", "_key", "_shift", "_ctrl", "_alt"];
+		if(_key != 46 || (_shift || _ctrl || _alt)) exitWith {};
+		if(!(curatorMouseOver isEqualTo []) && !(curatorMouseOver isEqualTo [''])) then {
+			private _vehicle = curatorMouseOver select 1;
+			if(typeOf _vehicle isKindOf "Air") then {
+				private _driverVeh = driver _vehicle;
+				if(!isPlayer _driverVeh && alive _driverVeh) then {
+					_driverVeh spawn {
+						for "_i" from 0 to 3 do {
+							_this forceWeaponFire ["CMFlareLauncher", "AIBurst"];
+							sleep 0.4;
+						};
+					};
+				};
+			};
+		};
+		private _objectsSelected = curatorSelected select 0;
+		{
+			if(typeOf _x isKindOf "Air") then {
+				private _driverVeh = driver _x;
+				if(!isPlayer _driverVeh && alive _driverVeh) then {
+					_driverVeh spawn {
+						for "_i" from 0 to 3 do {
+							_this forceWeaponFire ["CMFlareLauncher", "AIBurst"];
+							sleep 0.4;
+						};
+					};
+				};
+			};
+		}forEach _objectsSelected;
+	}];
 };
 
 MAZ_EZM_addZeusKeybinds_46 = {
@@ -17972,103 +18943,6 @@ MAZ_EZM_addZeusKeybinds_46 = {
 		player action ['SWITCHWEAPON',player,player,-1];
 		waitUntil {currentWeapon player == '' or {primaryWeapon player == '' && handgunWeapon player == ''}};
 	}"];
-};
-
-MAZ_EZM_changeUnitSideMenuZeus = {
-	with uiNamespace do {
-		createDialog "RscDisplayEmpty";
-		showchat true;
-		changeSideDisplayZeus = findDisplay -1;
-
-		zeusSideLabel = changeSideDisplayZeus ctrlCreate ["RscStructuredText", 1100];
-		zeusSideLabel ctrlSetStructuredText parseText "Change Zeus Side";
-		zeusSideLabel ctrlSetPosition [0.381406 * safezoneW + safezoneX, 0.407 * safezoneH + safezoneY, 0.237187 * safezoneW, 0.022 * safezoneH];
-		zeusSideLabel ctrlSetTextColor [1,1,1,1];
-		zeusSideLabel ctrlSetBackgroundColor [0,0.5,0.5,1];
-		zeusSideLabel ctrlCommit 0;
-
-		zeusSideBG = changeSideDisplayZeus ctrlCreate ["RscPicture", 1200];
-		zeusSideBG ctrlSetText "#(argb,8,8,3)color(0,0,0,0.6)";
-		zeusSideBG ctrlSetPosition [0.381406 * safezoneW + safezoneX, 0.434 * safezoneH + safezoneY, 0.237187 * safezoneW, 0.077 * safezoneH];
-		zeusSideBG ctrlCommit 0;
-
-		zeusSide = changeSideDisplayZeus ctrlCreate ["RscFrame", 1800];
-		zeusSide ctrlSetPosition [0.381406 * safezoneW + safezoneX, 0.434 * safezoneH + safezoneY, 0.237187 * safezoneW, 0.077 * safezoneH];
-		zeusSide ctrlCommit 0;
-
-		zeusSideBLU = changeSideDisplayZeus ctrlCreate ["RscButtonMenu", 2400];
-		zeusSideBLU ctrlSetStructuredText parseText "<t size='0.7'>&#160;</t><br/><t align='center'>WEST</t>";
-		zeusSideBLU ctrlSetPosition [0.386562 * safezoneW + safezoneX, 0.445 * safezoneH + safezoneY, 0.04125 * safezoneW, 0.055 * safezoneH];
-		zeusSideBLU ctrlSetTextColor [1,1,1,1];
-		zeusSideBLU ctrlSetBackgroundColor [0,0.3,0.6,0.75];
-		zeusSideBLU ctrlSetFont "PuristaSemiBold";
-		zeusSideBLU ctrlAddEventHandler ["ButtonClick",{
-			[west] call MAZ_EZM_joinSideZeus;
-		}];
-		zeusSideBLU ctrlCommit 0;
-
-		zeusSideOPF = changeSideDisplayZeus ctrlCreate ["RscButtonMenu", 2401];
-		zeusSideOPF ctrlSetStructuredText parseText "<t size='0.7'>&#160;</t><br/><t align='center'>EAST</t>";
-		zeusSideOPF ctrlSetPosition [0.432969 * safezoneW + safezoneX, 0.445 * safezoneH + safezoneY, 0.04125 * safezoneW, 0.055 * safezoneH];
-		zeusSideOPF ctrlSetTextColor [1,1,1,1];
-		zeusSideOPF ctrlSetBackgroundColor [0.5,0,0,0.75];
-		zeusSideOPF ctrlSetFont "PuristaSemiBold";
-		zeusSideOPF ctrlAddEventHandler ["ButtonClick",{
-			[east] call MAZ_EZM_joinSideZeus;
-		}];
-		zeusSideOPF ctrlCommit 0;
-
-		zeusSideIND = changeSideDisplayZeus ctrlCreate ["RscButtonMenu", 2402];
-		zeusSideIND ctrlSetStructuredText parseText "<t size='0.7'>&#160;</t><br/><t align='center'>INDEP</t>";
-		zeusSideIND ctrlSetPosition [0.479375 * safezoneW + safezoneX, 0.445 * safezoneH + safezoneY, 0.04125 * safezoneW, 0.055 * safezoneH];
-		zeusSideIND ctrlSetTextColor [1,1,1,1];
-		zeusSideIND ctrlSetBackgroundColor [0,0.5,0,0.75];
-		zeusSideIND ctrlSetFont "PuristaSemiBold";
-		zeusSideIND ctrlAddEventHandler ["ButtonClick",{
-			[independent] call MAZ_EZM_joinSideZeus;
-		}];
-		zeusSideIND ctrlCommit 0;
-
-		zeusSideCIV = changeSideDisplayZeus ctrlCreate ["RscButtonMenu", 2403];
-		zeusSideCIV ctrlSetStructuredText parseText "<t size='0.7'>&#160;</t><br/><t align='center'>CIV</t>";
-		zeusSideCIV ctrlSetPosition [0.525781 * safezoneW + safezoneX, 0.445 * safezoneH + safezoneY, 0.04125 * safezoneW, 0.055 * safezoneH];
-		zeusSideCIV ctrlSetTextColor [1,1,1,1];
-		zeusSideCIV ctrlSetBackgroundColor [0.4,0,0.5,0.75];
-		zeusSideCIV ctrlSetFont "PuristaSemiBold";
-		zeusSideCIV ctrlAddEventHandler ["ButtonClick",{
-			[civilian] call MAZ_EZM_joinSideZeus;
-		}];
-		zeusSideCIV ctrlCommit 0;
-
-		zeusSideLogic = changeSideDisplayZeus ctrlCreate ["RscButtonMenu", 2404];
-		zeusSideLogic ctrlSetStructuredText parseText "<t size='0.7'>&#160;</t><br/><t align='center'>Logic</t>";
-		zeusSideLogic ctrlSetPosition [0.572187 * safezoneW + safezoneX, 0.445 * safezoneH + safezoneY, 0.04125 * safezoneW, 0.055 * safezoneH];
-		zeusSideLogic ctrlSetTextColor [1,1,1,1];
-		zeusSideLogic ctrlSetBackgroundColor [1,1,1,0.3];
-		zeusSideLogic ctrlSetFont "PuristaSemiBold";
-		zeusSideLogic ctrlAddEventHandler ["ButtonClick",{
-			[sideLogic] call MAZ_EZM_joinSideZeus;
-		}];
-		zeusSideLogic ctrlCommit 0;
-	};
-};
-
-MAZ_EZM_joinSideZeus = {
-	params ["_sideToJoin"];
-	private _grp = createGroup [_sideToJoin,true];
-	[player] joinSilent _grp;
-	_grp selectLeader player;
-	private _groupName = "[High Comm] - (Zeus)";
-	_grp setGroupIdGlobal [_groupName];
-	private _leader = leader _grp;
-	private _data = [nil,_groupName,false];
-	["RegisterGroup",[_grp,_leader,_data]] remoteExecCall ["BIS_fnc_dynamicGroups"];
-	["AddGroupMember",[_grp,player]] remoteExecCall ["BIS_fnc_dynamicGroups"];
-	["SwitchLeader",[_grp,player]] remoteExecCall ["BIS_fnc_dynamicGroups"];
-	["SetPrivateState",[_grp,true]] remoteExecCall ["BIS_fnc_dynamicGroups"];
-	["SetName",[_grp,_groupName]] remoteExecCall ["BIS_fnc_dynamicGroups"];
-	["Your side has been changed."] call MAZ_EZM_fnc_systemMessage;
-	playSound 'addItemOk';
 };
 
 JAM_GUIfnc_groupMenuTeamSwitcher = {
