@@ -1,5 +1,4 @@
-"FORKS! FORKS! FORKS!"; "of a fork of a fork of a fork of a fork";
-MAZ_EZM_Version = "V1.9.1";
+MAZ_EZM_Version = "V2.0.1";
 MAZ_EZM_autoAdd = profileNamespace getVariable ['MAZ_EZM_autoAddVar',true];
 MAZ_EZM_spawnWithCrew = true;
 MAZ_EZM_nvgsOnlyAtNight = false;
