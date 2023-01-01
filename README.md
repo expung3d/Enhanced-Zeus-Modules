@@ -29,4 +29,4 @@ These are specifically built for <strong>Arma 3 Public Zeus servers</strong>, wi
 For more information visit the EZM Website: https://www.zamarma.com/
 
 ## License
-Enhanced Zeus Modules is licensed under the GNU General Public License ([GPLv3](https://github.com/expung3d/Enhanced-Zeus-Modules/blob/main/LICENSE)).
+Enhanced Zeus Modules is licensed under its own EULA. ([EULA](https://github.com/expung3d/Enhanced-Zeus-Modules/blob/main/LICENSE)).
