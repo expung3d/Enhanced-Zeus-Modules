@@ -60,7 +60,7 @@ These are specifically built for <strong>Arma 3 Public Zeus servers</strong>, wi
 <strong>For more information visit the [Z.A.M. website](https://www.zamarma.com/). </strong>
 
 ## Feedback, Bugs, and Suggestions
-For all feedback please use the [Enhanced Zeus Modules Issues Page](https://github.com/expung3d/Enhanced-Zeus-Modules/issues). When creating an issue, use the appropriate tags as to whether it is a suggestion, bug, and the severity.
+For all feedback please use the [Enhanced Zeus Modules Issues Page](https://github.com/expung3d/Enhanced-Zeus-Modules/issues). When creating an issue, denote whether it is a suggestion or a bug. If it is a bug, please provide the severity as either LOW, MEDIUM, or URGENT.
 
 ## License
 Enhanced Zeus Modules is licensed under its own EULA. ([EULA](https://github.com/expung3d/Enhanced-Zeus-Modules/blob/main/LICENSE)).
