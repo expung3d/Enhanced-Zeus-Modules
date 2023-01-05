@@ -1,3 +1,4 @@
+
 <p align="center">
     <img src="https://i.imgur.com/9an3mrd.png" width="500">
 </p>
@@ -30,18 +31,36 @@ These are specifically built for <strong>Arma 3 Public Zeus servers</strong>, wi
 ## Keybinds
 <strong>Zeus Interface Keybinds:</strong>
 
-0. Ctrl + Y: Closes the Zeus interface
-1. Space: Teleports your unit to the middle of your screen
-2. Ctrl + U: Opens a menu to change your unit’s side
-3. Alt + Left Mouse Button: Controls the selected unit
+ - Ctrl + Y: Closes the Zeus interface
+ - Ctrl + U: Opens a menu to change your unit’s side
+ - Alt + Left Mouse Button: Controls the selected unit
 
 <strong>Out-of-Zeus Keybinds:</strong>
 
-0. Y: Re-opens the Zeus interface.
-1. H: Holsters weapon.
+ - Y: Re-opens the Zeus interface.
+ - H: Holsters weapon.
 
-## More Information and Full Feature List
-For more information visit the EZM Website: https://www.zamarma.com/
+## Features
+ - Over a hundred new modules for Zeus to improve mission making.
+ - Context menu on right click to quickly use features.
+ - Custom interiors for buildings made by the Z.A.M. team.
+ - Object previews of items hovered in the object tabs.
+ - Pylon editor for jets and helicopters.
+ - Vehicle editor similar to the Virtual Garage.
+ - Area marker creation and editing.
+ - Automated missions and automatic garrisoning of towns.
+ - General bug fixes of the Zeus gamemode and quality of life improvements.
+ - Seasonal festive modules for holidays.
+ - Automatic cleanup scripts to increase server performance. 
+ - A.I. supports like helicopters, reinforcements, and airdrops.
+ - Ability to disable mortar usage for missions.
+ - Ability to god mode terrain fences so they cannot be ran over. 
+ - Ability to disable the game moderator slot.
+
+<strong>For more information visit the [Z.A.M. website](https://www.zamarma.com/). </strong>
+
+## Feedback, Bugs, and Suggestions
+For all feedback please use the [Enhanced Zeus Modules Issues Page](https://github.com/expung3d/Enhanced-Zeus-Modules/issues). When creating an issue, use the appropriate tags as to whether it is a suggestion, bug, and the severity.
 
 ## License
 Enhanced Zeus Modules is licensed under its own EULA. ([EULA](https://github.com/expung3d/Enhanced-Zeus-Modules/blob/main/LICENSE)).
