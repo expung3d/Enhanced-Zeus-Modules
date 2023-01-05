@@ -13,7 +13,7 @@
         <img src="https://img.shields.io/discord/700228330959536190?color=7683D5&label=Discord&logo=What" alt="EZM Discord" />
     </a>
     <a href="">
-        <img src="https://img.shields.io/github/forks/expung3d/Enhanced-Zeus-Modules?color=d99e27&label=Forks" alt="EZM Forks" />
+        <img src="https://img.shields.io/github/forks/expung3d/Enhanced-Zeus-Modules?color=d93f21&label=Forks" alt="EZM Forks" />
     </a>
 </p>
 
