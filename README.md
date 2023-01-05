@@ -2,6 +2,21 @@
     <img src="https://i.imgur.com/9an3mrd.png" width="500">
 </p>
 
+<p align="center">
+    <a href="https://github.com/expung3d/Enhanced-Zeus-Modules/releases">
+        <img src="https://img.shields.io/github/v/release/expung3d/Enhanced-Zeus-Modules?label=Version" alt="EZM Version" >
+    </a>
+    <a href="https://github.com/expung3d/Enhanced-Zeus-Modules/issues">
+        <img src="https://img.shields.io/github/issues-raw/expung3d/Enhanced-Zeus-Modules?label=Issues" alt="EZM Issues">
+    </a>
+    <a href="https://discord.gg/W4ew5HP">
+        <img src="https://img.shields.io/discord/700228330959536190?color=7683D5&label=Discord&logo=What" alt="EZM Discord">
+    </a>
+    <a href="">
+        <img src="https://img.shields.io/github/forks/expung3d/Enhanced-Zeus-Modules?color=d99e27&label=Forks" alt="EZM Forks">
+    </a>
+</p>
+
 # Enhanced Zeus Modules
 **Enhanced Zeus Modules (EZM)** was originally created by GamesByChris and M9-SD. With Expung3d doing slight edits and additions. EZM was adapted to be a composition by Expung3d and made into EZM Lite who added many new features and made the scripts available to all.
 
