@@ -4,16 +4,16 @@
 
 <p align="center">
     <a href="https://github.com/expung3d/Enhanced-Zeus-Modules/releases">
-        <img src="https://img.shields.io/github/v/release/expung3d/Enhanced-Zeus-Modules?label=Version" alt="EZM Version" >
+        <img src="https://img.shields.io/github/v/release/expung3d/Enhanced-Zeus-Modules?label=Version" alt="EZM Version" />
     </a>
     <a href="https://github.com/expung3d/Enhanced-Zeus-Modules/issues">
-        <img src="https://img.shields.io/github/issues-raw/expung3d/Enhanced-Zeus-Modules?label=Issues" alt="EZM Issues">
+        <img src="https://img.shields.io/github/issues-raw/expung3d/Enhanced-Zeus-Modules?label=Issues" alt="EZM Issues" />
     </a>
     <a href="https://discord.gg/W4ew5HP">
-        <img src="https://img.shields.io/discord/700228330959536190?color=7683D5&label=Discord&logo=What" alt="EZM Discord">
+        <img src="https://img.shields.io/discord/700228330959536190?color=7683D5&label=Discord&logo=What" alt="EZM Discord" />
     </a>
     <a href="">
-        <img src="https://img.shields.io/github/forks/expung3d/Enhanced-Zeus-Modules?color=d99e27&label=Forks" alt="EZM Forks">
+        <img src="https://img.shields.io/github/forks/expung3d/Enhanced-Zeus-Modules?color=d99e27&label=Forks" alt="EZM Forks" />
     </a>
 </p>
 
