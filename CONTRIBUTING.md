@@ -47,6 +47,17 @@ MAZ_EditAITree = [ //Returns our parent category, used for creating the module
 	[0.8,0,0,0.8] //Icon color disabled
 ] call MAZ_EZM_fnc_zeusAddModule;
 ```
+Following our example from the function declaration we will add the Hello World module. We will add it to the Utilities category.
+```sqf
+[
+	MAZ_zeusModulesTree, //Module tree
+	MAZ_UtilitiesTree, //Module category
+	"Hello World!", //The module name
+	"Says hello", //Our description
+	"MAZ_EZM_fnc_helloWorld", //Our function
+	"" //No icon
+] call MAZ_EZM_fnc_zeusAddModule;
+```
 <hr>
 
 ## Adding Factions
