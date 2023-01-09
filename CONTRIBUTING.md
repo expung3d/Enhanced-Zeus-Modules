@@ -14,6 +14,8 @@ MAZ_EZM_fnc_helloWorld = {
 	
 	systemChat format ["Hello World! %1", typeOf _entity];
 	//This will systemChat "Hello World!" and the type of the entity we placed the module onto.
+	
+	//!! This function has a script error if placed onto no object. See if you can fix it.
 };
 ```
 <hr>
