@@ -15,7 +15,7 @@ MAZ_EZM_fnc_helloWorld = {
 	systemChat format ["Hello World! %1", typeOf _entity];
 	//This will systemChat "Hello World!" and the type of the entity we placed the module onto.
 	
-	//!! This function has a script error if placed onto no object. See if you can fix it.
+	//!! This function has a script error if placed onto no object. See if you can fix it. !!
 };
 ```
 <hr>
@@ -274,6 +274,335 @@ For example:
 	"a3\soft_f\mrap_01\data\ui\map_mrap_01_ca.paa" //The icon
 ] call MAZ_EZM_fnc_zeusAddModule_BLUFOR;
 ```
+
+## Framework Functionality
+Enhanced Zeus Modules has two main frameworks in it that you'll want to know about when making a module. The Dialog Creation framework (using `MAZ_EZM_fnc_createDialog`) creates any UI you need for a module. The Context Menu framework (using `MAZ_EZM_fnc_createNewContextAction`) creates any right click buttons you need.
+
+<hr>
+
+### The Dialog Creation Framework
+The documentation for this framework is going to include how to create a dialog and the data needed for the 7 different types of rows in the dialog. 
+
+<hr>
+
+#### Making a Dialog
+This portion is super easy, simply give it a name, content, code to run on confirmation, code to run on cancel, and any arguments given to the code. 
+
+```sqf
+[
+	"My Dialog Title", //The title, obviously
+	[], //This is our content, you fill this array with other arrays shown later
+	{ //Code to execute on confirmation
+		params ["_values","_args","_display"];
+		systemChat "We confirmed!";
+		_display closeDisplay 1;
+		//exiting with 1 denotes an OK exit
+	},
+	{ //Code to execute on cancel
+		params ["_values","_args","_display"];
+		systemChat "We canceled...";
+		_display closeDisplay 2;
+		//exiting with 2 denotes a CANCEL exit
+	},
+	[] //Arguments (Optional, default is nil)
+] call MAZ_EZM_fnc_createDialog;
+```
+This will create our basic skeleton for the dialog. Now lets look at the rows to fill it with.
+The basic structure of a row in the content array will look like this:
+```sqf
+[ //The empty content array from above
+	[
+		"TYPE", //The type of the content
+		"Label", //The label shown to the left
+		[] //Values that go into the type
+	]
+]
+```
+
+<hr>
+
+##### COMBO
+The combo box creates a dropdown list of things to choose from and returns an index of what was selected. 
+```sqf
+[
+	"COMBO", 
+	"My Combo Box", 
+	[ 
+		["myDataFor0"], //Values (Actual values set with lbSetData)
+		["Wow my entry!"], //The text shown in the list
+		0 //The default index selected
+	] 
+]
+```
+This is the simplest implementation of a COMBO, however, we can get more complex with the entries in the combobox. By editing the text and changing it from a string to an array we can set the text, tooltip, picture, and color.
+```sqf
+[
+	"COMBO", 
+	"My Combo Box", 
+	[ 
+		["myDataFor0"], 
+		[
+			[ //Now an array, not a string
+				"Wow my entry!", //Display text
+				"This is my tooltip", //Tooltip
+				"somePicturePath", //Picture path
+				[0.8,0,0,0.8] //Text color
+			]
+		], 
+		0 
+	] 
+]
+```
+
+<hr>
+
+##### EDIT
+The EDIT creates a row that allows for inputting text. This can be either one line or multiple lines. We can change this using a subtype. Subtypes are used by having the main type followed by the subtype after a ":": "EDIT:MULTI").
+
+```sqf
+//Subtypes: MULTI, CODE.
+[
+	"EDIT", 
+	"My Text Box", 
+	[ 
+		"Default text", //Default text that shows
+		5 //Height of the box
+	] 
+]
+```
+
+<hr>
+
+##### LIST
+The LIST creates a row that has a list of items to choose from. Similar to the combo except it isn't a dropdown, the list is always expanded. 
+```sqf
+[
+	"LIST", 
+	"My List Box", 
+	[ 
+		["myDataFor0"], //Values (Actual values set with lbSetData)
+		["Wow my entry!"], //The text label shown in the list
+		0, //The default index selected
+		6 //Height of the listbox
+	] 
+]
+```
+The text labels can be edited in the same way as the COMBO ones can with tooltips, pictures, and colors. See the COMBO docs for more information.
+
+<hr>
+
+##### SIDES
+The SIDES creates a row with all the sides and allows for the sides to be chosen from.
+```sqf
+[
+	"SIDES",
+	"Select side",
+	west //Notice this doesn't need to be in an array. 
+	//When it is just one side on its own only one side can be selected.
+	//When it is an array, even just [west], multiple sides can be selected.
+]
+```
+
+<hr>
+
+##### SLIDER
+The SLIDER creates a row with a slider that allows them to pick any number between two.
+```sqf
+//Subtypes: RADIUS
+[
+	"SLIDER",
+	"Set health",
+	[
+		0, //Minimum value
+		1, //Maximum value
+		0, //Default value
+		objNull, //Radius center (For use with RADIUS subtype)
+		[1,1,1,0.7], //Radius color
+		false //Is percentage value
+	]
+]
+```
+
+<hr>
+
+##### TOOLBOX
+The TOOLBOX creates a toggle switch. Because scripting has been neglected when compared to modding we can only have two values available in a toolbox, unfortunately.
+```sqf
+//Subtypes: YESNO, ENABLED
+//YESNO creates selections of NO or YES
+//ENABLED creates selections of DISABLE or ENABLE
+[
+	"TOOLBOX",
+	"Enable?",
+	[
+		false, //Default selection, can be boolean or boolean number (0/1)
+		["Disable","Enable"] //Strings for the selections
+	]
+]
+```
+
+<hr>
+
+##### VECTOR
+The VECTOR is not as cleanly made as the rest and is hardly used. However, it creates up to 3 edit boxes for modifying positions, rotation, etc.
+```sqf
+[
+	"VECTOR",
+	"Position",
+	[
+		[0,0,0], //Default values
+		["X","Y","Z"], //Labels
+		3 //Number of edits
+	]
+]
+```
+
+<hr>
+
+#### Putting it Together
+Now that we understand the rows we can create lets put them into a dialog. This will give us a text box and print whatever we put into it.
+```sqf
+[ 
+	"My Dialog Title",  
+	[
+		[
+			"EDIT",
+			"My text",
+			["Input text"]
+	], 
+	{ 
+		["_values","_args","_display"]; 
+		//Values stores all the returned values from the rows in an array.
+		_values params ["_editBoxReturn"]; //Retrieving the return
+		systemChat format ["We inputted: %1",_editBoxReturn]; //Print our text
+		_display closeDisplay 1; 
+	}, 
+	{ //Code to execute on cancel 
+		params ["_values","_args","_display"]; 
+		systemChat "We canceled..."; 
+		_display closeDisplay 2; 
+	}, 
+	[]
+] call MAZ_EZM_fnc_createDialog;
+```
+
+<hr>
+
+### The Context Menu Framework
+Using this framework we can create a new action to show up when we right click. This framework works pretty much identically to how `addAction` works. 
+```sqf
+MAZ_EZM_action_myNewContextAction = [ //Stores our action ID in this variable
+	"Our Action Text", //The action display text
+	{ //Code to execute when selected
+		params ["_pos","_entity"];
+		//_pos is the position you right clicked
+		//_entity is any entity you right clicked
+		player setPos _pos;
+	},
+	{ //Condition for action to be shown
+		//_this refers to the entity you right clicked
+		//the condition should always return a boolean value
+		true //we want this to always show
+	},
+	3, //Action priority (for sorting of the actions)
+	"", //The action image
+	[1,1,1,1], //The action color
+	[] //Children actions
+	//Children actions are literally just the array of an action within the children array.
+	//This will create actions attached to this action that they can choose from.
+]
+```
+
+<hr>
+
+### Other Useful Functions
+E.Z.M. has a ton of useful functions for repetitive tasks. Use these whenever possible.
+
+#### MAZ_EZM_fnc_systemMessage
+This function systemChats your message with the prefix "[ Enhanced Zeus Modules ] : " and can play a sound along with it.
+```sqf
+["My warning message","addItemFailed"] call MAZ_EZM_fnc_systemMessage;
+```
+<hr>
+
+#### MAZ_EZM_fnc_getScreenPosition
+This function returns the mouse position from the map or the Zeus view. You can choose to get the height of any intersects or not.
+```sqf
+//Height will not be included when selecting from the map
+private _posAGL = [true] call MAZ_EZM_fnc_getScreenPosition; 
+//Gets position with height included
+
+private _pos = [] call MAZ_EZM_fnc_getScreenPosition; 
+//Gets position without height
+```
+<hr>
+
+#### MAZ_EZM_fnc_selectSecondaryPosition
+Allows the Zeus to select a position after selecting an initial position. 
+```sqf
+[
+	"Text", //Display text
+	{ //Code to call on left click
+		params ["_origin","_position","_args","_shift","_ctrl","_alt"];
+		//_position is the position we ended up clicking
+		//_shift, _ctrl, _alt is a boolean for if the keys are held down
+	}, 
+	_object, //any objects the line should be drawn from
+	[], //arguments to the function, anything
+	"", //the icon
+	45, //the icon angle
+	[1,0,0,1] //the icon color
+] call MAZ_EZM_fnc_selectSecondaryPosition;
+```
+<hr>
+
+#### MAZ_EZM_fnc_addObjectToInterface
+This function adds the passed objects to the Zeus interface. You can even select which Zeus gets them added
+```sqf
+[
+	_object1, //Adds a single object
+	getAssignedCuratorLogic player //To just our Zeus
+] call MAZ_EZM_fnc_addObjectToInterface;
+
+[
+	[_object1,_object2] //Adds multiple objects to all Zeuses
+] call MAZ_EZM_fnc_addObjectToInterface;
+```
+
+<hr>
+
+#### MAZ_EZM_fnc_removeObjectFromInterface
+This function works just like `MAZ_EZM_fnc_addObjectToInterface` except it removes them.
+```sqf
+[_object] call MAZ_EZM_fnc_removeObjectFromInterface;
+```
+
+<hr>
+
+#### MAZ_EZM_fnc_deleteAttachedWhenKilled
+This function will delete all the attached objects when the object passed is killed. This is useful for any sort of vehicles with things attached or unique compositions.
+```sqf
+[_myVehicle] call MAZ_EZM_fnc_deleteAttachedWhenKilled;
+```
+
+<hr>
+
+#### MAZ_EZM_fnc_deleteAttachedWhenDeleted
+This function will delete all the attached objects when the object passed is deleted. This is useful for any sort of vehicles with things attached or unique compositions.
+```sqf
+[_myVehicle] call MAZ_EZM_fnc_deleteAttachedWhenDeleted;
+```
+
+<hr>
+
+#### MAZ_EZM_fnc_cleanerWaitTilNoPlayers
+This function adds the object passed into the cleaner system so it can be auto-deleted when players are far away.
+```sqf
+//Must be in scheduled environment. You cannot CALL this function.
+[_myEntity] spawn MAZ_EZM_fnc_cleanerWaitTilNoPlayers;
+```
+
+<hr>
 
 ## Thank You for Contributing!
 Thank you for taking the time to look into the contribution information for E.Z.M. The community is what makes this entire project worth it, I hope to see some awesome things from you guys. If you find yourself needing more information to contribute please let me know and I can update this guide.
