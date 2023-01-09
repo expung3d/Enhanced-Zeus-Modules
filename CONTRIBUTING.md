@@ -2,7 +2,11 @@
 Everything you need to know about contributing to E.Z.M.
 
 ## New Modules
-When adding new modules there are two steps. First we must create the function that we desire the module to call on deployment and then we must add the module to the Zeus modules tree. <br>When adding modules, ensure they are things that should be Zeus modules. If it a system that can work independently from Zeus, make it into its own script, don't incorporate it into E.Z.M. For example, do not add a module that creates a roles system or changes how vehicles perform into E.Z.M., this should be separate from Zeus as it can act independently.
+When adding new modules there are two steps. First we must create the function that we desire the module to call on deployment and then we must add the module to the Zeus modules tree.
+<hr>
+When adding modules, ensure they are things that *should* be Zeus modules. If it a system that can work independently from Zeus, make it into its own script, don't incorporate it into E.Z.M. For example, do not add a module that creates a roles system or changes how vehicles perform into E.Z.M., this should be separate from Zeus as it can act independently.
+
+I would go as far as to say even having earplugs added to E.Z.M. should not be done. E.Z.M. should focus on modifying *only* Zeus and their abilities. 
 <hr>
 
 ### Adding the function
