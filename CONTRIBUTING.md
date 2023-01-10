@@ -530,7 +530,7 @@ This function systemChats your message with the prefix "[ Enhanced Zeus Modules 
 <hr>
 
 #### MAZ_EZM_fnc_getScreenPosition
-This function returns the mouse position from the map or the Zeus view. You can choose to get the height of any intersects or not.
+This function returns the mouse position from the map or the Zeus view. You can choose to get the height of any intersects or not. *When retrieving the position from outside the map the returned position is given in **positionAGL***.
 ```sqf
 //Height will not be included when selecting from the map
 private _posAGL = [true] call MAZ_EZM_fnc_getScreenPosition; 
