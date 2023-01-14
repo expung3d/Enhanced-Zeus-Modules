@@ -1,7 +1,7 @@
 
 comment "Determine if execution context is composition and delete the helipad.";
 
-if (!isNil 'this') then {
+if ((!isNull (findDisplay 312)) && (!isNil 'this')) then {
 	if (!isNull this) then {
 		if (typeOf this == 'Land_HelipadEmpty_F') then {
 			deleteVehicle this;
