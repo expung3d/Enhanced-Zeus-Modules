@@ -1,5 +1,5 @@
 
-LOADEZM = {
+
 comment " 
 
 	Welcome to the people's code!
@@ -40,7 +40,7 @@ comment "Determine if execution context is composition and delete the helipad.";
 
 if ((!isNull (findDisplay 312)) && (!isNil 'this')) then {
 	if (!isNull this) then {
-		if (typeOf this == 'Land_HelipadEmpty_F') then {
+		if (typeOf thi s == 'Land_HelipadEmpty_F') then {
 			deleteVehicle this;
 		};
 	};
@@ -48,7 +48,7 @@ if ((!isNull (findDisplay 312)) && (!isNil 'this')) then {
 
 comment "Execute EZM";
 
-MAZ_EZM_Version = "V2.0.3";
+MAZ_EZM_Version = "V2.0.4";
 MAZ_EZM_autoAdd = profileNamespace getVariable ['MAZ_EZM_autoAddVar',true];
 MAZ_EZM_spawnWithCrew = true;
 MAZ_EZM_nvgsOnlyAtNight = true;
@@ -26086,5 +26086,4 @@ comment "
  - Fix U Menu Module ✔️
  - Auto-Cleanup ✔️
 ";
-};
-[] SPAWN LOADEZM;
+
