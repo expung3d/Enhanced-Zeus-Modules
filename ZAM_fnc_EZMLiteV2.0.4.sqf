@@ -1,5 +1,4 @@
-
-
+LOADEZM = {
 comment " 
 
 	Welcome to the people's code!
@@ -26086,4 +26085,5 @@ comment "
  - Fix U Menu Module ✔️
  - Auto-Cleanup ✔️
 ";
-
+};
+[] SPAWN LOADEZM;
