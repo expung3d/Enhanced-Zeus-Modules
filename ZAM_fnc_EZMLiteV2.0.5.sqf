@@ -10690,12 +10690,13 @@ MAZ_EZM_fnc_initFunction = {
 						private _allGroupsWithPlayers = [];
 						{ _allGroupsWithPlayers pushBackUnique (group _x) } forEach allPlayers;
 						private _newGroup = _allGroupsWithPlayers select {side _x == _side};
-						if(_newGroup isEqualTo []) exitWith {
+						if(count _newGroup == 0) exitWith {
 							comment "Nobody in the server OR no groups of that side... you're a lost cause...";
 						};
 						_newGroup = selectRandom _newGroup;
 						while {(side (group player) != _side)} do {
 							[player] joinSilent _newGroup;
+							sleep 0.5;
 						};
 					};
 				} else {
@@ -26499,6 +26500,7 @@ Change Log:
  - Added Tracer module to Special Effects.
  - Fixed issue where 48+2 side switcher would stop working if the default group was deleted.
  - Fixed issue where ctrls would use ctrlSetEventHandler, not ctrlAddEventHandler. Leading to other events being overwritten.
+ - Fixed kick relating to the 48+2 side switcher
 ";
 
 comment "
