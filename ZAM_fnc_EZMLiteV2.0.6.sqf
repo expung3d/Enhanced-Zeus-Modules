@@ -11,7 +11,7 @@ if ((!isNull (findDisplay 312)) && (!isNil 'this')) then {
 
 comment "Execute EZM";
 
-MAZ_EZM_Version = "V2.0.5";
+MAZ_EZM_Version = "V2.0.6";
 MAZ_EZM_autoAdd = profileNamespace getVariable ['MAZ_EZM_autoAddVar',true];
 MAZ_EZM_spawnWithCrew = true;
 MAZ_EZM_nvgsOnlyAtNight = true;
