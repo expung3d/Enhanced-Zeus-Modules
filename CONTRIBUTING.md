@@ -221,7 +221,7 @@ MAZ_EZM_NF_fnc_createNewVehicle = {
 	[_driver,["arifle_MX_Black_F",["30Rnd_65x39_caseless_black_mag",3],["optic_ACO_grn","acc_pointer_ir"]],[],["hgun_Pistol_heavy_01_F",["11Rnd_45ACP_Mag",2],["optic_MRD"]],3,[["HandGrenade",2]]] call MAZ_EZM_fnc_addItemAndWeapons;
 	
 	//Then lets make the vehicle
-	private _vehicle ["B_MRAP_01_F"] call MAZ_EZM_fnc_createVehicle;
+	private _vehicle = ["B_MRAP_01_F"] call MAZ_EZM_fnc_createVehicle;
 	
 	//And move in the driver
 	_driver moveInDriver _vehicle;
