@@ -13920,7 +13920,7 @@ MAZ_EZM_fnc_initFunction = {
 				[  
 					_vehicle,  
 					["Hex",1],   
-					["showAmmobox",1,"showCanisters",1,"showCamonetTurret",1,"showCamonetHull",1,"showLog",1] 
+					["showAmmobox",0,"showCanisters",1,"showCamonetTurret",1,"showCamonetHull",1,"showLog",1] 
 				] call BIS_fnc_initVehicle;  
 
 				_vehicle setObjectTextureGlobal [3, ""]; _vehicle lockturret [[0,0],true];  
@@ -15274,6 +15274,19 @@ MAZ_EZM_fnc_initFunction = {
 				[_unit] spawn MAZ_EZM_CSATP_fnc_addRadioSoundtoUnit;
 				_unit 
 			}; 
+
+			MAZ_EZM_CSATP_fnc_createOfficerModule = { 
+				private _unit = [east,"O_T_Officer_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] spawn MAZ_EZM_CSATP_fnc_addCSATPIdentitiesToUnit;
+				[_unit] spawn MAZ_EZM_CSATP_fnc_addCSATPGogglesToUnit; 
+				_unit addUniform "U_O_OfficerUniform_ocamo";
+				_unit addMagazines ["6Rnd_45ACP_Cylinder", 3];
+				_unit addWeapon "hgun_Pistol_heavy_02_F";
+				[_unit] spawn MAZ_EZM_CSATP_fnc_addRadioSoundtoUnit;
+				_unit addHeadgear "H_Beret_CSAT_01_F";
+				_unit 
+			}; 
 			
 			MAZ_EZM_CSATP_fnc_createRadiomanModule = { 
 				private _unit = [east,"O_T_Soldier_A_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
@@ -15320,7 +15333,7 @@ MAZ_EZM_fnc_initFunction = {
 				_unit 
 			}; 
 			
-			MAZ_EZM_CSATP_fnc_createSurvivorModule = { 
+			MAZ_EZM_CSATP_fnc_createUnarmedModule = { 
 				private _unit = [east,"O_T_Soldier_unarmed_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
 				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
 				[_unit] call MAZ_EZM_CSATP_fnc_addCSATPUniformToUnit; 
@@ -15740,7 +15753,7 @@ MAZ_EZM_fnc_initFunction = {
 				_unit 
 			}; 
 			
-			MAZ_EZM_CSATP_fnc_createSurvivorUrbanModule = { 
+			MAZ_EZM_CSATP_fnc_createUnarmedUrbanModule = { 
 				private _unit = [east,"O_T_Soldier_unarmed_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
 			    [_unit] call MAZ_EZM_fnc_removeAllClothing; 
 				[_unit] call MAZ_EZM_CSATP_fnc_addCSATPUrbanUniformToUnit; 
@@ -16533,7 +16546,7 @@ MAZ_EZM_fnc_initFunction = {
 				private _vehicle = ["O_Truck_02_medical_F"] call MAZ_EZM_fnc_createVehicle; 
 			
 				if(MAZ_EZM_spawnWithCrew) then { 
-					private _driver = [] call MAZ_EZM_CSATP_fnc_createRiflemanModule; 
+					private _driver = [] call MAZ_EZM_CSATP_fnc_createRiflemanLightModule; 
 					_driver moveInDriver _vehicle; 
 				}; 
 			
@@ -16555,7 +16568,7 @@ MAZ_EZM_fnc_initFunction = {
 				private _vehicle = ["O_Truck_02_transport_F"] call MAZ_EZM_fnc_createVehicle;
 			
 				if(MAZ_EZM_spawnWithCrew) then { 
-					private _driver = [] call MAZ_EZM_CSATP_fnc_createRiflemanModule; 
+					private _driver = [] call MAZ_EZM_CSATP_fnc_createRiflemanLightModule; 
 					_driver moveInDriver _vehicle; 
 				}; 
 			
@@ -16566,7 +16579,7 @@ MAZ_EZM_fnc_initFunction = {
 				private _vehicle = ["O_Truck_02_covered_F"] call MAZ_EZM_fnc_createVehicle;
 	
 				if(MAZ_EZM_spawnWithCrew) then { 
-					private _driver = [] call MAZ_EZM_CSATP_fnc_createRiflemanModule; 
+					private _driver = [] call MAZ_EZM_CSATP_fnc_createRiflemanLightModule; 
 					_driver moveInDriver _vehicle; 
 				}; 
 			
@@ -16639,9 +16652,5038 @@ MAZ_EZM_fnc_initFunction = {
 				}; 
 			
 				_vehicle 
+			};
+	
+	comment "CSAT (Pacific) Units"; 
+
+		comment "Anti-Air";	
+
+			MAZ_EZM_CSATPacific_fnc_createTigris = { 
+				private _vehicle = ["O_T_APC_Tracked_02_AA_ghex_F"] call MAZ_EZM_fnc_createVehicle;	
+				_vehicle disableTIEquipment true; 
+	
+				[ 
+					_vehicle, 
+					[],  
+					["showTracks",1,"showCamonetHull",1,"showCamonetTurret",1,"showSLATHull",0]
+				] call BIS_fnc_initVehicle; 
+							
+				if(MAZ_EZM_spawnWithCrew) then {
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createCrewmanModule; 
+					_driver moveInDriver _vehicle; 
+				
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createCrewmanModule; 
+					_gunner moveInGunner _vehicle;
+				
+					private _grp = createGroup [east,true]; 
+					[_driver,_gunner] joinSilent _grp; 
+					_grp selectLeader _gunner; 
+					_grp setBehaviour "AWARE";
+				}; 
+			
+				_vehicle 
+			};
+
+			MAZ_EZM_CSATPacific_fnc_createTigrisMissile = { 
+				private _vehicle = ["O_T_APC_Tracked_02_AA_ghex_F"] call MAZ_EZM_fnc_createVehicle;
+				_vehicle disableTIEquipment true; 
+	
+				[ 
+					_vehicle, 
+					[],  
+					["showTracks",1,"showCamonetHull",1,"showCamonetTurret",1,"showSLATHull",0]
+				] call BIS_fnc_initVehicle; 
+							
+				if(MAZ_EZM_spawnWithCrew) then {
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createCrewmanModule; 
+					_driver moveInDriver _vehicle; 
+				
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createCrewmanModule; 
+					_gunner moveInGunner _vehicle;
+
+					_vehicle removeWeaponTurret ["missiles_titan_AA", [0]];
+				
+					private _grp = createGroup [east,true]; 
+					[_driver,_gunner] joinSilent _grp; 
+					_grp selectLeader _gunner; 
+					_grp setBehaviour "AWARE";
+				}; 
+			
+				_vehicle 
+			};
+
+		comment "APCs"; 
+		
+			MAZ_EZM_CSATPacific_fnc_createMarid = { 
+				private _vehicle = ["O_T_APC_Wheeled_02_rcws_ghex_F"] call MAZ_EZM_fnc_createVehicle;
+				_vehicle disableTIEquipment true; 
+	
+				[ 
+					_vehicle, 
+					[],  
+					["showBags",0,"showCanisters",1,"showTools",0,"showCamonetHull",1,"showSLATHull",0]
+				] call BIS_fnc_initVehicle; 
+							
+				if(MAZ_EZM_spawnWithCrew) then {
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createCrewmanModule; 
+					_driver moveInDriver _vehicle; 
+				
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createCrewmanModule; 
+					_gunner moveInGunner _vehicle;
+				
+					private _grp = createGroup [east,true]; 
+					[_driver,_gunner] joinSilent _grp; 
+					_grp selectLeader _commander; 
+					_grp setBehaviour "AWARE";
+				}; 
+			
+				_vehicle 
+			};
+
+			MAZ_EZM_CSATPacific_fnc_createBTRK = { 
+				private _vehicle = ["O_T_APC_Tracked_02_cannon_ghex_F"] call MAZ_EZM_fnc_createVehicle;
+				_vehicle disableTIEquipment true; 
+	
+				[ 
+					_vehicle, 
+					[],  
+					["showTracks",1,"showCamonetHull",1,"showBags",0,"showSLATHull",0]
+				] call BIS_fnc_initVehicle; 
+							
+				if(MAZ_EZM_spawnWithCrew) then {
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createCrewmanModule; 
+					_driver moveInDriver _vehicle; 
+				
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createCrewmanModule; 
+					_gunner moveInGunner _vehicle; 
+				
+					private _commander = [] call MAZ_EZM_CSATPacific_fnc_createCrewmanModule; 
+					_commander moveInCommander _vehicle; 
+				
+					private _grp = createGroup [east,true]; 
+					[_driver,_gunner,_commander] joinSilent _grp; 
+					_grp selectLeader _commander; 
+					_grp setBehaviour "AWARE";
+				}; 
+			
+				_vehicle 
+			};
+		
+		comment "Artillery";
+		
+			MAZ_EZM_CSATPacific_fnc_createSochorModule = { 
+				private _vehicle = ["O_T_MBT_02_arty_ghex_F"] call MAZ_EZM_fnc_createVehicle;
+				_vehicle disableTIEquipment true; 
+				_vehicle allowCrewInImmobile true;
+			
+				[ 
+					_vehicle, 
+					[],  
+					["showAmmobox",1,"showCanisters",1,"showCamonetTurret",1,"showCamonetHull",1,"showLog",1]
+				] call BIS_fnc_initVehicle; 
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createCrewmanModule; 
+					_driver moveInDriver _vehicle; 
+				
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createCrewmanModule; 
+					_gunner moveInGunner _vehicle; 
+
+					private _commander = [] call MAZ_EZM_CSATPacific_fnc_createCrewmanModule; 
+					_commander moveInCommander _vehicle; 
+				
+					private _grp = createGroup [east,true]; 
+					[_driver,_gunner,_commander] joinSilent _grp; 
+					_grp selectLeader _gunner; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			};
+
+			MAZ_EZM_CSATPacific_fnc_createSochorNoCommanderModule = {  
+				private _vehicle = ["O_T_MBT_02_arty_ghex_F"] call MAZ_EZM_fnc_createVehicle; 
+				_vehicle disableTIEquipment true;  
+				_vehicle allowCrewInImmobile true;
+				
+				[  
+					_vehicle,  
+					[],   
+					["showAmmobox",0,"showCanisters",1,"showCamonetTurret",1,"showCamonetHull",1,"showLog",1] 
+				] call BIS_fnc_initVehicle;  
+
+				_vehicle setObjectTextureGlobal [3, ""]; _vehicle lockturret [[0,0],true];  
+				
+				if(MAZ_EZM_spawnWithCrew) then {  
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createCrewmanModule;  
+					_driver moveInDriver _vehicle;  
+					
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createCrewmanModule;  
+					_gunner moveInGunner _vehicle; 
+					
+					private _grp = createGroup [east,true];  
+					[_driver,_gunner] joinSilent _grp;  
+					_grp selectLeader _gunner;  
+					_grp setBehaviour "AWARE"; 
+				}; 
+
+				_vehicle 
 			}; 
 
-	comment "FIA+"; 
+		comment "Boats"; 
+		
+			MAZ_EZM_CSATPacific_fnc_createRhibBoatModule = { 
+				private _vehicle = ["I_C_Boat_Transport_02_F"] call MAZ_EZM_fnc_createVehicle;
+				
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				
+					private _grp = createGroup [east,true]; 
+					[_driver,_gunner] joinSilent _grp; 
+					_grp selectLeader _driver; 
+				}; 
+			
+				_vehicle 
+			}; 
+		
+			MAZ_EZM_CSATPacific_fnc_createAssaultBoatModule = {
+				private _vehicle = ["O_Boat_Transport_01_F"] call MAZ_EZM_fnc_createVehicle;
+				
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				
+					private _grp = createGroup [east,true]; 
+					[_driver,_gunner] joinSilent _grp; 
+					_grp selectLeader _driver; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createSpeedBoatModule = {
+				private _vehicle = ["B_Boat_Armed_01_minigun_F",[
+				"a3\boat_f\boat_armed_01\data\boat_armed_01_ext_opfor_co.paa",
+				"a3\boat_f\boat_armed_01\data\boat_armed_01_int_opfor_co.paa",
+				""
+				]] call MAZ_EZM_fnc_createVehicle;
+				_vehicle setObjectTextureGlobal [2, ""];
+				_vehicle removeWeaponTurret ["GMG_40mm", [0]];
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+					private _commander = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_commander moveInCommander _vehicle; 
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_gunner moveInGunner _vehicle; 
+					private _grp = createGroup [east,true]; 
+					[_driver,_gunner,_commander] joinSilent _grp; 
+					_grp selectLeader _driver; 
+					_vehicle disableTIEquipment true; 
+				}; 
+				
+				_vehicle 
+			};
+
+			MAZ_EZM_CSATPacific_fnc_createSpeedBoatHMGModule = {
+				private _vehicle = ["O_Boat_Armed_01_hmg_F"] call MAZ_EZM_fnc_createVehicle;
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+					private _commander = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_commander moveInCommander _vehicle; 
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_gunner moveInGunner _vehicle; 
+					private _grp = createGroup [east,true]; 
+					[_driver,_gunner,_commander] joinSilent _grp; 
+					_grp selectLeader _driver; 
+					_vehicle disableTIEquipment true; 
+				}; 
+			
+				_vehicle 
+			};
+
+			MAZ_EZM_CSATPacific_fnc_createSpeedBoatMinigunModule = {
+				private _vehicle = ["B_Boat_Armed_01_minigun_F",[
+					"a3\boat_f\boat_armed_01\data\boat_armed_01_ext_opfor_co.paa",
+					"a3\boat_f\boat_armed_01\data\boat_armed_01_int_opfor_co.paa",
+					"a3\boat_f\boat_armed_01\data\boat_armed_01_crows_opfor_co.paa"
+				]] call MAZ_EZM_fnc_createVehicle;
+                _vehicle disableTIEquipment true; 
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+					private _commander = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_commander moveInCommander _vehicle; 
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_gunner moveInGunner _vehicle; 
+					private _grp = createGroup [east,true]; 
+					[_driver,_gunner,_commander] joinSilent _grp; 
+					_grp selectLeader _driver; 
+				}; 
+			
+				_vehicle 
+			};
+		
+		comment "Cars"; 
+		
+			MAZ_EZM_CSATPacific_fnc_createIfritModule = {
+				private _vehicle = ["O_T_MRAP_02_ghex_F"] call MAZ_EZM_fnc_createVehicle;
+				_vehicle allowCrewInImmobile true;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createIfritHMGModule = {
+				
+				private _vehicle = ["O_T_MRAP_02_hmg_ghex_F"] call MAZ_EZM_fnc_createVehicle;
+				_vehicle disableTIEquipment true; 
+				_vehicle allowCrewInImmobile true;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+					_gunner moveInGunner _vehicle;
+					private _grp = createGroup [east,true]; 
+					[_driver,_gunner] joinSilent _grp; 
+					_grp selectLeader _driver; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createIfritGMGModule = {
+				
+				private _vehicle = ["O_T_MRAP_02_gmg_ghex_F"] call MAZ_EZM_fnc_createVehicle;
+				_vehicle disableTIEquipment true; 
+				_vehicle allowCrewInImmobile true;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+					_gunner moveInGunner _vehicle;
+					private _grp = createGroup [east,true]; 
+					[_driver,_gunner] joinSilent _grp; 
+					_grp selectLeader _driver; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createQuadbikeModule = {
+				private _vehicle = ["O_T_Quadbike_01_ghex_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					private _passanger = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+					_passanger moveinCargo _vehicle; 
+					[_driver] call MAZ_EZM_CSATPacific_fnc_addCSATPacificBackpack; 
+					[_passanger] call MAZ_EZM_CSATPacific_fnc_addCSATPacificBackpack; 
+					private _grp = createGroup [east,true]; 
+					[_driver,_passanger] joinSilent _grp; 
+					_grp selectLeader _driver; 
+				}; 
+			
+				_vehicle 
+			};
+
+			MAZ_EZM_CSATPacific_fnc_createQilinUnarmedModule = {
+				private _vehicle = ["O_T_LSV_02_unarmed_F"] call MAZ_EZM_fnc_createVehicle; 
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createQilinMinigunModule = { 
+				private _vehicle = ["O_T_LSV_02_armed_F"] call MAZ_EZM_fnc_createVehicle; 
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+					_gunner moveInGunner _vehicle;
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createQilinATModule = { 
+				private _vehicle = ["O_T_LSV_02_AT_F"] call MAZ_EZM_fnc_createVehicle; 
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+					_gunner moveInGunner _vehicle;
+				}; 
+			
+				_vehicle 
+			}; 
+			
+		comment "Drones"; 
+
+			MAZ_EZM_CSATPacific_fnc_createJinaahLeafletModule = { 
+				private _vehicle = ["O_UAV_06_F"] call MAZ_EZM_fnc_createVehicle; 
+			
+				private _aiGroup = createGroup [opfor,true]; 
+				private _oldGroup = createVehicleCrew _vehicle; 
+				private _leader = leader _oldGroup; 
+				{ 
+					[_x] joinSilent _aiGroup; 
+				}forEach units _oldGroup; 
+				_aiGroup selectLeader _leader; 
+
+				_vehicle setPylonLoadout [1,"Pylon_1Rnd_Leaflets_East_F"];
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createJinaahMedicalModule = { 
+				private _vehicle = ["O_UAV_06_medical_F"] call MAZ_EZM_fnc_createVehicle; 
+			
+				private _aiGroup = createGroup [opfor,true]; 
+				private _oldGroup = createVehicleCrew _vehicle; 
+				private _leader = leader _oldGroup; 
+				{ 
+					[_x] joinSilent _aiGroup; 
+				}forEach units _oldGroup; 
+				_aiGroup selectLeader _leader; 
+			
+				_vehicle 
+			}; 
+					
+			MAZ_EZM_CSATPacific_fnc_createTayranModule = { 
+				private _vehicle = ["O_UAV_01_F"] call MAZ_EZM_fnc_createVehicle; 
+			
+				private _aiGroup = createGroup [opfor,true]; 
+				private _oldGroup = createVehicleCrew _vehicle; 
+				private _leader = leader _oldGroup; 
+				{ 
+					[_x] joinSilent _aiGroup; 
+				}forEach units _oldGroup; 
+				_aiGroup selectLeader _leader; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createK40Module = { 
+				private _vehicle = ["O_UAV_02_dynamicLoadout_F"] call MAZ_EZM_fnc_createVehicle; 
+			
+				private _aiGroup = createGroup [opfor,true]; 
+				private _oldGroup = createVehicleCrew _vehicle; 
+				private _leader = leader _oldGroup; 
+				{ 
+					[_x] joinSilent _aiGroup; 
+				}forEach units _oldGroup; 
+				_aiGroup selectLeader _leader;
+
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createKH3AModule = { 
+				private _vehicle = ["O_T_UAV_04_CAS_F"] call MAZ_EZM_fnc_createVehicle; 
+			
+				private _aiGroup = createGroup [opfor,true]; 
+				private _oldGroup = createVehicleCrew _vehicle; 
+				private _leader = leader _oldGroup; 
+				{ 
+					[_x] joinSilent _aiGroup; 
+				}forEach units _oldGroup; 
+				_aiGroup selectLeader _leader;
+
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createSaifModule = { 
+				private _vehicle = ["O_T_UGV_01_ghex_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				private _aiGroup = createGroup [opfor,true]; 
+				private _oldGroup = createVehicleCrew _vehicle; 
+				private _leader = leader _oldGroup; 
+				{ 
+					[_x] joinSilent _aiGroup; 
+				}forEach units _oldGroup; 
+				_aiGroup selectLeader _leader;
+
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createSaifRCWSModule = { 
+				private _vehicle = ["O_T_UGV_01_rcws_ghex_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				private _aiGroup = createGroup [opfor,true]; 
+				private _oldGroup = createVehicleCrew _vehicle; 
+				private _leader = leader _oldGroup; 
+				{ 
+					[_x] joinSilent _aiGroup; 
+				}forEach units _oldGroup; 
+				_aiGroup selectLeader _leader;
+
+				_vehicle 
+			}; 
+		
+		comment "Groups"; 
+			
+			MAZ_EZM_CSATPacific_fnc_createSquadModule = { 
+				private _squadLead = call MAZ_EZM_CSATPacific_fnc_createSquadLeadModule; 
+				private _grp = group _squadLead; 
+				{ 
+				private _unit = call (missionNamespace getVariable _x); 
+				[_unit] joinSilent _grp; 
+				}forEach [ 
+				'MAZ_EZM_CSATPacific_fnc_createAmmoBearerModule', 
+				'MAZ_EZM_CSATPacific_fnc_createCombatMedicModule', 
+				'MAZ_EZM_CSATPacific_fnc_createRiflemanModule', 
+				'MAZ_EZM_CSATPacific_fnc_createMarksmanModule', 
+				'MAZ_EZM_CSATPacific_fnc_createRiflemanLATModule', 
+				'MAZ_EZM_CSATPacific_fnc_createGrenadierModule', 
+				'MAZ_EZM_CSATPacific_fnc_createAutoriflemanModule', 
+				'MAZ_EZM_CSATPacific_fnc_createRiflemanModule' 
+				]; 
+				_grp setBehaviour "AWARE"; 
+				{_x setunitpos "AUTO"} foreach units _squadLead 
+			}; 
+		
+			MAZ_EZM_CSATPacific_fnc_createPatrolModule = { 
+				private _squadLead = call MAZ_EZM_CSATPacific_fnc_createSquadLeadModule; 
+				private _grp = group _squadLead; 
+				{ 
+				private _unit = call (missionNamespace getVariable _x); 
+				[_unit] joinSilent _grp; 
+				}forEach [ 
+				'MAZ_EZM_CSATPacific_fnc_createCombatMedicModule', 
+				'MAZ_EZM_CSATPacific_fnc_createRiflemanModule', 
+				'MAZ_EZM_CSATPacific_fnc_createMarksmanModule', 
+				'MAZ_EZM_CSATPacific_fnc_createRiflemanModule' 
+				]; 
+				_grp setBehaviour "AWARE"; 
+				{_x setunitpos "AUTO"} foreach units _squadLead 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createReconSquadModule = { 
+				private _squadLead = call MAZ_EZM_CSATPacific_fnc_createReconTeamLeaderModule; 
+				private _grp = group _squadLead; 
+				{ 
+				private _unit = call (missionNamespace getVariable _x); 
+				[_unit] joinSilent _grp; 
+				}forEach [ 
+				'MAZ_EZM_CSATPacific_fnc_createReconParamedicModule', 
+				'MAZ_EZM_CSATPacific_fnc_createReconScoutModule', 
+				'MAZ_EZM_CSATPacific_fnc_createReconJTACModule', 
+				'MAZ_EZM_CSATPacific_fnc_createReconScoutATModule',
+				'MAZ_EZM_CSATPacific_fnc_createReconDemoModule',
+				'MAZ_EZM_CSATPacific_fnc_createReconMarksmanModule'
+				]; 
+				_grp setBehaviour "AWARE"; 
+				{_x setunitpos "AUTO"} foreach units _squadLead 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createSentryModule = { 
+				private _squadLead = call MAZ_EZM_CSATPacific_fnc_createSquadLeadModule; 
+				private _grp = group _squadLead; 
+				{ 
+				private _unit = call (missionNamespace getVariable _x); 
+				[_unit] joinSilent _grp; 
+				}forEach [ 
+				'MAZ_EZM_CSATPacific_fnc_createRiflemanModule' 
+				]; 
+				_grp setBehaviour "AWARE"; 
+				{_x setunitpos "AUTO"} foreach units _squadLead 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createAntiAirTeamModule = { 
+				private _squadLead = call MAZ_EZM_CSATPacific_fnc_createSquadLeadModule; 
+				private _grp = group _squadLead; 
+				{ 
+				private _unit = call (missionNamespace getVariable _x); 
+				[_unit] joinSilent _grp; 
+				}forEach [ 
+				'MAZ_EZM_CSATPacific_fnc_createAmmoBearerModule', 
+				'MAZ_EZM_CSATPacific_fnc_createMissileSpecAAModule' 
+				]; 
+				_grp setBehaviour "AWARE"; 
+				{_x setunitpos "AUTO"} foreach units _squadLead 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createAntiTankTeamModule = { 
+				private _squadLead = call MAZ_EZM_CSATPacific_fnc_createSquadLeadModule; 
+				private _grp = group _squadLead; 
+				{ 
+				private _unit = call (missionNamespace getVariable _x); 
+				[_unit] joinSilent _grp; 
+				}forEach [ 
+				'MAZ_EZM_CSATPacific_fnc_createAmmoBearerModule', 
+				'MAZ_EZM_CSATPacific_fnc_createRiflemanLATModule' 
+				]; 
+				_grp setBehaviour "AWARE"; 
+				{_x setunitpos "AUTO"} foreach units _squadLead 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createMarksmanTeamModule = { 
+				private _squadLead = call MAZ_EZM_CSATPacific_fnc_createMarksmanModule; 
+				private _grp = group _squadLead; 
+				_squadLead addPrimaryWeaponItem "optic_DMS"; 
+				{ 
+				private _unit = call (missionNamespace getVariable _x); 
+				[_unit] joinSilent _grp; 
+				}forEach [ 
+				'MAZ_EZM_CSATPacific_fnc_createSquadLeadModule' 
+				]; 
+				
+				_grp setBehaviour "AWARE"; 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createSniperTeamModule = {  
+				private _squadLead = call MAZ_EZM_CSATPacific_fnc_createReconSniperModule;  
+				private _grp = group _squadLead;  
+				_squadLead addPrimaryWeaponItem "optic_DMS";  
+				{  
+				private _unit = call (missionNamespace getVariable _x);  
+				[_unit] joinSilent _grp;  
+				}forEach [  
+				'MAZ_EZM_CSATPacific_fnc_createReconSpotterModule'  
+				];  
+				
+				_grp setBehaviour "AWARE";  
+            };  
+
+		comment "Compositions";
+
+			MAZ_EZM_CSATPacific_fnc_createCache1Module = {
+				
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				
+				private _vehicle = createVehicle ["Land_Pallet_F",[24583.7,19262.5,0.00658536],[],0,"CAN_COLLIDE"];
+				_vehicle setPosWorld [24583.7,19262.5,3.28107];
+				_vehicle setVectorDirAndUp [[0.00257769,-0.999997,0],[0,0,1]];
+				_vehicle setDamage 0.9; 
+
+				_item25 = createVehicle ["Box_T_East_Ammo_F",[24583.2,19262.6,0.178298],[],0,"CAN_COLLIDE"];
+				_item25 setPosWorld [24583.2,19262.6,3.63531];
+				_item25 setVectorDirAndUp [[1,0.000220732,0],[0,0,1]];
+				_item25 = [_item25] call BIS_fnc_replaceWithSimpleObject;
+				[_item25, _vehicle] call BIS_fnc_attachToRelative;
+
+				_item26 = createVehicle ["Box_T_East_Wps_F",[24583.4,19262.2,0.239546],[],0,"CAN_COLLIDE"];
+				_item26 setPosWorld [24583.5,19262,3.53942];
+				_item26 setVectorDirAndUp [[0,-1,0],[0,0,1]];
+				_item26 = [_item26] call BIS_fnc_replaceWithSimpleObject;
+				[_item26, _vehicle] call BIS_fnc_attachToRelative;
+
+				_item27 = createVehicle ["ShootingMat_01_Khaki_F",[24584.1,19262.5,0.185562],[],0,"CAN_COLLIDE"];
+				_item27 setPosWorld [24584.1,19262.5,3.37622];
+				_item27 setVectorDirAndUp [[0.00206215,-0.799997,0],[0,0,0.8]];
+				_item27 = [_item27] call BIS_fnc_replaceWithSimpleObject;
+				[_item27, _vehicle] call BIS_fnc_attachToRelative;
+				_item27 setObjectscale 0.8;
+				
+				_item28 = createVehicle ["ShootingMat_01_Khaki_F",[24583.3,19262.5,0.187327],[],0,"CAN_COLLIDE"];
+				_item28 setPosWorld [24583.3,19262.5,3.37798];
+				_item28 setVectorDirAndUp [[0.00206215,-0.799997,0],[0,0,0.8]];
+				_item28 = [_item28] call BIS_fnc_replaceWithSimpleObject;
+				[_item28, _vehicle] call BIS_fnc_attachToRelative;
+				_item28 setObjectscale 0.8;
+				
+				_item29 = createVehicle ["Box_T_East_Wps_F",[24583.5,19262,0.512213],[],0,"CAN_COLLIDE"];
+				_item29 setPosWorld [24583.5,19262,3.87547];
+				_item29 setVectorDirAndUp [[0.00257769,-0.999997,0],[0,0,1]];
+				_item29 = [_item29] call BIS_fnc_replaceWithSimpleObject;
+				[_item29, _vehicle] call BIS_fnc_attachToRelative;
+
+				_item30 = createVehicle ["Box_T_East_Ammo_F",[24583.9,19262.4,0.269096],[],0,"CAN_COLLIDE"];
+				_item30 setPosWorld [24583.9,19262.6,3.64146];
+				_item30 setVectorDirAndUp [[0.999995,0.00322254,0],[0,0,1]];
+				_item30 = [_item30] call BIS_fnc_replaceWithSimpleObject;
+				[_item30, _vehicle] call BIS_fnc_attachToRelative;
+
+				_item43 = createVehicle ["Box_East_WpsLaunch_F",[24583.7,19263,0.20602],[],0,"CAN_COLLIDE"];
+				_item43 setPosWorld [24583.7,19263,3.52767];
+				_item43 setVectorDirAndUp [[0,1,0],[0,0,1]];
+				_item43 enableSimulationGlobal false;
+				_item43 setObjectTextureGlobal [0,"a3\supplies_f_exp\ammoboxes\data\ammobox_signs_opfor_ca.paa"]; 
+				_item43 setObjectTextureGlobal [1,"a3\supplies_f_exp\ammoboxes\data\box_t_east_wps_f_co.paa"];
+				[_item43, _vehicle] call BIS_fnc_attachToRelative;
+				clearItemCargoGlobal _item43;
+				clearWeaponCargoGlobal _item43;
+				clearMagazineCargoGlobal _item43;
+				clearBackpackCargo _item43;
+				
+				_simpleObject_6 = createSimpleObject ['a3\weapons_f\launchers\rpg32\pg32v_rocket_item.p3d', [24584.0351563,19262.179688,3.694174]];
+				_simpleObject_6 setVectorDirAndUp [[6.25676e-007,1,-5.97802e-005],[0.999998,-7.5623e-007,-0.00218392]];
+				[_simpleObject_6, _vehicle] call BIS_fnc_attachToRelative;
+				_simpleObject_7 = createSimpleObject ['a3\weapons_f\launchers\rpg32\pg32v_rocket_item.p3d', [24584.0351563,19262.285156,3.69271]];
+				_simpleObject_7 setVectorDirAndUp [[6.25676e-007,1,-5.97802e-005],[0.999998,-7.5623e-007,-0.00218392]];
+				[_simpleObject_7, _vehicle] call BIS_fnc_attachToRelative;
+				_simpleObject_8 = createSimpleObject ['a3\weapons_f\launchers\rpg32\pg32v_rocket_item.p3d', [24584.0351563,19262.0722656,3.69467]];
+				_simpleObject_8 setVectorDirAndUp [[6.25676e-007,1,-5.97802e-005],[0.999998,-7.5623e-007,-0.00218392]];
+				[_simpleObject_8, _vehicle] call BIS_fnc_attachToRelative;
+				_simpleObject_9 = createSimpleObject ['a3\weapons_f\launchers\rpg32\tbg32v_rocket_item.p3d', [24584.0546875,19261.962891,3.69224]];
+				_simpleObject_9 setVectorDirAndUp [[-1.86053e-007,1,-7.78989e-005],[0.99999,-1.70764e-007,-0.00458049]];
+				[_simpleObject_9, _vehicle] call BIS_fnc_attachToRelative;
+			
+				[_vehicle] call MAZ_EZM_fnc_cacheExplodeOnExplosiveDamage;
+				[_vehicle] call MAZ_EZM_fnc_deleteAttachedWhenKilled;
+				[_vehicle] call MAZ_EZM_fnc_deleteAttachedWhenDeleted;
+				[_vehicle] call MAZ_EZM_fnc_addObjectToInterface;
+
+				_vehicle setpos _pos;
+				
+				_vehicle
+			};
+
+			MAZ_EZM_CSATPacific_fnc_createCache2Module = {
+				
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				
+				_vehicle = createVehicle ["Land_Pallet_F",[24587.7,19262.5,0.00657558],[],0,"CAN_COLLIDE"];
+				_vehicle setPosWorld [24587.7,19262.5,3.28107];
+				_vehicle setVectorDirAndUp [[0.00257769,-0.999997,0],[0,0,1]];
+				_vehicle setDamage 0.9; 
+
+				_item16 = createVehicle ["Weapon_arifle_CTAR_blk_F",[24587.5,19262.2,0.532802],[],0,"CAN_COLLIDE"];
+				_item16 setPosWorld [24587.5,19262.2,3.70695];
+				_item16 setVectorDirAndUp [[-0.243731,0.969843,0],[0,0,1]];
+				[_item16, _vehicle] call BIS_fnc_attachToRelative;
+				_item16 setDamage 1;
+
+				_item17 = createVehicle ["Weapon_srifle_DMR_07_blk_F",[24587.9,19262,0.536677],[],0,"CAN_COLLIDE"];
+				_item17 setPosWorld [24587.9,19262,3.71141];
+				_item17 setVectorDirAndUp [[-0.0391472,0.999233,-4.28914e-005],[-0.00129824,-9.37858e-005,-0.999999]];
+				[_item17, _vehicle] call BIS_fnc_attachToRelative;
+				_item17 setDamage 1;
+
+				_item19 = createVehicle ["Box_T_East_Ammo_F",[24587.2,19262.8,0.172966],[],0,"CAN_COLLIDE"];
+				_item19 setPosWorld [24587.15,19262.8,3.62947];
+				_item19 setVectorDirAndUp [[0,-1,0],[0,0,1]];
+				_item19 = [_item19] call BIS_fnc_replaceWithSimpleObject;
+				[_item19, _vehicle] call BIS_fnc_attachToRelative;
+
+				_item20 = createVehicle ["Box_T_East_Wps_F",[24587.9,19262.6,0.232723],[],0,"CAN_COLLIDE"];
+				_item20 setPosWorld [24587.9,19262.7,3.53942];
+				_item20 setVectorDirAndUp [[0.00257769,-0.999997,0],[0,0,1]];
+				_item20 = [_item20] call BIS_fnc_replaceWithSimpleObject;
+				[_item20, _vehicle] call BIS_fnc_attachToRelative;
+
+				_item21 = createVehicle ["ShootingMat_01_Khaki_F",[24588.1,19262.5,0.185553],[],0,"CAN_COLLIDE"];
+				_item21 setPosWorld [24588.1,19262.5,3.37622];
+				_item21 setVectorDirAndUp [[0.00206215,-0.799997,0],[0,0,0.8]];
+				_item21 = [_item21] call BIS_fnc_replaceWithSimpleObject;
+				[_item21, _vehicle] call BIS_fnc_attachToRelative;
+				_item21 setObjectscale 0.8;
+
+				_item22 = createVehicle ["ShootingMat_01_Khaki_F",[24587.3,19262.5,0.187317],[],0,"CAN_COLLIDE"];
+				_item22 setPosWorld [24587.3,19262.5,3.37798];
+				_item22 setVectorDirAndUp [[0.00206215,-0.799997,0],[0,0,0.8]];
+				_item22 = [_item22] call BIS_fnc_replaceWithSimpleObject;
+				[_item22, _vehicle] call BIS_fnc_attachToRelative;
+				_item22 setObjectscale 0.8;
+
+				_item23 = createVehicle ["Box_T_East_Wps_F",[24587.9,19262.7,0.514064],[],0,"CAN_COLLIDE"];
+				_item23 setPosWorld [24587.9,19262.7,3.87547];
+				_item23 setVectorDirAndUp [[0.00257769,-0.999997,0],[0,0,1]];
+				_item23 = [_item23] call BIS_fnc_replaceWithSimpleObject;
+				[_item23, _vehicle] call BIS_fnc_attachToRelative;
+
+				_item15 = createVehicle ["Box_T_East_WpsSpecial_F",[24587.7,19262.2,0.157008],[],0,"CAN_COLLIDE"];
+				_item15 setPosWorld [24587.7,19262.1,3.52];
+				_item15 setVectorDirAndUp [[0.00228801,0.899997,0],[0,0,0.9]];
+				_item15 = [_item15] call BIS_fnc_replaceWithSimpleObject;
+				[_item15, _vehicle] call BIS_fnc_attachToRelative;
+
+				[_vehicle] call MAZ_EZM_fnc_cacheExplodeOnExplosiveDamage;
+				[_vehicle] call MAZ_EZM_fnc_deleteAttachedWhenKilled;
+				[_vehicle] call MAZ_EZM_fnc_deleteAttachedWhenDeleted;
+				[_vehicle] call MAZ_EZM_fnc_addObjectToInterface;
+
+				_vehicle setpos _pos;
+				
+				_vehicle
+			};
+
+			MAZ_EZM_CSATPacific_fnc_createDeadSoldierModule = {
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				
+				private _vehicle = createVehicle ["O_Soldier_F",[24602.4,19234.3,2.38419e-007],[],0,"CAN_COLLIDE"];
+				_vehicle setUnitLoadout [[],[],[],["U_O_T_Soldier_F",[["FirstAidKit",1],["Chemlight_red",1,1]]],["V_HarnessO_ghex_F",[]],[],"H_HelmetO_ghex_F","",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch",""]];
+
+				private _animData = selectRandom [
+					["KIA_gunner_static_low01",[24602.4,19234.4,3.19144],[24603.4,19234.9,3.20104],[24601.7,19235,3.195]],
+					["KIA_gunner_standup01",[24602.4,19234.4,3.19144],[24602.9,19233.5,3.2036],[24602.4,19234.3,3.19136]],
+					["KIA_driver_boat01",[24602.4,19234.4,3.19144],[24603,19235.2,3.19],[24602.8,19234.5,3.195]],
+					["KIA_passenger_boat_holdleft",[24602.5,19234.4,3.19144],[24603,19235.1,3.19896],[24602.8,19234.4,3.195]]
+				];
+				
+				_animData params ["_anim","_unitPos","_gunPos","_bloodPos"];
+				[_vehicle,_anim] remoteExec ['switchMove',0,true];
+				_vehicle disableAI "ALL";  
+				_vehicle setCaptive true; 
+				_vehicle setSpeaker "NoVoice"; 
+				_vehicle allowDamage false;
+				private _face = selectRandom ["AsianHead_A3_01","AsianHead_A3_02","AsianHead_A3_03","AsianHead_A3_04","AsianHead_A3_05","AsianHead_A3_06","AsianHead_A3_07"];
+				_vehicle setface _face;
+				_vehicle setPosWorld _unitPos;
+				_vehicle setVectorDirAndUp [[0.965509,-0.26037,0],[0,0,1]];
+				_vehicle setDir (random 359);
+				[_vehicle] call MAZ_EZM_fnc_deleteAttachedWhenKilled;
+				[_vehicle] call MAZ_EZM_fnc_deleteAttachedWhenDeleted;
+				[_vehicle] call MAZ_EZM_fnc_addObjectToInterface;
+				[_vehicle] call MAZ_EZM_fnc_ignoreWhenCleaning;
+
+				_vehicle spawn {
+					while {!isNull _this} do {
+						private _sounds = [
+							["A3\Missions_F_Oldman\Data\sound\Flies\Flies_02.wss",10.5,0.5,15]
+						];
+						private _soundData = selectRandom _sounds;
+						_soundData params ["_sound","_time","_volume","_distance"];
+						playSound3D [_sound,_this,false,getPosASL _this, _volume, 1, _distance];
+						sleep _time;
+					};
+				};
+
+				private _gun = createVehicle ["Weapon_arifle_CTAR_blk_F",[24603.4,19234.9,0.0110364],[],0,"CAN_COLLIDE"];
+				_gun setPosWorld _gunPos;
+				_gun setDir (random 90);
+				[_gun,_vehicle] call BIS_fnc_attachToRelative;
+
+				private _blood = createVehicle ["BloodSplatter_01_Medium_New_F",[24601.7,19235,0],[],0,"CAN_COLLIDE"];
+				_blood setPosWorld _bloodPos;
+				_blood setVectorDirAndUp [[0,1,0],[0,0,1]];
+				_blood setObjectTextureGlobal [0,"a3\props_f_orange\humanitarian\garbage\data\bloodsplatter_medium_fresh_ca.paa"];
+				_blood setDir (random 359);
+				[_blood, _vehicle] call BIS_fnc_attachToRelative;
+
+				_vehicle setpos _pos;
+
+				_vehicle
+			};  
+
+			MAZ_EZM_CSATPacific_fnc_createOpenedTaruBenchPodModule = { 
+				
+				private _vehicle = ["Land_Pod_Heli_Transport_04_bench_F"] call MAZ_EZM_fnc_createVehicle;
+		
+				_vehicle 
+			};
+			
+		comment "Helicopters";
+
+			MAZ_EZM_CSATPacific_fnc_createTaruKajmanModule = {
+				private _vehicle = ["O_Heli_Attack_02_dynamicLoadout_F"] call MAZ_EZM_fnc_createVehicle;
+
+                [_vehicle,"Black"] call bis_fnc_initVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _pilot = [] call MAZ_EZM_CSATPacific_fnc_createHelicopterPilotModule; 
+					_pilot moveInDriver _vehicle; 
+				
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createHelicopterPilotModule; 
+					_gunner moveInGunner _vehicle; 
+				
+					private _grp = createGroup [east,true]; 
+					[_pilot,_gunner] joinSilent _grp; 
+					_grp selectLeader _pilot; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createOrcaUnarmedModule = {
+				private _vehicle = ["O_Heli_Light_02_unarmed_F"] call MAZ_EZM_fnc_createVehicle;
+
+				[_vehicle,"Black"] call bis_fnc_initVehicle;
+
+                if(MAZ_EZM_spawnWithCrew) then {
+					private _pilot = [] call MAZ_EZM_CSATPacific_fnc_createHelicopterPilotModule; 
+					_pilot moveInDriver _vehicle; 
+				
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createHelicopterPilotModule; 
+					_gunner moveInAny _vehicle; 
+				
+					private _grp = createGroup [east,true]; 
+					[_pilot,_gunner] joinSilent _grp; 
+					_grp selectLeader _pilot; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createOrcaModule = {
+				private _vehicle = ["O_Heli_Light_02_dynamicLoadout_F"] call MAZ_EZM_fnc_createVehicle;
+
+                [_vehicle,"Black"] call bis_fnc_initVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _pilot = [] call MAZ_EZM_CSATPacific_fnc_createHelicopterPilotModule; 
+					_pilot moveInDriver _vehicle; 
+				
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createHelicopterPilotModule; 
+					_gunner moveInAny _vehicle; 
+				
+					private _grp = createGroup [east,true]; 
+					[_pilot,_gunner] joinSilent _grp; 
+					_grp selectLeader _pilot; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+		comment "Men"; 
+		
+			MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit = { 
+				params ["_unit"]; 
+				sleep 0.5; 
+
+				private _CSATPacificVoice = [
+					"Male03CHI",
+					"Male01CHI",
+					"Male02CHI"
+				];
+
+				[_unit,(selectRandom _CSATPacificVoice)] remoteExec ['setSpeaker']; 
+				
+				private _CSATPacificHeads = [ 
+					"AsianHead_A3_01",
+					"AsianHead_A3_02",
+					"AsianHead_A3_03",
+					"AsianHead_A3_04", 
+					"AsianHead_A3_05", 
+					"AsianHead_A3_06", 
+					"AsianHead_A3_07",
+					"CamoHead_Asian_02_F",
+					"CamoHead_Asian_03_F",
+					"CamoHead_Asian_01_F"
+				]; 
+
+				[_unit,(selectRandom _CSATPacificHeads)] remoteExec ['setFace',0,_unit]; 
+			
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_getCSATPacificWeaponToUnit = { 
+				params ["_unit"]; 
+				private _58Ammo = "30Rnd_580x42_Mag_F";  
+				private _pWeapon = selectRandom [ ["arifle_CTAR_blk_F", _58Ammo],["arifle_CTAR_ghex_F", _58Ammo] ]; 
+							
+				_pWeapon 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_addCSATPacificBackpack = { 
+				params ["_unit"]; 
+				private _randomBackpack = selectRandom ["B_FieldPack_ghex_F"]; 
+				_unit addBackpackGlobal _randomBackpack; 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit = { 
+				params ["_unit"]; 
+				removeGoggles _unit;  
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit = { 
+				params ["_unit"]; 
+				
+				private _CSATPacificUniforms = ["U_O_T_Soldier_F"]; 
+				private _CSATPacificVests = ["V_HarnessO_ghex_F"]; 
+				private _CSATPacificHeadgear = ["H_HelmetLeaderO_ghex_F","H_HelmetO_ghex_F","H_HelmetSpecO_ghex_F"]; 
+				
+				_unit forceAddUniform (selectRandom _CSATPacificUniforms); 
+				_unit addVest (selectRandom _CSATPacificVests); 
+				_unit addHeadgear (selectRandom _CSATPacificHeadgear); 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit = {
+				params ["_unit"];
+				_unit addEventHandler ["Killed",{
+					params ["_unit", "_killer", "_instigator", "_useEffects"];
+					_unit spawn {
+						private _RadioSounds = selectRandom ["\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_01_Chinese01_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_01_Chinese02_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_01_Chinese03_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_01_Chinese04_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_02_Chinese01_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_02_Chinese03_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_02_Chinese04_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_03_Chinese01_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_03_Chinese02_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_03_Chinese03_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_03_Chinese04_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_04_Chinese01_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_04_Chinese02_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_04_Chinese03_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_04_Chinese04_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_05_Chinese01_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_05_Chinese02_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_05_Chinese03_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_05_Chinese04_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_06_Chinese01_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_06_Chinese02_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_06_Chinese03_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_06_Chinese04_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_07_Chinese01_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_07_Chinese02_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_07_Chinese03_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_07_Chinese04_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_08_Chinese01_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_08_Chinese02_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_08_Chinese03_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_08_Chinese04_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_09_Chinese01_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_09_Chinese02_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_09_Chinese03_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_09_Chinese04_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_10_Chinese01_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_10_Chinese02_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_10_Chinese03_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_10_Chinese04_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_11_Chinese01_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_11_Chinese02_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_11_Chinese03_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_11_Chinese04_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_12_Chinese01_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_12_Chinese02_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_12_Chinese03_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_12_Chinese04_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_13_Chinese01_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_13_Chinese02_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_13_Chinese03_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_13_Chinese04_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_14_Chinese01_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_14_Chinese02_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_14_Chinese03_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_14_Chinese04_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_15_Chinese01_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_15_Chinese02_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_15_Chinese03_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_15_Chinese04_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_16_Chinese01_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_16_Chinese02_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_16_Chinese03_Processed.ogg","\a3\Dubbing_F_Oldman\Barks\Awareness\CSAT_Awareness_WT_16_Chinese04_Processed.ogg"];
+						private _randomNumber = [8, 20] call BIS_fnc_randomNum;
+						sleep _randomNumber;
+						playSound3D [_RadioSounds, _this, false, getPosASL _this, 2, 1, 15];
+						sleep _randomNumber;
+						playSound3D [_RadioSounds, _this, false, getPosASL _this, 2, 1, 15];
+					};
+				}];
+			};
+			
+			MAZ_EZM_CSATPacific_fnc_createAmmoBearerModule = { 
+				private _unit = [east,"O_T_Soldier_A_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificBackpack; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit; 
+				private _weaponInfo = [_unit] call MAZ_EZM_CSATPacific_fnc_getCSATPacificWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,["30Rnd_580x42_Mag_F",7],["optic_ACO_grn"]],[],["hgun_Rook40_F",["30Rnd_9x21_Mag",2]],3,[["HandGrenade",1],["SmokeShell",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+			    [_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createAutoriflemanModule = { 
+				private _unit = [east,"O_T_Soldier_AR_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit; 
+			
+				private _M58Ammo = selectRandom ["100Rnd_580x42_Mag_F","100Rnd_580x42_Mag_Tracer_F"];
+				private _M58AmmoHex = selectRandom ["100Rnd_580x42_hex_Mag_F","100Rnd_580x42_hex_Mag_Tracer_F"]; 
+				private _pMachineGun = selectRandom [ ["arifle_CTARS_blk_F",_M58Ammo],["arifle_CTARS_ghex_F",_M58AmmoHex] ];  
+				[_unit,[_pMachineGun select 0,[_pMachineGun select 1,2],[""]],[],["hgun_Rook40_F",["30Rnd_9x21_Mag",2]],3,[["HandGrenade",1],["SmokeShell",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+			    [_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createHeavyGunnerModule = { 
+				private _unit = [east,"O_T_Soldier_AR_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit; 
+				private _M93Ammo = selectRandom ["150Rnd_93x64_Mag"]; 
+				private _pMachineGun = selectRandom [ ["MMG_01_tan_F",_M93Ammo] ];  
+				[_unit,[_pMachineGun select 0,[_pMachineGun select 1,2],[]],[],["hgun_Rook40_F",["30Rnd_9x21_Mag",2]],3,[["HandGrenade",1],["SmokeShell",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+			    [_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createCombatMedicModule = { 
+				private _unit = [east,"O_T_Medic_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificBackpack; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit; 
+				private _weaponInfo = [_unit] call MAZ_EZM_CSATPacific_fnc_getCSATPacificWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,["30Rnd_580x42_Mag_F",7],["optic_ACO_grn"]],[],["hgun_Rook40_F",["30Rnd_9x21_Mag",2]],3,[["HandGrenade",1],["SmokeShell",2]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+				_unit addItemToBackpack "Medikit"; 
+				for "_i" from 0 to 4 do { 
+					_unit addItemToBackpack "FirstAidKit"; 
+				}; 
+			    [_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createCrewmanModule = { 
+				private _unit = [east,"O_T_Crew_F",MAZ_EZM_stanceForAI,"AWARE"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				removeHeadgear _unit; 
+				removevest _unit; 
+				removeheadgear _unit; 
+				_unit addHeadgear "H_Tank_black_F"; 
+				_unit addVest "V_HarnessO_ghex_F"; 
+				_unit addItemToVest "ToolKit"; 
+				private _weaponInfo = [_unit] call MAZ_EZM_CSATPacific_fnc_getCSATPacificWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,[_weaponInfo select 1,6],[]],[],["hgun_Rook40_F",["30Rnd_9x21_Mag",2]],3,[["HandGrenade",1],["SmokeShell",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+				[_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createEngineerModule = { 
+				private _unit = [east,"O_T_Engineer_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificBackpack; 
+				private _weaponInfo = [_unit] call MAZ_EZM_CSATPacific_fnc_getCSATPacificWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,["30Rnd_580x42_Mag_F",7],["optic_ACO_grn"]],[],["hgun_Rook40_F",["30Rnd_9x21_Mag",2]],3,[["HandGrenade",1],["SmokeShell",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+				[_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit addItemToBackpack "Toolkit";
+				_unit
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createSquadLeadModule = { 
+				private _unit = [east,"O_T_Soldier_SL_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit;
+				_unit addWeapon "Laserdesignator_02_ghex_F"; 
+				private _weaponInfo = [_unit] call MAZ_EZM_CSATPacific_fnc_getCSATPacificWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,["30Rnd_580x42_Mag_F",7],["optic_ACO_grn"]],[],["hgun_Rook40_F",["30Rnd_9x21_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+			    [_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit   
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createGrenadierModule = { 
+				private _unit = [east,"O_T_Soldier_GL_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit; 
+				_unit addVest "V_HarnessOGL_ghex_F";
+				private _pGrenadier = selectRandom ["arifle_CTAR_GL_blk_F","arifle_CTAR_GL_ghex_F"]; 
+				[_unit,[_pGrenadier,["30Rnd_580x42_Mag_F",5],["optic_ACO_grn"]],[],["hgun_Rook40_F",["30Rnd_9x21_Mag",2]],3,[["HandGrenade",1],["1Rnd_HE_Grenade_shell",6],["1Rnd_Smoke_Grenade_shell",2]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+			    [_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createMarksmanModule = { 
+				private _unit = [east,"O_T_Soldier_M_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit; 
+				private _pSniper = selectRandom ["srifle_DMR_07_blk_F","srifle_DMR_07_ghex_F"]; 
+				[_unit,[_pSniper,["20Rnd_650x39_Cased_Mag_F",5],["optic_Arco_blk_F"]],[],["hgun_Rook40_F",["30Rnd_9x21_Mag",2]],3,[["HandGrenade",1],["SmokeShell",1]]] call MAZ_EZM_fnc_addItemAndWeapons;  
+			    [_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createSharpshooterModule = { 
+				private _unit = [east,"O_T_Soldier_M_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit; 
+				private _pSniper = selectRandom ["srifle_DMR_05_blk_F"]; 
+				[_unit,[_pSniper,["10Rnd_93x64_DMR_05_Mag",5],["optic_DMS"]],[],["hgun_Rook40_F",["30Rnd_9x21_Mag",2]],3,[["HandGrenade",1],["SmokeShell",1]]] call MAZ_EZM_fnc_addItemAndWeapons;  
+			    [_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit 
+			};
+			
+			MAZ_EZM_CSATPacific_fnc_createMissileSpecAAModule = { 
+				private _unit = [east,"O_T_Soldier_AA_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificBackpack; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit; 
+				private _weaponInfo = [_unit] call MAZ_EZM_CSATPacific_fnc_getCSATPacificWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,["30Rnd_580x42_Mag_F",7],["optic_ACO_grn"]],["launch_O_Titan_ghex_F",["Titan_AA",2]],["hgun_Rook40_F",["30Rnd_9x21_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+				[_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createRiflemanModule = { 
+				private _unit = [east,"O_T_Soldier_A_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit; 
+				private _weaponInfo = [_unit] call MAZ_EZM_CSATPacific_fnc_getCSATPacificWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,["30Rnd_580x42_Mag_F",7],["optic_ACO_grn"]],[],["hgun_Rook40_F",["30Rnd_9x21_Mag",2]],3,[["HandGrenade",1],["SmokeShell",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+			    [_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createRiflemanLATModule = { 
+				private _unit = [east,"O_T_Soldier_LAT_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;  
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificBackpack; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit; 
+				private _pRPG = selectRandom ["RPG32_F"];
+				private _pAT = selectRandom [ ["launch_RPG32_ghex_F",_pRPG]]; 
+				private _weaponInfo = [_unit] call MAZ_EZM_CSATPacific_fnc_getCSATPacificWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,["30Rnd_580x42_Mag_F",7],["optic_ACO_grn"]],[_pAT select 0, [_pAT select 1,3]],["hgun_Rook40_F",["30Rnd_9x21_Mag",2]],3,[["HandGrenade",1],["SmokeShell",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+			    [_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createRiflemanHATModule = { 
+				private _unit = [east,"O_T_Soldier_LAT_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;  
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificBackpack; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit; 
+				private _pVorona = selectRandom ["Vorona_HEAT"]; 
+				private _pAT = selectRandom [ ["launch_O_Vorona_green_F",_pVorona]]; 
+				private _weaponInfo = [_unit] call MAZ_EZM_CSATPacific_fnc_getCSATPacificWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,["30Rnd_580x42_Mag_F",7],["optic_ACO_grn"]],[_pAT select 0, [_pAT select 1,3]],["",[""]],3,[["HandGrenade",1],["SmokeShell",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+			    [_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createMissileSpecATModule = { 
+				private _unit = [east,"O_T_Soldier_LAT_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificBackpack; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit; 
+				private _weaponInfo = [_unit] call MAZ_EZM_CSATPacific_fnc_getCSATPacificWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,["30Rnd_580x42_Mag_F",7],["optic_ACO_grn"]],["launch_O_Titan_F",["Titan_AT",2]],["hgun_Rook40_F",["30Rnd_9x21_Mag",2]],3,[["HandGrenade",1],["SmokeShell",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+			    [_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createOfficerModule = { 
+				private _unit = [east,"O_T_Officer_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit; 
+				_unit addUniform "U_O_T_Officer_F";
+				_unit addMagazines ["6Rnd_45ACP_Cylinder", 3];
+				_unit addWeapon "hgun_Pistol_heavy_02_F";
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit addHeadgear "H_Beret_CSAT_01_F";
+				_unit 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createRadiomanModule = { 
+				private _unit = [east,"O_T_Soldier_A_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit; 
+				_unit addBackpack "B_RadioBag_01_black_F"; 
+				private _weaponInfo = [_unit] call MAZ_EZM_CSATPacific_fnc_getCSATPacificWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,["30Rnd_580x42_Mag_F",7],["optic_ACO_grn"]],[],["hgun_Rook40_F",["30Rnd_9x21_Mag",2]],3,[["HandGrenade",1],["SmokeShell",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+			    [_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createHelicopterPilotModule = { 
+				private _unit = [east,"O_helipilot_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit;
+				_unit addMagazine "30Rnd_9x21_Mag_SMG_02_Tracer_Green";
+				_unit addWeapon "SMG_02_F";
+				_unit 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createPilotModule = { 
+				private _unit = [east,"O_pilot_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit;
+				_unit addMagazine "30Rnd_9x21_Mag_SMG_02_Tracer_Green";
+				_unit addWeapon "SMG_02_F";
+				_unit 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createHelicopterCrewModule = { 
+				private _unit = [east,"O_Helicrew_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				_unit addMagazine "30Rnd_9x21_Mag_SMG_02_Tracer_Green";
+				_unit addWeapon "SMG_02_F";
+				_unit 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createUnarmedModule = { 
+				private _unit = [east,"O_T_Soldier_unarmed_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				removeVest _unit; 
+				removeHeadgear _unit; 
+				[_unit,""] remoteExec ["switchMove"]; 
+			
+				_unit 
+			}; 
+
+	    comment "Men (Special)";
+
+			MAZ_EZM_CSATPacific_fnc_createDiverModule = { 
+				private _unit = [east,"O_T_Diver_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;
+				_unit setUnitLoadout [["arifle_SDAR_F","","","",["20Rnd_556x45_UW_mag",20],[],""],[],["hgun_Rook40_F","muzzle_snds_L","","",["16Rnd_9x21_Mag",16],[],""],["U_O_Wetsuit",[["FirstAidKit",1],["30Rnd_556x45_Stanag_green",4,30],["20Rnd_556x45_UW_mag",3,20],["16Rnd_9x21_Mag",2,16],["SmokeShellRed",2,1]]],["V_RebreatherIR",[]],["B_FieldPack_blk",[]],"","G_O_Diving",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch",""]]; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				_unit addHeadgear "H_HelmetSpecO_blk";
+				_unit
+			};
+
+			MAZ_EZM_CSATPacific_fnc_createReconDemoModule = { 
+				private _unit = [east,"O_R_recon_exp_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificBackpack; 
+				private _weaponInfo = [_unit] call MAZ_EZM_CSATPacific_fnc_getCSATPacificWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,["30Rnd_580x42_Mag_F",7],["optic_ACO_grn"]],[],["hgun_Rook40_F",["30Rnd_9x21_Mag",2]],3,[["HandGrenade",1],["SmokeShell",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+				_unit addPrimaryWeaponItem "muzzle_snds_58_blk_F";
+				_unit addHeadgear "H_HelmetSpecO_blk";
+				[_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit addItemToBackpack "Toolkit";
+				_unit
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createReconJTACModule = { 
+				private _unit = [east,"O_R_recon_JTAC_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit; 
+				_unit addVest "V_HarnessOGL_ghex_F";
+				private _pGrenadier = selectRandom ["arifle_CTAR_GL_blk_F","arifle_CTAR_GL_ghex_F"]; 
+				[_unit,[_pGrenadier,["30Rnd_580x42_Mag_F",5],["optic_ACO_grn"]],[],["hgun_Rook40_F",["30Rnd_9x21_Mag",2]],3,[["HandGrenade",1],["1Rnd_HE_Grenade_shell",6],["1Rnd_Smoke_Grenade_shell",2]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+				_unit addPrimaryWeaponItem "muzzle_snds_58_blk_F";
+				_unit addHeadgear "H_HelmetSpecO_blk";
+			    [_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createReconMarksmanModule = { 
+				private _unit = [east,"O_R_recon_M_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit; 
+				[_unit,["srifle_DMR_04_F",["10Rnd_127x54_Mag",5],["optic_DMS_weathered_Kir_F"]],[],["hgun_Rook40_F",["30Rnd_9x21_Mag",2]],3,[["HandGrenade",1],["SmokeShell",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+				_unit addPrimaryWeaponItem "muzzle_snds_58_blk_F"; 
+				_unit addHeadgear "H_HelmetSpecO_blk";
+			    [_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createReconParaMedicModule = { 
+				private _unit = [east,"O_R_recon_medic_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificBackpack; 
+				private _weaponInfo = [_unit] call MAZ_EZM_CSATPacific_fnc_getCSATPacificWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,["30Rnd_580x42_Mag_F",7],["optic_ACO_grn"]],[],["hgun_Rook40_F",["30Rnd_9x21_Mag",2]],3,[["HandGrenade",1],["SmokeShell",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+				_unit addPrimaryWeaponItem "muzzle_snds_58_blk_F";
+				_unit addHeadgear "H_HelmetSpecO_blk";
+				[_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createReconScoutModule = { 
+				private _unit = [east,"O_R_recon_medic_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificBackpack; 
+				private _weaponInfo = [_unit] call MAZ_EZM_CSATPacific_fnc_getCSATPacificWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,["30Rnd_580x42_Mag_F",7],["optic_ACO_grn"]],[],["hgun_Rook40_F",["30Rnd_9x21_Mag",2]],3,[["HandGrenade",1],["SmokeShell",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+				_unit addPrimaryWeaponItem "muzzle_snds_58_blk_F";
+				_unit addHeadgear "H_HelmetSpecO_blk";
+				[_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createReconScoutATModule = { 
+				private _unit = [east,"O_R_recon_LAT_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;  
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificBackpack; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit; 
+				private _pRPG = selectRandom ["RPG32_F"];
+				private _pAT = selectRandom [ ["launch_RPG32_ghex_F",_pRPG]]; 
+				private _weaponInfo = [_unit] call MAZ_EZM_CSATPacific_fnc_getCSATPacificWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,["30Rnd_580x42_Mag_F",7],["optic_ACO_grn"]],[_pAT select 0, [_pAT select 1,3]],["hgun_Rook40_F",["30Rnd_9x21_Mag",2]],3,[["HandGrenade",1],["SmokeShell",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+				_unit addPrimaryWeaponItem "muzzle_snds_58_blk_F";
+				_unit addHeadgear "H_HelmetSpecO_blk";
+			    [_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createReconTeamLeaderModule = { 
+				private _unit = [east,"O_R_recon_TL_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificBackpack; 
+                private _weaponInfo = [_unit] call MAZ_EZM_CSATPacific_fnc_getCSATPacificWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,["30Rnd_580x42_Mag_F",7],["optic_ACO_grn"]],[],["hgun_Rook40_F",["30Rnd_9x21_Mag",2]],3,[["HandGrenade",1],["SmokeShell",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+				_unit addPrimaryWeaponItem "muzzle_snds_58_blk_F";
+				_unit addHeadgear "H_HelmetSpecO_blk";
+				[_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createReconSniperModule = { 
+				private _unit = [east,"U_O_T_Sniper_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;
+				_unit setUnitLoadout [["srifle_GM6_camo_F","","","optic_LRPS",["5Rnd_127x108_Mag",5],[],""],[],["hgun_Rook40_F","muzzle_snds_L","","",["16Rnd_9x21_Mag",16],[],""],["O_T_GhillieSuit",[["FirstAidKit",1],["5Rnd_127x108_Mag",2,5],["SmokeShell",1,1]]],["V_Chestrig_oli",[["5Rnd_127x108_APDS_Mag",2,5],["16Rnd_9x21_Mag",2,16],["ClaymoreDirectionalMine_Remote_Mag",1,1],["APERSTripMine_Wire_Mag",1,1],["SmokeShellRed",1,1],["SmokeShellOrange",1,1],["SmokeShellYellow",1,1],["Chemlight_red",2,1],["5Rnd_127x108_Mag",1,5]]],[],"","",["Rangefinder","","","",[],[],""],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch",""]];
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit;
+				[_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit addWeapon "Laserdesignator_02_ghex_F";
+				_unit
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createReconSpotterModule = { 
+				private _unit = [east,"O_T_Spotter_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificUniformToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addCSATPacificGogglesToUnit; 
+				[_unit] call MAZ_EZM_CSATPacific_fnc_addCSATPacificBackpack; 
+				private _weaponInfo = [_unit] call MAZ_EZM_CSATPacific_fnc_getCSATPacificWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,["30Rnd_580x42_Mag_F",7],["optic_Arco_blk_F"]],[],["hgun_Rook40_F",["30Rnd_9x21_Mag",2]],3,[["HandGrenade",1],["SmokeShell",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+				_unit addPrimaryWeaponItem "muzzle_snds_58_blk_F";
+				_unit addUniform "O_T_GhillieSuit";
+				_unit addWeapon "Laserdesignator_02_ghex_F";
+				[_unit,"O_NVGoggles_ghex_F"] call MAZ_EZM_fnc_addNVGs;
+				[_unit] spawn MAZ_EZM_CSATPacific_fnc_addRadioSoundtoUnit;
+				_unit
+			}; 
+
+		comment "Reinforcement"; 
+		
+			MAZ_EZM_CSATPacific_fnc_createReinforcementZamakCoveredTransportModule = { 
+				private _vehicle = ["O_T_Truck_02_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+				
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					private _passanger16 = [] call MAZ_EZM_CSATPacific_fnc_createSquadLeadModule; 
+					private _passanger15 = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanLATModule; 
+					private _passanger14 = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					private _passanger13 = [] call MAZ_EZM_CSATPacific_fnc_createAutoriflemanModule; 
+					private _passanger12 = [] call MAZ_EZM_CSATPacific_fnc_createEngineerModule; 
+					private _passanger11 = [] call MAZ_EZM_CSATPacific_fnc_createMarksmanModule; 
+					private _passanger10 = [] call MAZ_EZM_CSATPacific_fnc_createCombatMedicModule; 
+					private _passanger9 = [] call MAZ_EZM_CSATPacific_fnc_createGrenadierModule; 
+					private _passanger8 = [] call MAZ_EZM_CSATPacific_fnc_createAutoriflemanModule; 
+					private _passanger7 = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					private _passanger6 = [] call MAZ_EZM_CSATPacific_fnc_createAmmoBearerModule; 
+					private _passanger5 = [] call MAZ_EZM_CSATPacific_fnc_createGrenadierModule; 
+					private _passanger4 = [] call MAZ_EZM_CSATPacific_fnc_createMarksmanModule; 
+					private _passanger3 = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanLATModule; 
+					private _passanger2 = [] call MAZ_EZM_CSATPacific_fnc_createCombatMedicModule; 
+					private _passanger1 = [] call MAZ_EZM_CSATPacific_fnc_createSquadLeadModule; 
+					
+					_driver moveInDriver _vehicle; 
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle; 
+					_passanger7 moveInCargo _vehicle; 
+					_passanger8 moveInCargo _vehicle; 
+					_passanger9 moveInCargo _vehicle; 
+					_passanger10 moveInCargo _vehicle; 
+					_passanger11 moveInCargo _vehicle; 
+					_passanger12 moveInCargo _vehicle; 
+					_passanger13 moveInCargo _vehicle; 
+					_passanger14 moveInCargo _vehicle; 
+					_passanger15 moveInCargo _vehicle; 
+					_passanger16 moveInCargo _vehicle; 
+				
+					[_passanger2,_passanger3,_passanger4,_passanger5,_passanger6,_passanger8,_passanger12,_passanger14] joinSilent (group _passanger1); 
+					(group _passanger1) setBehaviour "AWARE"; 
+				
+					[_passanger15,_passanger10,_passanger11,_passanger9,_passanger7,_passanger13] joinSilent (group _passanger16); 
+					(group _passanger16) setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createReinforcementTempestTransportModule = { 
+				private _vehicle = ["O_T_Truck_03_covered_ghex_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+				
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					private _passanger16 = [] call MAZ_EZM_CSATPacific_fnc_createSquadLeadModule; 
+					private _passanger15 = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanLATModule; 
+					private _passanger13 = [] call MAZ_EZM_CSATPacific_fnc_createAutoriflemanModule; 
+					private _passanger11 = [] call MAZ_EZM_CSATPacific_fnc_createMarksmanModule; 
+					private _passanger10 = [] call MAZ_EZM_CSATPacific_fnc_createCombatMedicModule; 
+					private _passanger9 = [] call MAZ_EZM_CSATPacific_fnc_createGrenadierModule; 
+					private _passanger8 = [] call MAZ_EZM_CSATPacific_fnc_createAutoriflemanModule; 
+					private _passanger7 = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					private _passanger5 = [] call MAZ_EZM_CSATPacific_fnc_createGrenadierModule; 
+					private _passanger4 = [] call MAZ_EZM_CSATPacific_fnc_createMarksmanModule; 
+					private _passanger3 = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanLATModule; 
+					private _passanger2 = [] call MAZ_EZM_CSATPacific_fnc_createCombatMedicModule; 
+					private _passanger1 = [] call MAZ_EZM_CSATPacific_fnc_createSquadLeadModule; 
+					
+					_driver moveInDriver _vehicle; 
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger7 moveInCargo _vehicle; 
+					_passanger8 moveInCargo _vehicle; 
+					_passanger9 moveInCargo _vehicle; 
+					_passanger10 moveInCargo _vehicle; 
+					_passanger11 moveInCargo _vehicle; 
+					_passanger13 moveInCargo _vehicle; 
+					_passanger15 moveInCargo _vehicle; 
+					_passanger16 moveInCargo _vehicle; 
+				
+					[_passanger2,_passanger3,_passanger4,_passanger5,_passanger6,_passanger8,_passanger12,_passanger14] joinSilent (group _passanger1); 
+				
+					[_passanger15,_passanger10,_passanger11,_passanger9,_passanger7,_passanger13] joinSilent (group _passanger16);
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createReinforcementOrcaModule = { 
+				private _vehicle = ["O_Heli_Light_02_unarmed_F"] call MAZ_EZM_fnc_createVehicle;
+
+				[_vehicle,"Black"] call bis_fnc_initVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+				
+					private _pilot = [] call MAZ_EZM_CSATPacific_fnc_createHelicopterPilotModule; 
+					private _copilot = [] call MAZ_EZM_CSATPacific_fnc_createHelicopterPilotModule;  
+					private _passanger8 = [] call MAZ_EZM_CSATPacific_fnc_createAutoriflemanModule; 
+					private _passanger7 = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					private _passanger6 = [] call MAZ_EZM_CSATPacific_fnc_createAmmoBearerModule; 
+					private _passanger5 = [] call MAZ_EZM_CSATPacific_fnc_createGrenadierModule; 
+					private _passanger4 = [] call MAZ_EZM_CSATPacific_fnc_createMarksmanModule; 
+					private _passanger3 = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanLATModule; 
+					private _passanger2 = [] call MAZ_EZM_CSATPacific_fnc_createCombatMedicModule; 
+					private _passanger1 = [] call MAZ_EZM_CSATPacific_fnc_createSquadLeadModule; 
+					
+					_pilot moveInDriver _vehicle; 
+					_copilot moveInAny _vehicle;
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle; 
+					_passanger7 moveInCargo _vehicle; 
+					_passanger8 moveInCargo _vehicle; 
+
+					[_passanger2,_passanger3,_passanger4,_passanger5,_passanger6,_passanger8,_passanger12,_passanger14] joinSilent (group _passanger1); 
+				 
+					[_copilot] joinSilent (group _pilot); 
+			
+					[_passanger15,_passanger10,_passanger11,_passanger9,_passanger7,_passanger13] joinSilent (group _passanger16); 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createReinforcementQilinUnarmedModule = { 
+				private _vehicle = ["O_T_LSV_02_unarmed_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+				
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					private _passanger6 = [] call MAZ_EZM_CSATPacific_fnc_createAmmoBearerModule; 
+					private _passanger5 = [] call MAZ_EZM_CSATPacific_fnc_createGrenadierModule; 
+					private _passanger4 = [] call MAZ_EZM_CSATPacific_fnc_createMarksmanModule; 
+					private _passanger3 = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanLATModule; 
+					private _passanger2 = [] call MAZ_EZM_CSATPacific_fnc_createCombatMedicModule; 
+					private _passanger1 = [] call MAZ_EZM_CSATPacific_fnc_createSquadLeadModule; 
+					
+					_driver moveInDriver _vehicle; 
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle;
+				
+					[_passanger2,_passanger3,_passanger4,_passanger5,_passanger6] joinSilent (group _passanger1); 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createReinforcementRhibModule = { 
+				
+				private _vehicle = ["I_C_Boat_Transport_02_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+				
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					private _passanger1 = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					private _passanger2 = [] call MAZ_EZM_CSATPacific_fnc_createAmmoBearerModule; 
+					private _passanger3 = [] call MAZ_EZM_CSATPacific_fnc_createGrenadierModule; 
+					private _passanger4 = [] call MAZ_EZM_CSATPacific_fnc_createMarksmanModule; 
+					private _passanger5 = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanLATModule; 
+					private _passanger6 = [] call MAZ_EZM_CSATPacific_fnc_createCombatMedicModule; 
+					private _passanger7 = [] call MAZ_EZM_CSATPacific_fnc_createSquadLeadModule; 
+					
+					_driver moveInDriver _vehicle; 
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle;
+					_passanger7 moveInCargo _vehicle;
+				
+					[_passanger2,_passanger3,_passanger4,_passanger5,_passanger6,_passanger7] joinSilent (group _passanger1); 
+				}; 
+			
+				_vehicle 
+			}; 
+		
+		comment "Planes";
+			
+
+			MAZ_EZM_CSATPacific_fnc_createVTOLInfantryModule = { 
+				private _vehicle = ["O_T_VTOL_02_infantry_F"] call MAZ_EZM_fnc_createVehicle;
+			    
+				_vehicle allowCrewInImmobile true;
+				
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _pilot = [] call MAZ_EZM_CSATPacific_fnc_createPilotModule; 
+					_pilot moveInDriver _vehicle; 
+
+					private _copilot = [] call MAZ_EZM_CSATPacific_fnc_createPilotModule; 
+					_copilot moveInGunner _vehicle; 
+				
+					private _grp = createGroup [east,true]; 
+					[_pilot,_copilot] joinSilent _grp; 
+					_grp selectLeader _pilot; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createVTOLVehicleModule = { 
+				private _vehicle = ["O_T_VTOL_02_vehicle_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				_vehicle allowCrewInImmobile true;
+
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _pilot = [] call MAZ_EZM_CSATPacific_fnc_createPilotModule; 
+					_pilot moveInDriver _vehicle;
+
+					private _copilot = [] call MAZ_EZM_CSATPacific_fnc_createPilotModule; 
+					_copilot moveInGunner _vehicle;  
+				
+					private _grp = createGroup [east,true]; 
+					[_pilot,_copilot] joinSilent _grp; 
+					_grp selectLeader _pilot; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+		comment "Tanks"; 
+		
+			MAZ_EZM_CSATPacific_fnc_createVarsukModule = { 
+				private _vehicle = ["O_T_MBT_02_cannon_ghex_F"] call MAZ_EZM_fnc_createVehicle;
+				_vehicle disableTIEquipment true; 
+				_vehicle allowCrewInImmobile true;
+			
+				[ 
+					_vehicle, 
+					[],  
+					["showCamonetHull",1,"showCamonetTurret",1,"showLog",1] 
+				] call BIS_fnc_initVehicle; 
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createCrewmanModule; 
+					_driver moveInDriver _vehicle; 
+				
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createCrewmanModule; 
+					_gunner moveInGunner _vehicle; 
+
+					private _commander = [] call MAZ_EZM_CSATPacific_fnc_createCrewmanModule; 
+					_commander moveInCommander _vehicle; 
+				
+					private _grp = createGroup [east,true]; 
+					[_driver,_gunner,_commander] joinSilent _grp; 
+					_grp selectLeader _gunner; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createAngaraModule = { 
+				private _vehicle = ["O_T_MBT_04_cannon_F"] call MAZ_EZM_fnc_createVehicle;
+				_vehicle disableTIEquipment true; 
+				_vehicle allowCrewInImmobile true;
+			
+				[ 
+					_vehicle, 
+					[],  
+					["showCamonetHull",1,"showCamonetTurret",1] 
+				] call BIS_fnc_initVehicle; 
+			
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createCrewmanModule; 
+					_driver moveInDriver _vehicle; 
+				
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createCrewmanModule; 
+					_gunner moveInGunner _vehicle; 
+
+					private _commander = [] call MAZ_EZM_CSATPacific_fnc_createCrewmanModule; 
+					_commander moveInCommander _vehicle; 
+				
+					private _grp = createGroup [east,true]; 
+					[_driver,_gunner,_commander] joinSilent _grp; 
+					_grp selectLeader _gunner; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createAngaraKModule = { 
+				private _vehicle = ["O_T_MBT_04_command_F"] call MAZ_EZM_fnc_createVehicle;
+				_vehicle disableTIEquipment true; 
+				_vehicle allowCrewInImmobile true;
+			
+				[ 
+					_vehicle, 
+					[],  
+					["showCamonetHull",1,"showCamonetTurret",1] 
+				] call BIS_fnc_initVehicle; 
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+				
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createCrewmanModule; 
+					_driver moveInDriver _vehicle; 
+				
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createCrewmanModule; 
+					_gunner moveInGunner _vehicle; 
+
+					private _commander = [] call MAZ_EZM_CSATPacific_fnc_createCrewmanModule; 
+					_commander moveInCommander _vehicle; 
+				
+					private _grp = createGroup [east,true]; 
+					[_driver,_gunner,_commander] joinSilent _grp; 
+					_grp selectLeader _gunner; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+		comment "Trucks"; 
+
+			MAZ_EZM_CSATPacific_fnc_createTempestDeviceModule = { 
+				private _vehicle = ["O_T_Truck_03_device_ghex_F"] call MAZ_EZM_fnc_createVehicle;
+		
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createTempestAmmoModule = { 
+				private _vehicle = ["O_T_Truck_03_ammo_ghex_F"] call MAZ_EZM_fnc_createVehicle;
+				_vehicle setObjectTextureGlobal [3, "a3\structures_f\data\metal\containers\containers_colors_05_co.paa"];
+		
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createTempestFuelModule = { 
+				private _vehicle = ["O_T_Truck_03_fuel_ghex_F"] call MAZ_EZM_fnc_createVehicle;
+		
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createTempestMedicalModule = { 
+				private _vehicle = ["O_T_Truck_03_medical_ghex_F"] call MAZ_EZM_fnc_createVehicle;
+		
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createTempestRepairModule = { 
+				private _vehicle = ["O_T_Truck_03_repair_ghex_F"] call MAZ_EZM_fnc_createVehicle;
+		
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createTempestTransportModule = { 
+				private _vehicle = ["O_T_Truck_03_transport_ghex_F"] call MAZ_EZM_fnc_createVehicle;
+		
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createTempestTransportCoveredModule = { 
+				private _vehicle = ["O_T_Truck_03_covered_ghex_F"] call MAZ_EZM_fnc_createVehicle;
+		
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createZamakAmmoModule = { 
+				private _vehicle = ["O_T_Truck_02_Ammo_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createZamakFuelModule = {
+				private _vehicle = ["O_T_Truck_02_fuel_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createZamakMedicalModule = { 
+				private _vehicle = ["O_T_Truck_02_Medical_F"] call MAZ_EZM_fnc_createVehicle; 
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createZamakRepairModule = { 
+				private _vehicle = ["O_T_Truck_02_Box_F"] call MAZ_EZM_fnc_createVehicle; 
+	
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createZamakTransportModule = { 
+				private _vehicle = ["O_T_Truck_02_transport_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createZamakCoveredTransportModule = { 
+				private _vehicle = ["O_T_Truck_02_F"] call MAZ_EZM_fnc_createVehicle;
+	
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+		comment "Turrets"; 
+		
+			MAZ_EZM_CSATPacific_fnc_createM2HMGModule = { 
+				private _vehicle = ["I_G_HMG_02_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_gunner moveInGunner _vehicle; 
+				}; 
+			   
+				_vehicle 
+			}; 
+		
+			MAZ_EZM_CSATPacific_fnc_createM2HMGRaisedModule = { 
+				private _vehicle = ["I_G_HMG_02_high_F"] call MAZ_EZM_fnc_createVehicle; 
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_gunner moveInGunner _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createMk32GMGModule = { 
+				private _vehicle = ["O_GMG_01_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_gunner moveInGunner _vehicle; 
+				}; 
+			    _vehicle disableTIEquipment true; 
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createMk6MortarModule = { 
+				private _vehicle = ["O_Mortar_01_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_gunner moveInGunner _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_CSATPacific_fnc_createAALauncherModule = { 
+				private _vehicle = ["O_static_AA_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_gunner moveInGunner _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_CSATPacific_fnc_createATLauncherModule = { 
+				private _vehicle = ["O_static_AT_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _gunner = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
+					_gunner moveInGunner _vehicle; 
+				}; 
+			
+				_vehicle 
+			};
+	
+	
+	comment "AAF+ Units";
+
+		comment "Anti-Air";
+
+			MAZ_EZM_AAFP_fnc_createAANyxModule = { 
+				private _vehicle = ["I_LT_01_AA_F"] call MAZ_EZM_fnc_createVehicle;
+				_vehicle disableTIEquipment true; 
+				_vehicle allowCrewInImmobile true;
+				[ 
+					_vehicle, 
+					["Indep_01"],  
+					["showTools",1,"showCamonetHull",1,"showBags",1,"showSLATHull",0] 
+				] call BIS_fnc_initVehicle; 
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createCrewmanModule; 
+					_driver moveInDriver _vehicle; 
+				
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createCrewmanModule; 
+					_gunner moveInGunner _vehicle; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_driver,_gunner] joinSilent _grp; 
+					_grp selectLeader _gunner; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+		
+		comment "APCs"; 
+		
+			MAZ_EZM_AAFP_fnc_createGorgonModule = { 
+				private _vehicle = ["I_APC_Wheeled_03_cannon_F"] call MAZ_EZM_fnc_createVehicle;
+				_vehicle disableTIEquipment true; 
+				_vehicle allowCrewInImmobile true;
+				[ 
+					_vehicle, 
+					["Indep_01",1],  
+					["showCamonetHull",1,"showBags",1,"showBags2",1,"showTools",1,"showSLATHull",0] 
+				] call BIS_fnc_initVehicle; 
+							
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createCrewmanModule; 
+					_driver moveInDriver _vehicle; 
+				
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createCrewmanModule; 
+					_gunner moveInGunner _vehicle; 
+				
+					private _commander = [] call MAZ_EZM_AAFP_fnc_createCrewmanModule; 
+					_commander moveInCommander _vehicle; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_driver,_gunner,_commander] joinSilent _grp; 
+					_grp selectLeader _commander; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createGorgon20mmModule = { 
+				private _vehicle = ["I_APC_Wheeled_03_cannon_F"] call MAZ_EZM_fnc_createVehicle;
+				[_vehicle] call MAZ_EZM_fnc_deleteAttachedWhenDeleted;
+				[_vehicle] call MAZ_EZM_fnc_deleteAttachedWhenKilled;
+				_vehicle allowCrewInImmobile true;
+				_vehicle animate ["HideTurret",1]; 
+				private _turret = createVehicle ["I_LT_01_cannon_F",[0,0,0],[],0,"CAN_COLLIDE"]; 
+				[_turret] call MAZ_EZM_fnc_addObjectToInterface; 
+			
+				_turret attachTo [_vehicle,[0.63,0,-0.1]]; 
+				_turret allowDamage true; 
+			
+				[ 
+					_vehicle, 
+					["Indep_01",1],  
+					["showCamonetHull",1,"showBags",0,"showBags2",0,"showTools",0,"showSLATHull",0] 
+				] call BIS_fnc_initVehicle; 
+			
+				[ 
+					_turret, 
+					["Indep_01",1],  
+					["showTools",0,"showCamonetHull",0,"showBags",0,"showSLATHull",0] 
+				] call BIS_fnc_initVehicle; 
+			
+				_turret disableTIEquipment true;
+				_turret addMagazineTurret ["60Rnd_20mm_HE_shells",[0]]; 
+				_turret addMagazineTurret ["60Rnd_20mm_HE_shells",[0]]; 
+				_turret removeWeaponTurret ["LMG_coax_ext", [0]]; 
+			
+				_turret setObjectTexture [0, ""]; 
+				_vehicle lockTurret [[0], true]; 
+				_vehicle lockTurret [[1,1], true]; 
+				_turret  lockDriver true; 
+				_vehicle lockTurret [[1], true]; 
+				_turret lockTurret [[1,1], true]; 
+							
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createCrewmanModule; 
+					_driver moveInDriver _vehicle; 
+					_driver setUnloadInCombat [false, false]; 
+				
+					private _commander = [] call MAZ_EZM_AAFP_fnc_createCrewmanModule; 
+					_commander moveInCommander _vehicle; 
+					_commander setUnloadInCombat [false, false]; 
+				
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createCrewmanModule; 
+					_gunner moveInGunner _turret; 
+					_gunner setUnloadInCombat [false, false]; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_driver,_gunner] joinSilent _grp; 
+					_grp selectLeader _driver; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+            MAZ_EZM_AAFP_fnc_createMoraModule = { 
+				private _vehicle = ["I_APC_tracked_03_cannon_F"] call MAZ_EZM_fnc_createVehicle;
+				_vehicle disableTIEquipment true; 
+				_vehicle allowCrewInImmobile true;
+				[ 
+					_vehicle, 
+					["Indep_01",1],
+                    ["showBags",0,"showBags2",1,"showCamonetHull",1,"showCamonetTurret",1,"showTools",1,"showSLATHull",0,"showSLATTurret",0] 
+				] call BIS_fnc_initVehicle; 
+							
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createCrewmanModule; 
+					_driver moveInDriver _vehicle; 
+				
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createCrewmanModule; 
+					_gunner moveInGunner _vehicle; 
+				
+					private _commander = [] call MAZ_EZM_AAFP_fnc_createCrewmanModule; 
+					_commander moveInCommander _vehicle; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_driver,_gunner,_commander] joinSilent _grp; 
+					_grp selectLeader _commander; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+		
+		comment "Artillery";
+
+			MAZ_EZM_AAFP_fnc_createZamakMRLModule = { 
+				private _vehicle = ["I_Truck_02_MRL_F"] call MAZ_EZM_fnc_createVehicle;
+				_vehicle disableTIEquipment true; 
+							
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_gunner moveIngunner _vehicle; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_driver,_gunner] joinSilent _grp; 
+					_grp selectLeader _gunner; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+		
+		comment "Boats"; 
+		
+			MAZ_EZM_AAFP_fnc_createRhibBoatModule = { 
+				private _vehicle = ["I_C_Boat_Transport_02_F"] call MAZ_EZM_fnc_createVehicle;
+				
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_driver,_gunner] joinSilent _grp; 
+					_grp selectLeader _driver; 
+				}; 
+			
+				_vehicle 
+			}; 
+		
+			MAZ_EZM_AAFP_fnc_createAssaultBoatModule = { 
+				private _vehicle = ["I_Boat_Transport_01_F"] call MAZ_EZM_fnc_createVehicle;
+				
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_driver,_gunner] joinSilent _grp; 
+					_grp selectLeader _driver; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+            MAZ_EZM_AAFP_fnc_createSpeedBoatModule = {
+				private _vehicle = ["I_Boat_Armed_01_minigun_F",[
+				"a3\boat_f\boat_armed_01\data\Boat_Armed_01_ext_INDP_CO.paa",
+				"a3\boat_f\boat_armed_01\data\Boat_Armed_01_int_INDP_CO.paa",
+				""
+				]] call MAZ_EZM_fnc_createVehicle;
+				_vehicle setObjectTextureGlobal [2, ""];
+				_vehicle removeWeaponTurret ["GMG_40mm", [0]];
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+					private _commander = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_commander moveInCommander _vehicle; 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_gunner moveInGunner _vehicle; 
+					private _grp = createGroup [Independent,true]; 
+					[_driver,_gunner,_commander] joinSilent _grp; 
+					_grp selectLeader _driver; 
+					_vehicle disableTIEquipment true; 
+				}; 
+				
+				_vehicle 
+			};
+
+			MAZ_EZM_AAFP_fnc_createSpeedBoatHMGModule = {
+				private _vehicle = ["O_Boat_Armed_01_hmg_F",[
+					"a3\boat_f\boat_armed_01\data\boat_armed_01_ext_INDP_CO.paa",
+					"a3\boat_f\boat_armed_01\data\boat_armed_01_int_INDP_CO.paa",
+					"a3\boat_f\boat_armed_01\data\boat_armed_01_CROWS_INDP_CO.paa"
+				]] call MAZ_EZM_fnc_createVehicle;
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+					private _commander = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_commander moveInCommander _vehicle; 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_gunner moveInGunner _vehicle; 
+					private _grp = createGroup [Independent,true]; 
+					[_driver,_gunner,_commander] joinSilent _grp; 
+					_grp selectLeader _driver; 
+					_vehicle disableTIEquipment true; 
+				}; 
+			
+				_vehicle 
+			};
+
+			MAZ_EZM_AAFP_fnc_createSpeedBoatMinigunModule = {
+				private _vehicle = ["I_Boat_Armed_01_minigun_F"] call MAZ_EZM_fnc_createVehicle;
+                _vehicle disableTIEquipment true; 
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+					private _commander = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_commander moveInCommander _vehicle; 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_gunner moveInGunner _vehicle; 
+					private _grp = createGroup [Independent,true]; 
+					[_driver,_gunner,_commander] joinSilent _grp; 
+					_grp selectLeader _driver; 
+				}; 
+			
+				_vehicle 
+			};
+		
+		comment "Cars"; 
+		
+			MAZ_EZM_AAFP_fnc_createOffroadModule = { 
+				private _vehicle = ["I_G_Offroad_01_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				[ 
+					_vehicle, 
+					["Green",1],  
+					["HideDoor1",0,"HideDoor2",0,"HideDoor3",0,"HideBackpacks",0,"HideBumper1",1,"HideBumper2",0,"HideConstruction",0,"hidePolice",1,"HideServices",1,"BeaconsStart",0,"BeaconsServicesStart",0] 
+				] call BIS_fnc_initVehicle;  
+				
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createMortarOffroadModule = { 
+				private _vehicle = ["I_G_Offroad_01_F"] call MAZ_EZM_fnc_createVehicle;
+				[_vehicle] call MAZ_EZM_fnc_deleteAttachedWhenDeleted;
+				[_vehicle] call MAZ_EZM_fnc_deleteAttachedWhenKilled;
+				private _turret = createVehicle ["I_Mortar_01_F",[0,0,0],[],0,"CAN_COLLIDE"]; 
+				private _box = createVehicle ["Box_Syndicate_WpsLaunch_F",[0,0,0],[],0,"CAN_COLLIDE"];  
+				[_turret] call MAZ_EZM_fnc_addObjectToInterface; 
+				[_box] call MAZ_EZM_fnc_addObjectToInterface; 
+							
+				_turret attachTo [_vehicle,[0.3,-2,0]]; 
+				_box attachTo [_vehicle,[-0.05,-0.8,-0.49]]; 
+			
+				[ 
+					_vehicle, 
+					["Green",1],  
+					["HideDoor1",0,"HideDoor2",0,"HideDoor3",1,"HideBackpacks",0,"HideBumper1",1,"HideBumper2",0,"HideConstruction",0,"hidePolice",1,"HideServices",1,"BeaconsStart",0,"BeaconsServicesStart",0] 
+				] call BIS_fnc_initVehicle; 
+				
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+					_gunner moveInGunner _turret; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createOffroadCoveredModule = { 
+				private _vehicle = ["C_Offroad_01_covered_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				[ 
+					_vehicle, 
+					["Green",1],  
+					["hidePolice",1,"HideServices",1,"HideCover",0,"StartBeaconLight",0,"HideRoofRack",0,"HideLoudSpeakers",1,"HideAntennas",1,"HideBeacon",1,"HideSpotlight",1,"HideDoor3",0,"OpenDoor3",0,"HideDoor1",0,"HideDoor2",0,"HideBackpacks",0,"HideBumper1",1,"HideBumper2",0,"HideConstruction",0,"BeaconsStart",0] 
+				] call BIS_fnc_initVehicle; 
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createOffroadRepairModule = { 
+				private _vehicle = ["C_Offroad_01_covered_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				[ 
+					_vehicle, 
+					["Green",1],  
+					["hidePolice",1,"HideServices",0,"HideCover",1,"StartBeaconLight",0,"HideRoofRack",0,"HideLoudSpeakers",1,"HideAntennas",1,"HideBeacon",1,"HideSpotlight",1,"HideDoor3",0,"OpenDoor3",0,"HideDoor1",0,"HideDoor2",0,"HideBackpacks",0,"HideBumper1",1,"HideBumper2",1,"HideConstruction",1,"BeaconsStart",0] 
+				] call BIS_fnc_initVehicle; 
+				
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createOffroadHMGModule = { 
+				private _vehicle = ["I_G_Offroad_01_armed_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				[ 
+					_vehicle, 
+					["Green",1],  
+					["Hide_Shield",0,"Hide_Rail",1,"HideDoor1",0,"HideDoor2",0,"HideDoor3",0,"HideBackpacks",0,"HideBumper1",1,"HideBumper2",0,"HideConstruction",0] 
+				] call BIS_fnc_initVehicle; 
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_gunner moveInGunner _vehicle; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_driver,_gunner] joinSilent _grp; 
+					_grp selectLeader _driver; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createOffroadATModule = { 
+				private _vehicle = ["I_G_Offroad_01_AT_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				[ 
+					_vehicle, 
+					["Green",1],  
+					["HideDoor1",0,"HideDoor2",0,"HideDoor3",0,"HideBackpacks",0,"HideBumper1",1,"HideBumper2",0,"HideConstruction",0] 
+				] call BIS_fnc_initVehicle; 
+
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_gunner moveInGunner _vehicle; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_driver,_gunner] joinSilent _grp; 
+					_grp selectLeader _driver; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createQuadbikeModule = { 
+				private _vehicle = ["I_Quadbike_01_F"] call MAZ_EZM_fnc_createVehicle;
+				
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _passanger = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+					_passanger moveinCargo _vehicle; 
+					[_driver] call MAZ_EZM_AAFP_fnc_addAAFPBackpack; 
+					[_passanger] call MAZ_EZM_AAFP_fnc_addAAFPBackpack; 
+					private _grp = createGroup [Independent,true]; 
+					[_driver,_passanger] joinSilent _grp; 
+					_grp selectLeader _driver; 
+				}; 
+			
+				_vehicle 
+			};
+            
+            MAZ_EZM_AAFP_fnc_createStriderModule = { 
+				private _vehicle = ["I_MRAP_03_F"] call MAZ_EZM_fnc_createVehicle; 
+				
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _commander = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _passanger = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule;
+					_driver moveInDriver _vehicle; 
+					_commander moveincommander _vehicle; 
+					_passanger moveincargo _vehicle;
+					[_driver] call MAZ_EZM_AAFP_fnc_addAAFPBackpack; 
+					[_commander] call MAZ_EZM_AAFP_fnc_addAAFPBackpack;
+					private _grp = createGroup [Independent,true]; 
+					[_driver,_commander,_passanger] joinSilent _grp; 
+					_grp selectLeader _commander; 
+                    _vehicle disableTIEquipment true; 
+				    _vehicle allowCrewInImmobile true;
+				}; 
+			
+				_vehicle 
+			};
+
+            MAZ_EZM_AAFP_fnc_createStriderHMGModule = { 
+				private _vehicle = ["I_MRAP_03_hmg_F"] call MAZ_EZM_fnc_createVehicle; 
+				
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule;
+					private _commander = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule;  
+					_driver moveInDriver _vehicle; 
+					_gunner moveinGunner _vehicle;
+					_commander moveinCommander _vehicle;  
+					[_driver] call MAZ_EZM_AAFP_fnc_addAAFPBackpack; 
+					[_gunner] call MAZ_EZM_AAFP_fnc_addAAFPBackpack;
+					private _grp = createGroup [Independent,true]; 
+					[_driver,_gunner,_commander] joinSilent _grp; 
+					_grp selectLeader _gunner; 
+                    _vehicle disableTIEquipment true; 
+				    _vehicle allowCrewInImmobile true;
+				}; 
+			
+				_vehicle 
+			};
+
+            MAZ_EZM_AAFP_fnc_createStriderGMGModule = { 
+				private _vehicle = ["I_MRAP_03_gmg_F"] call MAZ_EZM_fnc_createVehicle; 
+				
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule;
+					private _commander = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+					_gunner moveinGunner _vehicle; 
+					_commander moveinCommander _vehicle;
+					[_driver] call MAZ_EZM_AAFP_fnc_addAAFPBackpack; 
+					[_gunner] call MAZ_EZM_AAFP_fnc_addAAFPBackpack;
+					private _grp = createGroup [Independent,true]; 
+					[_driver,_gunner,_commander] joinSilent _grp; 
+					_grp selectLeader _gunner; 
+                    _vehicle disableTIEquipment true; 
+				    _vehicle allowCrewInImmobile true;
+				}; 
+			
+				_vehicle 
+			};
+
+        comment "Compositions";
+
+			MAZ_EZM_AAFP_fnc_createCache1Module = {
+				
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				
+				private _vehicle = createVehicle ["Land_Pallet_F",[24583.7,19262.5,0.00658536],[],0,"CAN_COLLIDE"];
+				_vehicle setPosWorld [24583.7,19262.5,3.28107];
+				_vehicle setVectorDirAndUp [[0.00257769,-0.999997,0],[0,0,1]];
+				_vehicle setDamage 0.9; 
+
+				_item25 = createVehicle ["Box_IND_Ammo_F",[24583.2,19262.6,0.178298],[],0,"CAN_COLLIDE"];
+				_item25 setPosWorld [24583.2,19262.6,3.63531];
+				_item25 setVectorDirAndUp [[1,0.000220732,0],[0,0,1]];
+				_item25 = [_item25] call BIS_fnc_replaceWithSimpleObject;
+				[_item25, _vehicle] call BIS_fnc_attachToRelative;
+
+				_item26 = createVehicle ["Box_IND_Wps_F",[24583.4,19262.2,0.239546],[],0,"CAN_COLLIDE"];
+				_item26 setPosWorld [24583.5,19262,3.53942];
+				_item26 setVectorDirAndUp [[0,-1,0],[0,0,1]];
+				_item26 = [_item26] call BIS_fnc_replaceWithSimpleObject;
+				[_item26, _vehicle] call BIS_fnc_attachToRelative;
+
+				_item27 = createVehicle ["ShootingMat_01_Olive_F",[24584.1,19262.5,0.185562],[],0,"CAN_COLLIDE"];
+				_item27 setPosWorld [24584.1,19262.5,3.37622];
+				_item27 setVectorDirAndUp [[0.00206215,-0.799997,0],[0,0,0.8]];
+				_item27 = [_item27] call BIS_fnc_replaceWithSimpleObject;
+				[_item27, _vehicle] call BIS_fnc_attachToRelative;
+				_item27 setObjectscale 0.8;
+				
+				_item28 = createVehicle ["ShootingMat_01_Olive_F",[24583.3,19262.5,0.187327],[],0,"CAN_COLLIDE"];
+				_item28 setPosWorld [24583.3,19262.5,3.37798];
+				_item28 setVectorDirAndUp [[0.00206215,-0.799997,0],[0,0,0.8]];
+				_item28 = [_item28] call BIS_fnc_replaceWithSimpleObject;
+				[_item28, _vehicle] call BIS_fnc_attachToRelative;
+				_item28 setObjectscale 0.8;
+				
+				_item29 = createVehicle ["Box_IND_Wps_F",[24583.5,19262,0.512213],[],0,"CAN_COLLIDE"];
+				_item29 setPosWorld [24583.5,19262,3.87547];
+				_item29 setVectorDirAndUp [[0.00257769,-0.999997,0],[0,0,1]];
+				_item29 = [_item29] call BIS_fnc_replaceWithSimpleObject;
+				[_item29, _vehicle] call BIS_fnc_attachToRelative;
+
+				_item30 = createVehicle ["Box_IND_Ammo_F",[24583.9,19262.4,0.269096],[],0,"CAN_COLLIDE"];
+				_item30 setPosWorld [24583.9,19262.6,3.64146];
+				_item30 setVectorDirAndUp [[0.999995,0.00322254,0],[0,0,1]];
+				_item30 = [_item30] call BIS_fnc_replaceWithSimpleObject;
+				[_item30, _vehicle] call BIS_fnc_attachToRelative;
+
+				_item43 = createVehicle ["Box_IND_WpsLaunch_F",[24583.7,19263,0.20602],[],0,"CAN_COLLIDE"];
+				_item43 setPosWorld [24583.7,19263,3.52767];
+				_item43 setVectorDirAndUp [[0,1,0],[0,0,1]];
+				_item43 enableSimulationGlobal false;
+				[_item43, _vehicle] call BIS_fnc_attachToRelative;
+				clearItemCargoGlobal _item43;
+				clearWeaponCargoGlobal _item43;
+				clearMagazineCargoGlobal _item43;
+				clearBackpackCargo _item43;
+				
+				_simpleObject_6 = createSimpleObject ['a3\weapons_f\launchers\rpg32\pg32v_rocket_item.p3d', [24584.0351563,19262.179688,3.694174]];
+				_simpleObject_6 setVectorDirAndUp [[6.25676e-007,1,-5.97802e-005],[0.999998,-7.5623e-007,-0.00218392]];
+				[_simpleObject_6, _vehicle] call BIS_fnc_attachToRelative;
+				_simpleObject_7 = createSimpleObject ['a3\weapons_f\launchers\rpg32\pg32v_rocket_item.p3d', [24584.0351563,19262.285156,3.69271]];
+				_simpleObject_7 setVectorDirAndUp [[6.25676e-007,1,-5.97802e-005],[0.999998,-7.5623e-007,-0.00218392]];
+				[_simpleObject_7, _vehicle] call BIS_fnc_attachToRelative;
+				_simpleObject_8 = createSimpleObject ['a3\weapons_f\launchers\rpg32\pg32v_rocket_item.p3d', [24584.0351563,19262.0722656,3.69467]];
+				_simpleObject_8 setVectorDirAndUp [[6.25676e-007,1,-5.97802e-005],[0.999998,-7.5623e-007,-0.00218392]];
+				[_simpleObject_8, _vehicle] call BIS_fnc_attachToRelative;
+				_simpleObject_9 = createSimpleObject ['a3\weapons_f\launchers\rpg32\tbg32v_rocket_item.p3d', [24584.0546875,19261.962891,3.69224]];
+				_simpleObject_9 setVectorDirAndUp [[-1.86053e-007,1,-7.78989e-005],[0.99999,-1.70764e-007,-0.00458049]];
+				[_simpleObject_9, _vehicle] call BIS_fnc_attachToRelative;
+			
+				[_vehicle] call MAZ_EZM_fnc_cacheExplodeOnExplosiveDamage;
+				[_vehicle] call MAZ_EZM_fnc_deleteAttachedWhenKilled;
+				[_vehicle] call MAZ_EZM_fnc_deleteAttachedWhenDeleted;
+				[_vehicle] call MAZ_EZM_fnc_addObjectToInterface;
+
+				_vehicle setpos _pos;
+				
+				_vehicle
+			};
+
+			MAZ_EZM_AAFP_fnc_createCache2Module = {
+				
+				private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+				
+				_vehicle = createVehicle ["Land_Pallet_F",[24587.7,19262.5,0.00657558],[],0,"CAN_COLLIDE"];
+				_vehicle setPosWorld [24587.7,19262.5,3.28107];
+				_vehicle setVectorDirAndUp [[0.00257769,-0.999997,0],[0,0,1]];
+				_vehicle setDamage 0.9; 
+
+				_item16 = createVehicle ["Weapon_arifle_Mk20_F",[24587.5,19262.2,0.532802],[],0,"CAN_COLLIDE"];
+				_item16 setPosWorld [24587.5,19262.2,3.70695];
+				_item16 setVectorDirAndUp [[-0.243731,0.969843,0],[0,0,1]];
+				[_item16, _vehicle] call BIS_fnc_attachToRelative;
+				_item16 setDamage 1;
+
+				_item17 = createVehicle ["Weapon_arifle_Mk20_F",[24587.9,19262,0.536677],[],0,"CAN_COLLIDE"];
+				_item17 setPosWorld [24587.9,19262,3.71141];
+				_item17 setVectorDirAndUp [[-0.0391472,0.999233,-4.28914e-005],[-0.00129824,-9.37858e-005,-0.999999]];
+				[_item17, _vehicle] call BIS_fnc_attachToRelative;
+				_item17 setDamage 1;
+
+				_item19 = createVehicle ["Box_IND_Ammo_F",[24587.2,19262.8,0.172966],[],0,"CAN_COLLIDE"];
+				_item19 setPosWorld [24587.15,19262.8,3.62947];
+				_item19 setVectorDirAndUp [[0,-1,0],[0,0,1]];
+				_item19 = [_item19] call BIS_fnc_replaceWithSimpleObject;
+				[_item19, _vehicle] call BIS_fnc_attachToRelative;
+
+				_item20 = createVehicle ["Box_IND_Wps_F",[24587.9,19262.6,0.232723],[],0,"CAN_COLLIDE"];
+				_item20 setPosWorld [24587.9,19262.7,3.53942];
+				_item20 setVectorDirAndUp [[0.00257769,-0.999997,0],[0,0,1]];
+				_item20 = [_item20] call BIS_fnc_replaceWithSimpleObject;
+				[_item20, _vehicle] call BIS_fnc_attachToRelative;
+
+				_item21 = createVehicle ["ShootingMat_01_Olive_F",[24588.1,19262.5,0.185553],[],0,"CAN_COLLIDE"];
+				_item21 setPosWorld [24588.1,19262.5,3.37622];
+				_item21 setVectorDirAndUp [[0.00206215,-0.799997,0],[0,0,0.8]];
+				_item21 = [_item21] call BIS_fnc_replaceWithSimpleObject;
+				[_item21, _vehicle] call BIS_fnc_attachToRelative;
+				_item21 setObjectscale 0.8;
+
+				_item22 = createVehicle ["ShootingMat_01_Olive_F",[24587.3,19262.5,0.187317],[],0,"CAN_COLLIDE"];
+				_item22 setPosWorld [24587.3,19262.5,3.37798];
+				_item22 setVectorDirAndUp [[0.00206215,-0.799997,0],[0,0,0.8]];
+				_item22 = [_item22] call BIS_fnc_replaceWithSimpleObject;
+				[_item22, _vehicle] call BIS_fnc_attachToRelative;
+				_item22 setObjectscale 0.8;
+
+				_item23 = createVehicle ["Box_IND_Wps_F",[24587.9,19262.7,0.514064],[],0,"CAN_COLLIDE"];
+				_item23 setPosWorld [24587.9,19262.7,3.87547];
+				_item23 setVectorDirAndUp [[0.00257769,-0.999997,0],[0,0,1]];
+				_item23 = [_item23] call BIS_fnc_replaceWithSimpleObject;
+				[_item23, _vehicle] call BIS_fnc_attachToRelative;
+
+				_item15 = createVehicle ["Box_IND_WpsSpecial_F",[24587.7,19262.2,0.157008],[],0,"CAN_COLLIDE"];
+				_item15 setPosWorld [24587.7,19262.1,3.52];
+				_item15 setVectorDirAndUp [[0.00228801,0.899997,0],[0,0,0.9]];
+				_item15 = [_item15] call BIS_fnc_replaceWithSimpleObject;
+				[_item15, _vehicle] call BIS_fnc_attachToRelative;
+
+				[_vehicle] call MAZ_EZM_fnc_cacheExplodeOnExplosiveDamage;
+				[_vehicle] call MAZ_EZM_fnc_deleteAttachedWhenKilled;
+				[_vehicle] call MAZ_EZM_fnc_deleteAttachedWhenDeleted;
+				[_vehicle] call MAZ_EZM_fnc_addObjectToInterface;
+
+				_vehicle setpos _pos;
+				
+				_vehicle
+
+			};
+
+		comment "Drones"; 
+					
+			MAZ_EZM_AAFP_fnc_createDarterModule = { 
+				private _vehicle = ["I_UAV_01_F"] call MAZ_EZM_fnc_createVehicle;
+
+				private _aiGroup = createGroup [INDEP,true]; 
+				private _oldGroup = createVehicleCrew _vehicle; 
+				private _leader = leader _oldGroup; 
+				{ 
+					[_x] joinSilent _aiGroup; 
+				}forEach units _oldGroup; 
+				_aiGroup selectLeader _leader; 
+			
+				_vehicle 
+			}; 
+
+            MAZ_EZM_AAFP_fnc_createPelicanMedicalModule = { 
+				private _vehicle = ["I_UAV_06_medical_F"] call MAZ_EZM_fnc_createVehicle; 
+			
+				private _aiGroup = createGroup [Independent,true]; 
+				private _oldGroup = createVehicleCrew _vehicle; 
+				private _leader = leader _oldGroup; 
+				{ 
+					[_x] joinSilent _aiGroup; 
+				}forEach units _oldGroup; 
+				_aiGroup selectLeader _leader; 
+			
+				_vehicle 
+			}; 
+
+            MAZ_EZM_AAFP_fnc_createPelicanLeafletModule = { 
+				private _vehicle = ["I_UAV_06_F"] call MAZ_EZM_fnc_createVehicle; 
+			
+				private _aiGroup = createGroup [Independent,true]; 
+				private _oldGroup = createVehicleCrew _vehicle; 
+				private _leader = leader _oldGroup; 
+				{ 
+					[_x] joinSilent _aiGroup; 
+				}forEach units _oldGroup; 
+				_aiGroup selectLeader _leader; 
+
+				_vehicle setPylonLoadout [1,"Pylon_1Rnd_Leaflets_Guer_F"];
+			
+				_vehicle 
+			}; 
+
+            MAZ_EZM_AAFP_fnc_createAbabilModule = { 
+				private _vehicle = ["I_UAV_02_F"] call MAZ_EZM_fnc_createVehicle; 
+			
+				private _aiGroup = createGroup [Independent,true]; 
+				private _oldGroup = createVehicleCrew _vehicle; 
+				private _leader = leader _oldGroup; 
+				{ 
+					[_x] joinSilent _aiGroup; 
+				}forEach units _oldGroup; 
+				_aiGroup selectLeader _leader;
+
+				_vehicle 
+			}; 
+
+            MAZ_EZM_AAFP_fnc_createAbabilCASModule = { 
+				private _vehicle = ["I_UAV_02_CAS_F"] call MAZ_EZM_fnc_createVehicle; 
+			
+				private _aiGroup = createGroup [Independent,true]; 
+				private _oldGroup = createVehicleCrew _vehicle; 
+				private _leader = leader _oldGroup; 
+				{ 
+					[_x] joinSilent _aiGroup; 
+				}forEach units _oldGroup; 
+				_aiGroup selectLeader _leader;
+
+				_vehicle 
+			}; 
+
+            MAZ_EZM_AAFP_fnc_createStomperModule = { 
+				private _vehicle = ["I_UGV_01_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				private _aiGroup = createGroup [Independent,true]; 
+				private _oldGroup = createVehicleCrew _vehicle; 
+				private _leader = leader _oldGroup; 
+				{ 
+					[_x] joinSilent _aiGroup; 
+				}forEach units _oldGroup; 
+				_aiGroup selectLeader _leader;
+
+				_vehicle 
+			}; 
+
+			MAZ_EZM_AAFP_fnc_createStomperRCWSModule = { 
+				private _vehicle = ["I_UGV_01_rcws_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				private _aiGroup = createGroup [Independent,true]; 
+				private _oldGroup = createVehicleCrew _vehicle; 
+				private _leader = leader _oldGroup; 
+				{ 
+					[_x] joinSilent _aiGroup; 
+				}forEach units _oldGroup; 
+				_aiGroup selectLeader _leader;
+
+				_vehicle 
+			}; 
+
+		comment "Helicopters";
+
+			MAZ_EZM_AAFP_fnc_createPawneeModule = {
+                private _vehicle = ["B_Heli_Light_01_armed_F"] call MAZ_EZM_fnc_createVehicle;
+
+				[_vehicle,[0,"A3\Air_F\Heli_Light_01\Data\heli_light_01_ext_indp_co.paa"]] remoteExec ['setObjectTexture'];
+
+                if(MAZ_EZM_spawnWithCrew) then {
+                    
+                    private _pilot = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+                    _pilot moveInDriver _vehicle; 
+                
+                    private _gunner = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+                    _gunner moveInAny _vehicle; 
+                
+                    private _grp = createGroup [Independent,true]; 
+                    [_pilot,_gunner] joinSilent _grp; 
+                    _grp selectLeader _pilot; 
+                    _grp setBehaviour "AWARE"; 
+                }; 
+            
+                _vehicle 
+            };
+
+            MAZ_EZM_AAFP_fnc_createOrcaUnarmedModule = {
+                private _vehicle = ["O_Heli_Light_02_unarmed_F"] call MAZ_EZM_fnc_createVehicle;
+
+                [_vehicle,[0,"\a3\air_f\Heli_Light_02\Data\heli_light_02_ext_indp_co.paa"]] remoteExec ['setObjectTexture'];
+
+                if(MAZ_EZM_spawnWithCrew) then {
+                    
+                    private _pilot = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+                    _pilot moveInDriver _vehicle; 
+                
+                    private _gunner = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+                    _gunner moveInAny _vehicle; 
+                
+                    private _grp = createGroup [Independent,true]; 
+                    [_pilot,_gunner] joinSilent _grp; 
+                    _grp selectLeader _pilot; 
+                    _grp setBehaviour "AWARE"; 
+                }; 
+            
+                _vehicle 
+            }; 
+
+            MAZ_EZM_AAFP_fnc_createOrcaModule = {
+                private _vehicle = ["O_Heli_Light_02_dynamicLoadout_F"] call MAZ_EZM_fnc_createVehicle;
+
+                [_vehicle,[0,"\a3\air_f\Heli_Light_02\Data\heli_light_02_ext_indp_co.paa"]] remoteExec ['setObjectTexture'];
+            
+                if(MAZ_EZM_spawnWithCrew) then { 
+                    
+                    private _pilot = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+                    _pilot moveInDriver _vehicle; 
+                
+                    private _gunner = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+                    _gunner moveInAny _vehicle; 
+                
+                    private _grp = createGroup [Independent,true]; 
+                    [_pilot,_gunner] joinSilent _grp; 
+                    _grp selectLeader _pilot; 
+                    _grp setBehaviour "AWARE"; 
+                }; 
+            
+                _vehicle 
+            }; 
+
+            MAZ_EZM_AAFP_fnc_createHellcatUnarmedModule = {
+                private _vehicle = ["I_Heli_light_03_unarmed_F"] call MAZ_EZM_fnc_createVehicle;
+
+                [_vehicle,"Green"] call bis_fnc_initVehicle;
+
+                if(MAZ_EZM_spawnWithCrew) then {
+                    
+                    private _pilot = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+                    _pilot moveInDriver _vehicle; 
+                
+                    private _gunner = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+                    _gunner moveInAny _vehicle; 
+                
+                    private _grp = createGroup [Independent,true]; 
+                    [_pilot,_gunner] joinSilent _grp; 
+                    _grp selectLeader _pilot; 
+                    _grp setBehaviour "AWARE"; 
+                }; 
+            
+                _vehicle 
+            };
+            
+            MAZ_EZM_AAFP_fnc_createHellcatModule = {
+                private _vehicle = ["I_Heli_light_03_F"] call MAZ_EZM_fnc_createVehicle;
+
+                [_vehicle,"Green"] call bis_fnc_initVehicle;
+
+                if(MAZ_EZM_spawnWithCrew) then {
+                    
+                    private _pilot = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+                    _pilot moveInDriver _vehicle; 
+                
+                    private _gunner = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+                    _gunner moveInAny _vehicle; 
+                
+                    private _grp = createGroup [Independent,true]; 
+                    [_pilot,_gunner] joinSilent _grp; 
+                    _grp selectLeader _pilot; 
+                    _grp setBehaviour "AWARE"; 
+                }; 
+            
+                _vehicle 
+            }; 
+
+			MAZ_EZM_AAFP_fnc_createHummingbirdModule = {
+                private _vehicle = ["B_Heli_Light_01_F"] call MAZ_EZM_fnc_createVehicle;
+
+				[_vehicle,[0,"A3\Air_F\Heli_Light_01\Data\heli_light_01_ext_indp_co.paa"]] remoteExec ['setObjectTexture'];
+
+                if(MAZ_EZM_spawnWithCrew) then {
+                    
+                    private _pilot = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+                    _pilot moveInDriver _vehicle; 
+                
+                    private _gunner = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+                    _gunner moveInAny _vehicle; 
+                
+                    private _grp = createGroup [Independent,true]; 
+                    [_pilot,_gunner] joinSilent _grp; 
+                    _grp selectLeader _pilot; 
+                    _grp setBehaviour "AWARE"; 
+                }; 
+            
+                _vehicle 
+            };
+
+            MAZ_EZM_AAFP_fnc_createMohawkModule = {
+                private _vehicle = ["I_Heli_Transport_02_F"] call MAZ_EZM_fnc_createVehicle;
+            
+                if(MAZ_EZM_spawnWithCrew) then { 
+                    
+                    private _pilot = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+                    _pilot moveInDriver _vehicle; 
+                
+                    private _gunner = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+                    _gunner moveInAny _vehicle; 
+                
+                    private _grp = createGroup [Independent,true]; 
+                    [_pilot,_gunner] joinSilent _grp; 
+                    _grp selectLeader _pilot; 
+                    _grp setBehaviour "AWARE"; 
+                }; 
+            
+                _vehicle 
+            }; 
+
+		comment "Groups"; 
+			
+			MAZ_EZM_AAFP_fnc_createSquadModule = { 
+				private _squadLead = call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
+				private _grp = group _squadLead; 
+				{ 
+				private _unit = call (missionNamespace getVariable _x); 
+				[_unit] joinSilent _grp; 
+				}forEach [ 
+				'MAZ_EZM_AAFP_fnc_createAmmoBearerModule', 
+				'MAZ_EZM_AAFP_fnc_createCombatMedicModule', 
+				'MAZ_EZM_AAFP_fnc_createRiflemanModule', 
+				'MAZ_EZM_AAFP_fnc_createMarksmanModule', 
+				'MAZ_EZM_AAFP_fnc_createRiflemanLATModule', 
+				'MAZ_EZM_AAFP_fnc_createGrenadierModule', 
+				'MAZ_EZM_AAFP_fnc_createAutoriflemanModule', 
+				'MAZ_EZM_AAFP_fnc_createRiflemanModule' 
+				]; 
+				_grp setBehaviour "AWARE"; 
+				{_x setunitpos "AUTO"} foreach units _squadLead 
+			}; 
+		
+			MAZ_EZM_AAFP_fnc_createPatrolModule = { 
+				private _squadLead = call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
+				private _grp = group _squadLead; 
+				{ 
+				private _unit = call (missionNamespace getVariable _x); 
+				[_unit] joinSilent _grp; 
+				}forEach [ 
+				'MAZ_EZM_AAFP_fnc_createCombatMedicModule', 
+				'MAZ_EZM_AAFP_fnc_createRiflemanModule', 
+				'MAZ_EZM_AAFP_fnc_createMarksmanModule', 
+				'MAZ_EZM_AAFP_fnc_createRiflemanModule' 
+				]; 
+				_grp setBehaviour "AWARE"; 
+				{_x setunitpos "AUTO"} foreach units _squadLead 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createSentryModule = { 
+				private _squadLead = call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
+				private _grp = group _squadLead; 
+				{ 
+				private _unit = call (missionNamespace getVariable _x); 
+				[_unit] joinSilent _grp; 
+				}forEach [ 
+				'MAZ_EZM_AAFP_fnc_createRiflemanModule' 
+				]; 
+				_grp setBehaviour "AWARE"; 
+				{_x setunitpos "AUTO"} foreach units _squadLead 
+			}; 
+		
+			MAZ_EZM_AAFP_fnc_createAntiAirTeamModule = { 
+				private _squadLead = call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
+				private _grp = group _squadLead; 
+				{ 
+				private _unit = call (missionNamespace getVariable _x); 
+				[_unit] joinSilent _grp; 
+				}forEach [ 
+				'MAZ_EZM_AAFP_fnc_createAmmoBearerModule', 
+				'MAZ_EZM_AAFP_fnc_createMissileSpecAAModule' 
+				]; 
+				_unit addItemToBackpack "Titan_AA";
+				_grp setBehaviour "AWARE"; 
+				{_x setunitpos "AUTO"} foreach units _squadLead 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createAntiTankTeamModule = { 
+				private _squadLead = call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
+				private _grp = group _squadLead; 
+				{ 
+				private _unit = call (missionNamespace getVariable _x); 
+				[_unit] joinSilent _grp; 
+				}forEach [ 
+				'MAZ_EZM_AAFP_fnc_createAmmoBearerModule', 
+				'MAZ_EZM_AAFP_fnc_createRiflemanLATModule' 
+				]; 
+				_grp setBehaviour "AWARE"; 
+				{_x setunitpos "AUTO"} foreach units _squadLead 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createMarksmanTeamModule = { 
+				private _squadLead = call MAZ_EZM_AAFP_fnc_createMarksmanModule; 
+				private _grp = group _squadLead; 
+				_squadLead addPrimaryWeaponItem "optic_SOS"; 
+				{ 
+				private _unit = call (missionNamespace getVariable _x); 
+				[_unit] joinSilent _grp; 
+				}forEach [ 
+				'MAZ_EZM_AAFP_fnc_createSquadLeadModule' 
+				]; 
+				
+				_grp setBehaviour "AWARE"; 
+			}; 
+
+		comment "Groups (Paramilitary)"; 
+			
+			MAZ_EZM_AAFP_fnc_createSquadPModule = { 
+				private _squadLead = call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
+				private _grp = group _squadLead; 
+				{ 
+				private _unit = call (missionNamespace getVariable _x); 
+				[_unit] joinSilent _grp; 
+				}forEach [ 
+				'MAZ_EZM_AAFP_fnc_createAmmoBearerPModule', 
+				'MAZ_EZM_AAFP_fnc_createCombatMedicPModule', 
+				'MAZ_EZM_AAFP_fnc_createRiflemanPModule', 
+				'MAZ_EZM_AAFP_fnc_createMarksmanPModule', 
+				'MAZ_EZM_AAFP_fnc_createRiflemanLATPModule', 
+				'MAZ_EZM_AAFP_fnc_createGrenadierPModule', 
+				'MAZ_EZM_AAFP_fnc_createAutoriflemanPModule', 
+				'MAZ_EZM_AAFP_fnc_createRiflemanPModule' 
+				]; 
+				_grp setBehaviour "AWARE"; 
+				{_x setunitpos "AUTO"} foreach units _squadLead 
+			}; 
+		
+			MAZ_EZM_AAFP_fnc_createPatrolPModule = { 
+				private _squadLead = call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
+				private _grp = group _squadLead; 
+				{ 
+				private _unit = call (missionNamespace getVariable _x); 
+				[_unit] joinSilent _grp; 
+				}forEach [ 
+				'MAZ_EZM_AAFP_fnc_createCombatMedicPModule', 
+				'MAZ_EZM_AAFP_fnc_createRiflemanPModule', 
+				'MAZ_EZM_AAFP_fnc_createMarksmanPModule', 
+				'MAZ_EZM_AAFP_fnc_createRiflemanPModule' 
+				]; 
+				_grp setBehaviour "AWARE"; 
+				{_x setunitpos "AUTO"} foreach units _squadLead 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createSentryPModule = { 
+				private _squadLead = call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
+				private _grp = group _squadLead; 
+				{ 
+				private _unit = call (missionNamespace getVariable _x); 
+				[_unit] joinSilent _grp; 
+				}forEach [ 
+				'MAZ_EZM_AAFP_fnc_createRiflemanPModule' 
+				]; 
+				_grp setBehaviour "AWARE"; 
+				{_x setunitpos "AUTO"} foreach units _squadLead 
+			};
+			
+			MAZ_EZM_AAFP_fnc_createAntiTankTeamPModule = { 
+				private _squadLead = call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
+				private _grp = group _squadLead; 
+				{ 
+				private _unit = call (missionNamespace getVariable _x); 
+				[_unit] joinSilent _grp; 
+				}forEach [ 
+				'MAZ_EZM_AAFP_fnc_createAmmoBearerPModule', 
+				'MAZ_EZM_AAFP_fnc_createRiflemanLATPModule' 
+				]; 
+				_grp setBehaviour "AWARE"; 
+				{_x setunitpos "AUTO"} foreach units _squadLead 
+			};
+
+
+			
+		comment "Men"; 
+		
+			MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit = { 
+				params ["_unit"]; 
+				sleep 0.5; 
+				private _greekVoice = [ 
+					"Male01GRE", 
+					"Male02GRE", 
+					"Male03GRE", 
+					"Male04GRE", 
+					"Male05GRE", 
+					"Male06GRE" 
+				]; 
+				private _AAFPHeads = [ 
+					"GreekHead_A3_11", 
+					"GreekHead_A3_12", 
+					"GreekHead_A3_13", 
+					"GreekHead_A3_14", 
+					"LivonianHead_2", 
+					"LivonianHead_3", 
+					"LivonianHead_4", 
+					"LivonianHead_5", 
+					"LivonianHead_6", 
+					"LivonianHead_7", 
+					"LivonianHead_8", 
+					"LivonianHead_9", 
+					"LivonianHead_10", 
+					"RussianHead_1", 
+					"RussianHead_2", 
+					"RussianHead_3", 
+					"RussianHead_4", 
+					"RussianHead_5", 
+					"GreekHead_A3_02", 
+					"GreekHead_A3_04", 
+					"GreekHead_A3_01", 
+					"GreekHead_A3_06", 
+					"GreekHead_A3_08", 
+					"GreekHead_A3_09" 
+				]; 
+			
+				[_unit,(selectRandom _greekVoice)] remoteExec ['setSpeaker']; 
+				[_unit,(selectRandom _AAFPHeads)] remoteExec ['setFace']; 
+			
+				if((toLower (goggles _unit)) in ["g_balaclava_oli"]) then { 
+					removeHeadgear _unit; 
+				}; 
+			
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_getAAFPWeaponToUnit = { 
+				params ["_unit"]; 
+				private _556Ammo = "30Rnd_556x45_Stanag";
+				private _pWeapon = selectRandom [ ["arifle_Mk20C_F", _556Ammo], ["arifle_Mk20_F", _556Ammo] ]; 
+							
+				_pWeapon 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_addAAFPBackpack = { 
+				params ["_unit"]; 
+				private _randomBackpack = selectRandom ["B_AssaultPack_dgtl"]; 
+				_unit addBackpackGlobal _randomBackpack; 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_addAAFPGogglesToUnit = { 
+				params ["_unit"]; 
+				private _AAFPGoggles = ["","","G_Shades_Black","G_Shades_Red"]; 
+				_unit addGoggles (selectRandom _AAFPGoggles); 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_addAAFPUniformToUnit = { 
+				params ["_unit"]; 
+				private _AAFPUniforms = ["U_I_CombatUniform_shortsleeve","U_I_CombatUniform"]; 
+				private _AAFPVests = ["V_PlateCarrierIA2_dgtl","V_PlateCarrierIA1_dgtl"]; 
+				private _AAFPHeadgear = ["H_HelmetIA"]; 
+				
+				_unit forceAddUniform (selectRandom _AAFPUniforms); 
+				_unit addVest (selectRandom _AAFPVests); 
+				_unit addHeadgear (selectRandom _AAFPHeadgear); 
+				
+				switch (uniform _unit) do { 
+					case "U_I_C_Soldier_Para_4_F": { 
+						private _textureTop = selectRandom ["a3\characters_f_enoch\uniforms\data\i_e_soldier_01_tanktop_co.paa","a3\characters_f_exp\syndikat\data\u_i_c_soldier_bandit_5_f_1_co.paa"]; 
+						private _textureBottom = selectRandom ["a3\characters_f_bootcamp\guerrilla\data\ig_guerrilla_6_1_co.paa","A3\characters_f_exp\Syndikat\Data\U_I_C_Soldier_Para_4_F_2_co.paa","a3\characters_f_beta\indep\data\ia_soldier_01_clothing_co.paa"]; 
+						[[_unit,_textureTop,_textureBottom],{ 
+							params ["_unit","_top","_bottom"]; 
+							_unit setObjectTexture [0, _top]; 
+							_unit setObjectTexture [1, _bottom]; 
+						}] remoteExec ['spawn',0,_unit]; 
+					};
+				}; 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createAmmoBearerModule = { 
+				private _unit = [independent,"I_Soldier_A_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnit; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPBackpack; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPGogglesToUnit; 
+				private _weaponInfo = [_unit] call MAZ_EZM_AAFP_fnc_getAAFPWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,[_weaponInfo select 1,6],["optic_ACO_grn"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+			
+				_unit 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createAutoriflemanModule = { 
+				private _unit = [independent,"I_Soldier_AR_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnit; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPGogglesToUnit; 
+		    	private _M556Ammo = selectRandom ["200Rnd_556x45_Box_Red_F", "200Rnd_556x45_Box_Tracer_Red_F"]; 
+				private _M65Ammo = selectRandom ["200Rnd_65x39_cased_Box_Red", "200Rnd_65x39_cased_Box_Tracer_Red"]; 
+				private _pMachineGun = selectRandom [ ["LMG_Mk200_black_F",_M65Ammo] ];  
+				[_unit,[_pMachineGun select 0,[_pMachineGun select 1,2],[]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+			
+				_unit 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createCombatMedicModule = { 
+				private _unit = [independent,"I_medic_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnit; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPBackpack; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPGogglesToUnit; 
+				private _weaponInfo = [_unit] call MAZ_EZM_AAFP_fnc_getAAFPWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,[_weaponInfo select 1,6],["optic_ACO_grn"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1],["SmokeShell",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+				_unit addItemToBackpack "Medikit"; 
+				for "_i" from 0 to 4 do { 
+					_unit addItemToBackpack "FirstAidKit"; 
+				}; 
+			
+				_unit 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createMedicModule = { 
+				private _unit = [independent,"I_medic_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnit; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPBackpack; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPGogglesToUnit; 
+			
+				_unit addVest "V_PlateCarrierIA1_dgtl"; 
+				removeGoggles _unit; 
+				_unit addHeadgear "H_HelmetIA"; 
+				_unit addItemToBackpack "Medikit"; 
+				for "_i" from 0 to 4 do { 
+					_unit addItemToBackpack "FirstAidKit"; 
+				}; 
+			
+				_unit 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createCrewmanModule = { 
+				private _unit = [independent,"I_crew_F",MAZ_EZM_stanceForAI,"AWARE"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				removeHeadgear _unit; 
+				removevest _unit; 
+				removeheadgear _unit; 
+				_unit addHeadgear "H_HelmetCrew_I"; 
+				_unit addUniform "U_Tank_green_F";
+				_unit addVest "V_TacVest_oli"; 
+				_unit addItemToVest "ToolKit"; 
+				private _weaponInfo = [_unit] call MAZ_EZM_AAFP_fnc_getAAFPWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,[_weaponInfo select 1,6],[]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+				
+				_unit 
+			};
+			
+			MAZ_EZM_AAFP_fnc_createEngineerModule = { 
+				private _unit = [independent,"I_engineer_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnit; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+                _unit addItemToVest "ToolKit"; 
+				private _weaponInfo = [_unit] call MAZ_EZM_AAFP_fnc_getAAFPWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,[_weaponInfo select 1,6],["optic_ACO_grn"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+				_unit 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createSquadLeadModule = { 
+				private _unit = [independent,"I_Soldier_SL_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnit;
+				private _SquadleadHeadgear = selectRandom ["H_MilCap_dgtl","H_HelmetIA"]; 
+				_unit addWeapon "Binocular"; 
+				removeheadgear _unit;
+				_unit addHeadgear _SquadleadHeadgear; 
+				private _weaponInfo = [_unit] call MAZ_EZM_AAFP_fnc_getAAFPWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,[_weaponInfo select 1,6],["optic_ACO_grn"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+				removeGoggles _unit;  
+			
+				_unit   
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createGrenadierModule = { 
+				private _unit = [independent,"I_Soldier_GL_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnit; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPGogglesToUnit; 
+				private _pGrenadier = selectRandom ["arifle_Mk20_GL_F"]; 
+				[_unit,[_pGrenadier,["30Rnd_556x45_Stanag",5],["optic_ACO_grn"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1],["1Rnd_HE_Grenade_shell",6],["1Rnd_Smoke_Grenade_shell",2]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+			
+				_unit 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createMarksmanModule = { 
+				private _unit = [independent,"I_Soldier_M_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+			
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnit; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPGogglesToUnit; 
+				private _pMarksman = selectRandom [ "srifle_EBR_F"]; 
+				[_unit,[_pMarksman,["20Rnd_762x51_Mag",5],["optic_MRCO"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons;  
+			
+				_unit 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createMissileSpecAAModule = { 
+				private _unit = [independent,"I_Soldier_AA_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+			
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnit; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPBackpack; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPGogglesToUnit; 
+				private _weaponInfo = [_unit] call MAZ_EZM_AAFP_fnc_getAAFPWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,[_weaponInfo select 1,6],["optic_ACO_grn"]],["launch_I_Titan_F",["Titan_AA",1]],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons;
+				_unit addItemToBackpack "Titan_AA";
+				_unit 
+			};
+
+			MAZ_EZM_AAFP_fnc_createOfficerModule = { 
+				private _unit = [independent,"I_officer_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan;  
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPGogglesToUnit; 
+				_unit addVest "V_PlateCarrierIA1_dgtl";
+				_unit addUniform "U_I_OfficerUniform";
+				private _weaponInfo = [_unit] call MAZ_EZM_AAFP_fnc_getAAFPWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,[_weaponInfo select 1,6],["optic_ACO_grn"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons;
+				_unit addHeadgear "H_Beret_blk";
+				
+				_unit 
+			};  
+			
+			MAZ_EZM_AAFP_fnc_createRiflemanModule = { 
+				private _unit = [independent,"I_soldier_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnit; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPGogglesToUnit; 
+				private _weaponInfo = [_unit] call MAZ_EZM_AAFP_fnc_getAAFPWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,[_weaponInfo select 1,6],["optic_ACO_grn"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons;
+				_unit 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createRiflemanLATModule = { 
+				private _unit = [independent,"I_Soldier_LAT_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+			
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;  
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnit; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPBackpack; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPGogglesToUnit; 
+				private _pRPG = selectRandom ["RPG32_F", "RPG32_F"];  
+				private _pAT = selectRandom [ ["launch_RPG32_green_F",_pRPG] ]; 
+				private _weaponInfo = [_unit] call MAZ_EZM_AAFP_fnc_getAAFPWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,[_weaponInfo select 1,6],["optic_ACO_grn"]],[_pAT select 0, [_pAT select 1,3]],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+				_unit 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createRiflemanHATModule = { 
+				private _unit = [independent,"I_Soldier_AT_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+			
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnit; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPBackpack; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPGogglesToUnit; 
+				private _weaponInfo = [_unit] call MAZ_EZM_AAFP_fnc_getAAFPWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,[_weaponInfo select 1,6],["optic_ACO_grn"]],["launch_MRAWS_olive_rail_F",["MRAWS_HEAT_F",2]],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+				_unit 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createRadiomanModule = { 
+				private _unit = [independent,"I_soldier_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+			
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnit; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPGogglesToUnit; 
+				_unit addBackpack "B_RadioBag_01_digi_F"; 
+				private _weaponInfo = [_unit] call MAZ_EZM_AAFP_fnc_getAAFPWeaponToUnit; 
+				[_unit,[_weaponInfo select 0,[_weaponInfo select 1,6],["optic_ACO_grn"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1],["SmokeShell",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+				_unit 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createUnarmedModule = { 
+				private _unit = [independent,"I_Soldier_unarmed_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnit; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				removeVest _unit; 
+				removeHeadgear _unit; 
+				[_unit,""] remoteExec ["switchMove"]; 
+				_unit 
+			}; 
+
+            MAZ_EZM_AAFP_fnc_createFighterPilotModule = { 
+				private _unit = [independent,"I_Fighter_Pilot_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+			
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+	
+				[_unit,""] remoteExec ["switchMove"]; 
+			
+				_unit 
+			};
+
+            MAZ_EZM_AAFP_fnc_createHelicopterCrewModule = { 
+				private _unit = [independent,"I_helicrew_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+			
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+	
+				[_unit,""] remoteExec ["switchMove"]; 
+			
+				_unit 
+			};
+
+            MAZ_EZM_AAFP_fnc_createHelicopterPilotModule = { 
+				private _unit = [independent,"I_helipilot_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+			
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+	
+				[_unit,""] remoteExec ["switchMove"]; 
+			
+				_unit 
+			};
+
+		comment "Men (Paramilitary)";  
+			
+			MAZ_EZM_AAFP_fnc_getAAFPWeaponToUnitP = { 
+				params ["_unit"]; 
+				private _556Ammo = "30Rnd_556x45_Stanag"; 
+				private _545Ammo = "30Rnd_545x39_Mag_F"; 
+				private _762Ammo = "30Rnd_762x39_Mag_F"; 
+				private _pWeapon = selectRandom [ ["arifle_AKM_FL_F", _762Ammo], ["arifle_Mk20C_F", _556Ammo], ["arifle_Mk20_F", _556Ammo], ["arifle_AKS_F", _545Ammo] ]; 
+							
+				_pWeapon 
+			};
+			
+			MAZ_EZM_AAFP_fnc_addAAFPUniformToUnitP = { 
+				params ["_unit"]; 
+				private _AAFPUniforms = ["U_I_CombatUniform_shortsleeve","U_I_CombatUniform","U_I_C_Soldier_Para_4_F"]; 
+				private _AAFPVests = ["V_PlateCarrierIA2_dgtl","V_PlateCarrierIA1_dgtl"]; 
+				private _AAFPHeadgear = ["H_HelmetIA","H_Booniehat_dgtl","H_Cap_blk_Raven","H_MilCap_dgtl","H_Bandanna_sgg"]; 
+				
+				_unit forceAddUniform (selectRandom _AAFPUniforms); 
+				_unit addVest (selectRandom _AAFPVests); 
+				_unit addHeadgear (selectRandom _AAFPHeadgear); 
+				
+				switch (uniform _unit) do { 
+					case "U_I_C_Soldier_Para_4_F": { 
+						private _textureTop = selectRandom ["a3\characters_f_enoch\uniforms\data\i_e_soldier_01_tanktop_co.paa"]; 
+						private _textureBottom = selectRandom ["a3\characters_f_beta\indep\data\ia_soldier_01_clothing_co.paa"]; 
+						[[_unit,_textureTop,_textureBottom],{ 
+							params ["_unit","_top","_bottom"]; 
+							_unit setObjectTexture [0, _top]; 
+							_unit setObjectTexture [1, _bottom]; 
+						}] remoteExec ['spawn',0,_unit]; 
+					};
+				}; 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createAmmoBearerPModule = { 
+				private _unit = [independent,"I_Soldier_A_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnitP; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPBackpack; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPGogglesToUnit; 
+				private _weaponInfo = [_unit] call MAZ_EZM_AAFP_fnc_getAAFPWeaponToUnitP; 
+				[_unit,[_weaponInfo select 0,[_weaponInfo select 1,6],["optic_ACO_grn"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+			
+				_unit 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createAutoriflemanPModule = { 
+				private _unit = [independent,"I_Soldier_AR_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnitP; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPGogglesToUnit; 
+		    	private _M556Ammo = selectRandom ["200Rnd_556x45_Box_Red_F", "200Rnd_556x45_Box_Tracer_Red_F"]; 
+				private _M65Ammo = selectRandom ["200Rnd_65x39_cased_Box_Red", "200Rnd_65x39_cased_Box_Tracer_Red"]; 
+				private _pMachineGun = selectRandom [ ["LMG_Mk200_black_F",_M65Ammo] ];  
+				[_unit,[_pMachineGun select 0,[_pMachineGun select 1,2],[]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+			
+				_unit 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createCombatMedicPModule = { 
+				private _unit = [independent,"I_medic_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnitP; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPBackpack; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPGogglesToUnit; 
+				private _weaponInfo = [_unit] call MAZ_EZM_AAFP_fnc_getAAFPWeaponToUnitP; 
+				[_unit,[_weaponInfo select 0,[_weaponInfo select 1,6],["optic_ACO_grn"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1],["SmokeShell",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+				_unit addItemToBackpack "Medikit"; 
+				for "_i" from 0 to 4 do { 
+					_unit addItemToBackpack "FirstAidKit"; 
+				}; 
+			
+				_unit 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createEngineerPModule = { 
+				private _unit = [independent,"I_engineer_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnitP; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+                _unit addItemToVest "ToolKit"; 
+				private _weaponInfo = [_unit] call MAZ_EZM_AAFP_fnc_getAAFPWeaponToUnitP; 
+				[_unit,[_weaponInfo select 0,[_weaponInfo select 1,6],["optic_ACO_grn"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+				_unit 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createSquadLeadPModule = { 
+				private _unit = [independent,"I_Soldier_SL_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+			
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnitP; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				_unit addWeapon "Binocular";
+				private _weaponInfo = [_unit] call MAZ_EZM_AAFP_fnc_getAAFPWeaponToUnitP; 
+				[_unit,[_weaponInfo select 0,[_weaponInfo select 1,6],["optic_ACO_grn"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+			
+				removeGoggles _unit;  
+			
+				_unit   
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createGrenadierPModule = { 
+				private _unit = [independent,"I_Soldier_GL_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+			
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnitP; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPGogglesToUnit; 
+				private _pGrenadier = selectRandom ["arifle_Mk20_GL_F"]; 
+				[_unit,[_pGrenadier,["30Rnd_556x45_Stanag",5],["optic_ACO_grn"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1],["1Rnd_HE_Grenade_shell",6],["1Rnd_Smoke_Grenade_shell",2]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+			
+				_unit 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createMarksmanPModule = { 
+				private _unit = [independent,"I_Soldier_M_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+			
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnitP; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPGogglesToUnit; 
+				private _pMarksman = selectRandom [ "srifle_DMR_06_olive_F","srifle_DMR_06_hunter_F"]; 
+				[_unit,[_pMarksman,["20Rnd_762x51_Mag",5],[]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons;  
+			
+				_unit 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createRiflemanPModule = { 
+				private _unit = [independent,"I_soldier_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+			
+				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnitP; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPGogglesToUnit; 
+				private _weaponInfo = [_unit] call MAZ_EZM_AAFP_fnc_getAAFPWeaponToUnitP; 
+				[_unit,[_weaponInfo select 0,[_weaponInfo select 1,6],["optic_ACO_grn"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons; 
+			
+				_unit 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createRiflemanLATPModule = { 
+				private _unit = [independent,"I_Soldier_LAT_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
+			
+				[_unit] call MAZ_EZM_fnc_removeAllClothing;  
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnitP; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				[_unit] call MAZ_EZM_AAFP_fnc_addAAFPBackpack; 
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPGogglesToUnit; 
+				private _fAT = selectRandom [ ["launch_RPG32_green_F","RPG32_F"],["launch_RPG7_F","RPG7_F"] ]; 
+				private _weaponInfo = [_unit] call MAZ_EZM_AAFP_fnc_getAAFPWeaponToUnitP; 
+				[_unit,[_weaponInfo select 0,[_weaponInfo select 1,6],["optic_ACO_grn"]],[_fAT select 0, [_fAT select 1,3]],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons;  
+			
+				_unit 
+			}; 
+
+		comment "Men (Special)";
+
+			MAZ_EZM_AAFP_fnc_createDiverModule = { 
+				private _unit = [independent,"I_diver_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan;
+				[_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+				_unit 
+			}; 
+
+			MAZ_EZM_AAFP_fnc_createSniperModule = { 
+				private _unit = [independent,"I_Sniper_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan;
+				private _pMarksman = selectRandom ["srifle_GM6_F"]; 
+				[_unit,[_pMarksman,["20Rnd_762x51_Mag",5],["optic_SOS"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons;
+				_unit 
+			}; 
+
+			MAZ_EZM_AAFP_fnc_createSniperAridModule = { 
+				private _unit = [independent,"I_ghillie_ard_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan;
+				private _pMarksman = selectRandom ["srifle_GM6_F"]; 
+				[_unit,[_pMarksman,["20Rnd_762x51_Mag",5],["optic_SOS"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons;
+				_unit 
+			};
+
+			MAZ_EZM_AAFP_fnc_createSniperLushModule = { 
+				private _unit = [independent,"I_ghillie_lsh_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan;
+				private _pMarksman = selectRandom ["srifle_GM6_F"]; 
+				[_unit,[_pMarksman,["20Rnd_762x51_Mag",5],["optic_SOS"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons;
+				_unit 
+			};
+
+			MAZ_EZM_AAFP_fnc_createSniperSemiAridModule = { 
+				private _unit = [independent,"I_ghillie_sard_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan;
+				private _pMarksman = selectRandom ["srifle_GM6_F"]; 
+				[_unit,[_pMarksman,["20Rnd_762x51_Mag",5],["optic_SOS"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons;
+				_unit 
+			};
+
+			MAZ_EZM_AAFP_fnc_createSpotterModule = { 
+				private _unit = [independent,"I_Spotter_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan;
+				removeallweapons _unit;
+				private _pMarksman = selectRandom ["arifle_Mk20_F"]; 
+				[_unit,[_pMarksman,["20Rnd_762x51_Mag",5],["optic_MRCO"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons;
+				_unit
+			}; 
+
+			MAZ_EZM_AAFP_fnc_createSpotterAridModule = { 
+				private _unit = [independent,"I_ghillie_ard_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan;
+				private _pMarksman = selectRandom ["arifle_Mk20_F"]; 
+				[_unit,[_pMarksman,["20Rnd_762x51_Mag",5],["optic_MRCO"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons;
+				_unit 
+			}; 
+
+			MAZ_EZM_AAFP_fnc_createSpotterLushModule = { 
+				private _unit = [independent,"I_ghillie_lsh_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan;
+				private _pMarksman = selectRandom ["arifle_Mk20_F"]; 
+				[_unit,[_pMarksman,["20Rnd_762x51_Mag",5],["optic_MRCO"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons;
+				_unit 
+			}; 
+
+			MAZ_EZM_AAFP_fnc_createSpotterSemiAridModule = { 
+				private _unit = [independent,"I_ghillie_sard_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan;
+				private _pMarksman = selectRandom ["arifle_Mk20_F"]; 
+				[_unit,[_pMarksman,["20Rnd_762x51_Mag",5],["optic_MRCO"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3,[["HandGrenade",1]]] call MAZ_EZM_fnc_addItemAndWeapons;
+				_unit 
+			}; 
+
+        comment "Planes";
+            
+            MAZ_EZM_AAFP_fnc_createGryphonModule = {
+                private _vehicle = ["I_Plane_Fighter_04_F"] call MAZ_EZM_fnc_createVehicle;
+
+				[_vehicle,"CamoGrey"] call bis_fnc_initVehicle;
+                
+                if(MAZ_EZM_spawnWithCrew) then {
+                    private _pilot = [] call MAZ_EZM_AAFP_fnc_createFighterPilotModule; 
+                    _pilot moveInDriver _vehicle;
+
+                    private _grp = createGroup [Independent,true]; 
+					[_pilot] joinSilent _grp; 
+					_grp selectLeader _pilot; 
+					_grp setBehaviour "AWARE"; 
+                };
+
+                _vehicle
+            };
+
+			MAZ_EZM_AAFP_fnc_createGryphonCASModule = {
+                private _vehicle = ["I_Plane_Fighter_04_F"] call MAZ_EZM_fnc_createVehicle;
+
+				[_vehicle,"CamoGrey"] call bis_fnc_initVehicle;
+
+				_vehicle setPylonLoadout [1,"PylonMissile_Missile_BIM9X_x1"];
+				_vehicle setPylonLoadout [2,"PylonMissile_Missile_BIM9X_x1"];
+				_vehicle setPylonLoadout [3,"PylonRack_Missile_AGM_02_x1"];
+				_vehicle setPylonLoadout [4,"PylonRack_Missile_AGM_02_x1"];
+				_vehicle setPylonLoadout [5,"PylonMissile_Bomb_GBU12_x1"];
+				_vehicle setPylonLoadout [6,"PylonMissile_Bomb_GBU12_x1"];
+                
+                if(MAZ_EZM_spawnWithCrew) then {
+                    private _pilot = [] call MAZ_EZM_AAFP_fnc_createFighterPilotModule; 
+                    _pilot moveInDriver _vehicle;
+                    private _grp = createGroup [Independent,true]; 
+					[_pilot] joinSilent _grp; 
+					_grp selectLeader _pilot; 
+					_grp setBehaviour "AWARE"; 
+                };
+
+                _vehicle
+            };
+
+            MAZ_EZM_AAFP_fnc_createBuzzardModule = { 
+				private _vehicle = ["I_Plane_Fighter_03_CAS_F",[""]] call MAZ_EZM_fnc_createVehicle;
+				_vehicle allowCrewInImmobile true;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _pilot = [] call MAZ_EZM_AAFP_fnc_createFighterPilotModule; 
+					_pilot moveInDriver _vehicle; 
+
+					private _grp = createGroup [Independent,true]; 
+					[_pilot] joinSilent _grp; 
+					_grp selectLeader _pilot; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			};
+		
+		comment "Reinforcement"; 
+
+			MAZ_EZM_AAFP_fnc_createReinforcementMohawkModule = { 
+				private _vehicle = ["I_Heli_Transport_02_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _pilot = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule;
+					private _passanger16 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
+					private _passanger15 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATModule; 
+					private _passanger14 = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _passanger13 = [] call MAZ_EZM_AAFP_fnc_createAutoriflemanModule; 
+					private _passanger12 = [] call MAZ_EZM_AAFP_fnc_createEngineerModule; 
+					private _passanger11 = [] call MAZ_EZM_AAFP_fnc_createMarksmanModule; 
+					private _passanger10 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicModule; 
+					private _passanger9 = [] call MAZ_EZM_AAFP_fnc_createGrenadierModule; 
+					private _passanger8 = [] call MAZ_EZM_AAFP_fnc_createAutoriflemanModule; 
+					private _passanger7 = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _passanger6 = [] call MAZ_EZM_AAFP_fnc_createAmmoBearerModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createGrenadierModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createMarksmanModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicModule; 
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
+					
+					_pilot moveInDriver _vehicle; 
+					_gunner moveInAny _vehicle;
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle; 
+					_passanger7 moveInCargo _vehicle; 
+					_passanger8 moveInCargo _vehicle; 
+					_passanger9 moveInCargo _vehicle; 
+					_passanger10 moveInCargo _vehicle; 
+					_passanger11 moveInCargo _vehicle; 
+					_passanger12 moveInCargo _vehicle; 
+					_passanger13 moveInCargo _vehicle; 
+					_passanger14 moveInCargo _vehicle; 
+					_passanger15 moveInCargo _vehicle; 
+					_passanger16 moveInCargo _vehicle; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5,_passanger6,_passanger8,_passanger12,_passanger14] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_pilot,_gunner] joinSilent _grp; 
+					_grp selectLeader _pilot; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_passanger16,_passanger15,_passanger10,_passanger11,_passanger9,_passanger7,_passanger13] joinSilent _grp; 
+					_grp selectLeader _passanger16; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_AAFP_fnc_createReinforcementHellcatUnarmedModule = { 
+				private _vehicle = ["I_Heli_light_03_unarmed_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _pilot = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule;
+
+					private _passanger6 = [] call MAZ_EZM_AAFP_fnc_createAmmoBearerModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createGrenadierModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createMarksmanModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicModule; 
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
+					
+					_pilot moveInDriver _vehicle; 
+					_gunner moveInAny _vehicle;
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle; 
+			
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5,_passanger6] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_pilot,_gunner] joinSilent _grp; 
+					_grp selectLeader _pilot; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_AAFP_fnc_createReinforcementHellcatModule = { 
+				private _vehicle = ["I_Heli_light_03_F"] call MAZ_EZM_fnc_createVehicle;
+
+				[_vehicle,"Green"] call bis_fnc_initVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _pilot = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule;
+
+					private _passanger6 = [] call MAZ_EZM_AAFP_fnc_createAmmoBearerModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createGrenadierModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createMarksmanModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicModule; 
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
+					
+					_pilot moveInDriver _vehicle; 
+					_gunner moveInAny _vehicle;
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle; 
+			
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5,_passanger6] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_pilot,_gunner] joinSilent _grp; 
+					_grp selectLeader _pilot; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_AAFP_fnc_createReinforcementOrcaModule = { 
+				
+				private _vehicle = ["O_Heli_Light_02_dynamicLoadout_F"] call MAZ_EZM_fnc_createVehicle;
+
+				[_vehicle,[0,"\a3\air_f\Heli_Light_02\Data\heli_light_02_ext_indp_co.paa"]] remoteExec ['setObjectTexture'];
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _pilot = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule;
+
+					private _passanger8 = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _passanger7 = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _passanger6 = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createGrenadierModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createMarksmanModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicModule; 
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
+					
+					_pilot moveInDriver _vehicle; 
+					_gunner moveInAny _vehicle;
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle; 
+					_passanger7 moveInCargo _vehicle; 
+					_passanger8 moveInCargo _vehicle; 
+			
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5,_passanger6,_passanger7,_passanger8] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_pilot,_gunner] joinSilent _grp; 
+					_grp selectLeader _pilot; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_AAFP_fnc_createReinforcementOrcaUnarmedModule = { 
+				
+				private _vehicle = ["O_Heli_Light_02_unarmed_F"] call MAZ_EZM_fnc_createVehicle;
+
+				[_vehicle,[0,"\a3\air_f\Heli_Light_02\Data\heli_light_02_ext_indp_co.paa"]] remoteExec ['setObjectTexture'];
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _pilot = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule;
+
+					private _passanger8 = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _passanger7 = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _passanger6 = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createGrenadierModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createMarksmanModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicModule; 
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
+					
+					_pilot moveInDriver _vehicle; 
+					_gunner moveInAny _vehicle;
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle; 
+					_passanger7 moveInCargo _vehicle; 
+					_passanger8 moveInCargo _vehicle; 
+			
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5,_passanger6,_passanger7,_passanger8] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_pilo,_gunnert] joinSilent _grp; 
+					_grp selectLeader _pilot; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_AAFP_fnc_createReinforcementHummingbirdModule = { 
+				
+				private _vehicle = ["B_Heli_Light_01_F"] call MAZ_EZM_fnc_createVehicle;
+
+				[_vehicle,[0,"A3\Air_F\Heli_Light_01\Data\heli_light_01_ext_indp_co.paa"]] remoteExec ['setObjectTexture'];
+
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _pilot = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule;
+
+					private _passanger6 = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createGrenadierModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createMarksmanModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicModule; 
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
+					
+					_pilot moveInDriver _vehicle; 
+					_gunner moveInAny _vehicle;
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle; 
+
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5,_passanger6] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_pilot,_gunner] joinSilent _grp; 
+					_grp selectLeader _pilot; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+		
+			MAZ_EZM_AAFP_fnc_createReinforcementZamakCoveredTransportModule = { 
+				private _vehicle = ["I_Truck_02_covered_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _passanger16 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
+					private _passanger15 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATModule; 
+					private _passanger14 = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _passanger13 = [] call MAZ_EZM_AAFP_fnc_createAutoriflemanModule; 
+					private _passanger12 = [] call MAZ_EZM_AAFP_fnc_createEngineerModule; 
+					private _passanger11 = [] call MAZ_EZM_AAFP_fnc_createMarksmanModule; 
+					private _passanger10 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicModule; 
+					private _passanger9 = [] call MAZ_EZM_AAFP_fnc_createGrenadierModule; 
+					private _passanger8 = [] call MAZ_EZM_AAFP_fnc_createAutoriflemanModule; 
+					private _passanger7 = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _passanger6 = [] call MAZ_EZM_AAFP_fnc_createAmmoBearerModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createGrenadierModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createMarksmanModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicModule; 
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
+					
+					_driver moveInDriver _vehicle; 
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle; 
+					_passanger7 moveInCargo _vehicle; 
+					_passanger8 moveInCargo _vehicle; 
+					_passanger9 moveInCargo _vehicle; 
+					_passanger10 moveInCargo _vehicle; 
+					_passanger11 moveInCargo _vehicle; 
+					_passanger12 moveInCargo _vehicle; 
+					_passanger13 moveInCargo _vehicle; 
+					_passanger14 moveInCargo _vehicle; 
+					_passanger15 moveInCargo _vehicle; 
+					_passanger16 moveInCargo _vehicle; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5,_passanger6,_passanger8,_passanger12,_passanger14] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_driver] joinSilent _grp; 
+					_grp selectLeader _driver; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_passanger16,_passanger15,_passanger10,_passanger11,_passanger9,_passanger7,_passanger13] joinSilent _grp; 
+					_grp selectLeader _passanger16; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createReinforcementOffroadCoveredModule = { 
+				private _vehicle = ["C_Offroad_01_covered_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				[ 
+					_vehicle, 
+					["Green",1],  
+					["hidePolice",1,"HideServices",1,"HideCover",0,"StartBeaconLight",0,"HideRoofRack",0,"HideLoudSpeakers",1,"HideAntennas",1,"HideBeacon",1,"HideSpotlight",1,"HideDoor3",0,"OpenDoor3",0,"HideDoor1",0,"HideDoor2",0,"HideBackpacks",0,"HideBumper1",1,"HideBumper2",0,"HideConstruction",0,"BeaconsStart",0] 
+				] call BIS_fnc_initVehicle; 
+		
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+					_grp selectLeader _driver; 
+					_grp setBehaviour "AWARE"; 
+					
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createMarksmanModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createReinforcementOffroadModule = {
+				private _vehicle = ["I_G_Offroad_01_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				[ 
+					_vehicle, 
+					["Green",1],  
+					["HideDoor1",0,"HideDoor2",0,"HideDoor3",0,"HideBackpacks",0,"HideBumper1",1,"HideBumper2",0,"HideConstruction",0,"hidePolice",1,"HideServices",1,"BeaconsStart",0,"BeaconsServicesStart",0] 
+				] call BIS_fnc_initVehicle; 
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+			
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+					private _grp = createGroup [Independent,true]; 
+					[_driver] joinSilent _grp; 
+					_grp selectLeader _driver; 
+					_grp setBehaviour "AWARE"; 
+					
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createMarksmanModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_AAFP_fnc_createReinforcementRhibModule = { 
+				
+				private _vehicle = ["I_C_Boat_Transport_02_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+				
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createAutoriflemanModule; 
+					private _passanger7 = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _passanger6 = [] call MAZ_EZM_AAFP_fnc_createAmmoBearerModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createGrenadierModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createMarksmanModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicModule; 
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
+					
+					_driver moveInDriver _vehicle; 
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle;
+					_passanger7 moveInCargo _vehicle;
+				
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5,_passanger6,_passanger7] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_driver] joinSilent _grp; 
+					_grp selectLeader _driver; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createReinforcementVanModule = { 
+				private _vehicle = ["I_G_Van_02_vehicle_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				[ 
+					_vehicle, 
+					["Black",1],  
+					["Enable_Cargo",1,"Door_1_source",0,"Door_2_source",0,"Door_3_source",0,"Door_4_source",0,"Hide_Door_1_source",0,"Hide_Door_2_source",0,"Hide_Door_3_source",0,"Hide_Door_4_source",0,"lights_em_hide",0,"ladder_hide",0,"spare_tyre_holder_hide",1,"spare_tyre_hide",1,"reflective_tape_hide",1,"roof_rack_hide",0,"LED_lights_hide",1,"sidesteps_hide",1,"rearsteps_hide",0,"side_protective_frame_hide",0,"front_protective_frame_hide",0,"beacon_front_hide",1,"beacon_rear_hide",1] 
+				] call BIS_fnc_initVehicle; 
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+				
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					
+					private _passanger10 = [] call MAZ_EZM_AAFP_fnc_createAutoriflemanModule; 
+					private _passanger9 = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _passanger8 = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _passanger7 = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _passanger6 = [] call MAZ_EZM_AAFP_fnc_createAmmoBearerModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createGrenadierModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createMarksmanModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicModule; 
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
+					
+					_driver moveInDriver _vehicle; 
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle; 
+					_passanger7 moveInCargo _vehicle; 
+					_passanger8 moveInCargo _vehicle; 
+					_passanger9 moveInCargo _vehicle; 
+					_passanger10 moveInCargo _vehicle; 
+					
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5,_passanger6,_passanger7,_passanger8,_passanger9,_passanger10] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_driver] joinSilent _grp; 
+					_grp selectLeader _driver; 
+					_grp setBehaviour "AWARE"; 
+					
+				}; 
+
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createReinforcementVanTransportModule = { 
+				private _vehicle = ["I_G_Van_02_transport_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				[ 
+					_vehicle, 
+					["Black",1],  
+					["Door_1_source",0,"Door_2_source",0,"Door_3_source",0,"Door_4_source",0,"Hide_Door_1_source",0,"Hide_Door_2_source",0,"Hide_Door_3_source",0,"Hide_Door_4_source",0,"lights_em_hide",0,"ladder_hide",0,"spare_tyre_holder_hide",1,"spare_tyre_hide",1,"reflective_tape_hide",1,"roof_rack_hide",0,"LED_lights_hide",1,"sidesteps_hide",1,"rearsteps_hide",1,"side_protective_frame_hide",0,"front_protective_frame_hide",0,"beacon_front_hide",1,"beacon_rear_hide",1] 
+				] call BIS_fnc_initVehicle; 
+				
+				if(MAZ_EZM_spawnWithCrew) then { 
+				
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					
+					private _passanger10 = [] call MAZ_EZM_AAFP_fnc_createAutoriflemanModule; 
+					private _passanger9 = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _passanger8 = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _passanger7 = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					private _passanger6 = [] call MAZ_EZM_AAFP_fnc_createAmmoBearerModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createGrenadierModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createMarksmanModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicModule; 
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
+					
+					_driver moveInDriver _vehicle; 
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle; 
+					_passanger7 moveInCargo _vehicle; 
+					_passanger8 moveInCargo _vehicle; 
+					_passanger9 moveInCargo _vehicle; 
+					_passanger10 moveInCargo _vehicle; 
+					
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5,_passanger6,_passanger7,_passanger8,_passanger9,_passanger10] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_driver] joinSilent _grp; 
+					_grp selectLeader _driver; 
+					_grp setBehaviour "AWARE"; 
+				
+				}; 
+			
+				_vehicle 
+			}; 
+
+		comment "Reinforcements (Paramilitary)";
+
+			MAZ_EZM_AAFP_fnc_createReinforcementMohawkPModule = { 
+				private _vehicle = ["I_Heli_Transport_02_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _pilot = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule;
+					private _passanger16 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadPModule; 
+					private _passanger15 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATPModule; 
+					private _passanger14 = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					private _passanger13 = [] call MAZ_EZM_AAFP_fnc_createAutoriflemanPModule; 
+					private _passanger12 = [] call MAZ_EZM_AAFP_fnc_createEngineerPModule; 
+					private _passanger11 = [] call MAZ_EZM_AAFP_fnc_createMarksmanPModule; 
+					private _passanger10 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicPModule; 
+					private _passanger9 = [] call MAZ_EZM_AAFP_fnc_createGrenadierPModule; 
+					private _passanger8 = [] call MAZ_EZM_AAFP_fnc_createAutoriflemanPModule; 
+					private _passanger7 = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					private _passanger6 = [] call MAZ_EZM_AAFP_fnc_createAmmoBearerPModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createGrenadierPModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createMarksmanPModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATPModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicPModule; 
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadPModule; 
+					
+					_pilot moveInDriver _vehicle; 
+					_gunner moveInAny _vehicle;
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle; 
+					_passanger7 moveInCargo _vehicle; 
+					_passanger8 moveInCargo _vehicle; 
+					_passanger9 moveInCargo _vehicle; 
+					_passanger10 moveInCargo _vehicle; 
+					_passanger11 moveInCargo _vehicle; 
+					_passanger12 moveInCargo _vehicle; 
+					_passanger13 moveInCargo _vehicle; 
+					_passanger14 moveInCargo _vehicle; 
+					_passanger15 moveInCargo _vehicle; 
+					_passanger16 moveInCargo _vehicle; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5,_passanger6,_passanger8,_passanger12,_passanger14] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_pilot,_gunner] joinSilent _grp; 
+					_grp selectLeader _pilot; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_passanger16,_passanger15,_passanger10,_passanger11,_passanger9,_passanger7,_passanger13] joinSilent _grp; 
+					_grp selectLeader _passanger16; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_AAFP_fnc_createReinforcementHellcatUnarmedPModule = { 
+				private _vehicle = ["I_Heli_light_03_unarmed_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _pilot = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule;
+
+					private _passanger6 = [] call MAZ_EZM_AAFP_fnc_createAmmoBearerPModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createGrenadierPModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createMarksmanPModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATPModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicPModule; 
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadPModule; 
+					
+					_pilot moveInDriver _vehicle; 
+					_gunner moveInAny _vehicle;
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle; 
+			
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5,_passanger6] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_pilot,_gunner] joinSilent _grp; 
+					_grp selectLeader _pilot; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_AAFP_fnc_createReinforcementHellcatPModule = { 
+				private _vehicle = ["I_Heli_light_03_F"] call MAZ_EZM_fnc_createVehicle;
+
+				[_vehicle,"Green"] call bis_fnc_initVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _pilot = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule;
+
+					private _passanger6 = [] call MAZ_EZM_AAFP_fnc_createAmmoBearerPModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createGrenadierPModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createMarksmanPModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATPModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicPModule; 
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadPModule; 
+					
+					_pilot moveInDriver _vehicle; 
+					_gunner moveInAny _vehicle;
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle; 
+			
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5,_passanger6] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_pilot,_gunner] joinSilent _grp; 
+					_grp selectLeader _pilot; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_AAFP_fnc_createReinforcementOrcaPModule = { 
+				
+				private _vehicle = ["O_Heli_Light_02_dynamicLoadout_F"] call MAZ_EZM_fnc_createVehicle;
+
+				[_vehicle,[0,"\a3\air_f\Heli_Light_02\Data\heli_light_02_ext_indp_co.paa"]] remoteExec ['setObjectTexture'];
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _pilot = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule;
+
+					private _passanger8 = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					private _passanger7 = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					private _passanger6 = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createGrenadierPModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createMarksmanPModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATPModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicPModule; 
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadPModule; 
+					
+					_pilot moveInDriver _vehicle; 
+					_gunner moveInAny _vehicle;
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle; 
+					_passanger7 moveInCargo _vehicle; 
+					_passanger8 moveInCargo _vehicle; 
+			
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5,_passanger6,_passanger7,_passanger8] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_pilot,_gunner] joinSilent _grp; 
+					_grp selectLeader _pilot; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_AAFP_fnc_createReinforcementOrcaUnarmedPModule = { 
+				
+				private _vehicle = ["O_Heli_Light_02_unarmed_F"] call MAZ_EZM_fnc_createVehicle;
+
+				[_vehicle,[0,"\a3\air_f\Heli_Light_02\Data\heli_light_02_ext_indp_co.paa"]] remoteExec ['setObjectTexture'];
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _pilot = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule;
+
+					private _passanger8 = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					private _passanger7 = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					private _passanger6 = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createGrenadierPModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createMarksmanPModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATPModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicPModule; 
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadPModule; 
+					
+					_pilot moveInDriver _vehicle; 
+					_gunner moveInAny _vehicle;
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle; 
+					_passanger7 moveInCargo _vehicle; 
+					_passanger8 moveInCargo _vehicle; 
+			
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5,_passanger6,_passanger7,_passanger8] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_pilo,_gunner] joinSilent _grp; 
+					_grp selectLeader _pilot; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_AAFP_fnc_createReinforcementHummingbirdPModule = { 
+				
+				private _vehicle = ["B_Heli_Light_01_F"] call MAZ_EZM_fnc_createVehicle;
+
+				[_vehicle,[0,"A3\Air_F\Heli_Light_01\Data\heli_light_01_ext_indp_co.paa"]] remoteExec ['setObjectTexture'];
+
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _pilot = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule; 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createHelicopterPilotModule;
+					private _passanger6 = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createGrenadierPModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createMarksmanPModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATPModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicPModule; 
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadPModule; 
+					
+					_pilot moveInDriver _vehicle; 
+					_gunner moveInAny _vehicle;
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle; 
+
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5,_passanger6] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_pilot,_gunner] joinSilent _grp; 
+					_grp selectLeader _pilot; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_AAFP_fnc_createReinforcementZamakCoveredTransportPModule = { 
+				private _vehicle = ["I_Truck_02_covered_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					private _passanger16 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadPModule; 
+					private _passanger15 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATPModule; 
+					private _passanger14 = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					private _passanger13 = [] call MAZ_EZM_AAFP_fnc_createAutoriflemanPModule; 
+					private _passanger12 = [] call MAZ_EZM_AAFP_fnc_createEngineerPModule; 
+					private _passanger11 = [] call MAZ_EZM_AAFP_fnc_createMarksmanPModule; 
+					private _passanger10 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicPModule; 
+					private _passanger9 = [] call MAZ_EZM_AAFP_fnc_createGrenadierPModule; 
+					private _passanger8 = [] call MAZ_EZM_AAFP_fnc_createAutoriflemanPModule; 
+					private _passanger7 = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					private _passanger6 = [] call MAZ_EZM_AAFP_fnc_createAmmoBearerPModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createGrenadierPModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createMarksmanPModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATPModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicPModule; 
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadPModule; 
+					
+					_driver moveInDriver _vehicle; 
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle; 
+					_passanger7 moveInCargo _vehicle; 
+					_passanger8 moveInCargo _vehicle; 
+					_passanger9 moveInCargo _vehicle; 
+					_passanger10 moveInCargo _vehicle; 
+					_passanger11 moveInCargo _vehicle; 
+					_passanger12 moveInCargo _vehicle; 
+					_passanger13 moveInCargo _vehicle; 
+					_passanger14 moveInCargo _vehicle; 
+					_passanger15 moveInCargo _vehicle; 
+					_passanger16 moveInCargo _vehicle; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5,_passanger6,_passanger8,_passanger12,_passanger14] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_driver] joinSilent _grp; 
+					_grp selectLeader _driver; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_passanger16,_passanger15,_passanger10,_passanger11,_passanger9,_passanger7,_passanger13] joinSilent _grp; 
+					_grp selectLeader _passanger16; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createReinforcementOffroadCoveredPModule = { 
+				private _vehicle = ["C_Offroad_01_covered_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				[ 
+					_vehicle, 
+					["Green",1],  
+					["hidePolice",1,"HideServices",1,"HideCover",0,"StartBeaconLight",0,"HideRoofRack",0,"HideLoudSpeakers",1,"HideAntennas",1,"HideBeacon",1,"HideSpotlight",1,"HideDoor3",0,"OpenDoor3",0,"HideDoor1",0,"HideDoor2",0,"HideBackpacks",0,"HideBumper1",1,"HideBumper2",0,"HideConstruction",0,"BeaconsStart",0] 
+				] call BIS_fnc_initVehicle; 
+		
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					_driver moveInDriver _vehicle; 
+					_grp selectLeader _driver; 
+					_grp setBehaviour "AWARE"; 
+					
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadPModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicPModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createMarksmanPModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createReinforcementOffroadPModule = {
+				private _vehicle = ["I_G_Offroad_01_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				[ 
+					_vehicle, 
+					["Green",1],  
+					["HideDoor1",0,"HideDoor2",0,"HideDoor3",0,"HideBackpacks",0,"HideBumper1",1,"HideBumper2",0,"HideConstruction",0,"hidePolice",1,"HideServices",1,"BeaconsStart",0,"BeaconsServicesStart",0] 
+				] call BIS_fnc_initVehicle; 
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+			
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					_driver moveInDriver _vehicle; 
+					private _grp = createGroup [Independent,true]; 
+					[_driver] joinSilent _grp; 
+					_grp selectLeader _driver; 
+					_grp setBehaviour "AWARE"; 
+					
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadPModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicPModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createMarksmanPModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_AAFP_fnc_createReinforcementRhibPModule = { 
+				
+				private _vehicle = ["I_C_Boat_Transport_02_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+				
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createAutoriflemanPModule; 
+					private _passanger7 = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					private _passanger6 = [] call MAZ_EZM_AAFP_fnc_createAmmoBearerPModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createGrenadierPModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createMarksmanPModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATPModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicPModule; 
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadPModule; 
+					
+					_driver moveInDriver _vehicle; 
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle;
+					_passanger7 moveInCargo _vehicle;
+				
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5,_passanger6,_passanger7] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_driver] joinSilent _grp; 
+					_grp selectLeader _driver; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createReinforcementVanPModule = { 
+				private _vehicle = ["I_G_Van_02_vehicle_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				[ 
+					_vehicle, 
+					["Black",1],  
+					["Enable_Cargo",1,"Door_1_source",0,"Door_2_source",0,"Door_3_source",0,"Door_4_source",0,"Hide_Door_1_source",0,"Hide_Door_2_source",0,"Hide_Door_3_source",0,"Hide_Door_4_source",0,"lights_em_hide",0,"ladder_hide",0,"spare_tyre_holder_hide",1,"spare_tyre_hide",1,"reflective_tape_hide",1,"roof_rack_hide",0,"LED_lights_hide",1,"sidesteps_hide",1,"rearsteps_hide",0,"side_protective_frame_hide",0,"front_protective_frame_hide",0,"beacon_front_hide",1,"beacon_rear_hide",1] 
+				] call BIS_fnc_initVehicle; 
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+				
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					
+					private _passanger10 = [] call MAZ_EZM_AAFP_fnc_createAutoriflemanPModule; 
+					private _passanger9 = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					private _passanger8 = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					private _passanger7 = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					private _passanger6 = [] call MAZ_EZM_AAFP_fnc_createAmmoBearerPModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createGrenadierPModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createMarksmanPModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATPModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicPModule; 
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadPModule; 
+					
+					_driver moveInDriver _vehicle; 
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle; 
+					_passanger7 moveInCargo _vehicle; 
+					_passanger8 moveInCargo _vehicle; 
+					_passanger9 moveInCargo _vehicle; 
+					_passanger10 moveInCargo _vehicle; 
+					
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5,_passanger6,_passanger7,_passanger8,_passanger9,_passanger10] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_driver] joinSilent _grp; 
+					_grp selectLeader _driver; 
+					_grp setBehaviour "AWARE"; 
+					
+				}; 
+
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createReinforcementVanTransportPModule = { 
+				private _vehicle = ["I_G_Van_02_transport_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				[ 
+					_vehicle, 
+					["Black",1],  
+					["Door_1_source",0,"Door_2_source",0,"Door_3_source",0,"Door_4_source",0,"Hide_Door_1_source",0,"Hide_Door_2_source",0,"Hide_Door_3_source",0,"Hide_Door_4_source",0,"lights_em_hide",0,"ladder_hide",0,"spare_tyre_holder_hide",1,"spare_tyre_hide",1,"reflective_tape_hide",1,"roof_rack_hide",0,"LED_lights_hide",1,"sidesteps_hide",1,"rearsteps_hide",1,"side_protective_frame_hide",0,"front_protective_frame_hide",0,"beacon_front_hide",1,"beacon_rear_hide",1] 
+				] call BIS_fnc_initVehicle; 
+				
+				if(MAZ_EZM_spawnWithCrew) then { 
+				
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					
+					private _passanger10 = [] call MAZ_EZM_AAFP_fnc_createAutoriflemanPModule; 
+					private _passanger9 = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					private _passanger8 = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					private _passanger7 = [] call MAZ_EZM_AAFP_fnc_createRiflemanPModule; 
+					private _passanger6 = [] call MAZ_EZM_AAFP_fnc_createAmmoBearerPModule; 
+					private _passanger5 = [] call MAZ_EZM_AAFP_fnc_createGrenadierPModule; 
+					private _passanger4 = [] call MAZ_EZM_AAFP_fnc_createMarksmanPModule; 
+					private _passanger3 = [] call MAZ_EZM_AAFP_fnc_createRiflemanLATPModule; 
+					private _passanger2 = [] call MAZ_EZM_AAFP_fnc_createCombatMedicPModule; 
+					private _passanger1 = [] call MAZ_EZM_AAFP_fnc_createSquadLeadPModule; 
+					
+					_driver moveInDriver _vehicle; 
+					_passanger1 moveInCargo _vehicle; 
+					_passanger2 moveInCargo _vehicle; 
+					_passanger3 moveInCargo _vehicle; 
+					_passanger4 moveInCargo _vehicle; 
+					_passanger5 moveInCargo _vehicle; 
+					_passanger6 moveInCargo _vehicle; 
+					_passanger7 moveInCargo _vehicle; 
+					_passanger8 moveInCargo _vehicle; 
+					_passanger9 moveInCargo _vehicle; 
+					_passanger10 moveInCargo _vehicle; 
+					
+					private _grp = createGroup [Independent,true]; 
+					[_passanger1,_passanger2,_passanger3,_passanger4,_passanger5,_passanger6,_passanger7,_passanger8,_passanger9,_passanger10] joinSilent _grp; 
+					_grp selectLeader _passanger1; 
+					_grp setBehaviour "AWARE"; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_driver] joinSilent _grp; 
+					_grp selectLeader _driver; 
+					_grp setBehaviour "AWARE"; 
+				
+				}; 
+			
+				_vehicle 
+			}; 
+		
+		comment "Submersibles";
+
+			MAZ_EZM_AAFP_fnc_createSDVModule = { 
+				private _vehicle = ["I_SDV_01_F"] call MAZ_EZM_fnc_createVehicle;
+				_vehicle disableTIEquipment true; 
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createDiverModule; 
+					_gunner moveInGunner _vehicle; 
+				
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createDiverModule; 
+					_driver moveInDriver _vehicle; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_driver,_gunner] joinSilent _grp; 
+					_grp selectLeader _driver; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+		comment "Tanks";
+
+            MAZ_EZM_AAFP_fnc_createATNyxModule = { 
+				private _vehicle = ["I_LT_01_AT_F"] call MAZ_EZM_fnc_createVehicle;
+				_vehicle disableTIEquipment true; 
+				_vehicle allowCrewInImmobile true;
+				[ 
+					_vehicle, 
+					["Indep_01"],  
+					["showTools",1,"showCamonetHull",1,"showBags",1,"showSLATHull",0] 
+				] call BIS_fnc_initVehicle; 
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createCrewmanModule; 
+					_driver moveInDriver _vehicle; 
+				
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createCrewmanModule; 
+					_gunner moveInGunner _vehicle; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_driver,_gunner] joinSilent _grp; 
+					_grp selectLeader _gunner; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+            
+
+            MAZ_EZM_AAFP_fnc_createReconNyxModule = { 
+				private _vehicle = ["I_LT_01_scout_F"] call MAZ_EZM_fnc_createVehicle;
+				_vehicle disableTIEquipment true; 
+				_vehicle addMagazineTurret ["60Rnd_20mm_HE_shells",[0]]; 
+				_vehicle addMagazineTurret ["60Rnd_20mm_HE_shells",[0]]; 
+				_vehicle removeWeaponTurret ["LMG_coax_ext", [0]]; 
+				_vehicle allowCrewInImmobile true;
+				[ 
+					_vehicle, 
+					["Indep_01",1],  
+					["showTools",1,"showCamonetHull",1,"showBags",1,"showSLATHull",0] 
+				] call BIS_fnc_initVehicle; 
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createCrewmanModule; 
+					_driver moveInDriver _vehicle; 
+				
+					private _commander = [] call MAZ_EZM_AAFP_fnc_createCrewmanModule; 
+					_commander moveInCommander _vehicle; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_driver,_commander] joinSilent _grp; 
+					_grp selectLeader _commander; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_create20mmNyxModule = { 
+				private _vehicle = ["I_LT_01_cannon_F"] call MAZ_EZM_fnc_createVehicle;
+				_vehicle disableTIEquipment true; 
+				_vehicle addMagazineTurret ["60Rnd_20mm_HE_shells",[0]]; 
+				_vehicle addMagazineTurret ["60Rnd_20mm_HE_shells",[0]]; 
+				_vehicle removeWeaponTurret ["LMG_coax_ext", [0]]; 
+				_vehicle allowCrewInImmobile true;
+				[ 
+					_vehicle, 
+					["Indep_01",1],  
+					["showTools",1,"showCamonetHull",1,"showBags",1,"showSLATHull",0] 
+				] call BIS_fnc_initVehicle; 
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createCrewmanModule; 
+					_driver moveInDriver _vehicle; 
+				
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createCrewmanModule; 
+					_gunner moveInGunner _vehicle; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_driver,_gunner] joinSilent _grp; 
+					_grp selectLeader _gunner; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+                
+			}; 
+
+            MAZ_EZM_AAFP_fnc_createKumaModule = { 
+				private _vehicle = ["I_MBT_03_cannon_F"] call MAZ_EZM_fnc_createVehicle;
+				_vehicle disableTIEquipment true; 
+				_vehicle allowCrewInImmobile true;
+				[ 
+					_vehicle, 
+					["Indep_01",1],  
+					["showTools",1,"showCamonetHull",1,"showCamonetTurret",1,"showBags",1,"showSLATHull",0]  
+				] call BIS_fnc_initVehicle; 
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createCrewmanModule; 
+					_driver moveInDriver _vehicle; 
+				
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createCrewmanModule; 
+					_gunner moveInGunner _vehicle; 
+
+					private _commander = [] call MAZ_EZM_AAFP_fnc_createCrewmanModule; 
+					_commander moveInCommander _vehicle; 
+				
+					private _grp = createGroup [Independent,true]; 
+					[_driver,_gunner,_commander] joinSilent _grp; 
+					_grp selectLeader _commander; 
+					_grp setBehaviour "AWARE"; 
+				}; 
+			
+				_vehicle 
+                
+			}; 
+
+		comment "Trucks"; 
+			
+			MAZ_EZM_AAFP_fnc_createZamakAmmoModule = {  
+				private _vehicle = ["I_Truck_02_ammo_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createZamakFuelModule = { 
+				private _vehicle = ["I_Truck_02_fuel_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createZamakMedicalModule = { 
+				private _vehicle = ["I_Truck_02_medical_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createZamakRepairModule = { 
+				private _vehicle = ["I_Truck_02_box_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createZamakTransportModule = { 
+				private _vehicle = ["I_Truck_02_transport_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createZamakCoveredTransportModule = { 
+				private _vehicle = ["I_Truck_02_covered_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+			
+				_vehicle 
+			};
+			
+		comment "Turrets"; 
+		
+			MAZ_EZM_AAFP_fnc_createM2HMGModule = { 
+				private _vehicle = ["I_G_HMG_02_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_gunner moveInGunner _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+		
+			MAZ_EZM_AAFP_fnc_createM2HMGRaisedModule = { 
+				private _vehicle = ["I_G_HMG_02_high_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_gunner moveInGunner _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createMk6MortarModule = { 
+				private _vehicle = ["I_G_Mortar_01_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_gunner moveInGunner _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createAALauncherModule = { 
+				private _vehicle = ["I_static_AA_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_gunner moveInGunner _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+
+			MAZ_EZM_AAFP_fnc_createATLauncherModule = { 
+				private _vehicle = ["I_static_AT_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _gunner = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_gunner moveInGunner _vehicle; 
+				}; 
+			
+				_vehicle 
+			}; 
+		
+		comment "Vans"; 
+				
+			MAZ_EZM_AAFP_fnc_createVanModule = { 
+				private _vehicle = ["I_G_Van_02_vehicle_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				[ 
+					_vehicle, 
+					["Black",1],  
+					["Enable_Cargo",1,"Door_1_source",0,"Door_2_source",0,"Door_3_source",0,"Door_4_source",0,"Hide_Door_1_source",0,"Hide_Door_2_source",0,"Hide_Door_3_source",0,"Hide_Door_4_source",0,"lights_em_hide",0,"ladder_hide",0,"spare_tyre_holder_hide",1,"spare_tyre_hide",1,"reflective_tape_hide",1,"roof_rack_hide",0,"LED_lights_hide",1,"sidesteps_hide",1,"rearsteps_hide",0,"side_protective_frame_hide",0,"front_protective_frame_hide",0,"beacon_front_hide",1,"beacon_rear_hide",1] 
+				] call BIS_fnc_initVehicle; 
+			
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				}; 
+		
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createVanTransportModule = { 
+				private _vehicle = ["I_G_Van_02_transport_F"] call MAZ_EZM_fnc_createVehicle;
+			
+				[ 
+					_vehicle, 
+					["Black",1],  
+					["Door_1_source",0,"Door_2_source",0,"Door_3_source",0,"Door_4_source",0,"Hide_Door_1_source",0,"Hide_Door_2_source",0,"Hide_Door_3_source",0,"Hide_Door_4_source",0,"lights_em_hide",0,"ladder_hide",0,"spare_tyre_holder_hide",1,"spare_tyre_hide",1,"reflective_tape_hide",1,"roof_rack_hide",0,"LED_lights_hide",1,"sidesteps_hide",1,"rearsteps_hide",1,"side_protective_frame_hide",0,"front_protective_frame_hide",0,"beacon_front_hide",1,"beacon_rear_hide",1] 
+				] call BIS_fnc_initVehicle; 
+				
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
+					_driver moveInDriver _vehicle; 
+				};
+
+				_vehicle 
+			}; 
+			
+			MAZ_EZM_AAFP_fnc_createMedicalVanModule = { 
+				private _vehicle = ["I_E_Van_02_medevac_F"] call MAZ_EZM_fnc_createVehicle;
+				_vehicle setPosWorld [24668.3,18863.8,4.84614]; 
+				_vehicle setVectorDirAndUp [[0,1,0],[0,0,1]]; 
+				if(MAZ_EZM_spawnWithCrew) then { 
+					private _driver = [] call MAZ_EZM_AAFP_fnc_createMedicModule; 
+					_driver moveInDriver _vehicle; 
+				};
+
+				[ 
+					_vehicle, 
+					["FIA3",1],  
+					["Door_1_source",0,"Door_2_source",0,"Door_3_source",0,"Door_4_source",0,"Hide_Door_1_source",0,"Hide_Door_2_source",0,"Hide_Door_3_source",0,"Hide_Door_4_source",0,"lights_em_hide",0,"ladder_hide",1,"spare_tyre_holder_hide",1,"spare_tyre_hide",1,"reflective_tape_hide",1,"roof_rack_hide",1,"LED_lights_hide",1,"sidesteps_hide",1,"rearsteps_hide",1,"side_protective_frame_hide",0,"front_protective_frame_hide",0,"beacon_front_hide",0,"beacon_rear_hide",0] 
+				] call BIS_fnc_initVehicle; 
+			
+				_vehicle setpos ([true] call MAZ_EZM_fnc_getScreenPosition); 
+				
+				_vehicle 
+			}; 		
+	
+	comment "FIA+ Units"; 
 		
 		comment "APCs"; 
 		
@@ -17897,7 +22939,7 @@ MAZ_EZM_fnc_initFunction = {
 				_unit 
 			}; 
 			
-			MAZ_EZM_FIAP_fnc_createSurvivorModule = { 
+			MAZ_EZM_FIAP_fnc_createUnarmedModule = { 
 				private _unit = [east,"O_G_Survivor_F",MAZ_EZM_stanceForAI,"ALERT"] call MAZ_EZM_fnc_createMan; 
 			
 				[_unit] call MAZ_EZM_fnc_removeAllClothing; 
@@ -18754,7 +23796,7 @@ MAZ_EZM_fnc_initFunction = {
 				_vehicle 
 			}; 
 	
-	comment "CTRG+";
+	comment "CTRG+ Units";
 	
 		comment "Appearance";
 
@@ -21463,7 +26505,7 @@ JAM_MAZ_EZM_editZeusInterface = {
 					"Delete Empty Groups",
 					"Deletes all empty groups.",
 					"MAZ_EZM_fnc_deleteEmptyGroupsModule",
-					"a3\ui_f_curator\data\displays\rscdisplaycurator\modegroups_ca.paa"
+					"\a3\ui_f_curator\data\rsccommon\rscattributeformation\wedge_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 				
 				[
@@ -22235,7 +27277,7 @@ JAM_MAZ_EZM_editZeusInterface = {
 				[] call MAZ_EZM_fnc_zeusPreviewImage;
 				[] call MAZ_EZM_fnc_addZeusPreviewEvents;
 			
-			comment "Better Civilians";
+			comment "Better Civilians Modules";
 				
 				MAZ_BetterCivsTree = [
 					MAZ_UnitsTree_CIVILIAN,
@@ -22270,7 +27312,7 @@ JAM_MAZ_EZM_editZeusInterface = {
 					"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule_CIVILIAN;
 
-			comment "MDF";
+			comment "MDF Modules";
 
 				MAZ_MDFTree = [
 					MAZ_UnitsTree_INDEP,
@@ -22451,7 +27493,7 @@ JAM_MAZ_EZM_editZeusInterface = {
 						MAZ_UnitsTree_INDEP,
 						MAZ_MDFTree,
 						"Groups",
-						'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\meet_ca.paa'
+						'\a3\ui_f_curator\data\rsccommon\rscattributeformation\wedge_ca.paa'
 					] call MAZ_EZM_fnc_zeusAddSubCategory;
 
 					[
@@ -22747,8 +27789,9 @@ JAM_MAZ_EZM_editZeusInterface = {
 						"CSAT (China)",
 						""
 					] call MAZ_EZM_fnc_zeusAddCategory;
-		
-					MAZ_UnitsTree_OPFOR tvSetTooltip [[MAZ_CSATPTree], "A Chinese Faction outside the Pacific"]; 
+
+					MAZ_UnitsTree_OPFOR tvSetPictureRight [[MAZ_CSATPTree], "\a3\ui_f_orange\data\displays\rscdisplayorangechoice\faction_csat_ca.paa"]; 
+					MAZ_UnitsTree_OPFOR tvSetTooltip [[MAZ_CSATPTree], "Chinese CSAT with arid camouflage"]; 
 
 				comment "Anti-Air";
 
@@ -23129,7 +28172,7 @@ JAM_MAZ_EZM_editZeusInterface = {
 						MAZ_UnitsTree_OPFOR, 
 						MAZ_CSATPTree, 
 						"Groups", 
-						"" 
+						"\a3\ui_f_curator\data\rsccommon\rscattributeformation\wedge_ca.paa" 
 					] call MAZ_EZM_fnc_zeusAddSubCategory; 
 					
 					[ 
@@ -23218,7 +28261,7 @@ JAM_MAZ_EZM_editZeusInterface = {
 						MAZ_UnitsTree_OPFOR, 
 						MAZ_CSATPTree, 
 						"Groups (Urban)", 
-						"" 
+						"\a3\ui_f_curator\data\rsccommon\rscattributeformation\wedge_ca.paa" 
 					] call MAZ_EZM_fnc_zeusAddSubCategory; 
 					
 					[ 
@@ -23549,6 +28592,16 @@ JAM_MAZ_EZM_editZeusInterface = {
 						"MAZ_EZM_CSATP_fnc_createMissileSpecATModule", 
 						"\A3\ui_f\data\Map\VehicleIcons\iconManAT_ca.paa" 
 					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPTree, 
+						MAZ_CSATPMenTree, 
+						"Officer", 
+						"Officer", 
+						"MAZ_EZM_CSATP_fnc_createOfficerModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManOfficer_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
 					
 					[ 
 						MAZ_UnitsTree_OPFOR, 
@@ -23557,16 +28610,6 @@ JAM_MAZ_EZM_editZeusInterface = {
 						"Rifleman", 
 						"Rifleman", 
 						"MAZ_EZM_CSATP_fnc_createRiflemanModule", 
-						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
-					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
-
-					[ 
-						MAZ_UnitsTree_OPFOR, 
-						MAZ_CSATPTree, 
-						MAZ_CSATPMenTree, 
-						"Rifleman (Light)", 
-						"Rifleman (Light)", 
-						"MAZ_EZM_CSATP_fnc_createRiflemanLightModule", 
 						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
 					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
 					
@@ -23578,6 +28621,16 @@ JAM_MAZ_EZM_editZeusInterface = {
 						"Light Anti-Tank Rifleman", 
 						"MAZ_EZM_CSATP_fnc_createRiflemanLATModule", 
 						"\A3\ui_f\data\Map\VehicleIcons\iconManAT_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPTree, 
+						MAZ_CSATPMenTree, 
+						"Rifleman (Light)", 
+						"Rifleman (Light)", 
+						"MAZ_EZM_CSATP_fnc_createRiflemanLightModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
 					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
 					
 					[ 
@@ -24361,8 +29414,2631 @@ JAM_MAZ_EZM_editZeusInterface = {
 						"MAZ_EZM_CSATP_fnc_createAALauncherModule", 
 						"\A3\Static_F_Gamma\data\UI\map_StaticTurret_AA_CA.paa" 
 					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+			comment "CSAT (Pacific) Modules"; 
+		
+					private _UnitsTree_OPFOR = MAZ_UnitsTree_OPFOR;  
+                    private _count = MAZ_UnitsTree_OPFOR tvCount [1];  
+                    for "_i" from 0 to (_count - 1) do {  
+                     	MAZ_UnitsTree_OPFOR tvDelete [1,0];  
+                    };  
+     
+                    MAZ_CSATPacificTree = 1;  
+                    MAZ_UnitsTree_OPFOR tvSetText [[MAZ_CSATPacificTree],"CSAT (Pacific)"];  
+
+				comment "Anti-Air";
+
+					MAZ_CSATPacificAntiAirTree = [ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						"Anti-Air", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
 					
-			comment "FIA+"; 
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificAntiAirTree, 
+						"Tigris ZSU-39", 
+						"Tigris ZSU-39", 
+						"MAZ_EZM_CSATPacific_fnc_createTigris", 
+						"a3\armor_f_beta\apc_tracked_02\data\ui\map_apc_tracked_02_aa_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificAntiAirTree, 
+						"Tigris ZSU-39 (No Missiles)", 
+						"Tigris ZSU-39 (No Missiles)", 
+						"MAZ_EZM_CSATPacific_fnc_createTigrisMissile", 
+						"a3\armor_f_beta\apc_tracked_02\data\ui\map_apc_tracked_02_aa_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+				
+				comment "APCs"; 
+					
+					MAZ_CSATPacificAPCsTree = [ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						"APCs", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificAPCsTree, 
+						"BTR-K Kamysh", 
+						"BTR-K Kamysh.", 
+						"MAZ_EZM_CSATPacific_fnc_createBTRK", 
+						"a3\armor_f_beta\apc_tracked_02\data\ui\map_apc_tracked_02_cannon_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificAPCsTree, 
+						"MSE-3 Marid", 
+						"MSE-3 Marid.", 
+						"MAZ_EZM_CSATPacific_fnc_createMarid", 
+						"a3\armor_f_beta\apc_wheeled_02\data\ui\map_apc_wheeled_02_rcws_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+				comment "Artillery"; 
+					
+					MAZ_CSATPacificArtilleryTree = [ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						"Artillery", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificArtilleryTree, 
+						"2S9 Sochor", 
+						"2S9 Sochor", 
+						"MAZ_EZM_CSATPacific_fnc_createSochorModule", 
+						"a3\armor_f_gamma\mbt_02\data\ui\map_mbt_arty_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+				    [  
+						MAZ_UnitsTree_OPFOR,  
+						MAZ_CSATPacificTree,  
+						MAZ_CSATPacificArtilleryTree,  
+						"2S9 Sochor (No Commander)",  
+						"2S9 Sochor (No Commander)",  
+						"MAZ_EZM_CSATPacific_fnc_createSochorNoCommanderModule",  
+						"a3\armor_f_gamma\mbt_02\data\ui\map_mbt_arty_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;  
+
+				comment "Boats"; 
+				
+					MAZ_CSATPacificBoatsTree = [ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						"Boats", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificBoatsTree, 
+						"Assault Boat", 
+						"Assault Boat", 
+						"MAZ_EZM_CSATPacific_fnc_createAssaultBoatModule", 
+						"a3\boat_f\boat_transport_01\data\ui\map_boat_transport_01_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificBoatsTree, 
+						"RHIB", 
+						"RHIB", 
+						"MAZ_EZM_CSATPacific_fnc_createRhibBoatModule", 
+						"a3\boat_f_exp\boat_transport_02\data\ui\map_boat_transport_02_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificBoatsTree, 
+						"Speedboat (No Turret)", 
+						"Speedboat (No Turret)", 
+						"MAZ_EZM_CSATPacific_fnc_createSpeedBoatModule", 
+						"a3\boat_f\boat_armed_01\data\ui\map_boat_armed_01_minigun.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificBoatsTree, 
+						"Speedboat HMG", 
+						"Speedboat HMG", 
+						"MAZ_EZM_CSATPacific_fnc_createSpeedBoatHMGModule", 
+						"a3\boat_f\boat_armed_01\data\ui\map_boat_armed_01_minigun.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificBoatsTree, 
+						"Speedboat Minigun", 
+						"Speedboat Minigun", 
+						"MAZ_EZM_CSATPacific_fnc_createSpeedBoatMinigunModule", 
+						"a3\boat_f\boat_armed_01\data\ui\map_boat_armed_01_minigun.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+				
+				comment "Cars"; 
+				
+					MAZ_CSATPacificCarsTree = [ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						"Cars", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificCarsTree, 
+						"Ifrit", 
+						"Ifrit", 
+						"MAZ_EZM_CSATPacific_fnc_createIfritModule", 
+						"a3\soft_f\mrap_02\data\ui\map_mrap_02_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificCarsTree, 
+						"Ifrit GMG", 
+						"Ifrit GMG", 
+						"MAZ_EZM_CSATPacific_fnc_createIfritGMGModule", 
+						"a3\soft_f\mrap_02\data\ui\map_mrap_02_rcws_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificCarsTree, 
+						"Ifrit HMG", 
+						"Ifrit HMG", 
+						"MAZ_EZM_CSATPacific_fnc_createIfritHMGModule", 
+						"a3\soft_f\mrap_02\data\ui\map_mrap_02_hmg_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificCarsTree, 
+						"Qilin (AT)", 
+						"Qilin (AT)", 
+						"MAZ_EZM_CSATPacific_fnc_createQilinATModule", 
+						"a3\soft_f_exp\lsv_01\data\ui\map_lsv_01_armed_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificCarsTree, 
+						"Qilin (Mingun)", 
+						"Qilin (Mingun)", 
+						"MAZ_EZM_CSATPacific_fnc_createQilinMinigunModule", 
+						"a3\soft_f_exp\lsv_02\data\ui\map_lsv_02_armed_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+				
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificCarsTree, 
+						"Qilin (Unarmed)", 
+						"Qilin (Unarmed)", 
+						"MAZ_EZM_CSATPacific_fnc_createQilinUnarmedModule", 
+						"a3\soft_f_exp\lsv_02\data\ui\map_lsv_02_base_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificCarsTree, 
+						"Quadbike", 
+						"Quadbike", 
+						"MAZ_EZM_CSATPacific_fnc_createQuadbikeModule", 
+						"a3\soft_f\quadbike_01\data\ui\map_quad_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+				comment "Compositions";
+
+					MAZ_CSATPacificCompositionsTree = [ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						"Compositions", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificCompositionsTree, 
+						"Cache #1", 
+						"Cache #1", 
+						"MAZ_EZM_CSATPacific_fnc_createCache1Module", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificCompositionsTree, 
+						"Cache #2", 
+						"Cache #2", 
+						"MAZ_EZM_CSATPacific_fnc_createCache2Module", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificCompositionsTree, 
+						"Dead Soldier", 
+						"Dead Soldier", 
+						"MAZ_EZM_CSATPacific_fnc_createDeadSoldierModule", 
+						"a3\ui_f_curator\data\cfgmarkers\kia_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificCompositionsTree, 
+						"Taru Bench Pod", 
+						"Taru Bench Pod", 
+						"MAZ_EZM_CSATPacific_fnc_createOpenedTaruBenchPodModule", 
+						"a3\air_f_heli\heli_transport_04\data\ui\pod_heli_transport_04_bench_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+				
+				comment "Drones"; 
+				
+					MAZ_CSATPacificDronesTree = [ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						"Drones", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory;
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificDronesTree, 
+						"Jinaah AL-6 (Leaflet)", 
+						"Jinaah AL-6 (Leaflet)", 
+						"MAZ_EZM_CSATPacific_fnc_createJinaahLeafletModule", 
+						"a3\air_f_orange\uav_06\data\ui\map_uav_06_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificDronesTree, 
+						"Jinaah AL-6 (Medical)", 
+						"Jinaah AL-6 (Medical)", 
+						"MAZ_EZM_CSATPacific_fnc_createJinaahMedicalModule", 
+						"a3\air_f_orange\uav_06\data\ui\map_uav_06_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificDronesTree, 
+						"K40 Ababil-3", 
+						"K40 Ababil-3", 
+						"MAZ_EZM_CSATPacific_fnc_createK40Module", 
+						"a3\drones_f\air_f_gamma\uav_02\data\ui\map_uav_02_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificDronesTree, 
+						"KH-3A Fenghuang", 
+						"KH-3A Fenghuang", 
+						"MAZ_EZM_CSATPacific_fnc_createKH3AModule", 
+						"a3\air_f_exp\uav_04\data\ui\map_uav_04_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificDronesTree, 
+						"Tayran AR-2", 
+						"Tayran AR-2", 
+						"MAZ_EZM_CSATPacific_fnc_createTayranModule", 
+						"a3\drones_f\air_f_gamma\uav_01\data\ui\map_uav_01_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificDronesTree, 
+						"UGV Saif", 
+						"UGV Saif", 
+						"MAZ_EZM_CSATPacific_fnc_createSaifModule", 
+						"a3\drones_f\soft_f_gamma\ugv_01\data\ui\map_ugv_01_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificDronesTree, 
+						"UGV Saif RCWS", 
+						"UGV Saif RCWS", 
+						"MAZ_EZM_CSATPacific_fnc_createSaifRCWSModule", 
+						"a3\drones_f\soft_f_gamma\ugv_01\data\ui\map_ugv_01_rcws_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+				comment "Groups"; 
+				
+					MAZ_CSATPacificSubCatTree = [ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						"Groups", 
+						"\a3\ui_f_curator\data\rsccommon\rscattributeformation\wedge_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificSubCatTree, 
+						"Anti-Air Team", 
+						"Anti-Air Team", 
+						"MAZ_EZM_CSATPacific_fnc_createAntiAirTeamModule", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificSubCatTree, 
+						"Anti-Tank Team", 
+						"Anti-Tank Team", 
+						"MAZ_EZM_CSATPacific_fnc_createAntiTankTeamModule", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[  
+						MAZ_UnitsTree_OPFOR,  
+						MAZ_CSATPacificTree,  
+						MAZ_CSATPacificSubCatTree,  
+						"Marksman Team",  
+						"Marksman Team",  
+						"MAZ_EZM_CSATPacific_fnc_createMarksmanTeamModule",  
+						""  
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;  
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificSubCatTree, 
+						"Patrol", 
+						"Patrol", 
+						"MAZ_EZM_CSATPacific_fnc_createPatrolModule", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[
+						MAZ_UnitsTree_OPFOR,
+						MAZ_CSATPacificTree,
+						MAZ_CSATPacificSubCatTree,
+						"Recon Squad",
+						"Recon BIN_fnc_setAISquadID",
+						"MAZ_EZM_CSATPacific_fnc_createReconSquadModule",
+						""
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificSubCatTree, 
+						"Squad", 
+						"Squad", 
+						"MAZ_EZM_CSATPacific_fnc_createSquadModule", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificSubCatTree, 
+						"Sentry", 
+						"Sentry", 
+						"MAZ_EZM_CSATPacific_fnc_createSentryModule", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificSubCatTree, 
+						"Sniper Team", 
+						"Sniper Team", 
+						"MAZ_EZM_CSATPacific_fnc_createSniperTeamModule", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+	
+				
+				comment "Helicopters";
+				
+					MAZ_CSATPacificSubCatTree = [ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						"Helicopters", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificSubCatTree, 
+						"Mi-48 Kajman", 
+						"Mi-48 Kajman", 
+						"MAZ_EZM_CSATPacific_fnc_createTaruKajmanModule", 
+						"a3\air_f_beta\heli_attack_02\data\ui\map_heli_attack_02_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificSubCatTree, 
+						"PO-30 Orca", 
+						"PO-30 Orca", 
+						"MAZ_EZM_CSATPacific_fnc_createOrcaModule", 
+						"a3\air_f\heli_light_02\data\ui\map_heli_light_02_rockets_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificSubCatTree, 
+						"PO-30 Orca (Unarmed)", 
+						"PO-30 Orca (Unarmed)", 
+						"MAZ_EZM_CSATPacific_fnc_createOrcaUnarmedModule", 
+						"a3\air_f\heli_light_02\data\ui\map_heli_light_02_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+				comment "Men"; 
+					
+					MAZ_CSATPacificMenTree = [ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						"Men", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificMenTree, 
+						"Ammo Bearer", 
+						"Ammo Bearer", 
+						"MAZ_EZM_CSATPacific_fnc_createAmmoBearerModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificMenTree, 
+						"Autorifleman", 
+						"Autorifleman", 
+						"MAZ_EZM_CSATPacific_fnc_createAutoriflemanModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManMG_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificMenTree, 
+						"Combat Lifesaver", 
+						"Combat Lifesaver", 
+						"MAZ_EZM_CSATPacific_fnc_createCombatMedicModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManMedic_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificMenTree, 
+						"Crewman", 
+						"Crewman", 
+						"MAZ_EZM_CSATPacific_fnc_createCrewmanModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificMenTree, 
+						"Engineer", 
+						"Engineer", 
+						"MAZ_EZM_CSATPacific_fnc_createEngineerModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManEngineer_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificMenTree, 
+						"Grenadier", 
+						"Grenadier", 
+						"MAZ_EZM_CSATPacific_fnc_createGrenadierModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificMenTree, 
+						"Heavy Gunner", 
+						"Heavy Gunner", 
+						"MAZ_EZM_CSATPacific_fnc_createHeavyGunnerModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManMG_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificMenTree, 
+						"Helicopter Crew", 
+						"Helicopter Crew", 
+						"MAZ_EZM_CSATPacific_fnc_createHelicopterCrewModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificMenTree, 
+						"Helicopter Pilot", 
+						"Helicopter Pilot", 
+						"MAZ_EZM_CSATPacific_fnc_createHelicopterPilotModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificMenTree, 
+						"Pilot", 
+						"Pilot", 
+						"MAZ_EZM_CSATPacific_fnc_createPilotModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificMenTree, 
+						"Fighter Pilot", 
+						"Fighter Pilot", 
+						"MAZ_EZM_CSATPacific_fnc_createFighterPilotModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+					
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificMenTree, 
+						"Marksman", 
+						"Marksman", 
+						"MAZ_EZM_CSATPacific_fnc_createMarksmanModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificMenTree, 
+						"Missile Specialist (AA)", 
+						"Anti-Air Missile Specialist", 
+						"MAZ_EZM_CSATPacific_fnc_createMissileSpecAAModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManAT_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificMenTree, 
+						"Missile Specialist (AT)", 
+						"Anti-Tank Missile Specialist", 
+						"MAZ_EZM_CSATPacific_fnc_createMissileSpecATModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManAT_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificMenTree, 
+						"Officer", 
+						"Officer", 
+						"MAZ_EZM_CSATPacific_fnc_createOfficerModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManOfficer_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificMenTree, 
+						"Rifleman", 
+						"Rifleman", 
+						"MAZ_EZM_CSATPacific_fnc_createRiflemanModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificMenTree, 
+						"Rifleman (LAT)", 
+						"Light Anti-Tank Rifleman", 
+						"MAZ_EZM_CSATPacific_fnc_createRiflemanLATModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManAT_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificMenTree, 
+						"Rifleman (HAT)", 
+						"Heavy Anti-Tank Rifleman", 
+						"MAZ_EZM_CSATPacific_fnc_createRiflemanHATModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManAT_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificMenTree, 
+						"Sharpshooter", 
+						"Sharpshooter", 
+						"MAZ_EZM_CSATPacific_fnc_createSharpshooterModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificMenTree, 
+						"Squad Leader", 
+						"Squad Leader", 
+						"MAZ_EZM_CSATPacific_fnc_createSquadLeadModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManLeader_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificMenTree, 
+						"Radioman", 
+						"Radioman", 
+						"MAZ_EZM_CSATPacific_fnc_createRadiomanModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificMenTree, 
+						"Survivor", 
+						"Survivor", 
+						"MAZ_EZM_CSATPacific_fnc_createSurvivorModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+				comment "Men (Special)";
+
+					MAZ_CSATPacificSpecialMenTree = [ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						"Men (Special)", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificSpecialMenTree, 
+						"Diver", 
+						"Diver", 
+						"MAZ_EZM_CSATPacific_fnc_createDiverModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificSpecialMenTree, 
+						"Recon Demo Specialist", 
+						"Recon Demo Specialist", 
+						"MAZ_EZM_CSATPacific_fnc_createReconDemoModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManEngineer_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificSpecialMenTree, 
+						"Recon JTAC", 
+						"Recon JTAC", 
+						"MAZ_EZM_CSATPacific_fnc_createReconJTACModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificSpecialMenTree, 
+						"Recon Marksman", 
+						"Recon Marksman", 
+						"MAZ_EZM_CSATPacific_fnc_createReconMarksmanModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificSpecialMenTree, 
+						"Recon Paramedic", 
+						"Recon Paramedic", 
+						"MAZ_EZM_CSATPacific_fnc_createReconParamedicModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManMedic_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificSpecialMenTree, 
+						"Recon Scout", 
+						"Recon Scout", 
+						"MAZ_EZM_CSATPacific_fnc_createReconScoutModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificSpecialMenTree, 
+						"Recon Scout (AT)", 
+						"Recon Scout (AT)", 
+						"MAZ_EZM_CSATPacific_fnc_createReconScoutATModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManAT_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificSpecialMenTree, 
+						"Recon Team Leader", 
+						"Recon Team Leader", 
+						"MAZ_EZM_CSATPacific_fnc_createReconTeamLeaderModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificSpecialMenTree, 
+						"Sniper", 
+						"Sniper", 
+						"MAZ_EZM_CSATPacific_fnc_createReconSniperModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificSpecialMenTree, 
+						"Spotter", 
+						"Spotter", 
+						"MAZ_EZM_CSATPacific_fnc_createReconSpotterModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+				
+				comment "Reinforcement"; 
+				
+					MAZ_CSATPacificReinforcementTree = [ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						"Reinforcement", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificReinforcementTree, 
+						"Orca (Unarmed)", 
+						"Orca (Unarmed)", 
+						"MAZ_EZM_CSATPacific_fnc_createReinforcementOrcaModule", 
+						"a3\air_f\heli_light_02\data\ui\map_heli_light_02_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificReinforcementTree, 
+						"Qilin (Unarmed)", 
+						"Qilin (Unarmed)", 
+						"MAZ_EZM_CSATPacific_fnc_createReinforcementQilinUnarmedModule", 
+						"\A3\soft_f\Offroad_01\Data\UI\map_offroad_01_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificReinforcementTree, 
+						"RHIB", 
+						"RHIB", 
+						"MAZ_EZM_CSATPacific_fnc_createReinforcementRhibModule", 
+						"a3\boat_f_exp\boat_transport_02\data\ui\map_boat_transport_02_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificReinforcementTree, 
+						"Tempest Transport", 
+						"Tempest Transport", 
+						"MAZ_EZM_CSATPacific_fnc_createReinforcementTempestTransportModule", 
+						"a3\soft_f_epc\truck_03\data\ui\map_truck_03_transport_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificReinforcementTree, 
+						"Zamak Tansport", 
+						"Zamak Transport", 
+						"MAZ_EZM_CSATPacific_fnc_createReinforcementZamakCoveredTransportModule", 
+						"a3\soft_f_beta\truck_02\data\ui\map_truck_02_dump_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+				
+				comment "Planes";
+				
+					MAZ_CSATPacificPlanesTree = [ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						"Planes", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory;
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificPlanesTree, 
+						"Y-32 Xi'an (Infantry Transport)", 
+						"Y-32 Xi'an (Infantry Transport)", 
+						"MAZ_EZM_CSATPacific_fnc_createVTOLInfantryModule", 
+						"a3\air_f_exp\vtol_02\data\ui\map_vtol_02_vehicle_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificPlanesTree, 
+						"Y-32 Xi'an (Vehicle Transport)", 
+						"Y-32 Xi'an (Vehicle Transport)", 
+						"MAZ_EZM_CSATPacific_fnc_createVTOLVehicleModule", 
+						"a3\air_f_exp\vtol_02\data\ui\map_vtol_02_vehicle_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+						
+				comment "Tanks"; 
+					
+					MAZ_CSATPacificTankTree = [ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						"Tanks", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificTankTree, 
+						"T-100 Varsuk", 
+						"T-100 Varsuk", 
+						"MAZ_EZM_CSATPacific_fnc_createVarsukModule", 
+						"a3\armor_f_gamma\mbt_02\data\ui\map_mbt_02_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificTankTree, 
+						"T-140 Angara", 
+						"T-140 Angara", 
+						"MAZ_EZM_CSATPacific_fnc_createAngaraModule", 
+						"a3\armor_f_tank\mbt_04\data\ui\map_mbt_04_cannon_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificTankTree, 
+						"T-140K Angara", 
+						"T-140K Angara", 
+						"MAZ_EZM_CSATPacific_fnc_createAngaraKModule", 
+						"a3\armor_f_tank\mbt_04\data\ui\map_mbt_04_command_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+				comment "Trucks"; 
+				
+					MAZ_CSATPacificTrucksTree = [ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						"Trucks", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificTrucksTree, 
+						"Tempest (Device)", 
+						"Tempest Device", 
+						"MAZ_EZM_CSATPacific_fnc_createTempestDeviceModule", 
+						"a3\soft_f_epc\truck_03\data\ui\map_truck_03_device_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificTrucksTree, 
+						"Tempest Ammo", 
+						"Tempest Ammo", 
+						"MAZ_EZM_CSATPacific_fnc_createTempestAmmoModule", 
+						"a3\soft_f_epc\truck_03\data\ui\map_truck_03_ammo_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificTrucksTree, 
+						"Tempest Fuel", 
+						"Tempest Fuel", 
+						"MAZ_EZM_CSATPacific_fnc_createTempestFuelModule", 
+						"a3\soft_f_epc\truck_03\data\ui\map_truck_03_fuel_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificTrucksTree, 
+						"Tempest Medical", 
+						"Tempest Medical", 
+						"MAZ_EZM_CSATPacific_fnc_createTempestMedicalModule", 
+						"a3\soft_f_epc\truck_03\data\ui\map_truck_03_medevac_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificTrucksTree, 
+						"Tempest Repair", 
+						"Tempest Repair", 
+						"MAZ_EZM_CSATPacific_fnc_createTempestRepairModule", 
+						"a3\soft_f_epc\truck_03\data\ui\map_truck_03_ammo_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificTrucksTree, 
+						"Tempest Transport", 
+						"Tempest Transport", 
+						"MAZ_EZM_CSATPacific_fnc_createTempestTransportModule", 
+						"a3\soft_f_epc\truck_03\data\ui\map_truck_03_transport_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificTrucksTree, 
+						"Tempest Transport (Covered)", 
+						"Tempest Transport", 
+						"MAZ_EZM_CSATPacific_fnc_createTempestTransportCoveredModule", 
+						"a3\soft_f_epc\truck_03\data\ui\map_truck_03_covered_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificTrucksTree, 
+						"Zamak Ammo", 
+						"Zamak Ammo", 
+						"MAZ_EZM_CSATPacific_fnc_createZamakAmmoModule", 
+						"\A3\soft_f_gamma\Truck_02\data\UI\Map_Truck_02_box_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificTrucksTree, 
+						"Zamak Fuel", 
+						"Zamak Fuel", 
+						"MAZ_EZM_CSATPacific_fnc_createZamakFuelModule", 
+						"a3\soft_f_gamma\truck_02\data\ui\map_truck_02_fuel_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificTrucksTree, 
+						"Zamak Medical", 
+						"Medical Zamak", 
+						"MAZ_EZM_CSATPacific_fnc_createZamakMedicalModule", 
+						"a3\soft_f_gamma\truck_02\data\ui\map_truck_02_medevac_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificTrucksTree, 
+						"Zamak Repair", 
+						"Zamak Repair", 
+						"MAZ_EZM_CSATPacific_fnc_createZamakRepairModule", 
+						"a3\soft_f_beta\truck_02\data\ui\map_truck_02_repair_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificTrucksTree, 
+						"Zamak Transport", 
+						"Zamak", 
+						"MAZ_EZM_CSATPacific_fnc_createZamakTransportModule", 
+						"a3\soft_f_beta\truck_02\data\ui\map_truck_02_dump_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificTrucksTree, 
+						"Zamak Transport (Covered)", 
+						"Zamak (Covered)", 
+						"MAZ_EZM_CSATPacific_fnc_createZamakCoveredTransportModule", 
+						"a3\soft_f_beta\truck_02\data\ui\map_truck_02_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+				
+				comment "Turrets"; 
+				
+					MAZ_CSATPacificTurretTree = [ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						"Turrets", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificTurretTree, 
+						"M2 HMG", 
+						"M2 HMG", 
+						"MAZ_EZM_CSATPacific_fnc_createM2HMGModule", 
+						"\a3\static_f\hmg_02\data\ui\icon_hmg_02_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificTurretTree, 
+						"M2 HMG (Raised)", 
+						"M2 HMG (Raised)", 
+						"MAZ_EZM_CSATPacific_fnc_createM2HMGRaisedModule", 
+						"a3\static_f_oldman\hmg_02\data\ui\icon_hmg_02_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificTurretTree, 
+						"Mk32 GMG", 
+						"Mk32 GMG", 
+						"MAZ_EZM_CSATPacific_fnc_createMk32GMGModule", 
+						"\a3\static_f\hmg_02\data\ui\icon_hmg_02_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR;  
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificTurretTree, 
+						"Mk6 Mortar", 
+						"Mk6 Mortar", 
+						"MAZ_EZM_CSATPacific_fnc_createMk6MortarModule", 
+						"\A3\Static_f\Mortar_01\data\UI\map_Mortar_01_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificTurretTree, 
+						"Static AT Launcher", 
+						"Static AT Launcher", 
+						"MAZ_EZM_CSATPacific_fnc_createATLauncherModule", 
+						"\A3\Static_F_Gamma\data\UI\map_StaticTurret_AT_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+					
+					[ 
+						MAZ_UnitsTree_OPFOR, 
+						MAZ_CSATPacificTree, 
+						MAZ_CSATPacificTurretTree, 
+						"Static AA Launcher", 
+						"Static AA Launcher", 
+						"MAZ_EZM_CSATPacific_fnc_createAALauncherModule", 
+						"\A3\Static_F_Gamma\data\UI\map_StaticTurret_AA_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
+
+			
+			comment "AAF+ Modules"; 
+				
+					private _UnitsTree_INDEP = MAZ_UnitsTree_INDEP; 
+					private _count = _UnitsTree_INDEP tvCount [0]; 
+					for "_i" from 0 to (_count - 1) do { 
+				    	_UnitsTree_INDEP tvDelete [0,0]; 
+					}; 
+				
+					MAZ_AAFPTree = 0; 
+					MAZ_UnitsTree_INDEP tvSetText [[MAZ_AAFPTree],"AAF+"]; 
+					MAZ_UnitsTree_INDEP tvSetPictureRight [[MAZ_AAFPTree], "\a3\ui_f_orange\data\displays\rscdisplayorangechoice\faction_aaf_ca.paa"]; 
+					MAZ_UnitsTree_INDEP tvSetTooltip [[MAZ_AAFPTree], "A remastered version of the AAF faction."]; 
+
+				comment "Anti-Air";
+
+					MAZ_AAFPAntiAirTree = [ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						"Anti-Air", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPAntiAirTree, 
+						"AWC 302 Nyx (AA)", 
+						"AWC 302 Nyx (AA)", 
+						"MAZ_EZM_AAFP_fnc_createAANyxModule", 
+						"\A3\armor_f_beta\APC_Tracked_01\Data\ui\map_APC_Tracked_01_aa_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+				
+				comment "APCs"; 
+					
+					MAZ_AAFPAPCsTree = [ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						"APCs", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPAPCsTree, 
+						"AFV-4 Gorgon", 
+						"AFV-4 Gorgon", 
+						"MAZ_EZM_AAFP_fnc_createGorgonModule", 
+						"\A3\armor_f_gamma\APC_Wheeled_03\Data\UI\map_APC_Wheeled_03_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPAPCsTree, 
+						"AFV-4 Gorgon (20mm)", 
+						"20mm Gorgon. Can only be used by AI vs Players", 
+						"MAZ_EZM_AAFP_fnc_createGorgon20mmModule", 
+						"\A3\armor_f_gamma\APC_Wheeled_03\Data\UI\map_APC_Wheeled_03_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPAPCsTree, 
+						"FV-720 Mora", 
+						"FV-720 Mora", 
+						"MAZ_EZM_AAFP_fnc_createMoraModule", 
+						"\a3\armor_f_epb\apc_tracked_03\data\ui\map_apc_tracked_03_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+				comment "Artillery";
+
+					MAZ_AAFPArtilleryTree = [ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						"Artillery", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory;
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPArtilleryTree, 
+						"Zamak MRL", 
+						"Zamak MRL", 
+						"MAZ_EZM_AAFP_fnc_createZamakMRLModule", 
+						"a3\soft_f_gamma\truck_02\data\ui\map_truck_02_mrl_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+				comment "Boats"; 
+				
+					MAZ_AAFPBoatsTree = [ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						"Boats", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPBoatsTree, 
+						"Assault Boat", 
+						"Assault Boat", 
+						"MAZ_EZM_AAFP_fnc_createAssaultBoatModule", 
+						"\A3\boat_F\Boat_Transport_01\data\UI\map_Boat_Transport_01_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPBoatsTree, 
+						"RHIB", 
+						"RHIB", 
+						"MAZ_EZM_AAFP_fnc_createRhibBoatModule", 
+						"\A3\Boat_F_Exp\Boat_Transport_02\Data\UI\Map_Boat_Transport_02_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPBoatsTree, 
+						"Speedboat (No Turret)", 
+						"Speedboat (No Turret)", 
+						"MAZ_EZM_AAFP_fnc_createSpeedBoatModule", 
+						"a3\boat_f\boat_armed_01\data\ui\map_boat_armed_01_minigun.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPBoatsTree, 
+						"Speedboat HMG", 
+						"Speedboat HMG", 
+						"MAZ_EZM_AAFP_fnc_createSpeedBoatHMGModule", 
+						"a3\boat_f\boat_armed_01\data\ui\map_boat_armed_01_minigun.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPBoatsTree, 
+						"Speedboat Minigun", 
+						"Speedboat Minigun", 
+						"MAZ_EZM_AAFP_fnc_createSpeedBoatMinigunModule", 
+						"a3\boat_f\boat_armed_01\data\ui\map_boat_armed_01_minigun.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+				
+				comment "Cars"; 
+				
+					MAZ_AAFPCarsTree = [ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						"Cars", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPCarsTree, 
+						"Offroad", 
+						"Offroad", 
+						"MAZ_EZM_AAFP_fnc_createOffroadModule", 
+						"\A3\soft_f\Offroad_01\Data\UI\map_offroad_01_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPCarsTree, 
+						"Offroad (Covered)", 
+						"Offroad (Covered)", 
+						"MAZ_EZM_AAFP_fnc_createOffroadCoveredModule", 
+						"\A3\soft_f\Offroad_01\Data\UI\map_offroad_01_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+				
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPCarsTree, 
+						"Offroad (Repair)", 
+						"Offroad (Repair)", 
+						"MAZ_EZM_AAFP_fnc_createOffroadRepairModule", 
+						"\A3\soft_f\Offroad_01\Data\UI\map_offroad_01_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+		
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPCarsTree, 
+						"Quadbike", 
+						"Quadbike", 
+						"MAZ_EZM_AAFP_fnc_createQuadbikeModule", 
+						"\A3\Soft_F\Quadbike_01\Data\UI\map_Quad_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPCarsTree, 
+						"Strider", 
+						"Strider", 
+						"MAZ_EZM_AAFP_fnc_createStriderModule", 
+						"\a3\soft_f_beta\mrap_03\data\ui\map_mrap_03_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPCarsTree, 
+						"Strider HMG", 
+						"Strider HMG", 
+						"MAZ_EZM_AAFP_fnc_createStriderHMGModule", 
+						"\a3\soft_f_beta\mrap_03\data\ui\map_mrap_03_rcws_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPCarsTree, 
+						"Strider GMG", 
+						"Strider GMG", 
+						"MAZ_EZM_AAFP_fnc_createStriderGMGModule", 
+						"\a3\soft_f_beta\mrap_03\data\ui\map_mrap_03_hmg_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+					
+				comment "Compositions"; 
+				
+					MAZ_AAFPCompositionsTree = [ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						"Compositions", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPCompositionsTree, 
+						"Cache #1", 
+						"Cache", 
+						"MAZ_EZM_AAFP_fnc_createCache1Module", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPCompositionsTree, 
+						"Cache #2", 
+						"Cache", 
+						"MAZ_EZM_AAFP_fnc_createCache2Module", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+				
+				comment "Drones"; 
+				
+					MAZ_AAFPDronesTree = [ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						"Drones", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPDronesTree, 
+						"Pelican AL-6 (Leaflet)", 
+						"Pelican AL-6 (Leaflet)", 
+						"MAZ_EZM_AAFP_fnc_createPelicanLeafletModule", 
+						"a3\air_f_orange\uav_06\data\ui\map_uav_06_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPDronesTree, 
+						"Pelican AL-6 (Medical)", 
+						"Pelican AL-6 (Medical)", 
+						"MAZ_EZM_AAFP_fnc_createPelicanMedicalModule", 
+						"a3\air_f_orange\uav_06\data\ui\map_uav_06_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPDronesTree, 
+						"AR-2 Darter", 
+						"AR-2 Darter",
+						"MAZ_EZM_AAFP_fnc_createDarterModule", 
+						"\A3\Drones_F\Air_F_Gamma\UAV_01\Data\UI\Map_UAV_01_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[
+						MAZ_UnitsTree_INDEP,
+						MAZ_AAFPTree,
+						MAZ_AAFPDronesTree,
+						"K40 Ababil-3",
+						"K40 Ababil-3",
+						"MAZ_EZM_AAFP_fnc_createAbabilModule",
+						"\A3\Drones_F\Air_F_Gamma\UAV_02\Data\UI\Map_UAV_02_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+
+                    [
+						MAZ_UnitsTree_INDEP,
+						MAZ_AAFPTree,
+						MAZ_AAFPDronesTree,
+						"K40 Ababil-3 (CAS)",
+						"K40 Ababil-3 (CAS)",
+						"MAZ_EZM_AAFP_fnc_createAbabilCASModule",
+						"\A3\Drones_F\Air_F_Gamma\UAV_02\Data\UI\Map_UAV_02_CA.paa"
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPDronesTree, 
+						"UGV Stomper", 
+						"UGV Stomper", 
+						"MAZ_EZM_AAFP_fnc_createStomperModule", 
+						"a3\drones_f\soft_f_gamma\ugv_01\data\ui\map_ugv_01_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPDronesTree, 
+						"UGV Stomper RCWS", 
+						"UGV Stomper RCWS", 
+						"MAZ_EZM_AAFP_fnc_createStomperRCWSModule", 
+						"a3\drones_f\soft_f_gamma\ugv_01\data\ui\map_ugv_01_rcws_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+				comment "Helicopters"; 
+
+				    MAZ_AAFPHelicoptersTree = [ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						"Helicopters", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPHelicoptersTree, 
+						"AH-9 Pawnee", 
+						"AH-9 Pawnee", 
+						"MAZ_EZM_AAFP_fnc_createPawneeModule", 
+						"\A3\Air_F\Heli_Light_01\Data\UI\Map_Heli_Light_01_armed_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPHelicoptersTree, 
+						"CH-49 Mohawk", 
+						"CH-49 Mohawk", 
+						"MAZ_EZM_AAFP_fnc_createMohawkModule", 
+						"\a3\air_f_beta\heli_transport_02\data\ui\map_heli_transport_02_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPHelicoptersTree, 
+						"MH-9 Hummingbird", 
+						"MH-9 Hummingbird", 
+						"MAZ_EZM_AAFP_fnc_createHummingbirdModule", 
+						"\A3\Air_F\Heli_Light_01\Data\UI\Map_Heli_Light_01_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPHelicoptersTree, 
+						"PO-30 Orca", 
+						"PO-30 Orca", 
+						"MAZ_EZM_AAFP_fnc_createOrcaModule", 
+						"a3\air_f\heli_light_02\data\ui\map_heli_light_02_rockets_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPHelicoptersTree, 
+						"PO-30 Orca (Unarmed)", 
+						"PO-30 Orca (Unarmed)", 
+						"MAZ_EZM_AAFP_fnc_createOrcaUnarmedModule", 
+						"a3\air_f\heli_light_02\data\ui\map_heli_light_02_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPHelicoptersTree, 
+						"WY-55 Hellcat", 
+						"WY-55 Hellcat", 
+						"MAZ_EZM_AAFP_fnc_createHellcatModule", 
+						"\a3\air_f_epb\heli_light_03\data\ui\map_heli_light_03_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPHelicoptersTree, 
+						"WY-55 Hellcat (Unarmed)", 
+						"WY-55 Hellcat (Unarmed)", 
+						"MAZ_EZM_AAFP_fnc_createHellcatUnarmedModule", 
+						"\a3\air_f_epb\heli_light_03\data\ui\map_heli_light_03_unarmed_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+				
+				comment "Groups"; 
+				
+					MAZ_AAFPSubGroupTree = [ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						"Groups", 
+						"\a3\ui_f_curator\data\rsccommon\rscattributeformation\wedge_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPSubGroupTree, 
+						"Anti-Air Team", 
+						"Anti-Air Team", 
+						"MAZ_EZM_AAFP_fnc_createAntiAirTeamModule", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPSubGroupTree, 
+						"Anti-Tank Team", 
+						"Anti-Tank Team", 
+						"MAZ_EZM_AAFP_fnc_createAntiTankTeamModule", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPSubGroupTree, 
+						"Marksman Team", 
+						"Marksman Team", 
+						"MAZ_EZM_AAFP_fnc_createMarksmanTeamModule", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPSubGroupTree, 
+						"Patrol", 
+						"Patrol", 
+						"MAZ_EZM_AAFP_fnc_createPatrolModule", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPSubGroupTree, 
+						"Squad", 
+						"Squad", 
+						"MAZ_EZM_AAFP_fnc_createSquadModule", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPSubGroupTree, 
+						"Sentry", 
+						"Sentry", 
+						"MAZ_EZM_AAFP_fnc_createSentryModule", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+				comment "Groups (Paramilitary)"; 
+				
+					MAZ_AAFPSubGroupTree = [ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						"Groups (Paramilitary)", 
+						"\a3\ui_f_curator\data\rsccommon\rscattributeformation\wedge_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPSubGroupTree, 
+						"Anti-Tank Team", 
+						"Anti-Tank Team", 
+						"MAZ_EZM_AAFP_fnc_createAntiTankTeamPModule", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPSubGroupTree, 
+						"Patrol", 
+						"Patrol", 
+						"MAZ_EZM_AAFP_fnc_createPatrolPModule", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPSubGroupTree, 
+						"Squad", 
+						"Squad", 
+						"MAZ_EZM_AAFP_fnc_createSquadPModule", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPSubGroupTree, 
+						"Sentry", 
+						"Sentry", 
+						"MAZ_EZM_AAFP_fnc_createSentryPModule", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+				
+				comment "Men"; 
+					
+					MAZ_AAFPMenTree = [ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						"Men", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenTree, 
+						"Ammo Bearer", 
+						"Ammo Bearer", 
+						"MAZ_EZM_AAFP_fnc_createAmmoBearerModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenTree, 
+						"Autorifleman", 
+						"Autorifleman", 
+						"MAZ_EZM_AAFP_fnc_createAutoriflemanModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManMG_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenTree, 
+						"Combat Lifesaver", 
+						"Combat Lifesaver", 
+						"MAZ_EZM_AAFP_fnc_createCombatMedicModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManMedic_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenTree, 
+						"Crewman", 
+						"Crewman", 
+						"MAZ_EZM_AAFP_fnc_createCrewmanModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenTree, 
+						"Engineer", 
+						"Engineer", 
+						"MAZ_EZM_AAFP_fnc_createEngineerModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManEngineer_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenTree, 
+						"Grenadier", 
+						"Grenadier", 
+						"MAZ_EZM_AAFP_fnc_createGrenadierModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+                    [ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenTree, 
+						"Helicopter Crew", 
+						"Helicopter Crew", 
+						"MAZ_EZM_AAFP_fnc_createHelicopterCrewModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+                    [ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenTree, 
+						"Helicopter Pilot", 
+						"Helicopter Pilot", 
+						"MAZ_EZM_AAFP_fnc_createHelicopterPilotModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenTree, 
+						"Marksman", 
+						"Marksman", 
+						"MAZ_EZM_AAFP_fnc_createMarksmanModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenTree, 
+						"Missile Specialist (AA)", 
+						"Missile Specialist (AA)", 
+						"MAZ_EZM_AAFP_fnc_createMissileSpecAAModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManAT_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenTree, 
+						"Officer", 
+						"Officer", 
+						"MAZ_EZM_AAFP_fnc_createOfficerModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManOfficer_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+
+                    [ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenTree, 
+						"Pilot", 
+						"Pilot", 
+						"MAZ_EZM_AAFP_fnc_createFighterPilotModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenTree, 
+						"Rifleman", 
+						"Rifleman", 
+						"MAZ_EZM_AAFP_fnc_createRiflemanModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenTree, 
+						"Rifleman (LAT)", 
+						"Light Anti-Tank Rifleman", 
+						"MAZ_EZM_AAFP_fnc_createRiflemanLATModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManAT_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenTree, 
+						"Rifleman (HAT)", 
+						"Heavy Anti-Tank Rifleman", 
+						"MAZ_EZM_AAFP_fnc_createRiflemanHATModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManAT_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenTree, 
+						"Squad Leader", 
+						"Squad Leader", 
+						"MAZ_EZM_AAFP_fnc_createSquadLeadModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManLeader_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenTree, 
+						"Radioman", 
+						"Radioman", 
+						"MAZ_EZM_AAFP_fnc_createRadiomanModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenTree, 
+						"Unarmed", 
+						"Unarmed", 
+						"MAZ_EZM_AAFP_fnc_createUnarmedModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+				comment "Men (Paramilitary)"; 
+					
+					MAZ_AAFPMenParaTree = [ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						"Men (Paramilitary)", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenParaTree, 
+						"Ammo Bearer", 
+						"Ammo Bearer", 
+						"MAZ_EZM_AAFP_fnc_createAmmoBearerPModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenParaTree, 
+						"Autorifleman", 
+						"Autorifleman", 
+						"MAZ_EZM_AAFP_fnc_createAutoriflemanPModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManMG_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenParaTree, 
+						"Combat Lifesaver", 
+						"Combat Lifesaver", 
+						"MAZ_EZM_AAFP_fnc_createCombatMedicPModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManMedic_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenParaTree, 
+						"Engineer", 
+						"Engineer", 
+						"MAZ_EZM_AAFP_fnc_createEngineerPModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManEngineer_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenParaTree, 
+						"Grenadier", 
+						"Grenadier", 
+						"MAZ_EZM_AAFP_fnc_createGrenadierPModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenParaTree, 
+						"Marksman", 
+						"Marksman", 
+						"MAZ_EZM_AAFP_fnc_createMarksmanPModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenParaTree, 
+						"Rifleman", 
+						"Rifleman",
+						"MAZ_EZM_AAFP_fnc_createRiflemanPModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenParaTree, 
+						"Rifleman (LAT)", 
+						"Light Anti-Tank Rifleman", 
+						"MAZ_EZM_AAFP_fnc_createRiflemanLATPModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManAT_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenParaTree, 
+						"Squad Leader", 
+						"Squad Leader", 
+						"MAZ_EZM_AAFP_fnc_createSquadLeadPModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconManLeader_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+				comment "Men (Special)";
+
+					MAZ_AAFPMenSpecialTree = [ 
+						
+					    MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						"Men (Special)", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenSpecialTree, 
+						"Diver", 
+						"Diver", 
+						"MAZ_EZM_AAFP_fnc_createDiverModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenSpecialTree, 
+						"Sniper", 
+						"Sniper", 
+						"MAZ_EZM_AAFP_fnc_createSniperModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenSpecialTree, 
+						"Sniper (Arid)", 
+						"Sniper (Arid)", 
+						"MAZ_EZM_AAFP_fnc_createSniperAridModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenSpecialTree, 
+						"Sniper (Lush)", 
+						"Sniper (Lush)", 
+						"MAZ_EZM_AAFP_fnc_createSniperLushModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenSpecialTree, 
+						"Sniper (Semi-Arid)", 
+						"Sniper (Semi-Arid)", 
+						"MAZ_EZM_AAFP_fnc_createSniperSemiAridModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenSpecialTree, 
+						"Spotter", 
+						"Spotter", 
+						"MAZ_EZM_AAFP_fnc_createSpotterModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenSpecialTree, 
+						"Spotter (Arid)", 
+						"Spotter (Arid)", 
+						"MAZ_EZM_AAFP_fnc_createSpotterAridModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenSpecialTree, 
+						"Spotter (Lush)", 
+						"Spotter (Lush)", 
+						"MAZ_EZM_AAFP_fnc_createSpotterLushModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPMenSpecialTree, 
+						"Spotter (Semi-Arid)", 
+						"Spotter (Semi-Arid)", 
+						"MAZ_EZM_AAFP_fnc_createSpotterSemiAridModule", 
+						"\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+				comment "Planes";
+
+					MAZ_AAFPPlanesTree = [ 
+						
+					    MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						"Planes", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory;
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPPlanesTree, 
+						"A-143 Buzzard", 
+						"A-143 Buzzard", 
+						"MAZ_EZM_AAFP_fnc_createBuzzardModule", 
+						"a3\air_f_gamma\plane_fighter_03\data\ui\map_plane_fighter_03_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPPlanesTree, 
+						"A-149 Gryphon", 
+						"A-149 Gryphon", 
+						"MAZ_EZM_AAFP_fnc_createGryphonCASModule", 
+						"\A3\Air_F_Jets\Plane_Fighter_04\Data\UI\Fighter04_icon_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPPlanesTree, 
+						"A-149 Gryphon (CAS)", 
+						"A-149 Gryphon (CAS)", 
+						"MAZ_EZM_AAFP_fnc_createGryphonCASModule", 
+						"\A3\Air_F_Jets\Plane_Fighter_04\Data\UI\Fighter04_icon_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+				
+				comment "Reinforcement"; 
+				
+					MAZ_AAFPReinforcementTree = [ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						"Reinforcement", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"CH-49 Mohawk", 
+						"Creates a loaded AAF CH-49 Mohawk", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementMohawkModule", 
+						"\a3\air_f_beta\heli_transport_02\data\ui\map_heli_transport_02_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"MH-9 Hummingbird", 
+						"Creates a loaded AAF MH-9 Hummingbird", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementHummingbirdModule", 
+						"\A3\Air_F\Heli_Light_01\Data\UI\Map_Heli_Light_01_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"Offroad", 
+						"Creates a loaded AAF Offroad", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementOffroadModule", 
+						"\A3\soft_f\Offroad_01\Data\UI\map_offroad_01_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"Offroad (Covered)", 
+						"Creates a loaded AAF Offroad (Covered)", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementOffroadCoveredModule", 
+						"\A3\soft_f\Offroad_01\Data\UI\map_offroad_01_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"PO-30 Orca (Unarmed)", 
+						"Creates a loaded AAF PO-30 Orca (Unarmed)", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementOrcaUnarmedModule", 
+						"a3\air_f\heli_light_02\data\ui\map_heli_light_02_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"PO-30 Orca", 
+						"Creates a loaded AAF PO-30 Orca", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementOrcaModule", 
+						"a3\air_f\heli_light_02\data\ui\map_heli_light_02_rockets_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"RHIB", 
+						"Creates a loaded AAF RHIB", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementRhibModule", 
+						"a3\boat_f_exp\boat_transport_02\data\ui\map_boat_transport_02_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"Transport Van", 
+						"Creates a loaded AAF Transport Van", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementVanTransportModule", 
+						"\a3\Soft_F_Orange\Van_02\Data\UI\Map_Van_02_vehicle_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"Van", 
+						"Creates a loaded AAF Van", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementVanModule", 
+						"\a3\Soft_F_Orange\Van_02\Data\UI\Map_Van_02_vehicle_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"WY-55 Hellcat", 
+						"Creates a loaded AAF WY-55 Hellcat", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementHellcatModule", 
+						"\a3\air_f_epb\heli_light_03\data\ui\map_heli_light_03_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"WY-55 Hellcat (Unarmed)", 
+						"Creates a loaded AAF WY-55 Hellcat (Unarmed)", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementHellcatUnarmedModule", 
+						"\a3\air_f_epb\heli_light_03\data\ui\map_heli_light_03_unarmed_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"Zamak", 
+						"Creates a loaded AAF Zamak", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementZamakCoveredTransportModule", 
+						"\A3\soft_f_beta\Truck_02\data\UI\Map_Truck_02_dump_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+				comment "Reinforcement (Paramilitary)"; 
+				
+					MAZ_AAFPReinforcementTree = [ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						"Reinforcement (Paramilitary)", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"CH-49 Mohawk", 
+						"Creates a loaded AAF CH-49 Mohawk", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementMohawkPModule", 
+						"\a3\air_f_beta\heli_transport_02\data\ui\map_heli_transport_02_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"MH-9 Hummingbird", 
+						"Creates a loaded AAF MH-9 Hummingbird", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementHummingbirdPModule", 
+						"\A3\Air_F\Heli_Light_01\Data\UI\Map_Heli_Light_01_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"Offroad", 
+						"Creates a loaded AAF Offroad", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementOffroadPModule", 
+						"\A3\soft_f\Offroad_01\Data\UI\map_offroad_01_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"Offroad (Covered)", 
+						"Creates a loaded AAF Offroad (Covered)", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementOffroadCoveredPModule", 
+						"\A3\soft_f\Offroad_01\Data\UI\map_offroad_01_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"PO-30 Orca (Unarmed)", 
+						"Creates a loaded AAF PO-30 Orca (Unarmed)", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementOrcaUnarmedPModule", 
+						"a3\air_f\heli_light_02\data\ui\map_heli_light_02_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"PO-30 Orca", 
+						"Creates a loaded AAF PO-30 Orca", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementOrcaPModule", 
+						"a3\air_f\heli_light_02\data\ui\map_heli_light_02_rockets_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"RHIB", 
+						"Creates a loaded AAF RHIB", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementRhibPModule", 
+						"a3\boat_f_exp\boat_transport_02\data\ui\map_boat_transport_02_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"Transport Van", 
+						"Creates a loaded AAF Transport Van", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementVanTransportPModule", 
+						"\a3\Soft_F_Orange\Van_02\Data\UI\Map_Van_02_vehicle_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"Van", 
+						"Creates a loaded AAF Van", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementVanPModule", 
+						"\a3\Soft_F_Orange\Van_02\Data\UI\Map_Van_02_vehicle_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"WY-55 Hellcat", 
+						"Creates a loaded AAF WY-55 Hellcat", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementHellcatPModule", 
+						"\a3\air_f_epb\heli_light_03\data\ui\map_heli_light_03_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"WY-55 Hellcat (Unarmed)", 
+						"Creates a loaded AAF WY-55 Hellcat (Unarmed)", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementHellcatUnarmedPModule", 
+						"\a3\air_f_epb\heli_light_03\data\ui\map_heli_light_03_unarmed_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPReinforcementTree, 
+						"Zamak", 
+						"Creates a loaded AAF Zamak", 
+						"MAZ_EZM_AAFP_fnc_createReinforcementZamakCoveredTransportPModule", 
+						"\A3\soft_f_beta\Truck_02\data\UI\Map_Truck_02_dump_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+
+				comment "Submersibles"; 
+				
+					MAZ_AAFPSubmersibleTree = [ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						"Submersibles", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPSubmersibleTree, 
+						"SDV", 
+						"SDV", 
+						"MAZ_EZM_AAFP_fnc_createSDVModule", 
+						"\a3\boat_f_beta\sdv_01\data\ui\map_sdv_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+				
+				comment "Tanks"; 
+					
+					MAZ_AAFPTankTree = [ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						"Tanks", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPTankTree, 
+						"AWC 301 Nyx (AT)", 
+						"AWC 301 Nyx (AT)", 
+						"MAZ_EZM_AAFP_fnc_createATNyxModule", 
+						"\A3\armor_f_beta\APC_Tracked_01\Data\ui\map_APC_Tracked_01_aa_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPTankTree, 
+						"AWC 304 Nyx (Autocannon)", 
+						"AWC 304 Nyx (Autocannon)", 
+						"MAZ_EZM_AAFP_fnc_create20mmNyxModule", 
+						"\A3\armor_f_beta\APC_Tracked_01\Data\ui\map_APC_Tracked_01_aa_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPTankTree, 
+						"AWC 303 Nyx (Recon)", 
+						"AWC 303 Nyx (Recon)", 
+						"MAZ_EZM_AAFP_fnc_createReconNyxModule", 
+						"\A3\armor_f_beta\APC_Tracked_01\Data\ui\map_APC_Tracked_01_aa_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPTankTree, 
+						"MBT-52 Kuma", 
+						"MBT-52 Kuma", 
+						"MAZ_EZM_AAFP_fnc_createKumaModule", 
+						"\a3\armor_f_epb\mbt_03\data\ui\map_mbt_03_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+				
+				comment "Trucks"; 
+				
+					MAZ_AAFPTrucksTree = [ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						"Trucks", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPTrucksTree, 
+						"Zamak Ammo", 
+						"Zamak Ammo", 
+						"MAZ_EZM_AAFP_fnc_createZamakAmmoModule", 
+						"\A3\soft_f_gamma\Truck_02\data\UI\Map_Truck_02_box_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPTrucksTree, 
+						"Zamak Fuel", 
+						"Zamak Fuel", 
+						"MAZ_EZM_AAFP_fnc_createZamakFuelModule", 
+						"\A3\soft_f_gamma\Truck_02\data\UI\Map_Truck_02_fuel_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPTrucksTree, 
+						"Zamak Medical", 
+						"Zamak Medical", 
+						"MAZ_EZM_AAFP_fnc_createZamakMedicalModule", 
+						"\A3\soft_f_gamma\Truck_02\data\UI\Map_Truck_02_medevac_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPTrucksTree, 
+						"Zamak Repair", 
+						"Zamak Repair", 
+						"MAZ_EZM_AAFP_fnc_createZamakRepairModule", 
+						"\A3\Soft_F_Beta\Truck_02\Data\UI\Map_Truck_02_repair_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPTrucksTree, 
+						"Zamak Transport", 
+						"Zamak Transport", 
+						"MAZ_EZM_AAFP_fnc_createZamakTransportModule", 
+						"\A3\soft_f_beta\Truck_02\data\UI\Map_Truck_02_dump_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPTrucksTree, 
+						"Zamak Transport (Covered)", 
+						"Zamak Transport (Covered)", 
+						"MAZ_EZM_AAFP_fnc_createZamakCoveredTransportModule", 
+						"\A3\soft_f_beta\Truck_02\data\UI\Map_Truck_02_dump_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+				
+				comment "Turrets"; 
+				
+					MAZ_AAFPTurretTree = [ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						"Turrets", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPTurretTree, 
+						"M2 HMG", 
+						"M2 HMG", 
+						"MAZ_EZM_AAFP_fnc_createM2HMGModule", 
+						"\a3\static_f\hmg_02\data\ui\icon_hmg_02_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPTurretTree, 
+						"M2 HMG (Raised)", 
+						"M2 HMG (Raised)", 
+						"MAZ_EZM_AAFP_fnc_createM2HMGRaisedModule", 
+						"a3\static_f_oldman\hmg_02\data\ui\icon_hmg_02_ca.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPTurretTree, 
+						"Mk6 Mortar", 
+						"Mk6 Mortar", 
+						"MAZ_EZM_AAFP_fnc_createMk6MortarModule", 
+						"\A3\Static_f\Mortar_01\data\UI\map_Mortar_01_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPTurretTree, 
+						"Static AA Launcher", 
+						"Static AA Launcher", 
+						"MAZ_EZM_AAFP_fnc_createAALauncherModule", 
+						"\A3\Static_F_Gamma\data\UI\map_StaticTurret_AA_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPTurretTree, 
+						"Static AT Launcher", 
+						"Static AT Launcher", 
+						"MAZ_EZM_AAFP_fnc_createATLauncherModule", 
+						"\A3\Static_F_Gamma\data\UI\map_StaticTurret_AT_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+				comment "Vans"; 
+				
+					MAZ_AAFPVansTree = [ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						"Vans", 
+						"" 
+					] call MAZ_EZM_fnc_zeusAddSubCategory; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPVansTree, 
+						"Van", 
+						"Van", 
+						"MAZ_EZM_AAFP_fnc_createVanModule", 
+						"\a3\Soft_F_Orange\Van_02\Data\UI\Map_Van_02_vehicle_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPVansTree, 
+						"Transport Van", 
+						"Transport Van", 
+						"MAZ_EZM_AAFP_fnc_createVanTransportModule", 
+						"\a3\Soft_F_Orange\Van_02\Data\UI\Map_Van_02_vehicle_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+					
+					[ 
+						MAZ_UnitsTree_INDEP, 
+						MAZ_AAFPTree, 
+						MAZ_AAFPVansTree, 
+						"Medical Van", 
+						"Medical Van", 
+						"MAZ_EZM_AAFP_fnc_createMedicalVanModule", 
+						"\a3\Soft_F_Orange\Van_02\Data\UI\Map_Van_02_medevac_CA.paa" 
+					] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+			comment "FIA+ Modules"; 
 				
 					private _UnitsTree_OPFOR = MAZ_UnitsTree_OPFOR; 
 					private _count = _UnitsTree_OPFOR tvCount [2]; 
@@ -24372,7 +32048,7 @@ JAM_MAZ_EZM_editZeusInterface = {
 				
 					MAZ_FIAPTree = 2; 
 					MAZ_UnitsTree_OPFOR tvSetText [[MAZ_FIAPTree],"FIA+"]; 
-					MAZ_UnitsTree_OPFOR tvSetPictureRight [[MAZ_FIAPTree], "\a3\data_f\cfgfactionclasses_civ_ca.paa"]; 
+					MAZ_UnitsTree_OPFOR tvSetPictureRight [[MAZ_FIAPTree], "\a3\ui_f_orange\data\displays\rscdisplayorangechoice\faction_fia_ca.paa"]; 
 					MAZ_UnitsTree_OPFOR tvSetTooltip [[MAZ_FIAPTree], "A remastered version of the FIA faction."]; 
 				
 				comment "APCs"; 
@@ -24617,7 +32293,7 @@ JAM_MAZ_EZM_editZeusInterface = {
 						MAZ_UnitsTree_OPFOR, 
 						MAZ_FIAPTree, 
 						"Groups", 
-						"" 
+						"\a3\ui_f_curator\data\rsccommon\rscattributeformation\wedge_ca.paa" 
 					] call MAZ_EZM_fnc_zeusAddSubCategory; 
 					
 					[ 
@@ -25124,7 +32800,7 @@ JAM_MAZ_EZM_editZeusInterface = {
 						"\a3\Soft_F_Orange\Van_02\Data\UI\Map_Van_02_medevac_CA.paa" 
 					] call MAZ_EZM_fnc_zeusAddModule_OPFOR; 
 
-			comment "CTRG+";
+			comment "CTRG+ Modules";
 
 				MAZ_CTRGPTree = 0;
 				MAZ_UnitsTree_BLUFOR tvSetText [[MAZ_CTRGPTree],"CTRG+"];
@@ -26307,7 +33983,7 @@ JAM_GUIfnc_groupMenuTeamSwitcher = {
 				private _group = EZM_curator_group;
 				private _leader = leader _group;
 				private _data = [nil, _groupName, false]; comment " [<Insignia>, <Group Name>, <Private>] ";
-				["RegisterGroup", [_group, _leader, _data]] remoteExecCall ['BIS_fnc_dynamicGroups'];
+				["RegisterGroup", [_group, _leader, _data]] remoteExecCall ['BIS_fnc_dynamic\a3\ui_f_curator\data\rsccommon\rscattributeformation\wedge_ca.paa'];
 				["AddGroupMember", [EZM_curator_group,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
 				["SwitchLeader", [EZM_curator_group,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
 				["SetPrivateState", [EZM_curator_group,true]] remoteExecCall ['BIS_fnc_dynamicGroups'];	
@@ -26533,9 +34209,7 @@ Change Log:
 
 comment "
 	TODO Expung3d:
- - NATO+ 
- - CSAT+ 
- - AAF+ 
+ - NATO+
  - Better Looters 
  - Paradrop Reinforcements 
  - Airdrop selected object 
