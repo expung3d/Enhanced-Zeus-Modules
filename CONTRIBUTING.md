@@ -5,6 +5,7 @@ Everything you need to know about contributing to E.Z.M.
 ## New Modules
 Adding new modules is very simple compared to the previous methods, now there are automated methods by which you, the amazing contributor you are, can add them dynamically to an already running E.Z.M. version. Firstly, we must define the functions that will be called by the modules. Second, we must create a function to add them to our modules list. Lastly, we need to load the function that adds them into the modules list into E.Z.M.'s automated system.
 <hr>
+
 When adding modules, ensure they are things that *should* be Zeus modules. If it a system that can work independently from Zeus, make it into its own script, don't incorporate it into E.Z.M. For example, do not add a module that creates a roles system or changes how vehicles perform into E.Z.M., this should be separate from Zeus as it can act independently.
 
 I would go as far as to say even having earplugs added to E.Z.M. should not be done. E.Z.M. should focus on modifying *only* Zeus and their abilities. 
@@ -57,6 +58,7 @@ MAZ_EditAITree = [ //Returns our parent category, used for creating the module
 ] call MAZ_EZM_fnc_zeusAddModule;
 ```
 <br>
+
 Our module needs to be held within a function that holds all our additions to the modules. We'll name this `MAZ_EZM_fnc_ourAddedModules`.
 
 ```sqf
