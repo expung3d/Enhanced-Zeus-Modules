@@ -1,8 +1,9 @@
+
 # Enhanced Zeus Modules Contribution Guidelines
 Everything you need to know about contributing to E.Z.M.
 
 ## New Modules
-When adding new modules there are two steps. First we must create the function that we desire the module to call on deployment and then we must add the module to the Zeus modules tree.
+Adding new modules is very simple compared to the previous methods, now there are automated methods by which you, the amazing contributor you are, can add them dynamically to an already running E.Z.M. version. Firstly, we must define the functions that will be called by the modules. Second, we must create a function to add them to our modules list. Lastly, we need to load the function that adds them into the modules list into E.Z.M.'s automated system.
 <hr>
 When adding modules, ensure they are things that *should* be Zeus modules. If it a system that can work independently from Zeus, make it into its own script, don't incorporate it into E.Z.M. For example, do not add a module that creates a roles system or changes how vehicles perform into E.Z.M., this should be separate from Zeus as it can act independently.
 
@@ -10,7 +11,9 @@ I would go as far as to say even having earplugs added to E.Z.M. should not be d
 <hr>
 
 ### Adding the function
-Adding the function is very simple. Inside E.Z.M. there is a function called `MAZ_EZM_fnc_initFunction` within this are all the function declarations. Inside your text editor you can use the collapse option to show and hide the sections denoted by comments. When adding a new function ensure that the function is placed within the correct category as this helps other developers understand where the function should be and what it affects. Also, all functions should contain the prefix `TAG_MAZ_EZM_fnc_`. TAG being your own tag. <br>For this example we will create a function within `MAZ_EZM_fnc_initFunction` called `MAZ_EZM_fnc_helloWorld`.
+Adding the function is very simple. Simply define the function you want to call. Our example will simply `systemChat` "Hello World!" and put the type of the object we placed it on.
+
+Make sure that when you're creating a function that you use a unique prefix! The format to follow would be `TAG_MAZ_EZM_fnc_`. TAG is replaced with your own function tag, our function will simply be called `MAZ_EZM_fnc_helloWorld`.
 ```sqf
 MAZ_EZM_fnc_helloWorld = {
 	params ["_entity"]; //This entity will always be passed into a function called via EZM.
@@ -25,9 +28,11 @@ MAZ_EZM_fnc_helloWorld = {
 <hr>
 
 ### Adding the module
-Adding the module can be confusing, especially if aiming to create a new category for modules. Find the function `JAM_MAZ_EZM_editZeusInterface`. Inside here are all the changes that happen to the Zeus interface, color changes, adding modules, the warning system, etc. Just like the `MAZ_EZM_fnc_initFunction` had comments to organize the categories, this function does too. Find the category and create your category or module as follows.
+Adding the module can be confusing, especially if aiming to create a new category for modules. Find the function `JAM_MAZ_EZM_editZeusInterface`. Inside here are all the changes that happen to the Zeus interface, color changes, adding modules, the warning system, etc. In the function you will find examples you can look at to see how modules are added. You can see existing trees and add to them in your custom additions. In our example, we will add a module to the "AI Modifiers" tree, which is assigned the variable `MAZ_EditAITree`. 
 ```sqf
-//Creating the category
+//Inside of JAM_MAZ_EZM_editZeusInterface two actions are being performed.
+
+//Creating the category for the modules
 MAZ_EditAITree = [ //Returns our parent category, used for creating the module
 	MAZ_zeusModulesTree,//Predefined variable for modules control tree
 	"AI Modifiers", //The name of the category you wish to add
@@ -36,9 +41,8 @@ MAZ_EditAITree = [ //Returns our parent category, used for creating the module
 	"" //The tooltip shown when hovering over the category
 ] call MAZ_EZM_fnc_zeusAddCategory;
 
----------------------------------------
 
-//Creating the module
+//Creating the actual module within said category
 [
 	MAZ_zeusModulesTree, //The modules control tree
 	MAZ_EditAITree, //The parent category we defined prior
@@ -52,21 +56,41 @@ MAZ_EditAITree = [ //Returns our parent category, used for creating the module
 	[0.8,0,0,0.8] //Icon color disabled
 ] call MAZ_EZM_fnc_zeusAddModule;
 ```
-Following our example from the function declaration we will add the Hello World module. We will add it to the Utilities category.
+<br>
+Our module needs to be held within a function that holds all our additions to the modules. We'll name this `MAZ_EZM_fnc_ourAddedModules`.
+
 ```sqf
-[
-	MAZ_zeusModulesTree, //Module tree
-	MAZ_UtilitiesTree, //Module category
-	"Hello World!", //The module name
-	"Says hello", //Our description
-	"MAZ_EZM_fnc_helloWorld", //Our function
-	"" //No icon
-] call MAZ_EZM_fnc_zeusAddModule;
+MAZ_EZM_fnc_ourAddedModules = {
+	[
+		MAZ_zeusModulesTree, //Module tree
+		MAZ_EditAITree, //Module category
+		"Hello World Function!", //The module name
+		"Says hello", //Our description
+		"MAZ_EZM_fnc_helloWorld", //Our function
+		"" //No icon
+	] call MAZ_EZM_fnc_zeusAddModule;
+};
+```
+Now, all we have to do is load this into the automated system within E.Z.M. to load the modules! To do so, we will take the function we just created and load it into a function that will be called during the Zeus interface's creation.
+```sqf
+//For modules
+["MAZ_EZM_fnc_ourAddedModules"] call MAZ_EZM_fnc_addNewModulesToDynamicModules;
+
+//For factions
+["MAZ_EZM_fnc_ourAddedModules"] call MAZ_EZM_fnc_addNewFactionToDynamicFactions;
+
+//These functions perform very similar actions, and can be used interchangeably.
+//However, using factions vs modules is useful syntactically if you are adding different things.
 ```
 <hr>
 
 ## Adding Factions
-At the most basic level factions are glorified modules located in a different place. Before you start creating a faction in E.Z.M. remember that your factions won't be included in future updates unless Expung3d looks at the faction and approves it to be an official faction. This means you should keep a backup of your factions and have the code separate from your E.Z.M. file so you can transfer it with new updates. 
+At the most basic level factions are glorified modules, this means that the same information from above can be applied here. There are two differences. One is that instead of using `MAZ_EZM_fnc_zeusAddModule` we will use `MAZ_EZM_fnc_zeusAddModule_FACTION`. For example, if we wanted to create a function for blufor we would use `MAZ_EZM_fnc_zeusAddModule_BLUFOR`.
+
+Here are the existing functions: `MAZ_EZM_fnc_zeusAddModule_BLUFOR`, `MAZ_EZM_fnc_zeusAddModule_OPFOR`, `MAZ_EZM_fnc_zeusAddModule_INDEP`, and `MAZ_EZM_fnc_zeusAddModule_CIVILIAN`.
+
+The other difference is that instead of basing it off of the `MAZ_zeusModulesTree` it will be based off one of the following: `MAZ_UnitsTree_BLUFOR`, `MAZ_UnitsTree_OPFOR`, `MAZ_UnitsTree_INDEP`, `MAZ_UnitsTree_CIVLIAN`, and `MAZ_UnitsTree_EMPTY`.
+
 <hr>
 
 **Tips to make a good faction:**
@@ -80,7 +104,7 @@ At the most basic level factions are glorified modules located in a different pl
 <hr>
 
 ### Creating the Faction Functions
-Just like with the module functions we will add the function into `MAZ_EZM_fnc_initFunction`. Inside here we will see the familiar comment organization structure, create a new area for your faction's functions. <br>For this example we will create a function `MAZ_EZM_NF_fnc_createNewVehicle`. *Notice the new prefix, MAZ_EZM_[FactionTag]_fnc. FactionTag is replaced to a shortening of your faction's name. This is just "New Faction".* 
+Just like with the module functions we will just create our own function definition. <br>For this example we will create a function `MAZ_EZM_NF_fnc_createNewVehicle`. *Notice the new prefix, MAZ_EZM_[FactionTag]_fnc. FactionTag is replaced to a shortening of your faction's name. This faction is just "New Faction". When we add a faction we add our faction's name into the tag. You can keep your tag before the MAZ too if wanted.*
 
 ```sqf
 MAZ_EZM_NF_fnc_createNewVehicle = {
