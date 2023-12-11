@@ -35826,7 +35826,6 @@ comment "
 
 comment "
 Change Log:
- - Added Snow Storm module to Christmas festive modules.
  - Added ability to use direct chat when remote controlling units.
  - Added ability to reference object in debug console with 'this' keyword.
  - Added more building interiors.
@@ -35834,6 +35833,7 @@ Change Log:
  - Changed how context actions are added.
  - Fixed issue where the bottom of lists wouldn't be visible.
  - Fixed issue where teleport player context action was provided the wrong position.
+ - Fixed issue where context actions could be removed, but not by the correct indexes.
  - Removed random code that would never run added by M9.
 ";
 
