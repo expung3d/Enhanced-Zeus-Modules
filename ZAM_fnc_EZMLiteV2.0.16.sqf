@@ -1,3 +1,4 @@
+comment "hi this is Gustav, I am very cool B)";
 [] spawn {
 MAZ_EZM_Version = "V2.0.16";
 MAZ_EZM_autoAdd = profileNamespace getVariable ['MAZ_EZM_autoAddVar',true];
