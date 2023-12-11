@@ -7074,9 +7074,7 @@ MAZ_EZM_fnc_initFunction = {
 								playSound['hintExpand', false];
 							}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
 						];
-						
-						_supplyCrate addAction
-						[
+						_supplyCrate addAction[
 							"<t color='#FFFFFF' size='1.2'><img image='\A3\ui_f\data\map\diary\icons\taskCustom_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Copy Loadout</t>", 
 							{
 								playSound ['beep_target', true]; 
@@ -7252,8 +7250,6 @@ MAZ_EZM_fnc_initFunction = {
 								playSound['hintExpand', false];
 							}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
 						];
-						
-						
 						_supplyCrate addAction[
 							"<t color='#FFFFFF' size='1.2'><img image='\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\heal_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Heal</t>", {
 								playSound['beep_target', true];
