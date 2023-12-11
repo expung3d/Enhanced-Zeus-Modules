@@ -35755,50 +35755,6 @@ MAZ_EZM_fnc_initMainLoop = {
 	while {MAZ_EZM_mainLoop_Active} do {
 		waitUntil {uiSleep 0.01; (!isNull (findDisplay 312))};
 
-		comment "TODO - What?!";
-		if (false) then {
-			if ((vehicle player == player) && (!(missionNamespace getvariable ['AR_active', false]))) then {
-				private _fnc = {
-					private _animBlacklist = [
-						"pronebipod_centerleft",
-						"pronebipod_centerright",
-
-
-						"bipod_90_centerleft",
-						"bipod_90_centerright",
-
-
-						"bipod_150_centerleft",
-						"bipod_150_centerright"
-					];
-					
-					if (JAM_zeus_prevAnim in _animBlacklist) then {
-						[PLAYER, ''] remoteExec ['switchMove'];
-					} else {
-						[PLAYER, JAM_zeus_prevAnim] remoteExec ['switchMove'];
-					};
-				
-					if (false) then {
-						if (!isNil 'JAM_EH_zeusUnitAnims') then {
-							player removeEventHandler ['AnimDone', JAM_EH_zeusUnitAnims];
-						};
-						
-						JAM_EH_zeusUnitAnims = player addEventHandler ["AnimDone", {
-							params ["_unit", "_anim"];
-							systemChat _anim;
-							[PLAYER, JAM_zeus_prevAnim] remoteExec ['switchMove'];
-						}];
-					};
-				};
-				if (!isNil 'JAM_zeus_prevAnim') then {
-					[] call _fnc;
-				} else {
-					JAM_zeus_prevAnim = animationState player;
-					[] call _fnc;
-				};
-			};			
-		};
-
 		[] spawn MAZ_EZM_editZeusLogic;
 		[] spawn MAZ_EZM_addZeusKeybinds_312;
 		[] spawn MAZ_EZM_fnc_editZeusInterface;
@@ -35856,6 +35812,7 @@ Change Log:
  - Added more building interiors.
  - Added No Turret APC's to various factions.
  - Fixed issue where teleport player context action was provided the wrong position.
+ - Removed random code that would never run added by M9.
 ";
 
 comment "
