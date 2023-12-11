@@ -12,10 +12,9 @@ MAZ_EZM_moduleAddons = [];
 
 comment "Color Override";
 	EZM_themeColor = [0, 0.75, 0.75, 1];
-	EZM_zeusTransparency = 1;	
+	EZM_zeusTransparency = profileNamespace getVariable ["MAZ_EZM_zeusTransparency_currentValue",1];	
 	EZM_dialogColor = [0,0.5,0.5,1];	
 	EZM_dialogBackgroundCO = [0, 0, 0, 0.7];
-	profileNamespace setVariable ['JAM_zeusTransparency_currentValue', EZM_zeusTransparency];
 	uiNamespace setVariable ['EZM_themeColor', EZM_themeColor];
 
 comment "Dialog Creation";
@@ -3147,7 +3146,7 @@ comment "Context Menu";
 			"Add Editable Objects",
 			{
 				params ["_pos"];
-				private _objects = [_pos,100] call JAM_fnc_getEditableObjs_radius;
+				private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
 				[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
 			},
 			{true},
@@ -3159,7 +3158,7 @@ comment "Context Menu";
 					"50m",
 					{
 						params ["_pos"];
-						private _objects = [_pos,50] call JAM_fnc_getEditableObjs_radius;
+						private _objects = [_pos,50] call MAZ_EZM_fnc_getEditableObjectsRadius;
 						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
 					},
 					{true},
@@ -3170,7 +3169,7 @@ comment "Context Menu";
 					"100m",
 					{
 						params ["_pos"];
-						private _objects = [_pos,100] call JAM_fnc_getEditableObjs_radius;
+						private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
 						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
 					},
 					{true},
@@ -3181,7 +3180,7 @@ comment "Context Menu";
 					"250m",
 					{
 						params ["_pos"];
-						private _objects = [_pos,250] call JAM_fnc_getEditableObjs_radius;
+						private _objects = [_pos,250] call MAZ_EZM_fnc_getEditableObjectsRadius;
 						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
 					},
 					{true},
@@ -3192,7 +3191,7 @@ comment "Context Menu";
 					"500m",
 					{
 						params ["_pos"];
-						private _objects = [_pos,500] call JAM_fnc_getEditableObjs_radius;
+						private _objects = [_pos,500] call MAZ_EZM_fnc_getEditableObjectsRadius;
 						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
 					},
 					{true},
@@ -3203,7 +3202,7 @@ comment "Context Menu";
 					"1000m",
 					{
 						params ["_pos"];
-						private _objects = [_pos,1000] call JAM_fnc_getEditableObjs_radius;
+						private _objects = [_pos,1000] call MAZ_EZM_fnc_getEditableObjectsRadius;
 						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
 					},
 					{true},
@@ -3219,7 +3218,7 @@ comment "Context Menu";
 			"Remove Edit Objects",
 			{
 				params ["_pos"];
-				private _objects = [_pos,100] call JAM_fnc_getEditableObjs_radius;
+				private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
 				[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
 			},
 			{true},
@@ -3231,7 +3230,7 @@ comment "Context Menu";
 					"50m",
 					{
 						params ["_pos"];
-						private _objects = [_pos,50] call JAM_fnc_getEditableObjs_radius;
+						private _objects = [_pos,50] call MAZ_EZM_fnc_getEditableObjectsRadius;
 						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
 					},
 					{true},
@@ -3242,7 +3241,7 @@ comment "Context Menu";
 					"100m",
 					{
 						params ["_pos"];
-						private _objects = [_pos,100] call JAM_fnc_getEditableObjs_radius;
+						private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
 						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
 					},
 					{true},
@@ -3253,7 +3252,7 @@ comment "Context Menu";
 					"250m",
 					{
 						params ["_pos"];
-						private _objects = [_pos,250] call JAM_fnc_getEditableObjs_radius;
+						private _objects = [_pos,250] call MAZ_EZM_fnc_getEditableObjectsRadius;
 						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
 					},
 					{true},
@@ -3264,7 +3263,7 @@ comment "Context Menu";
 					"500m",
 					{
 						params ["_pos"];
-						private _objects = [_pos,500] call JAM_fnc_getEditableObjs_radius;
+						private _objects = [_pos,500] call MAZ_EZM_fnc_getEditableObjectsRadius;
 						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
 					},
 					{true},
@@ -3275,7 +3274,7 @@ comment "Context Menu";
 					"1000m",
 					{
 						params ["_pos"];
-						private _objects = [_pos,1000] call JAM_fnc_getEditableObjs_radius;
+						private _objects = [_pos,1000] call MAZ_EZM_fnc_getEditableObjectsRadius;
 						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
 					},
 					{true},
@@ -4018,7 +4017,7 @@ comment "Dynamic Module Addons";
 
 comment "Modules";
 
-MAZ_EZM_createUnitForZeus = {
+MAZ_EZM_fnc_createUnitForZeus = {
 	private _pos = getPos player;
 	private _zeusLogic = getAssignedCuratorLogic player;
 	private _isGameMod = false;
@@ -4401,7 +4400,7 @@ MAZ_EZM_fnc_updateModuleSelection = {
 	};
 };
 
-JAM_GUIfnc_setZeusTransparency = {
+MAZ_EZM_fnc_setZeusTransparency = {
 	params [['_alpha', 1]];
 	with uiNamespace do {
 		private _display = findDisplay 312;
@@ -9229,7 +9228,7 @@ MAZ_EZM_fnc_initFunction = {
 		MAZ_EZM_fnc_deleteEverythingModule = {
 			[] spawn {
 				["Filtering map objects..."] call MAZ_EZM_fnc_systemMessage;
-				private _JAM_zeus_objBlacklist = 
+				private _objBlacklist = 
 				[
 					"Logic",
 					"ModuleHQ_F",
@@ -9253,7 +9252,7 @@ MAZ_EZM_fnc_initFunction = {
 
 				private _goodObjects = [];
 				{
-					if(!(typeOf _x in _JAM_zeus_objBlacklist)) then {
+					if(!(typeOf _x in _objBlacklist)) then {
 						_goodObjects pushBack _x;
 					};
 					sleep 0.001;
@@ -9281,7 +9280,7 @@ MAZ_EZM_fnc_initFunction = {
 				]
 			],{
 				params ["_values","_args","_display"];
-				private _objects = [_args,_values # 0] call JAM_fnc_getEditableObjs_radius;
+				private _objects = [_args,_values # 0] call MAZ_EZM_fnc_getEditableObjectsRadius;
 				{
 					deleteVehicle _x;
 				} forEach _objects;
@@ -13130,7 +13129,7 @@ MAZ_EZM_fnc_initFunction = {
 
 	comment "Utilities";
 
-		JAM_zeus_objBlacklist = [
+		MAZ_EZM_zeusObjectBlacklist = [
 			"Logic",
 			"ModuleHQ_F",
 			"ModuleSector_F",
@@ -13150,7 +13149,7 @@ MAZ_EZM_fnc_initFunction = {
 			"ModuleCuratorSetAttributesPlayer_F",
 			"ModuleCuratorAddEditingAreaPlayers_F"
 		];
-		JAM_zeus_objWhitelist = [
+		MAZ_EZM_zeusObjectWhitelist = [
 			"ModuleLightning_F",
 			"ModuleRemoteControl_F",
 			"ModuleArsenal_F",
@@ -13224,7 +13223,7 @@ MAZ_EZM_fnc_initFunction = {
 				["Filtering map objects..."] call MAZ_EZM_fnc_systemMessage;
 				private _goodObjects = [];
 				{
-					if(!(typeOf _x in JAM_zeus_objBlacklist)) then {
+					if(!(typeOf _x in MAZ_EZM_zeusObjectBlacklist)) then {
 						_goodObjects pushBack _x;
 					};
 					sleep 0.00001;
@@ -13235,7 +13234,7 @@ MAZ_EZM_fnc_initFunction = {
 			};
 		};
 
-		JAM_fnc_getEditableObjs_radius = {
+		MAZ_EZM_fnc_getEditableObjectsRadius = {
 			params ['_addPos', '_addRadius'];
 			private _allObjs = nearestObjects [_addPos, ['ALL'], _addRadius, true];
 			private _simpleObjectsInRange = (allSimpleObjects []) select {(_x distance _addPos) <= _addRadius};
@@ -13244,8 +13243,8 @@ MAZ_EZM_fnc_initFunction = {
 				_addObject = false;
 				_className = typeOf _x;
 				_isKindOfLogic = _x isKindOf 'Logic';
-				_isInWhitelist = _className in JAM_zeus_objWhitelist;
-				_isInBlacklist = _className in JAM_zeus_objBlacklist;
+				_isInWhitelist = _className in MAZ_EZM_zeusObjectWhitelist;
+				_isInBlacklist = _className in MAZ_EZM_zeusObjectBlacklist;
 				if (_isKindOfLogic) then 
 				{
 					if ((!_isInBlacklist) OR (_isInWhitelist)) then 
@@ -13289,7 +13288,7 @@ MAZ_EZM_fnc_initFunction = {
 				private _radius = round (_values # 0);
 				private _isGlobal = _values # 1;
 				_isGlobal = [getAssignedCuratorLogic player, allCurators] select _isGlobal;
-				private _objects = [_args,_radius] call JAM_fnc_getEditableObjs_radius;
+				private _objects = [_args,_radius] call MAZ_EZM_fnc_getEditableObjectsRadius;
 				[_objects,_isGlobal] call MAZ_EZM_fnc_addObjectToInterface;
 				_display closeDisplay 1;
 			},{
@@ -13600,7 +13599,7 @@ MAZ_EZM_fnc_initFunction = {
 				["Filtering map objects..."] call MAZ_EZM_fnc_systemMessage;
 				private _goodObjects = [];
 				{
-					if(!(typeOf _x in JAM_zeus_objBlacklist)) then {
+					if(!(typeOf _x in MAZ_EZM_zeusObjectBlacklist)) then {
 						_goodObjects pushBack _x;
 					};
 					sleep 0.001;
@@ -26864,7 +26863,7 @@ MAZ_EZM_fnc_initFunction = {
 };
 [] call MAZ_EZM_fnc_initFunction;
 
-JAM_MAZ_EZM_editZeusInterface = {
+MAZ_EZM_fnc_editZeusInterface = {
 	comment " 👽 ";
 	if (isNull (findDisplay 312)) exitWith {};
 	showChat true;
@@ -26898,8 +26897,8 @@ JAM_MAZ_EZM_editZeusInterface = {
 			comment "Transparency & Function Defines";
 
 				missionNamespace setVariable ['MAZ_zeusModulesWithFunction', []];
-				private _transparency = profilenamespace getVariable ['JAM_zeusTransparency_currentValue', 1];
-				[_transparency] call (missionNamespace getvariable ['JAM_GUIfnc_setZeusTransparency', {}]);
+				private _transparency = profilenamespace getVariable ['MAZ_EZM_zeusTransparency_currentValue', 1];
+				[_transparency] call (missionNamespace getvariable ['MAZ_EZM_fnc_setZeusTransparency', {}]);
 
 				MAZ_EZM_fnc_zeusAddCategory = {
 					params [
@@ -26934,7 +26933,7 @@ JAM_MAZ_EZM_editZeusInterface = {
 						['_parentCategory', 1],
 						['_moduleName', '[ Module ]'],
 						['_moduleTip', '[ Placeholder ]'],
-						['_moduleFunction', 'JAM_fnc_nullFunction'],
+						['_moduleFunction', 'MAZ_EZM_fnc_nullFunction'],
 						['_iconPath', '\a3\ui_f_curator\Data\Displays\RscDisplayCurator\modeModules_ca.paa'],
 						['_textColor', [1,1,1,1]],
 						['_iconColor', [1,1,1,1]],
@@ -26971,7 +26970,7 @@ JAM_MAZ_EZM_editZeusInterface = {
 						['_parentSubcategory',1],
 						['_moduleName', '[ Module ]'],
 						['_moduleTip', '[ Placeholder ]'],
-						['_moduleFunction', 'JAM_fnc_nullFunction'],
+						['_moduleFunction', 'MAZ_EZM_fnc_nullFunction'],
 						['_iconPath', '\a3\ui_f_curator\Data\Displays\RscDisplayCurator\modeModules_ca.paa'],
 						['_textColor', [1,1,1,1]],
 						['_iconColor', [1,1,1,1]],
@@ -27008,7 +27007,7 @@ JAM_MAZ_EZM_editZeusInterface = {
 						['_parentSubcategory',1],
 						['_moduleName', '[ Module ]'],
 						['_moduleTip', '[ Placeholder ]'],
-						['_moduleFunction', 'JAM_fnc_nullFunction'],
+						['_moduleFunction', 'MAZ_EZM_fnc_nullFunction'],
 						['_iconPath', '\a3\ui_f_curator\Data\Displays\RscDisplayCurator\modeModules_ca.paa'],
 						['_textColor', [1,1,1,1]],
 						['_iconColor', [1,1,1,1]],
@@ -27045,7 +27044,7 @@ JAM_MAZ_EZM_editZeusInterface = {
 						['_parentSubcategory',1],
 						['_moduleName', '[ Module ]'],
 						['_moduleTip', '[ Placeholder ]'],
-						['_moduleFunction', 'JAM_fnc_nullFunction'],
+						['_moduleFunction', 'MAZ_EZM_fnc_nullFunction'],
 						['_iconPath', '\a3\ui_f_curator\Data\Displays\RscDisplayCurator\modeModules_ca.paa'],
 						['_textColor', [1,1,1,1]],
 						['_iconColor', [1,1,1,1]],
@@ -27082,7 +27081,7 @@ JAM_MAZ_EZM_editZeusInterface = {
 						['_parentSubcategory',1],
 						['_moduleName', '[ Module ]'],
 						['_moduleTip', '[ Placeholder ]'],
-						['_moduleFunction', 'JAM_fnc_nullFunction'],
+						['_moduleFunction', 'MAZ_EZM_fnc_nullFunction'],
 						['_iconPath', '\a3\ui_f_curator\Data\Displays\RscDisplayCurator\modeModules_ca.paa'],
 						['_textColor', [1,1,1,1]],
 						['_iconColor', [1,1,1,1]],
@@ -35291,7 +35290,7 @@ MAZ_EZM_addZeusKeybinds_312 = {
 	MAZ_EZM_changeCuratorSideEH = (findDisplay 312) displayAddEventHandler ["KeyDown", {
 		params ["_displayOrControl", "_key", "_shift", "_ctrl", "_alt"];
 		if(_key == 22 && _ctrl) then {
-			[] spawn JAM_GUIfnc_groupMenuTeamSwitcher;
+			[] spawn MAZ_EZM_fnc_groupMenuTeamSwitcher;
 		};
 	}];
 
@@ -35596,7 +35595,7 @@ MAZ_EZM_addZeusKeybinds_46 = {
 	}"];
 };
 
-JAM_GUIfnc_groupMenuTeamSwitcher = {
+MAZ_EZM_fnc_groupMenuTeamSwitcher = {
 	if (!isNull findDisplay 60490) exitWith {};
 	with uiNamespace do 
 	{
@@ -35802,7 +35801,7 @@ MAZ_EZM_fnc_initMainLoop = {
 
 		[] spawn MAZ_EZM_editZeusLogic;
 		[] spawn MAZ_EZM_addZeusKeybinds_312;
-		[] spawn JAM_MAZ_EZM_editZeusInterface;
+		[] spawn MAZ_EZM_fnc_editZeusInterface;
 		call MAZ_EZM_fnc_addRespawnModules;
 		playSound "beep_target";
 		waitUntil {uiSleep 0.1; (isNull (findDisplay 312))};
@@ -35826,7 +35825,7 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 	params ["_values","_args","_display"];
 	_values params ["_createZeusUnit"];
 	if(_createZeusUnit) then {
-		[] spawn MAZ_EZM_createUnitForZeus;
+		[] spawn MAZ_EZM_fnc_createUnitForZeus;
 	} else {
 		if (isNil "MAZ_EZM_mainLoop_Active") then {
 			[] spawn MAZ_EZM_fnc_initMainLoop;
