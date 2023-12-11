@@ -10327,7 +10327,7 @@ MAZ_EZM_fnc_initFunction = {
 			},[]] call MAZ_EZM_fnc_createDialog;
 		};
 
-		EZM_fnc_moduleDialogMessage = {
+		MAZ_EZM_fnc_moduleDialogMessage = {
 			params["_object"];
 			with uiNamespace do {
 				createDialog "RscDisplayEmpty";
@@ -26874,7 +26874,8 @@ JAM_MAZ_EZM_editZeusInterface = {
 			private _display = displayNull;
 			_display = findDisplay 312;
 			if(isNull _display) exitWith {};
-				comment "Re-Color Zeus Watermark";
+			
+			comment "Re-Color Zeus Watermark";
 				_display displayAddEventHandler ['KeyDown', {
 					if (_this select 1 == 14) then {
 						private _display = findDisplay 312;
@@ -28198,7 +28199,7 @@ JAM_MAZ_EZM_editZeusInterface = {
 					MAZ_MessagesTree,
 					'Voice Dialog Message',
 					'Play a voiced message from Arma 3.\n(Select voice lines from a menu.)',
-					'EZM_fnc_moduleDialogMessage',
+					'MAZ_EZM_fnc_moduleDialogMessage',
 					'\A3\ui_f\data\IGUI\Cfg\actions\talk_ca.paa'
 				] call MAZ_EZM_fnc_zeusAddModule;
 
@@ -35206,7 +35207,7 @@ MAZ_EZM_editZeusLogic = {
 	};
 	_zeusLogic setVariable [
 		"MAZ_zeusEH_curatorObjectPlaced",
-			_zeusLogic addEventHandler ["CuratorObjectPlaced", {
+		_zeusLogic addEventHandler ["CuratorObjectPlaced", {
 			params ["_curator", "_entity"];
 			private _tab = RscDisplayCurator_sections select 0;
 			if(_tab == 1) exitWith {comment "IN GROUPS TAB";};
@@ -35853,6 +35854,8 @@ Change Log:
  - Added Snow Storm module to Christmas festive modules.
  - Added ability to use direct chat when remote controlling units.
  - Added ability to reference object in debug console with 'this' keyword.
+ - Added more building interiors.
+ - Added No Turret APC's to various factions.
  - Fixed issue where teleport player context action was provided the wrong position.
 ";
 
