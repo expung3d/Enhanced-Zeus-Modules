@@ -277,6 +277,9 @@ comment "Dialog Creation";
 				_listBox lbSetCurSel _index;
 			};
 		} forEach _entries;
+		_listBox lbAdd " ";
+		_listBox lbAdd "  ";
+		_listBox lbAdd "   ";
 
 		_rowControlGroup setVariable ["controlValue",{
 			params ["_controlsGroup"];
@@ -2892,13 +2895,14 @@ comment "Context Menu";
 			ZAM_EZM_contextMenuActions = [];
 		};
 		private _index = ZAM_EZM_contextMenuActions pushBack [_displayName,_code,_condition,_priority,_img,_color,_childActions];
-		ZAM_EZM_contextMenuActions = [ZAM_EZM_contextMenuActions,[],{_x select 3},"ASCEND"] call BIS_fnc_sortBy;
 		_index
 	};
 
 	ZAM_fnc_removeContextAction = {
 		params ["_index"];
-		if(_index < 0 || _index >= (count ZAM_EZM_contextMenuActions)) exitWith {};
+		if(_index < 0 || _index >= (count ZAM_EZM_contextMenuActions)) exitWith {
+			["Failed to remove action","addItemFailed"] call MAZ_EZM_fnc_systemMessage;
+		};
 		ZAM_EZM_contextMenuActions set [_index,nil];
 	};
 
@@ -3064,7 +3068,10 @@ comment "Context Menu";
 
 			comment "Run conditionals";
 			private _yPos = 0;
+			private _actions = +(missionNamespace getVariable "ZAM_EZM_contextMenuActions");
+			_actions = [_actions,[],{_x select 3},"ASCEND"] call BIS_fnc_sortBy;
 			{
+				if(isNil "_x") then {continue};
 				_x params ["_displayName","_code","_condition","_priority","_img","_color","_childActions"];
 				with missionNamespace do {
 					private _result = _entity call _condition;
@@ -3112,7 +3119,7 @@ comment "Context Menu";
 					_yPos = _yPos + _posH;
 				};
 				MAZ_EZM_contextConditionResult = nil;
-			}forEach (missionNamespace getVariable "ZAM_EZM_contextMenuActions");
+			}forEach _actions;
 
 			_ctrlGroup ctrlSetPositionH _yPos;
 			_ctrlGroupFrame ctrlSetPositionH _yPos;
@@ -35824,6 +35831,8 @@ Change Log:
  - Added ability to reference object in debug console with 'this' keyword.
  - Added more building interiors.
  - Added No Turret APC's to various factions.
+ - Changed how context actions are added.
+ - Fixed issue where the bottom of lists wouldn't be visible.
  - Fixed issue where teleport player context action was provided the wrong position.
  - Removed random code that would never run added by M9.
 ";
