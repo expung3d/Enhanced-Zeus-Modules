@@ -1,3 +1,4 @@
+comment "Zaco is gay and has AIDS";
 [] spawn {
 MAZ_EZM_Version = "V2.0.16";
 MAZ_EZM_autoAdd = profileNamespace getVariable ['MAZ_EZM_autoAddVar',true];
