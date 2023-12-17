@@ -27401,6 +27401,20 @@ MAZ_EZM_fnc_editZeusInterface = {
 					} forEach [275,276,277];
 				};
 
+				MAZ_EZM_fnc_findTree = {
+					params ["_parent","_value",["_parentPath",[]]];
+					private _index = -1;
+					for "_i" from 0 to (_parent tvCount _parentPath) do {
+						private _newPath = +_parentPath;
+						_newPath pushBack _i;
+						if(_parent tvText _newPath == _value) then {
+							_index = _i;
+							break;
+						};
+					};
+					_index
+				};
+
 			comment "Warning System";
 
 				MAZ_EZM_fnc_getActiveWarnings = {
@@ -32171,14 +32185,14 @@ MAZ_EZM_fnc_editZeusInterface = {
 			
 			comment "AAF+ Modules"; 
 				
-					private _UnitsTree_INDEP = MAZ_UnitsTree_INDEP; 
-					private _count = _UnitsTree_INDEP tvCount [0]; 
+					private _aafLocalText = localize "$STR_A3_CFGFACTIONCLASSES_IND_F0";
+					MAZ_AAFPTree = [MAZ_UnitsTree_INDEP,_aafLocalText] call MAZ_EZM_fnc_findTree;
+					private _count = MAZ_UnitsTree_INDEP tvCount [MAZ_AAFPTree]; 
 					for "_i" from 0 to (_count - 1) do { 
-				    	_UnitsTree_INDEP tvDelete [0,0]; 
+				    	MAZ_UnitsTree_INDEP tvDelete [MAZ_AAFPTree,0]; 
 					}; 
 				
-					MAZ_AAFPTree = 0; 
-					MAZ_UnitsTree_INDEP tvSetText [[MAZ_AAFPTree],"AAF+"]; 
+					MAZ_UnitsTree_INDEP tvSetText [[MAZ_AAFPTree], _aafLocalText + "+"]; 
 					MAZ_UnitsTree_INDEP tvSetPictureRight [[MAZ_AAFPTree], "\a3\ui_f_orange\data\displays\rscdisplayorangechoice\faction_aaf_ca.paa"]; 
 					MAZ_UnitsTree_INDEP tvSetTooltip [[MAZ_AAFPTree], "A remastered version of the AAF faction."]; 
 
@@ -33625,14 +33639,14 @@ MAZ_EZM_fnc_editZeusInterface = {
 
 			comment "FIA+ Modules"; 
 				
-					private _UnitsTree_OPFOR = MAZ_UnitsTree_OPFOR; 
-					private _count = _UnitsTree_OPFOR tvCount [2]; 
+					private _fiaLocalText = localize "$STR_A3_CFGFACTIONCLASSES_IND_G_F0";
+					MAZ_FIAPTree = [MAZ_UnitsTree_OPFOR,_fiaLocalText] call MAZ_EZM_fnc_findTree;
+					private _count = MAZ_UnitsTree_OPFOR tvCount [MAZ_FIAPTree]; 
 					for "_i" from 0 to (_count - 1) do { 
-						_UnitsTree_OPFOR tvDelete [2,0]; 
+						MAZ_UnitsTree_OPFOR tvDelete [MAZ_FIAPTree,0]; 
 					}; 
-				
-					MAZ_FIAPTree = 2; 
-					MAZ_UnitsTree_OPFOR tvSetText [[MAZ_FIAPTree],"FIA+"]; 
+	
+					MAZ_UnitsTree_OPFOR tvSetText [[MAZ_FIAPTree], _fiaLocalText + "+"]; 
 					MAZ_UnitsTree_OPFOR tvSetPictureRight [[MAZ_FIAPTree], "\a3\ui_f_orange\data\displays\rscdisplayorangechoice\faction_fia_ca.paa"]; 
 					MAZ_UnitsTree_OPFOR tvSetTooltip [[MAZ_FIAPTree], "A remastered version of the FIA faction."]; 
 				
@@ -34397,8 +34411,9 @@ MAZ_EZM_fnc_editZeusInterface = {
 
 			comment "CTRG+ Modules";
 
-				MAZ_CTRGPTree = 0;
-				MAZ_UnitsTree_BLUFOR tvSetText [[MAZ_CTRGPTree],"CTRG+"];
+				private _ctrgLocalText = localize "$STR_A3_CFGFACTIONCLASSES_BLU_CTRG_F0";
+				MAZ_CTRGPTree = [MAZ_UnitsTree_BLUFOR,_ctrgLocalText] call MAZ_EZM_fnc_findTree;
+				MAZ_UnitsTree_BLUFOR tvSetText [[MAZ_CTRGPTree], (_ctrgLocalText + "+")];
 				MAZ_UnitsTree_BLUFOR tvSetPictureRight [[MAZ_CTRGPTree], "\A3\missions_F_exp\data\img\lobby\ui_campaign_lobby_ctrg_tree_logo_ca.paa"];
 				MAZ_UnitsTree_BLUFOR tvSetTooltip [[MAZ_CTRGPTree], "A remastered version of the CTRG faction."];
 
@@ -35033,10 +35048,11 @@ MAZ_EZM_fnc_editZeusInterface = {
 					};
 					[((findDisplay 312) displayCtrl 152)] call (missionNamespace getVariable "MAZ_EZM_fnc_emulateModeClick");
 					private _mainIndex = 0;
-					while {_zeusModulesTree tvText [_mainIndex] != "Respawn" && _mainIndex < (_zeusModulesTree tvCount [])} do {
+					private _respawnLocalText = localize "$STR_A3_RSCRESPAWNCONTROLS_RESPAWN";
+					while {_zeusModulesTree tvText [_mainIndex] != _respawnLocalText && _mainIndex < (_zeusModulesTree tvCount [])} do {
 						_mainIndex = _mainIndex + 1;
 					};
-					if(_zeusModulesTree tvText [_mainIndex] == "Respawn") then {
+					if(_zeusModulesTree tvText [_mainIndex] == _respawnLocalText) then {
 						_zeusModulesTree tvExpand [_mainIndex];
 						_zeusModulesTree tvSetCurSel [-1];
 						_zeusModulesTree tvSetCurSel [_mainIndex];
@@ -35826,15 +35842,7 @@ comment "
 
 comment "
 Change Log:
- - Added ability to use direct chat when remote controlling units.
- - Added ability to reference object in debug console with 'this' keyword.
- - Added more building interiors.
- - Added No Turret APC's to various factions.
- - Changed how context actions are added.
- - Fixed issue where the bottom of lists wouldn't be visible.
- - Fixed issue where teleport player context action was provided the wrong position.
- - Fixed issue where context actions could be removed, but not by the correct indexes.
- - Removed random code that would never run added by M9.
+ - Fixed issue where EZM factions would override new DLC factions. Now finds faction index by localized names.
 ";
 
 comment "
