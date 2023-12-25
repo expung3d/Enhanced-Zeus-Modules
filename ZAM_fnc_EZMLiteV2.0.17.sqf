@@ -1,5 +1,5 @@
 [] spawn {
-MAZ_EZM_Version = "V2.0.16";
+MAZ_EZM_Version = "V2.0.17";
 MAZ_EZM_autoAdd = profileNamespace getVariable ['MAZ_EZM_autoAddVar',true];
 MAZ_EZM_spawnWithCrew = true;
 MAZ_EZM_nvgsOnlyAtNight = true;
@@ -720,6 +720,7 @@ comment "Dialog Creation";
 				case "SIDES": {
 					_defaultValue = [_value] param [0,west,[west,[]]];
 					_controlType = MAZ_EZM_fnc_createSidesRow;
+					_settings = [];
 				};
 				case "SLIDER": {
 					_value params [
@@ -4039,11 +4040,15 @@ comment "Dynamic Module Addons";
 comment "Modules";
 
 MAZ_EZM_fnc_createUnitForZeus = {
+	params ["_joinSide","_sideToJoin"];
+	if(!_joinSide) then {
+		_sideToJoin = sideLogic;
+	};
 	private _pos = getPos player;
 	private _zeusLogic = getAssignedCuratorLogic player;
 	private _isGameMod = false;
 	private _zeusIndex = allCurators find _zeusLogic;
-	private _grp = createGroup [west,true];
+	private _grp = createGroup [_sideToJoin,true];
 	private _zeusObject = _grp createUnit ["B_officer_F",[0,0,0],[],0,"CAN_COLLIDE"];
 	_grp selectLeader _zeusObject;
 	_zeusObject setPosWorld _pos;
@@ -4053,6 +4058,8 @@ MAZ_EZM_fnc_createUnitForZeus = {
 	selectPlayer _zeusObject;
 	waitUntil{player == _zeusObject};
 	[_zeusObject,false] remoteExec ['allowDamage',0,_zeusObject];
+	_grp = createGroup [_sideToJoin,true];
+	[player] joinSilent _grp;
 
 	[allCurators select _zeusIndex] remoteExec ['unassignCurator',2];
 
@@ -27420,6 +27427,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 				MAZ_EZM_fnc_getActiveWarnings = {
 					private _count = 0;
 					{
+						param [2,false];
 						if(_x select 2) then {_count = _count + 1;}
 					}forEach (uiNamespace getVariable ["MAZ_EZM_activeWarnings",[]]);
 					_count
@@ -27448,11 +27456,13 @@ MAZ_EZM_fnc_editZeusInterface = {
 					params ["_warningIndex"];
 					private _warningData = (uiNamespace getVariable ["MAZ_EZM_activeWarnings",[]]) select _warningIndex;
 					_warningData params ["_warningPicture","_warningInfo","_isActive"];
-					(uiNamespace getVariable ["MAZ_EZM_activeWarnings",[]]) set [_warningIndex,[nil,nil,false]];
+					(uiNamespace getVariable ["MAZ_EZM_activeWarnings",[]]) set [_warningIndex,nil];
 					ctrlDelete _warningPicture;
 					private _count = 0;
 					{
+						if(isNil "_x") then {continue};
 						_x params ["_ctrl","_warningInfo","_isActive"];
+						if(isNil "_warningInfo") then {continue};
 						if(!_isActive) then {continue};
 						_ctrl ctrlSetPositionY (["Y",-8 + (2 * _count)] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 						_ctrl ctrlCommit 0;
@@ -27468,7 +27478,9 @@ MAZ_EZM_fnc_editZeusInterface = {
 						private _count = 0;
 						if(isNil "MAZ_EZM_activeWarnings") exitWith {};
 						{
+							if(isNil "_x") then {continue};
 							_x params ["_ctrl","_warningInfo","_isActive"];
+							if(isNil "_warningInfo") then {continue};
 							_warningInfo params ["_text","_icon","_color"];
 							if(!_isActive) then {continue};
 							private _ctrl = (findDisplay 312) ctrlCreate ["RscPicture",-1];
@@ -27494,7 +27506,9 @@ MAZ_EZM_fnc_editZeusInterface = {
 					with uiNamespace do {
 						if(isNil "MAZ_EZM_activeWarnings") exitWith {};
 						{
+							if(isNil "_x") then {continue};
 							_x params ["_ctrl","_warningInfo","_isActive"];
+							if(isNil "_ctrl") then {continue};
 							_ctrl ctrlSetFade 1;
 							_ctrl ctrlCommit 0.1;
 						}forEach MAZ_EZM_activeWarnings;
@@ -27507,6 +27521,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					with uiNamespace do {
 						if(isNil "MAZ_EZM_activeWarnings") exitWith {};
 						{
+							if(isNil "_x") then {continue};
 							_x params [["_ctrl", controlNull],"_warningInfo","_isActive"];
 							if(isNull _ctrl) then {continue};
 							_ctrl ctrlSetFade 0;
@@ -35807,17 +35822,48 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 	missionNamespace setVariable ["MAZ_EZM_shamelesslyPlugged",true,true];
 };
 
+private _changelog = [
+	"Changed the initial launch dialog to have additional options and change logs.",
+	"Fixed issue where EZM factions would override new DLC factions. Now finds faction index by localized names.",
+	"Fixed script errors with Warning Systems.",
+	"Fixed script errors when using SIDES dialog row type."
+];
+
+private _changelogString = "";
+{
+	_changelogString = _changelogString + "- " + _x + (toString [13,10]);
+}forEach _changelog;
+
 ["Create Zeus Unit?",[
 	[
 		"TOOLBOX:YESNO",
-		["Create Zeus Unit","Whether to create a new controllable unit for your player."],
+		["Create Zeus Unit?","Whether to create a new controllable unit for your player."],
 		[true]
+	],
+	[
+		"TOOLBOX:YESNO",
+		["Join a Side Channel?","Whether you will be set as a certain side and be able to hear their side chat."],
+		[true]
+	],
+	[
+		"SIDES",
+		"Side to Join",
+		west
+	],
+	[
+		"EDIT:MULTI",
+		"Change Log",
+		[
+			_changelogString,
+			5
+		]
 	]
 ],{
 	params ["_values","_args","_display"];
-	_values params ["_createZeusUnit"];
+	_values params ["_createZeusUnit","_joinSide","_sideToJoin"];
+	
 	if(_createZeusUnit) then {
-		[] spawn MAZ_EZM_fnc_createUnitForZeus;
+		[_joinSide,_sideToJoin] spawn MAZ_EZM_fnc_createUnitForZeus;
 	} else {
 		if (isNil "MAZ_EZM_mainLoop_Active") then {
 			[] spawn MAZ_EZM_fnc_initMainLoop;
