@@ -63,14 +63,16 @@ Our module needs to be held within a function that holds all our additions to th
 
 ```sqf
 MAZ_EZM_fnc_ourAddedModules = {
-	[
-		MAZ_zeusModulesTree, //Module tree
-		MAZ_EditAITree, //Module category
-		"Hello World Function!", //The module name
-		"Says hello", //Our description
-		"MAZ_EZM_fnc_helloWorld", //Our function
-		"" //No icon
-	] call MAZ_EZM_fnc_zeusAddModule;
+	with uiNamespace do {
+		[
+			MAZ_zeusModulesTree, //Module tree
+			MAZ_EditAITree, //Module category
+			"Hello World Function!", //The module name
+			"Says hello", //Our description
+			"MAZ_EZM_fnc_helloWorld", //Our function
+			"" //No icon
+		] call MAZ_EZM_fnc_zeusAddModule;
+	};
 };
 ```
 Now, all we have to do is load this into the automated system within E.Z.M. to load the modules! To do so, we will take the function we just created and load it into a function that will be called during the Zeus interface's creation.

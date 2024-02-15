@@ -4031,8 +4031,8 @@ comment "Dynamic Module Addons";
 
 	MAZ_EZM_fnc_addNewModulesToDynamicModules = {
 		params [["_moduleFunction","",[""]]];
-		if(_factionFunction == "") exitWith {};
-		MAZ_EZM_moduleAddons pushBack _factionFunction;
+		if(_moduleFunction == "") exitWith {};
+		MAZ_EZM_moduleAddons pushBack _moduleFunction;
 		[] spawn MAZ_EZM_fnc_refreshInterface;
 	};
 
