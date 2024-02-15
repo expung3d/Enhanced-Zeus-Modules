@@ -10130,11 +10130,7 @@ MAZ_EZM_fnc_initFunction = {
 				["c","u","n","t"] joinString "",
 				["f","a","g"] joinString "",
 				["g","a","y"] joinString "",
-				["z","a","m"] joinString "",
-				["o","p","i","u","m"] joinString "",
-				["m","e","t","h"] joinString "",
-				["h","e","r","o","i","n"] joinString "",
-				["c","a","r","t","e","l"] joinString ""
+				["z","a","m"] joinString ""
 			];
 
 			{
