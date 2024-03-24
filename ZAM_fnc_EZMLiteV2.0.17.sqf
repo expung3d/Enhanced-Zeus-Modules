@@ -1,5 +1,5 @@
 [] spawn {
-MAZ_EZM_Version = "V2.0.17";
+MAZ_EZM_Version = "V2.0.18";
 MAZ_EZM_autoAdd = profileNamespace getVariable ['MAZ_EZM_autoAddVar',true];
 MAZ_EZM_spawnWithCrew = true;
 MAZ_EZM_nvgsOnlyAtNight = true;
@@ -5033,6 +5033,27 @@ MAZ_EZM_fnc_initFunction = {
 			_index;
 		};
 
+		comment "Will return the first valid result. Not useful for searching for things like 'Autorifleman' or vague, reused terms.";
+		MAZ_EZM_fnc_tvFindDeepSearch = {
+			params ["_tree",["_startPath",[]],["_text",""]];
+			if(_text == "") exitWith {};
+			private _path = +_startPath;
+			private _size = (_tree tvCount _startPath) - 1;
+			for "_i" from 0 to _size do {
+				private _tempPath = _path + [_i];
+				if((_tree tvText _tempPath) == _text) exitWith {_path = _tempPath};
+				if(_tree tvCount _tempPath > 0) then {
+					private _searchResult = [_tree,_tempPath,_text] call MAZ_EZM_fnc_tvFindDeepSearch;
+					if (!(_searchResult isEqualTo [])) then {
+						_path = _searchResult;
+						break;
+					};
+				};
+			};
+			if(_path isEqualTo _startPath) then {_path = []};
+			_path;
+		};
+
 		MAZ_EZM_fnc_tvEmpty = {
 			params ["_tree",["_path",[]]];
 			private _size = (_tree tvCount _path) - 1;
@@ -5849,8 +5870,8 @@ MAZ_EZM_fnc_initFunction = {
 					private _target = (createGroup [east,true]) createUnit ["O_Soldier_unarmed_F",_position,[],0,"CAN_COLLIDE"];
 					_target disableAI "MOVE";
 					_target hideObject true;
-					comment "ZACO: You need to hide him from everyone!";
-					[_target, true] remoteExec ['hideObjectGlobal', 2];
+					comment "TODO ZACO: You need to hide him from everyone!";
+					[_target, true] remoteExec ['hideObjectGlobal', 0];
 					_target setUnitPOs "UP";
 					_target addRating -100000000000;
 
@@ -5951,7 +5972,7 @@ MAZ_EZM_fnc_initFunction = {
 
 	comment "AI Supports";
 
-		MAZ_airDropSupportModule = {
+		MAZ_EZM_fnc_airDropSupportModule = {
 			params ["_pos","_mode","_direction","_vehType","_sideOf","_sfx"];
 			private ["_typeMode","_dropType","_dropLoad","_dir","_vehPos","_doorAnim"];
 			private _typeMode = _mode select 0; _dropType = nil; if(count _mode == 2) then {_dropType = _mode select 1;};
@@ -6212,7 +6233,7 @@ MAZ_EZM_fnc_initFunction = {
 					_typeArray pushBack 'Arsenal';
 				};
 
-				[_args,_typeArray,_dir,_aircraft,_sideNew,_radioSFX] spawn MAZ_airDropSupportModule; 
+				[_args,_typeArray,_dir,_aircraft,_sideNew,_radioSFX] spawn MAZ_EZM_fnc_airDropSupportModule; 
 				_display closeDisplay 1;
 			},{
 				params ["_values","_args","_display"];
@@ -7687,139 +7708,136 @@ MAZ_EZM_fnc_initFunction = {
 			};
 		};
 
-		MAZ_EZM_fnc_newConvoyMission = {
-
-			private _fnc_getUnitTypes = {
-				params [
-					"_side"
-				];
-				private _return = [];
-				switch (_side) do {
-					case west: {
-						switch (worldName) do {
-							case "Stratis";
-							case "Malden";
-							case "Altis": {
-								_return = [
-									"B_Soldier_A_F",
-									"B_Soldier_AR_F",
-									"B_Medic_F",
-									"B_Soldier_GL_F",
-									"B_Soldier_M_F",
-									"B_Soldier_F",
-									"B_Soldier_LAT_F",
-									"B_Soldier_LAT2_F"
-								];
-							};
-							case "Tanoa": {
-								_return = [
-									"B_T_Soldier_A_F",
-									"B_T_Soldier_AR_F",
-									"B_T_Medic_F",
-									"B_T_Soldier_GL_F",
-									"B_T_Soldier_M_F",
-									"B_T_Soldier_F",
-									"B_T_Soldier_LAT_F",
-									"B_T_Soldier_LAT2_F"
-								];
-							};
-							case "Enoch": {
-								_return = [
-									"B_W_Soldier_A_F",
-									"B_W_Soldier_AR_F",
-									"B_W_Medic_F",
-									"B_W_Soldier_GL_F",
-									"B_W_Soldier_M_F",
-									"B_W_Soldier_F",
-									"B_W_Soldier_LAT_F",
-									"B_W_Soldier_LAT2_F"
-								];
-							};
+		MAZ_EZM_fnc_getAutoMissionUnitTypes = {
+			params ["_side"];
+			private _return = [];
+			switch (_side) do {
+				case west: {
+					switch (worldName) do {
+						case "Stratis";
+						case "Malden";
+						case "Altis": {
+							_return = [
+								"B_Soldier_A_F",
+								"B_Soldier_AR_F",
+								"B_Medic_F",
+								"B_Soldier_GL_F",
+								"B_Soldier_M_F",
+								"B_Soldier_F",
+								"B_Soldier_LAT_F",
+								"B_Soldier_LAT2_F"
+							];
 						};
-					};
-					case east: {
-						switch (worldName) do {
-							case "Stratis";
-							case "Malden";
-							case "Altis": {
-								_return = [
-									"O_Soldier_A_F",
-									"O_Soldier_AR_F",
-									"O_Medic_F",
-									"O_Soldier_GL_F",
-									"O_Soldier_M_F",
-									"O_Soldier_F",
-									"O_Soldier_LAT_F"
-								];
-							};
-							case "Tanoa": {
-								_return = [
-									"O_T_Soldier_A_F",
-									"O_T_Soldier_AR_F",
-									"O_T_Medic_F",
-									"O_T_Soldier_GL_F",
-									"O_T_Soldier_M_F",
-									"O_T_Soldier_F",
-									"O_T_Soldier_LAT_F"
-								];
-							};
-							case "Enoch": {
-								_return = [
-									"O_R_JTAC_F",
-									"O_R_Soldier_AR_F",
-									"O_R_Medic_F",
-									"O_R_Soldier_GL_F",
-									"O_R_Soldier_M_F",
-									"O_R_Soldier_LAT_F"
-								]
-							};
+						case "Tanoa": {
+							_return = [
+								"B_T_Soldier_A_F",
+								"B_T_Soldier_AR_F",
+								"B_T_Medic_F",
+								"B_T_Soldier_GL_F",
+								"B_T_Soldier_M_F",
+								"B_T_Soldier_F",
+								"B_T_Soldier_LAT_F",
+								"B_T_Soldier_LAT2_F"
+							];
 						};
-					};
-					case independent: {
-						switch (worldName) do {
-							case "Stratis";
-							case "Malden";
-							case "Altis": {
-								_return = [
-									"I_Soldier_A_F",
-									"I_Soldier_AR_F",
-									"I_Medic_F",
-									"I_Soldier_GL_F",
-									"I_Soldier_M_F",
-									"I_Soldier_F",
-									"I_Soldier_LAT_F",
-									"I_Soldier_LAT2_F"
-								];
-							};
-							case "Tanoa": {
-								_return = [
-									"I_C_Soldier_Para_7_F",
-									"I_C_Soldier_Para_3_F",
-									"I_C_Soldier_Para_4_F",
-									"I_C_Soldier_Para_6_F",
-									"I_C_Soldier_Para_8_F",
-									"I_C_Soldier_Para_1_F",
-									"I_C_Soldier_Para_5_F"
-								];
-							};
-							case "Enoch": {
-								_return = [
-									"I_E_Soldier_A_F",
-									"I_E_Soldier_AR_F",
-									"I_E_Medic_F",
-									"I_E_Soldier_GL_F",
-									"I_E_Soldier_M_F",
-									"I_E_Soldier_F",
-									"I_E_Soldier_LAT_F",
-									"I_E_Soldier_LAT2_F"
-								];
-							};
+						case "Enoch": {
+							_return = [
+								"B_W_Soldier_A_F",
+								"B_W_Soldier_AR_F",
+								"B_W_Medic_F",
+								"B_W_Soldier_GL_F",
+								"B_W_Soldier_M_F",
+								"B_W_Soldier_F",
+								"B_W_Soldier_LAT_F",
+								"B_W_Soldier_LAT2_F"
+							];
 						};
 					};
 				};
-				_return
+				case east: {
+					switch (worldName) do {
+						case "Stratis";
+						case "Malden";
+						case "Altis": {
+							_return = [
+								"O_Soldier_A_F",
+								"O_Soldier_AR_F",
+								"O_Medic_F",
+								"O_Soldier_GL_F",
+								"O_Soldier_M_F",
+								"O_Soldier_F",
+								"O_Soldier_LAT_F"
+							];
+						};
+						case "Tanoa": {
+							_return = [
+								"O_T_Soldier_A_F",
+								"O_T_Soldier_AR_F",
+								"O_T_Medic_F",
+								"O_T_Soldier_GL_F",
+								"O_T_Soldier_M_F",
+								"O_T_Soldier_F",
+								"O_T_Soldier_LAT_F"
+							];
+						};
+						case "Enoch": {
+							_return = [
+								"O_R_JTAC_F",
+								"O_R_Soldier_AR_F",
+								"O_R_Medic_F",
+								"O_R_Soldier_GL_F",
+								"O_R_Soldier_M_F",
+								"O_R_Soldier_LAT_F"
+							]
+						};
+					};
+				};
+				case independent: {
+					switch (worldName) do {
+						case "Stratis";
+						case "Malden";
+						case "Altis": {
+							_return = [
+								"I_Soldier_A_F",
+								"I_Soldier_AR_F",
+								"I_Medic_F",
+								"I_Soldier_GL_F",
+								"I_Soldier_M_F",
+								"I_Soldier_F",
+								"I_Soldier_LAT_F",
+								"I_Soldier_LAT2_F"
+							];
+						};
+						case "Tanoa": {
+							_return = [
+								"I_C_Soldier_Para_7_F",
+								"I_C_Soldier_Para_3_F",
+								"I_C_Soldier_Para_4_F",
+								"I_C_Soldier_Para_6_F",
+								"I_C_Soldier_Para_8_F",
+								"I_C_Soldier_Para_1_F",
+								"I_C_Soldier_Para_5_F"
+							];
+						};
+						case "Enoch": {
+							_return = [
+								"I_E_Soldier_A_F",
+								"I_E_Soldier_AR_F",
+								"I_E_Medic_F",
+								"I_E_Soldier_GL_F",
+								"I_E_Soldier_M_F",
+								"I_E_Soldier_F",
+								"I_E_Soldier_LAT_F",
+								"I_E_Soldier_LAT2_F"
+							];
+						};
+					};
+				};
 			};
+			_return
+		};
 
+		MAZ_EZM_fnc_newConvoyMission = {
 			MAZ_EZM_fnc_getConvoyInfo = {
 				params ["_convoyType"];
 				private _returnInfo = [];
@@ -8022,22 +8040,22 @@ MAZ_EZM_fnc_initFunction = {
 				params ["_type","_vehPos","_vehDir","_group"];
 				private _veh = createVehicle [_type,_vehPos,[],0,"None"];
 				_veh setDir _vehDir;
-				private _unitType = selectRandom ([side _group] call _fnc_getUnitTypes);
+				private _unitType = selectRandom ([side _group] call MAZ_EZM_fnc_getAutoMissionUnitTypes);
 				private _vehDriver = [_group,_unitType] call MAZ_EZM_fnc_createVehicleUnitConvoy;
 				_vehDriver moveInDriver _veh;
 				_vehDriver limitSpeed 57;
 				_vehDriver setSkill ["courage",1];
 				_vehDriver setSkill ["commanding",1];
 				if(_type isKindOf "Truck_F") then {
-					_unitType = selectRandom ([side _group] call _fnc_getUnitTypes);
+					_unitType = selectRandom ([side _group] call MAZ_EZM_fnc_getAutoMissionUnitTypes);
 					private _vehCargo = [_group,_unitType] call MAZ_EZM_fnc_createVehicleUnitConvoy;
 					_vehCargo moveInCargo _veh;
 				} else {
-					_unitType = selectRandom ([side _group] call _fnc_getUnitTypes);
+					_unitType = selectRandom ([side _group] call MAZ_EZM_fnc_getAutoMissionUnitTypes);
 					private _vehGunner = [_group,_unitType] call MAZ_EZM_fnc_createVehicleUnitConvoy;
 					_vehGunner moveInGunner _veh;
 					if (_veh emptyPositions "commander" > 0) then {
-						_unitType = selectRandom ([side _group] call _fnc_getUnitTypes);
+						_unitType = selectRandom ([side _group] call MAZ_EZM_fnc_getAutoMissionUnitTypes);
 						private _vehCommander = [_group,_unitType] call MAZ_EZM_fnc_createVehicleUnitConvoy;
 						_vehCommander moveInCommander _veh;
 					};
@@ -8045,7 +8063,7 @@ MAZ_EZM_fnc_initFunction = {
 				_veh;
 			};
 
-			private _convoyType = selectRandom [3];
+			private _convoyType = [0,3] call BIS_fnc_randomInt;
 			private _convoyInfo = [_convoyType] call MAZ_EZM_fnc_getConvoyInfo;
 			
 			private _vehTypes = _convoyInfo select 0;
@@ -8264,10 +8282,26 @@ MAZ_EZM_fnc_initFunction = {
 					"SLIDER",
 					"Number of Patrols",
 					[2,4,3]
+				],
+				[
+					"TOOLBOX",
+					"Fortify Houses?:",
+					[
+						true,
+						["Don't Fortify","Fortify"]
+					]
+				],
+				[
+					"TOOLBOX",
+					["Notify Players?:","Shows players a task popup after the town has been garrisoned."],
+					[
+						true,
+						["Don't Notify","Notify"]
+					]
 				]
 			],{
 				params ["_values","_args","_display"];
-				_values params ["_town","_side","_garrPercent","_patrols"];
+				_values params ["_town","_side","_garrPercent","_patrols","_fortify","_notify"];
 				private _locationNames = [];
 				{	
 					private _lct = _forEachIndex;
@@ -8278,7 +8312,7 @@ MAZ_EZM_fnc_initFunction = {
 				if(!(toUpper _town in _locationNames) && ((toUpper _town) != "NONE" && (toUpper _town) != "")) exitWith {["No such town!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 				private _sideNew = [[_side]] call MAZ_EZM_fnc_getSidesFromString;
 				_sideNew = _sideNew # 0;
-				[_town,_sideNew,_garrPercent,_patrols] spawn MAZ_EZM_fnc_garrisonTown; 
+				[_town,_sideNew,_garrPercent,_patrols,_fortify,_notify] spawn MAZ_EZM_fnc_garrisonTown; 
 				_display closeDisplay 1;
 			},{
 				params ["_values","_args","_display"];
@@ -8368,7 +8402,9 @@ MAZ_EZM_fnc_initFunction = {
 				["_town","NONE",[""]],
 				["_side",east,[east]],
 				["_percentGarrison",0.2,[0.2]],
-				["_numOfPatrols",selectRandom [2,3,4],[3]]
+				["_numOfPatrols",selectRandom [2,3,4],[3]],
+				["_fortify",true,[false]],
+				["_notify",false,[true]]
 			];
 			if(_side isEqualTo civilian) exitWith {false};
 
@@ -8396,142 +8432,15 @@ MAZ_EZM_fnc_initFunction = {
 				_townAlert = "A TOWN IS UNDER ATTACK";
 			};
 
-			private _fnc_getUnitTypes = {
-				params [
-					"_side"
-				];
-				private _return = [];
-				switch (_side) do {
-					case west: {
-						switch (worldName) do {
-							case "Stratis";
-							case "Malden";
-							case "Altis": {
-								_return = [
-									"B_Soldier_A_F",
-									"B_Soldier_AR_F",
-									"B_Medic_F",
-									"B_Soldier_GL_F",
-									"B_Soldier_M_F",
-									"B_Soldier_F",
-									"B_Soldier_LAT_F",
-									"B_Soldier_LAT2_F"
-								];
-							};
-							case "Tanoa": {
-								_return = [
-									"B_T_Soldier_A_F",
-									"B_T_Soldier_AR_F",
-									"B_T_Medic_F",
-									"B_T_Soldier_GL_F",
-									"B_T_Soldier_M_F",
-									"B_T_Soldier_F",
-									"B_T_Soldier_LAT_F",
-									"B_T_Soldier_LAT2_F"
-								];
-							};
-							case "Enoch": {
-								_return = [
-									"B_W_Soldier_A_F",
-									"B_W_Soldier_AR_F",
-									"B_W_Medic_F",
-									"B_W_Soldier_GL_F",
-									"B_W_Soldier_M_F",
-									"B_W_Soldier_F",
-									"B_W_Soldier_LAT_F",
-									"B_W_Soldier_LAT2_F"
-								];
-							};
-						};
-					};
-					case east: {
-						switch (worldName) do {
-							case "Stratis";
-							case "Malden";
-							case "Altis": {
-								_return = [
-									"O_Soldier_A_F",
-									"O_Soldier_AR_F",
-									"O_Medic_F",
-									"O_Soldier_GL_F",
-									"O_Soldier_M_F",
-									"O_Soldier_F",
-									"O_Soldier_LAT_F"
-								];
-							};
-							case "Tanoa": {
-								_return = [
-									"O_T_Soldier_A_F",
-									"O_T_Soldier_AR_F",
-									"O_T_Medic_F",
-									"O_T_Soldier_GL_F",
-									"O_T_Soldier_M_F",
-									"O_T_Soldier_F",
-									"O_T_Soldier_LAT_F"
-								];
-							};
-							case "Enoch": {
-								_return = [
-									"O_R_JTAC_F",
-									"O_R_Soldier_AR_F",
-									"O_R_Medic_F",
-									"O_R_Soldier_GL_F",
-									"O_R_Soldier_M_F",
-									"O_R_Soldier_LAT_F"
-								]
-							};
-						};
-					};
-					case independent: {
-						switch (worldName) do {
-							case "Stratis";
-							case "Malden";
-							case "Altis": {
-								_return = [
-									"I_Soldier_A_F",
-									"I_Soldier_AR_F",
-									"I_Medic_F",
-									"I_Soldier_GL_F",
-									"I_Soldier_M_F",
-									"I_Soldier_F",
-									"I_Soldier_LAT_F",
-									"I_Soldier_LAT2_F"
-								];
-							};
-							case "Tanoa": {
-								_return = [
-									"I_C_Soldier_Para_7_F",
-									"I_C_Soldier_Para_3_F",
-									"I_C_Soldier_Para_4_F",
-									"I_C_Soldier_Para_6_F",
-									"I_C_Soldier_Para_8_F",
-									"I_C_Soldier_Para_1_F",
-									"I_C_Soldier_Para_5_F"
-								];
-							};
-							case "Enoch": {
-								_return = [
-									"I_E_Soldier_A_F",
-									"I_E_Soldier_AR_F",
-									"I_E_Medic_F",
-									"I_E_Soldier_GL_F",
-									"I_E_Soldier_M_F",
-									"I_E_Soldier_F",
-									"I_E_Soldier_LAT_F",
-									"I_E_Soldier_LAT2_F"
-								];
-							};
-						};
-					};
-				};
-				_return
-			};
-			private _unitTypes = [_side] call _fnc_getUnitTypes;
+			private _unitTypes = [_side] call MAZ_EZM_fnc_getAutoMissionUnitTypes;
 			private _buildings = nearestTerrainObjects [_position,["BUILDING","HOUSE"],_sizeTown];
 			private _units = [];
 			{
 				if((random 1) < _percentGarrison) then {
 					private _randomNumOfUnits = [2,5] call BIS_fnc_randomInt;
+					if(_fortify) then {
+						[_x,[],false] call MAZ_EZM_fnc_createBuildingInterior;
+					};
 					private _grp = createGroup [_side,true];
 					for "_i" from 1 to _randomNumOfUnits do {
 						private _unitType = selectRandom _unitTypes;
@@ -8573,7 +8482,9 @@ MAZ_EZM_fnc_initFunction = {
 
 			[_units] call MAZ_EZM_fnc_addObjectToInterface;
 
-			["TaskAssignedIcon",["A3\UI_F\Data\Map\Markers\Military\warning_CA.paa",_townAlert]] remoteExec ['BIS_fnc_showNotification',0];
+			if(_notify) then {
+				["TaskAssignedIcon",["A3\UI_F\Data\Map\Markers\Military\warning_CA.paa",_townAlert]] remoteExec ['BIS_fnc_showNotification',0];
+			};
 
 			true
 		};
@@ -8896,7 +8807,7 @@ MAZ_EZM_fnc_initFunction = {
 		MAZ_EZM_fnc_isSameBuildingType = {
 			params ["_typeOfBuilding","_searchType"];
 			if(_searchType isEqualType [] && _typeOfBuilding in _searchType) exitWith {true};
-			if(_serachType isEqualType []) exitWith {false};
+			if(_searchType isEqualType []) exitWith {false};
 			if(_searchType isEqualType "" && {_typeOfBuilding isKindOf _searchType}) exitWith {true};
 			false
 		};
@@ -8914,9 +8825,11 @@ MAZ_EZM_fnc_initFunction = {
 		};
 
 		MAZ_EZM_fnc_createBuildingInterior = {
-			params ["_building",["_compDataFull",[]]];
+			params ["_building",["_compDataFull",[]],["_doDebug",true]];
 			if(_building getVariable ["MAZ_EZM_hasCompSetup",false]) exitWith {
-				["This building already has a composition!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;
+				if(_doDebug) then {
+					["This building already has a composition!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;
+				};
 			};
 			private _typeOfBuilding = "";
 			if(_compDataFull isEqualTo []) then {
@@ -8925,9 +8838,9 @@ MAZ_EZM_fnc_initFunction = {
 				_typeOfBuilding = _buildingDatas # 0 # 0;
 				_compDataFull = selectRandom (_buildingDatas # 0 # 1);
 			};
-			if(_compDataFull isEqualTo []) exitWith {["Cannot find any saved types","addItemFailed"] call MAZ_EZM_fnc_systemMessage};
+			if(_compDataFull isEqualTo []) exitWith {if(_doDebug) then {["Cannot find any saved types","addItemFailed"] call MAZ_EZM_fnc_systemMessage}};
 			private _compData = _compDataFull;
-			if(!([typeOf _building,_typeOfBuilding] call MAZ_EZM_fnc_isSameBuildingType)) exitWith {["Wrong house type","addItemFailed"] call MAZ_EZM_fnc_systemMessage};
+			if(!([typeOf _building,_typeOfBuilding] call MAZ_EZM_fnc_isSameBuildingType)) exitWith {if(_doDebug) then {["Wrong house type","addItemFailed"] call MAZ_EZM_fnc_systemMessage}};
 			private _isTerrainBuilding = if(_building in(nearestTerrainObjects [getPos _building, ["House"], 50])) then {true} else {false};
 			if(_isTerrainBuilding) then {
 				comment "Replace building, terrain buildings don't invoke BuildingChanged MEH";
@@ -27423,8 +27336,8 @@ MAZ_EZM_fnc_editZeusInterface = {
 				MAZ_EZM_fnc_getActiveWarnings = {
 					private _count = 0;
 					{
-						param [2,false];
-						if(_x select 2) then {_count = _count + 1;}
+						_x params ["_ctrl","_warningInfo","_isActive"];
+						if(_isActive) then {_count = _count + 1;}
 					}forEach (uiNamespace getVariable ["MAZ_EZM_activeWarnings",[]]);
 					_count
 				};
@@ -27475,7 +27388,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 						if(isNil "MAZ_EZM_activeWarnings") exitWith {};
 						{
 							if(isNil "_x") then {continue};
-							_x params ["_ctrl","_warningInfo","_isActive"];
+							_x params ["","_warningInfo","_isActive"];
 							if(isNil "_warningInfo") then {continue};
 							_warningInfo params ["_text","_icon","_color"];
 							if(!_isActive) then {continue};
@@ -35819,10 +35732,12 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 };
 
 private _changelog = [
-	"Changed the initial launch dialog to have additional options and change logs.",
+	"Added option to fortify buildings when using auto-garrison module.",
 	"Fixed issue where EZM factions would override new DLC factions. Now finds faction index by localized names.",
 	"Fixed script errors with Warning Systems.",
-	"Fixed script errors when using SIDES dialog row type."
+	"Fixed script errors when using SIDES dialog row type.",
+	"Fixed various issues with auto missions. Specifically the convoy system.",
+	"Fixed script error when using building interior system."
 ];
 
 private _changelogString = "";
@@ -35880,11 +35795,6 @@ comment "
  - Add module that spawns a pack of dogs
  - Add a module that gives a player a commandable/controllable dog
  - Save/Load Mission modules
-";
-
-comment "
-Change Log:
- - Fixed issue where EZM factions would override new DLC factions. Now finds faction index by localized names.
 ";
 
 comment "
