@@ -5019,6 +5019,42 @@ MAZ_EZM_fnc_initFunction = {
 			};
 		};
 
+	comment "EZM Eventhandlers";
+		MAZ_EZM_fnc_addEZMEventHandler = {
+			params ["_type","_code"];
+			private _var = format ["MAZ_EZM_events_%1",_type];
+			private _eventsOfType = missionNamespace getVariable [_var,[]];
+			private _index = switch (toLower _type) do {
+				case "onmancreated": {
+					_eventsOfType pushBack _code;
+				};
+				default {-1};
+			};
+			if(_index != -1) then {
+				missionNamespace setVariable [_var,_eventsOfType];
+			};
+			_index
+		};
+
+		MAZ_EZM_fnc_removeEZMEventHandler = {
+			params ["_type","_index"];
+			private _eventsOfType = missionNamespace getVariable [format ["MAZ_EZM_events_%1",_type],[]];
+			if(_index < 0 || _index >= (count _eventsOfType)) exitWith {false};
+			switch (toLower _type) do {
+				case "onmancreated": {
+					_eventsOfType set [_index,nil];
+					true;
+				};
+				default {false};
+			};
+		};
+
+		MAZ_EZM_fnc_getEZMEventhandlers = {
+			params ["_type"];
+			private _eventsOfType = missionNamespace getVariable [format ["MAZ_EZM_events_%1",_type],[]];
+			(_eventsOfType select {!isNil "_x"});
+		};
+
 	comment "Add All Faction Respawns";
 
 		MAZ_EZM_fnc_tvFind = {
@@ -9208,7 +9244,7 @@ MAZ_EZM_fnc_initFunction = {
 		};
 
 		MAZ_EZM_fnc_deleteRadiusModule = {
-			private _pos = [] call MAZ_EZM_fnc_getScreenPosition;
+			private _pos = [true] call MAZ_EZM_fnc_getScreenPosition;
 			["Delete Objects In Radius",[
 				[
 					"SLIDER:RADIUS",
@@ -13181,25 +13217,21 @@ MAZ_EZM_fnc_initFunction = {
 				_isKindOfLogic = _x isKindOf 'Logic';
 				_isInWhitelist = _className in MAZ_EZM_zeusObjectWhitelist;
 				_isInBlacklist = _className in MAZ_EZM_zeusObjectBlacklist;
-				if (_isKindOfLogic) then 
-				{
-					if ((!_isInBlacklist) OR (_isInWhitelist)) then 
-					{
+				if (_isKindOfLogic) then {
+					"If its logic NOT in blacklist OR in whitelist";
+					if ((!_isInBlacklist) OR (_isInWhitelist)) then {
 						_addObject = true;
 					};
-				} else 
-				{
-					if (!_isInBlacklist) then 
-					{
+				} else {
+					"If its NOT logic AND NOT in blacklist";
+					if (!_isInBlacklist) then {
 						_addObject = true;
 					};
 				};
-				if !(_x getVariable ['JAM_isEditable', true]) then 
-				{
+				if !(_x getVariable ['JAM_isEditable', true]) then {
 					_addObject = false;
 				};
-				if (_addObject) then 
-				{
+				if (_addObject) then {
 					_objsToAdd pushBack _x;
 				};
 			} forEach (_allObjs + _simpleObjectsInRange);
@@ -13571,6 +13603,11 @@ MAZ_EZM_fnc_initFunction = {
 			_grp setBehaviour _behaviour;
 			[_unit] call MAZ_EZM_fnc_addObjectToInterface;
 			[_unit] spawn MAZ_EZM_fnc_cleanerWaitTilNoPlayers;
+
+			private _events = ["onManCreated"] call MAZ_EZM_fnc_getEZMEventhandlers;
+			{
+				[_unit] call _x;
+			}forEach _events;
 
 			_unit
 		};
@@ -35799,6 +35836,8 @@ comment "
 
 comment "
 	TODO Expung3d:
+ - EZM Eventhandlers
+
  - Add Dead Soldier compositions to all factions 
  - NATO+ 
  - Better Looters 
