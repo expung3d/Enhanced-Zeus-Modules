@@ -27373,6 +27373,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 				MAZ_EZM_fnc_getActiveWarnings = {
 					private _count = 0;
 					{
+						if(isNil "_x") then {continue};
 						_x params ["_ctrl","_warningInfo","_isActive"];
 						if(_isActive) then {_count = _count + 1;}
 					}forEach (uiNamespace getVariable ["MAZ_EZM_activeWarnings",[]]);
