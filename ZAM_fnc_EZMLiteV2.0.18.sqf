@@ -5596,7 +5596,7 @@ MAZ_EZM_fnc_initFunction = {
 				if (local (leader _groupUnderCursor)) then{
 					private _outsidePos = [getPos (leader _groupUnderCursor), [3,15], 2, 0] call MAZ_EZM_fnc_getSafePos;
 					{
-						_x setUnitPos "AUTO";
+						_x setUnitPos MAZ_EZM_stanceForAI;
 						_x forceSpeed -1;
 						_x doWatch objNull;
 						_x doMove _outsidePos;
@@ -6588,7 +6588,7 @@ MAZ_EZM_fnc_initFunction = {
 			private _units = units _group;
 			{
 				_x moveInCargo _spawnedVeh;
-				_x setUnitPos "UP";
+				_x setUnitPos MAZ_EZM_stanceForAI;
 			}forEach _units;
 
 			private _heliPad1 = "Land_HelipadEmpty_F" createVehicle _pos;
@@ -7582,7 +7582,7 @@ MAZ_EZM_fnc_initFunction = {
 					_soldier setPosATL _position;
 					_soldier setVectorDirAndUp [[0,1,0],[0,0,1]];
 					_soldier setUnitLoadout (selectRandom _unitLoadouts);
-					_soldier setUnitPos "UP";
+					_soldier setUnitPos MAZ_EZM_stanceForAI;
 
 					[_soldierGroup,0] setWaypointPosition [position leader _soldierGroup,0];
 					_soldierGroup setGroupID ["Alpha 1-1"];;
@@ -8071,7 +8071,7 @@ MAZ_EZM_fnc_initFunction = {
 				params ["_group","_unitType"];
 				private _soldier = _group createUnit [_unitType,[23405.7,17895.8,0],[],0,"CAN_COLLIDE"];
 				_soldier setVectorDirAndUp [[0,1,0],[0,0,1]];
-				_soldier setUnitPos "UP";
+				_soldier setUnitPos MAZ_EZM_stanceForAI;
 				_soldier;
 			};
 
@@ -8485,7 +8485,7 @@ MAZ_EZM_fnc_initFunction = {
 						private _unitType = selectRandom _unitTypes;
 						private _unit = _grp createUnit [_unitType,_x,[],0,"CAN_COLLIDE"];
 						_unit setSkill 0.4;
-						_unit setUnitPos "UP";
+						_unit setUnitPos MAZ_EZM_stanceForAI;
 						_units pushBack _unit;
 					};
 					[_grp] call MAZ_EZM_fnc_garrisonGroup;
@@ -8503,7 +8503,7 @@ MAZ_EZM_fnc_initFunction = {
 					private _unitType = selectRandom _unitTypes;
 					private _unit = _grp createUnit [_unitType, _nearRoad,[],0,"CAN_COLLIDE"];
 					_unit setSkill 0.4;
-					_unit setUnitPos "UP";
+					_unit setUnitPos MAZ_EZM_stanceForAI;
 					_units pushBack _unit;
 				};
 
@@ -13582,7 +13582,7 @@ MAZ_EZM_fnc_initFunction = {
 			params [
 				["_side",west,[west]],
 				["_unitType","B_Soldier_F",[""]],
-				["_unitPos","UP",[""]],
+				["_unitPos",MAZ_EZM_stanceForAI,[""]],
 				["_behaviour","AWARE",[""]],
 				["_rank","PRIVATE",[""]],
 				["_pos",[true] call MAZ_EZM_fnc_getScreenPosition,[[]]]
@@ -14995,95 +14995,95 @@ MAZ_EZM_fnc_initFunction = {
 				private _squadLead = call MAZ_EZM_CSATP_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_CSATP_fnc_createAmmoBearerModule', 
-				'MAZ_EZM_CSATP_fnc_createCombatMedicModule', 
-				'MAZ_EZM_CSATP_fnc_createRiflemanModule', 
-				'MAZ_EZM_CSATP_fnc_createMarksmanModule', 
-				'MAZ_EZM_CSATP_fnc_createRiflemanLATModule', 
-				'MAZ_EZM_CSATP_fnc_createGrenadierModule', 
-				'MAZ_EZM_CSATP_fnc_createAutoriflemanModule', 
-				'MAZ_EZM_CSATP_fnc_createRiflemanModule' 
+					'MAZ_EZM_CSATP_fnc_createAmmoBearerModule', 
+					'MAZ_EZM_CSATP_fnc_createCombatMedicModule', 
+					'MAZ_EZM_CSATP_fnc_createRiflemanModule', 
+					'MAZ_EZM_CSATP_fnc_createMarksmanModule', 
+					'MAZ_EZM_CSATP_fnc_createRiflemanLATModule', 
+					'MAZ_EZM_CSATP_fnc_createGrenadierModule', 
+					'MAZ_EZM_CSATP_fnc_createAutoriflemanModule', 
+					'MAZ_EZM_CSATP_fnc_createRiflemanModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 		
 			MAZ_EZM_CSATP_fnc_createPatrolModule = { 
 				private _squadLead = call MAZ_EZM_CSATP_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_CSATP_fnc_createCombatMedicModule', 
-				'MAZ_EZM_CSATP_fnc_createRiflemanModule', 
-				'MAZ_EZM_CSATP_fnc_createMarksmanModule', 
-				'MAZ_EZM_CSATP_fnc_createRiflemanModule' 
+					'MAZ_EZM_CSATP_fnc_createCombatMedicModule', 
+					'MAZ_EZM_CSATP_fnc_createRiflemanModule', 
+					'MAZ_EZM_CSATP_fnc_createMarksmanModule', 
+					'MAZ_EZM_CSATP_fnc_createRiflemanModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 
 			MAZ_EZM_CSATP_fnc_createReconSquadModule = { 
 				private _squadLead = call MAZ_EZM_CSATP_fnc_createReconTeamLeaderModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_CSATP_fnc_createReconParamedicModule', 
-				'MAZ_EZM_CSATP_fnc_createReconScoutModule', 
-				'MAZ_EZM_CSATP_fnc_createReconJTACModule', 
-				'MAZ_EZM_CSATP_fnc_createReconScoutATModule',
-				'MAZ_EZM_CSATP_fnc_createReconDemoModule',
-				'MAZ_EZM_CSATP_fnc_createReconMarksmanModule'
+					'MAZ_EZM_CSATP_fnc_createReconParamedicModule', 
+					'MAZ_EZM_CSATP_fnc_createReconScoutModule', 
+					'MAZ_EZM_CSATP_fnc_createReconJTACModule', 
+					'MAZ_EZM_CSATP_fnc_createReconScoutATModule',
+					'MAZ_EZM_CSATP_fnc_createReconDemoModule',
+					'MAZ_EZM_CSATP_fnc_createReconMarksmanModule'
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 			
 			MAZ_EZM_CSATP_fnc_createSentryModule = { 
 				private _squadLead = call MAZ_EZM_CSATP_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_CSATP_fnc_createRiflemanModule' 
+					'MAZ_EZM_CSATP_fnc_createRiflemanModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 			
 			MAZ_EZM_CSATP_fnc_createAntiAirTeamModule = { 
 				private _squadLead = call MAZ_EZM_CSATP_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_CSATP_fnc_createAmmoBearerModule', 
-				'MAZ_EZM_CSATP_fnc_createMissileSpecAAModule' 
+					'MAZ_EZM_CSATP_fnc_createAmmoBearerModule', 
+					'MAZ_EZM_CSATP_fnc_createMissileSpecAAModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 			
 			MAZ_EZM_CSATP_fnc_createAntiTankTeamModule = { 
 				private _squadLead = call MAZ_EZM_CSATP_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_CSATP_fnc_createAmmoBearerModule', 
-				'MAZ_EZM_CSATP_fnc_createRiflemanLATModule' 
+					'MAZ_EZM_CSATP_fnc_createAmmoBearerModule', 
+					'MAZ_EZM_CSATP_fnc_createRiflemanLATModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 			
 			MAZ_EZM_CSATP_fnc_createMarksmanTeamModule = { 
@@ -15091,10 +15091,10 @@ MAZ_EZM_fnc_initFunction = {
 				private _grp = group _squadLead; 
 				_squadLead addPrimaryWeaponItem "optic_DMS"; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_CSATP_fnc_createSquadLeadModule' 
+					MAZ_EZM_CSATP_fnc_createSquadLeadModule' 
 				]; 
 				
 				_grp setBehaviour "AWARE"; 
@@ -15105,10 +15105,10 @@ MAZ_EZM_fnc_initFunction = {
 				private _grp = group _squadLead;  
 				_squadLead addPrimaryWeaponItem "optic_DMS";  
 				{  
-				private _unit = call (missionNamespace getVariable _x);  
-				[_unit] joinSilent _grp;  
+					private _unit = call (missionNamespace getVariable _x);  
+					[_unit] joinSilent _grp;  
 				}forEach [  
-				'MAZ_EZM_CSATP_fnc_createReconSpotterModule'  
+					'MAZ_EZM_CSATP_fnc_createReconSpotterModule'  
 				];  
 				
 				_grp setBehaviour "AWARE";  
@@ -15329,7 +15329,7 @@ MAZ_EZM_fnc_initFunction = {
 					'MAZ_EZM_CSATP_fnc_createRiflemanUrbanModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 		
 			MAZ_EZM_CSATP_fnc_createPatrolUrbanModule = { 
@@ -15345,7 +15345,7 @@ MAZ_EZM_fnc_initFunction = {
 					'MAZ_EZM_CSATP_fnc_createRiflemanUrbanModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 			
 			MAZ_EZM_CSATP_fnc_createSentryUrbanModule = { 
@@ -15358,7 +15358,7 @@ MAZ_EZM_fnc_initFunction = {
 					'MAZ_EZM_CSATP_fnc_createRiflemanUrbanModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 			
 			MAZ_EZM_CSATP_fnc_createAntiAirTeamUrbanModule = { 
@@ -15372,7 +15372,7 @@ MAZ_EZM_fnc_initFunction = {
 					'MAZ_EZM_CSATP_fnc_createMissileSpecAAUrbanModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 			
 			MAZ_EZM_CSATP_fnc_createAntiTankTeamUrbanModule = { 
@@ -15386,7 +15386,7 @@ MAZ_EZM_fnc_initFunction = {
 					'MAZ_EZM_CSATP_fnc_createRiflemanLATUrbanModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 			
 			MAZ_EZM_CSATP_fnc_createMarksmanTeamUrbanModule = { 
@@ -17831,95 +17831,95 @@ MAZ_EZM_fnc_initFunction = {
 				private _squadLead = call MAZ_EZM_CSATPacific_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_CSATPacific_fnc_createAmmoBearerModule', 
-				'MAZ_EZM_CSATPacific_fnc_createCombatMedicModule', 
-				'MAZ_EZM_CSATPacific_fnc_createRiflemanModule', 
-				'MAZ_EZM_CSATPacific_fnc_createMarksmanModule', 
-				'MAZ_EZM_CSATPacific_fnc_createRiflemanLATModule', 
-				'MAZ_EZM_CSATPacific_fnc_createGrenadierModule', 
-				'MAZ_EZM_CSATPacific_fnc_createAutoriflemanModule', 
-				'MAZ_EZM_CSATPacific_fnc_createRiflemanModule' 
+					'MAZ_EZM_CSATPacific_fnc_createAmmoBearerModule', 
+					'MAZ_EZM_CSATPacific_fnc_createCombatMedicModule', 
+					'MAZ_EZM_CSATPacific_fnc_createRiflemanModule', 
+					'MAZ_EZM_CSATPacific_fnc_createMarksmanModule', 
+					'MAZ_EZM_CSATPacific_fnc_createRiflemanLATModule', 
+					'MAZ_EZM_CSATPacific_fnc_createGrenadierModule', 
+					'MAZ_EZM_CSATPacific_fnc_createAutoriflemanModule', 
+					'MAZ_EZM_CSATPacific_fnc_createRiflemanModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 		
 			MAZ_EZM_CSATPacific_fnc_createPatrolModule = { 
 				private _squadLead = call MAZ_EZM_CSATPacific_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_CSATPacific_fnc_createCombatMedicModule', 
-				'MAZ_EZM_CSATPacific_fnc_createRiflemanModule', 
-				'MAZ_EZM_CSATPacific_fnc_createMarksmanModule', 
-				'MAZ_EZM_CSATPacific_fnc_createRiflemanModule' 
+					'MAZ_EZM_CSATPacific_fnc_createCombatMedicModule', 
+					'MAZ_EZM_CSATPacific_fnc_createRiflemanModule', 
+					'MAZ_EZM_CSATPacific_fnc_createMarksmanModule', 
+					'MAZ_EZM_CSATPacific_fnc_createRiflemanModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 
 			MAZ_EZM_CSATPacific_fnc_createReconSquadModule = { 
 				private _squadLead = call MAZ_EZM_CSATPacific_fnc_createReconTeamLeaderModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_CSATPacific_fnc_createReconParamedicModule', 
-				'MAZ_EZM_CSATPacific_fnc_createReconScoutModule', 
-				'MAZ_EZM_CSATPacific_fnc_createReconJTACModule', 
-				'MAZ_EZM_CSATPacific_fnc_createReconScoutATModule',
-				'MAZ_EZM_CSATPacific_fnc_createReconDemoModule',
-				'MAZ_EZM_CSATPacific_fnc_createReconMarksmanModule'
+					'MAZ_EZM_CSATPacific_fnc_createReconParamedicModule', 
+					'MAZ_EZM_CSATPacific_fnc_createReconScoutModule', 
+					'MAZ_EZM_CSATPacific_fnc_createReconJTACModule', 
+					'MAZ_EZM_CSATPacific_fnc_createReconScoutATModule',
+					'MAZ_EZM_CSATPacific_fnc_createReconDemoModule',
+					'MAZ_EZM_CSATPacific_fnc_createReconMarksmanModule'
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 			
 			MAZ_EZM_CSATPacific_fnc_createSentryModule = { 
 				private _squadLead = call MAZ_EZM_CSATPacific_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_CSATPacific_fnc_createRiflemanModule' 
+					'MAZ_EZM_CSATPacific_fnc_createRiflemanModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 			
 			MAZ_EZM_CSATPacific_fnc_createAntiAirTeamModule = { 
 				private _squadLead = call MAZ_EZM_CSATPacific_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_CSATPacific_fnc_createAmmoBearerModule', 
-				'MAZ_EZM_CSATPacific_fnc_createMissileSpecAAModule' 
+					'MAZ_EZM_CSATPacific_fnc_createAmmoBearerModule', 
+					'MAZ_EZM_CSATPacific_fnc_createMissileSpecAAModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 			
 			MAZ_EZM_CSATPacific_fnc_createAntiTankTeamModule = { 
 				private _squadLead = call MAZ_EZM_CSATPacific_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_CSATPacific_fnc_createAmmoBearerModule', 
-				'MAZ_EZM_CSATPacific_fnc_createRiflemanLATModule' 
+					'MAZ_EZM_CSATPacific_fnc_createAmmoBearerModule', 
+					'MAZ_EZM_CSATPacific_fnc_createRiflemanLATModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 			
 			MAZ_EZM_CSATPacific_fnc_createMarksmanTeamModule = { 
@@ -17927,10 +17927,10 @@ MAZ_EZM_fnc_initFunction = {
 				private _grp = group _squadLead; 
 				_squadLead addPrimaryWeaponItem "optic_DMS"; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_CSATPacific_fnc_createSquadLeadModule' 
+					'MAZ_EZM_CSATPacific_fnc_createSquadLeadModule' 
 				]; 
 				
 				_grp setBehaviour "AWARE"; 
@@ -17941,10 +17941,10 @@ MAZ_EZM_fnc_initFunction = {
 				private _grp = group _squadLead;  
 				_squadLead addPrimaryWeaponItem "optic_DMS";  
 				{  
-				private _unit = call (missionNamespace getVariable _x);  
-				[_unit] joinSilent _grp;  
+					private _unit = call (missionNamespace getVariable _x);  
+					[_unit] joinSilent _grp;  
 				}forEach [  
-				'MAZ_EZM_CSATPacific_fnc_createReconSpotterModule'  
+					'MAZ_EZM_CSATPacific_fnc_createReconSpotterModule'  
 				];  
 				
 				_grp setBehaviour "AWARE";  
@@ -20456,78 +20456,78 @@ MAZ_EZM_fnc_initFunction = {
 				private _squadLead = call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_AAFP_fnc_createAmmoBearerModule', 
-				'MAZ_EZM_AAFP_fnc_createCombatMedicModule', 
-				'MAZ_EZM_AAFP_fnc_createRiflemanModule', 
-				'MAZ_EZM_AAFP_fnc_createMarksmanModule', 
-				'MAZ_EZM_AAFP_fnc_createRiflemanLATModule', 
-				'MAZ_EZM_AAFP_fnc_createGrenadierModule', 
-				'MAZ_EZM_AAFP_fnc_createAutoriflemanModule', 
-				'MAZ_EZM_AAFP_fnc_createRiflemanModule' 
+					'MAZ_EZM_AAFP_fnc_createAmmoBearerModule', 
+					'MAZ_EZM_AAFP_fnc_createCombatMedicModule', 
+					'MAZ_EZM_AAFP_fnc_createRiflemanModule', 
+					'MAZ_EZM_AAFP_fnc_createMarksmanModule', 
+					'MAZ_EZM_AAFP_fnc_createRiflemanLATModule', 
+					'MAZ_EZM_AAFP_fnc_createGrenadierModule', 
+					'MAZ_EZM_AAFP_fnc_createAutoriflemanModule', 
+					'MAZ_EZM_AAFP_fnc_createRiflemanModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 		
 			MAZ_EZM_AAFP_fnc_createPatrolModule = { 
 				private _squadLead = call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_AAFP_fnc_createCombatMedicModule', 
-				'MAZ_EZM_AAFP_fnc_createRiflemanModule', 
-				'MAZ_EZM_AAFP_fnc_createMarksmanModule', 
-				'MAZ_EZM_AAFP_fnc_createRiflemanModule' 
+					'MAZ_EZM_AAFP_fnc_createCombatMedicModule', 
+					'MAZ_EZM_AAFP_fnc_createRiflemanModule', 
+					'MAZ_EZM_AAFP_fnc_createMarksmanModule', 
+					'MAZ_EZM_AAFP_fnc_createRiflemanModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 			
 			MAZ_EZM_AAFP_fnc_createSentryModule = { 
 				private _squadLead = call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_AAFP_fnc_createRiflemanModule' 
+					'MAZ_EZM_AAFP_fnc_createRiflemanModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 		
 			MAZ_EZM_AAFP_fnc_createAntiAirTeamModule = { 
 				private _squadLead = call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_AAFP_fnc_createAmmoBearerModule', 
-				'MAZ_EZM_AAFP_fnc_createMissileSpecAAModule' 
+					'MAZ_EZM_AAFP_fnc_createAmmoBearerModule', 
+					'MAZ_EZM_AAFP_fnc_createMissileSpecAAModule' 
 				]; 
 				_unit addItemToBackpack "Titan_AA";
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 			
 			MAZ_EZM_AAFP_fnc_createAntiTankTeamModule = { 
 				private _squadLead = call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_AAFP_fnc_createAmmoBearerModule', 
-				'MAZ_EZM_AAFP_fnc_createRiflemanLATModule' 
+					'MAZ_EZM_AAFP_fnc_createAmmoBearerModule', 
+					'MAZ_EZM_AAFP_fnc_createRiflemanLATModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 			
 			MAZ_EZM_AAFP_fnc_createMarksmanTeamModule = { 
@@ -20535,10 +20535,10 @@ MAZ_EZM_fnc_initFunction = {
 				private _grp = group _squadLead; 
 				_squadLead addPrimaryWeaponItem "optic_SOS"; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_AAFP_fnc_createSquadLeadModule' 
+					'MAZ_EZM_AAFP_fnc_createSquadLeadModule' 
 				]; 
 				
 				_grp setBehaviour "AWARE"; 
@@ -20550,63 +20550,63 @@ MAZ_EZM_fnc_initFunction = {
 				private _squadLead = call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_AAFP_fnc_createAmmoBearerPModule', 
-				'MAZ_EZM_AAFP_fnc_createCombatMedicPModule', 
-				'MAZ_EZM_AAFP_fnc_createRiflemanPModule', 
-				'MAZ_EZM_AAFP_fnc_createMarksmanPModule', 
-				'MAZ_EZM_AAFP_fnc_createRiflemanLATPModule', 
-				'MAZ_EZM_AAFP_fnc_createGrenadierPModule', 
-				'MAZ_EZM_AAFP_fnc_createAutoriflemanPModule', 
-				'MAZ_EZM_AAFP_fnc_createRiflemanPModule' 
+					'MAZ_EZM_AAFP_fnc_createAmmoBearerPModule', 
+					'MAZ_EZM_AAFP_fnc_createCombatMedicPModule', 
+					'MAZ_EZM_AAFP_fnc_createRiflemanPModule', 
+					'MAZ_EZM_AAFP_fnc_createMarksmanPModule', 
+					'MAZ_EZM_AAFP_fnc_createRiflemanLATPModule', 
+					'MAZ_EZM_AAFP_fnc_createGrenadierPModule', 
+					'MAZ_EZM_AAFP_fnc_createAutoriflemanPModule', 
+					'MAZ_EZM_AAFP_fnc_createRiflemanPModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 		
 			MAZ_EZM_AAFP_fnc_createPatrolPModule = { 
 				private _squadLead = call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_AAFP_fnc_createCombatMedicPModule', 
-				'MAZ_EZM_AAFP_fnc_createRiflemanPModule', 
-				'MAZ_EZM_AAFP_fnc_createMarksmanPModule', 
-				'MAZ_EZM_AAFP_fnc_createRiflemanPModule' 
+					'MAZ_EZM_AAFP_fnc_createCombatMedicPModule', 
+					'MAZ_EZM_AAFP_fnc_createRiflemanPModule', 
+					'MAZ_EZM_AAFP_fnc_createMarksmanPModule', 
+					'MAZ_EZM_AAFP_fnc_createRiflemanPModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 			
 			MAZ_EZM_AAFP_fnc_createSentryPModule = { 
 				private _squadLead = call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_AAFP_fnc_createRiflemanPModule' 
+					'MAZ_EZM_AAFP_fnc_createRiflemanPModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			};
 			
 			MAZ_EZM_AAFP_fnc_createAntiTankTeamPModule = { 
 				private _squadLead = call MAZ_EZM_AAFP_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_AAFP_fnc_createAmmoBearerPModule', 
-				'MAZ_EZM_AAFP_fnc_createRiflemanLATPModule' 
+					'MAZ_EZM_AAFP_fnc_createAmmoBearerPModule', 
+					'MAZ_EZM_AAFP_fnc_createRiflemanLATPModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			};
 
 
@@ -23466,77 +23466,77 @@ MAZ_EZM_fnc_initFunction = {
 				private _squadLead = call MAZ_EZM_FIAP_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_FIAP_fnc_createAmmoBearerModule', 
-				'MAZ_EZM_FIAP_fnc_createCombatMedicModule', 
-				'MAZ_EZM_FIAP_fnc_createRiflemanModule', 
-				'MAZ_EZM_FIAP_fnc_createMarksmanModule', 
-				'MAZ_EZM_FIAP_fnc_createRiflemanLATModule', 
-				'MAZ_EZM_FIAP_fnc_createGrenadierModule', 
-				'MAZ_EZM_FIAP_fnc_createAutoriflemanModule', 
-				'MAZ_EZM_FIAP_fnc_createRiflemanModule' 
+					'MAZ_EZM_FIAP_fnc_createAmmoBearerModule', 
+					'MAZ_EZM_FIAP_fnc_createCombatMedicModule', 
+					'MAZ_EZM_FIAP_fnc_createRiflemanModule', 
+					'MAZ_EZM_FIAP_fnc_createMarksmanModule', 
+					'MAZ_EZM_FIAP_fnc_createRiflemanLATModule', 
+					'MAZ_EZM_FIAP_fnc_createGrenadierModule', 
+					'MAZ_EZM_FIAP_fnc_createAutoriflemanModule', 
+					'MAZ_EZM_FIAP_fnc_createRiflemanModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 		
 			MAZ_EZM_FIAP_fnc_createPatrolModule = { 
 				private _squadLead = call MAZ_EZM_FIAP_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_FIAP_fnc_createCombatMedicModule', 
-				'MAZ_EZM_FIAP_fnc_createRiflemanModule', 
-				'MAZ_EZM_FIAP_fnc_createMarksmanModule', 
-				'MAZ_EZM_FIAP_fnc_createRiflemanModule' 
+					'MAZ_EZM_FIAP_fnc_createCombatMedicModule', 
+					'MAZ_EZM_FIAP_fnc_createRiflemanModule', 
+					'MAZ_EZM_FIAP_fnc_createMarksmanModule', 
+					'MAZ_EZM_FIAP_fnc_createRiflemanModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 			
 			MAZ_EZM_FIAP_fnc_createSentryModule = { 
 				private _squadLead = call MAZ_EZM_FIAP_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_FIAP_fnc_createRiflemanModule' 
+					'MAZ_EZM_FIAP_fnc_createRiflemanModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 			
 			MAZ_EZM_FIAP_fnc_createAntiAirTeamModule = { 
 				private _squadLead = call MAZ_EZM_FIAP_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_FIAP_fnc_createAmmoBearerModule', 
-				'MAZ_EZM_FIAP_fnc_createMissileSpecAAModule' 
+					'MAZ_EZM_FIAP_fnc_createAmmoBearerModule', 
+					'MAZ_EZM_FIAP_fnc_createMissileSpecAAModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 			
 			MAZ_EZM_FIAP_fnc_createAntiTankTeamModule = { 
 				private _squadLead = call MAZ_EZM_FIAP_fnc_createSquadLeadModule; 
 				private _grp = group _squadLead; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_FIAP_fnc_createAmmoBearerModule', 
-				'MAZ_EZM_FIAP_fnc_createRiflemanLATModule' 
+					'MAZ_EZM_FIAP_fnc_createAmmoBearerModule', 
+					'MAZ_EZM_FIAP_fnc_createRiflemanLATModule' 
 				]; 
 				_grp setBehaviour "AWARE"; 
-				{_x setunitpos "AUTO"} foreach units _squadLead 
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead 
 			}; 
 			
 			MAZ_EZM_FIAP_fnc_createSniperTeamModule = { 
@@ -23544,10 +23544,10 @@ MAZ_EZM_fnc_initFunction = {
 				private _grp = group _squadLead; 
 				_squadLead addPrimaryWeaponItem "optic_KHS_old"; 
 				{ 
-				private _unit = call (missionNamespace getVariable _x); 
-				[_unit] joinSilent _grp; 
+					private _unit = call (missionNamespace getVariable _x); 
+					[_unit] joinSilent _grp; 
 				}forEach [ 
-				'MAZ_EZM_FIAP_fnc_createSquadLeadModule' 
+					'MAZ_EZM_FIAP_fnc_createSquadLeadModule' 
 				]; 
 				
 				_grp setBehaviour "AWARE"; 
@@ -25490,7 +25490,7 @@ MAZ_EZM_fnc_initFunction = {
 					'MAZ_EZM_AFR_fnc_createATRiflemanModule'
 				];
 				_grp setBehaviour "AWARE";
-				{_x setunitpos "AUTO"} foreach units _squadLead
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead
 			};
 
 			MAZ_EZM_AFR_fnc_createRifleSquadModule = {
@@ -25509,7 +25509,7 @@ MAZ_EZM_fnc_initFunction = {
 					'MAZ_EZM_AFR_fnc_createMedicModule'
 				];
 				_grp setBehaviour "AWARE";
-				{_x setunitpos "AUTO"} foreach units _squadLead
+				{_x setunitpos MAZ_EZM_stanceForAI} foreach units _squadLead
 			};
 
 	comment "Pylon Editor";
