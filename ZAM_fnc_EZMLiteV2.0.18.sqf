@@ -9163,15 +9163,8 @@ MAZ_EZM_fnc_initFunction = {
 					_clutterDeleted = _clutterDeleted + 1;
 				};
 			}forEach _allMObjects;
-			private _totalEmptyGroupsDeleted = 0;
-			{
-				if (count units _x == 0) then {
-					deleteGroup _x;
-					_totalEmptyGroupsDeleted = _totalEmptyGroupsDeleted + 1;
-				};
-			} forEach allGroups; 
 			[format ["%1 dead objects and clutter deleted.",_clutterDeleted],"addItemOk"] call MAZ_EZM_fnc_systemMessage;
-			[format ["%1 empty groups deleted.",_totalEmptyGroupsDeleted]] call MAZ_EZM_fnc_systemMessage;
+			[objNull] call MAZ_EZM_fnc_deleteEmptyGroupsModule;
 		};
 
 		MAZ_EZM_fnc_deleteBodies = {
