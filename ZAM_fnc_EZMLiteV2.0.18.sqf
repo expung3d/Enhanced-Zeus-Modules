@@ -9125,52 +9125,57 @@ MAZ_EZM_fnc_initFunction = {
 		};
 
 		MAZ_EZM_fnc_deleteClutterModule = {
-			params ["_entity"];
-			[] spawn {
-				private _clutterNames = [
-					'Ground', 
-					'Damaged Building', 
-					'Canopy', 
-					'Ejection Seat', 
-					'Airplane Crater (Small)'
-				];
-				private _clutterDeleted = 0;
-				private _allMObjects = ((allMissionObjects 'All') + allUnits);
-				{
-					if (_x getVariable ['MAZ_EZM_fnc_doNotRemove', false]) then {continue;};
-					if ((!alive _x) or (damage _x == 1)) then {
-						comment "Delete dead soldiers & destroyed vehicles";
-						deleteVehicle _x;
-						_clutterDeleted = _clutterDeleted + 1;
-						continue;
-					};
-					private _objName = getText (configFile >> 'cfgVehicles' >> typeOf _x >> 'displayName');
-					if (_objName in _clutterNames) then {
-						comment "Delete Clutter";
-						deleteVehicle _x;
-						_clutterDeleted = _clutterDeleted + 1;
-						continue;
-					};
-					comment "Delete Destroyed Buildings (Ruins)";
-					private _objName2 = _objName splitString ' ';
-					if ((count _objName2) == 0) then {continue};
-					
-					private _lastWord = _objName2 select (count _objName2 - 1);
-					if ("ruin" in (toLower _lastWord)) then {
-						deleteVehicle _x;
-						_clutterDeleted = _clutterDeleted + 1;
-					};
-				}forEach _allMObjects;
-				private _totalEmptyGroupsDeleted = 0;
-				{
-					if (count units _x == 0) then {
-						deleteGroup _x;
-						_totalEmptyGroupsDeleted = _totalEmptyGroupsDeleted + 1;
-					};
-				} forEach allGroups; 
-				[format ["%1 dead objects and clutter deleted.",_clutterDeleted],"addItemOk"] call MAZ_EZM_fnc_systemMessage;
-				[format ["%1 empty groups deleted.",_totalEmptyGroupsDeleted]] call MAZ_EZM_fnc_systemMessage;
+			params ["_entity",["_deleteBuildings",true]];
+			private _clutterNames = [
+				'Ground', 
+				'Canopy', 
+				'Ejection Seat', 
+				'Airplane Crater (Small)'
+			];
+			if(_deleteBuildings) then {
+				_clutterNames pushBack 'Damaged Building';
 			};
+			private _clutterDeleted = 0;
+			private _allMObjects = ((allMissionObjects 'All') + allUnits);
+			{
+				if (_x getVariable ['MAZ_EZM_fnc_doNotRemove', false]) then {continue;};
+				if ((!alive _x) or (damage _x == 1)) then {
+					comment "Delete dead soldiers & destroyed vehicles";
+					deleteVehicle _x;
+					_clutterDeleted = _clutterDeleted + 1;
+					continue;
+				};
+				private _objName = getText (configFile >> 'cfgVehicles' >> typeOf _x >> 'displayName');
+				if (_objName in _clutterNames) then {
+					comment "Delete Clutter";
+					deleteVehicle _x;
+					_clutterDeleted = _clutterDeleted + 1;
+					continue;
+				};
+				if(!_deleteBuildings) then {continue};
+				comment "Delete Destroyed Buildings (Ruins)";
+				private _objName2 = _objName splitString ' ';
+				if ((count _objName2) == 0) then {continue};
+
+				private _lastWord = _objName2 select (count _objName2 - 1);
+				if ("ruin" in (toLower _lastWord)) then {
+					deleteVehicle _x;
+					_clutterDeleted = _clutterDeleted + 1;
+				};
+			}forEach _allMObjects;
+			private _totalEmptyGroupsDeleted = 0;
+			{
+				if (count units _x == 0) then {
+					deleteGroup _x;
+					_totalEmptyGroupsDeleted = _totalEmptyGroupsDeleted + 1;
+				};
+			} forEach allGroups; 
+			[format ["%1 dead objects and clutter deleted.",_clutterDeleted],"addItemOk"] call MAZ_EZM_fnc_systemMessage;
+			[format ["%1 empty groups deleted.",_totalEmptyGroupsDeleted]] call MAZ_EZM_fnc_systemMessage;
+		};
+
+		MAZ_EZM_fnc_deleteBodies = {
+			[objNull,false] call MAZ_EZM_fnc_deleteClutterModule;
 		};
 
 		MAZ_EZM_fnc_deleteMinesModule = {
@@ -27904,6 +27909,15 @@ MAZ_EZM_fnc_editZeusInterface = {
 					"Clean-Up Tools",
 					"a3\3den\data\displays\display3den\panelleft\entitylist_delete_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddCategory;
+
+				[
+					MAZ_zeusModulesTree,
+					MAZ_CleanUpTree,
+					"Delete Bodies",
+					"Similar to Delete Clutter except it does not delete destroyed buildings.",
+					"MAZ_EZM_fnc_deleteBodies",
+					"a3\3den\data\displays\display3den\panelleft\entitylist_delete_ca.paa"
+				] call MAZ_EZM_fnc_zeusAddModule;
 
 				[
 					MAZ_zeusModulesTree,
