@@ -1,5 +1,5 @@
 [] spawn {
-MAZ_EZM_Version = "V2.0.18";
+MAZ_EZM_Version = "V2.0.19";
 MAZ_EZM_autoAdd = profileNamespace getVariable ["MAZ_EZM_autoAddVar",true];
 MAZ_EZM_spawnWithCrew = true;
 MAZ_EZM_nvgsOnlyAtNight = true;
@@ -8473,7 +8473,7 @@ MAZ_EZM_fnc_initFunction = {
 
 			private _unitTypes = [_side] call MAZ_EZM_fnc_getAutoMissionUnitTypes;
 			private _buildings = nearestTerrainObjects [_position,["BUILDING","HOUSE"],_sizeTown];
-			private _buildingBlacklist = [];
+			private _buildingBlacklist = ["Land_Metal_Shed_F","Land_i_Addon_04_V1_F","Land_i_Addon_03_V1_F","Land_i_Addon_01_V1_F","Land_Slum_House03_F","Land_Slum_House01_F","Land_i_Garage_V1_F","Land_u_Addon_01_V1_F"];
 			private _maxUnits = 200;
 			private _units = [];
 			{
@@ -35786,12 +35786,10 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 };
 
 private _changelog = [
-	"Added option to fortify buildings when using auto-garrison module.",
-	"Fixed issue where EZM factions would override new DLC factions. Now finds faction index by localized names.",
-	"Fixed script errors with Warning Systems.",
-	"Fixed script errors when using SIDES dialog row type.",
-	"Fixed various issues with auto missions. Specifically the convoy system.",
-	"Fixed script error when using building interior system."
+	"Added new Delete Bodies module. Similar to Delete Clutter but doesn't delete destroyed buildings",
+	"Added new Reset Saved Loadouts module. Removes all player's saved loadouts from AIO and Full Arsenal",
+	"Adjusted buildings that can be garrisoned using Garrison Town module",
+	"Fixed issue where some placed AI wouldn't use the previously set unit stance"
 ];
 
 private _changelogString = "";
@@ -35839,17 +35837,6 @@ private _changelogString = "";
 	params ["_values","_args","_display"];
 	_display closeDisplay 2;
 },[]] call MAZ_EZM_fnc_createDialog;
-
-comment "
-	TODO M9-SD:
- - Civilian Interaction Modules:
- 	- Add module that puts unit in injured animation and adds hold action to save
- 	- Add module that puts unit in panic mode and adds hold action
- 	- Add add ambient civilian module (chris script)
- - Add module that spawns a pack of dogs
- - Add a module that gives a player a commandable/controllable dog
- - Save/Load Mission modules
-";
 
 comment "
 	TODO Expung3d:
