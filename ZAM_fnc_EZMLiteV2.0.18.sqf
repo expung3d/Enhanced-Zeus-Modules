@@ -8473,8 +8473,15 @@ MAZ_EZM_fnc_initFunction = {
 
 			private _unitTypes = [_side] call MAZ_EZM_fnc_getAutoMissionUnitTypes;
 			private _buildings = nearestTerrainObjects [_position,["BUILDING","HOUSE"],_sizeTown];
+			private _buildingBlacklist = [];
+			private _maxUnits = 200;
 			private _units = [];
 			{
+				if(count _units >= _maxUnits) exitWith {};
+				if(typeOf _x isKindOf "Church") then {continue};
+				if("chapel" in (toLower (typeOf _x))) then {continue};
+				if(typeOf _x in _buildingBlacklist) then {continue};
+				if(!alive _x || damage _x > 1) then {continue};
 				if((random 1) < _percentGarrison) then {
 					private _randomNumOfUnits = [2,5] call BIS_fnc_randomInt;
 					if(_fortify) then {
@@ -15094,7 +15101,7 @@ MAZ_EZM_fnc_initFunction = {
 					private _unit = call (missionNamespace getVariable _x); 
 					[_unit] joinSilent _grp; 
 				}forEach [ 
-					MAZ_EZM_CSATP_fnc_createSquadLeadModule' 
+					'MAZ_EZM_CSATP_fnc_createSquadLeadModule' 
 				]; 
 				
 				_grp setBehaviour "AWARE"; 
