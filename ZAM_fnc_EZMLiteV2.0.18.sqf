@@ -1,11 +1,11 @@
 [] spawn {
 MAZ_EZM_Version = "V2.0.18";
-MAZ_EZM_autoAdd = profileNamespace getVariable ['MAZ_EZM_autoAddVar',true];
+MAZ_EZM_autoAdd = profileNamespace getVariable ["MAZ_EZM_autoAddVar",true];
 MAZ_EZM_spawnWithCrew = true;
 MAZ_EZM_nvgsOnlyAtNight = true;
 MAZ_EZM_stanceForAI = "UP";
 uiNamespace setVariable ["MAZ_EZM_activeWarnings",[]];
-uiNamespace setVariable ['MAZ_EZM_missingRespawnWarn',nil];
+uiNamespace setVariable ["MAZ_EZM_missingRespawnWarn",nil];
 MAZ_EZM_autoAdd = false;
 MAZ_EZM_factionAddons = [];
 MAZ_EZM_moduleAddons = [];
