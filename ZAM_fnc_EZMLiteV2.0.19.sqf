@@ -4514,36 +4514,35 @@ MAZ_EZM_fnc_initFunction = {
 				["_screenPos",getMousePosition,[[]],2]
 			];
 
-			if(visibleMap) then {
+			if(visibleMap) exitWith {
 				private _ctrlMap = findDisplay 312 displayCtrl 50;
 				private _pos2D = _ctrlMap ctrlMapScreenToWorld _screenPos;
-				_position = (_pos2D + [0]);
+				private _position = (_pos2D + [0]);
 				_position
-			} else {
-				private _position = AGLtoASL screenToWorld _screenPos;
-				{
-					_x params ["_intersectPos","_surfaceNormal","","_obj"];
-					private _className = (str _obj) splitString ":";
-					if(count _className <= 1) then {
-							comment "TODO : Using variable name for object, I have no clue how to handle this...";
-							continue;
-					};
-					_className = _className select 1;
-					private _faunaCheck = _className select [1,2];
-
-					if(_faunaCheck isEqualType "") then {
-						if(_faunaCheck == "t_" || _faunaCheck == "b_") then {
-							continue;
-						};
-					};
-
-					if(_surfaceNormal vectorDotProduct [0,0,1] > 0.5) exitWith {_position = _intersectPos;};
-				}forEach lineIntersectsSurfaces [getPosASL curatorCamera,_position,objNull,objNull,true,5,"VIEW","FIRE",false];
-				if(!_getHeight) then {
-					_position set [2,0];
-				};
-				(ASLtoAGL _position)
 			};
+			private _position = AGLtoASL screenToWorld _screenPos;
+			{
+				_x params ["_intersectPos","_surfaceNormal","","_obj"];
+				private _className = (str _obj) splitString ":";
+				if(count _className <= 1) then {
+					comment "TODO : Using variable name for object, I have no clue how to handle this...";
+					continue;
+				};
+				_className = _className select 1;
+				private _faunaCheck = _className select [1,2];
+
+				if(_faunaCheck isEqualType "") then {
+					if(_faunaCheck == "t_" || _faunaCheck == "b_") then {
+						continue;
+					};
+				};
+
+				if(_surfaceNormal vectorDotProduct [0,0,1] > 0.5) exitWith {_position = _intersectPos;};
+			}forEach lineIntersectsSurfaces [getPosASL curatorCamera,_position,objNull,objNull,true,5,"VIEW","FIRE",false];
+			if(!_getHeight) then {
+				_position set [2,0];
+			};
+			(ASLtoAGL _position)
 		};
 
 		MAZ_EZM_fnc_selectSecondaryPosition = {
