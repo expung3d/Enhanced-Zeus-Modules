@@ -12700,7 +12700,7 @@ MAZ_EZM_fnc_initFunction = {
     ] 
    ],{ 
     params ["_values","_args","_display"]; 
-    _values params ["_radius","_mode"]; 
+    _values params ["_radius"]; 
     private _types = [ 
      "Lamps_Base_F", 
      "Land_LampAirport_F", 
@@ -12727,7 +12727,6 @@ MAZ_EZM_fnc_initFunction = {
      "Land_fs_sign_F" 
     ]; 
     private _nearestLamps = nearestObjects [_args,_types, _radius]; 
-    private _damage = [0.0,0.97] select _mode; 
     private _empCars = _args nearObjects ["LandVehicle",_radius];  
     { 
      playSound3D ["a3\sounds_f_orange\MissionSFX\Car_Alarm_6s.wss",_x,false,_x,1,1,250]; 
