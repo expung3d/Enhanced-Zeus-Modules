@@ -10866,6 +10866,24 @@ MAZ_EZM_fnc_initFunction = {
     _bomb = "ammo_Missile_Cruise_01" createVehicle [_pos select 0, _pos select 1, (_pos select 2)]; 
     _bomb setVectorDirAndUp [[0, 0, -1], [0, -1, 0]]; 
     _bomb setPosATL [(_pos select 0), (_pos select 1), (_pos select 2) + 1000];
+  }; 
+  
+  HYPER_EZM_fnc_lightningStorm = {
+    params ["_entity"];
+
+    [screenToWorld getMousePosition] spawn {
+      params ["_strikeCore"];
+      number_of_strikes = 100;  
+      strike_radius = 500;
+      strike_delay = 0.1;
+      private _tempTarget = createSimpleObject ["Land_HelipadEmpty_F", _strikeCore];   
+      for "_i" from 1 to number_of_strikes do {   
+        _randPos = [[[_strikeCore, strike_radius]], []] call BIS_fnc_randomPos;   
+        _tempTarget setPos _randPos;   
+        [_tempTarget, nil, true] spawn BIS_fnc_moduleLightning;   
+        sleep strike_delay;   
+      };  
+    };
   };
  
   MAZ_EZM_fnc_toggleSimulationModule = { 
@@ -30065,6 +30083,15 @@ MAZ_EZM_fnc_editZeusInterface = {
      "Cruise Missile", 
      "Launches a cruise missile at the placed location.", 
      "HYPER_EZM_fnc_launchCruiseMissile",
+     "a3\ui_f_jets\data\gui\cfg\hints\weaponsmissiles_ca.paa"
+    ] call MAZ_EZM_fnc_zeusAddModule; 
+
+    [ 
+     MAZ_zeusModulesTree, 
+     HYPER_bzmModules,
+     "Lightning Storm", 
+     "Summon a large lightning storm around the target location.", 
+     "HYPER_EZM_fnc_lightningStorm",
      "a3\ui_f_jets\data\gui\cfg\hints\weaponsmissiles_ca.paa"
     ] call MAZ_EZM_fnc_zeusAddModule; 
  
