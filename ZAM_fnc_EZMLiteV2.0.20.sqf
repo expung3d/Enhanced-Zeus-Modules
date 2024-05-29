@@ -10869,21 +10869,38 @@ MAZ_EZM_fnc_initFunction = {
   }; 
   
   HYPER_EZM_fnc_lightningStorm = {
-    params ["_entity"];
-
-    [screenToWorld getMousePosition] spawn {
-      params ["_strikeCore"];
-      number_of_strikes = 100;  
-      strike_radius = 500;
+   _pos = screenToWorld getMousePosition;
+   ["Summon Lightning Storm",[ 
+    [ 
+     "SLIDER:RADIUS", 
+     "Radius", 
+     [10,250,100,_pos,[1,1,1,1]] 
+    ]
+   ],{
+    params ["_values","_args","_display"];
+    _pos = _args;
+    _values params ["_radius"];
+    HYPER_fnc_strikeLightning = {
+      params ["_pos","_radius"];
+      _strikeCore = _pos;
+      number_of_strikes = 100;
+      strike_radius = _radius;
       strike_delay = 0.1;
-      private _tempTarget = createSimpleObject ["Land_HelipadEmpty_F", _strikeCore];   
+      private _tempTarget = createSimpleObject ["Land_HelipadEmpty_F", _strikeCore];
       for "_i" from 1 to number_of_strikes do {   
         _randPos = [[[_strikeCore, strike_radius]], []] call BIS_fnc_randomPos;   
         _tempTarget setPos _randPos;   
         [_tempTarget, nil, true] spawn BIS_fnc_moduleLightning;   
         sleep strike_delay;   
-      };  
+      };
+      deleteVehicle _tempTarget;
     };
+    [_pos, _radius] spawn HYPER_fnc_strikeLightning;
+    _display closeDisplay 1; 
+   },{ 
+    params ["_values","_args","_display"]; 
+    _display closeDisplay 2; 
+   },_pos] call MAZ_EZM_fnc_createDialog; 
   };
  
   MAZ_EZM_fnc_toggleSimulationModule = { 
@@ -30085,13 +30102,13 @@ MAZ_EZM_fnc_editZeusInterface = {
      "a3\ui_f_jets\data\gui\cfg\hints\weaponsmissiles_ca.paa"
     ] call MAZ_EZM_fnc_zeusAddModule; 
 
-    [ 
+    [
      MAZ_zeusModulesTree, 
      HYPER_bzmModules,
      "Lightning Storm", 
      "Summon a large lightning storm around the target location.", 
      "HYPER_EZM_fnc_lightningStorm",
-     "a3\ui_f_jets\data\gui\cfg\hints\weaponsmissiles_ca.paa"
+     "a3\ui_f\data\gui\rsc\rscdisplayarcademap\stormy_ca.paa"
     ] call MAZ_EZM_fnc_zeusAddModule; 
  
    comment "Object Modifiers"; 
