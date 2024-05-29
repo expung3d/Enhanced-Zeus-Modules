@@ -10875,13 +10875,18 @@ MAZ_EZM_fnc_initFunction = {
      "SLIDER:RADIUS", 
      "Radius", 
      [10,250,100,_pos,[1,1,1,1]] 
+    ],
+    [
+     "TOOLBOX",
+     "Explosive Lightning", 
+     [true,["Disabled","Enabled"]] 
     ]
    ],{
     params ["_values","_args","_display"];
     _pos = _args;
-    _values params ["_radius"];
+    _values params ["_radius", "_explosiveMode"];
     HYPER_fnc_strikeLightning = {
-      params ["_pos","_radius"];
+      params ["_pos","_radius","_explosiveMode"];
       _strikeCore = _pos;
       number_of_strikes = 100;
       strike_radius = _radius;
@@ -10890,12 +10895,15 @@ MAZ_EZM_fnc_initFunction = {
       for "_i" from 1 to number_of_strikes do {   
         _randPos = [[[_strikeCore, strike_radius]], []] call BIS_fnc_randomPos;   
         _tempTarget setPos _randPos;   
-        [_tempTarget, nil, true] spawn BIS_fnc_moduleLightning;   
+        [_tempTarget, nil, true] spawn BIS_fnc_moduleLightning;
+        if (_explosiveMode) then {
+          "Bo_GBU12_LGB" createVehicle (getPosATL _tempTarget);
+        };
         sleep strike_delay;   
       };
       deleteVehicle _tempTarget;
     };
-    [_pos, _radius] spawn HYPER_fnc_strikeLightning;
+    [_pos, _radius, _explosiveMode] spawn HYPER_fnc_strikeLightning;
     _display closeDisplay 1; 
    },{ 
     params ["_values","_args","_display"]; 
