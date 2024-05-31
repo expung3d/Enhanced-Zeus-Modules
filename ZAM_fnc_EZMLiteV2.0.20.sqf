@@ -10882,25 +10882,29 @@ MAZ_EZM_fnc_initFunction = {
      [10,100,25]
     ],
 	[
-     "SLIDER", 
-     "Delay Between Strikes", 
-     [0.1,5,0.5] 
+     "EDIT", 
+     "Delay Between Strikes (seconds)", 
+     "0.5"
     ],
     [
      "TOOLBOX",
-     "Explosive Lightning", 
-     [true,["Disabled","Enabled"]] 
+     "Explosive Lightning",
+     [false,["Disabled","Enabled"]] 
     ]
    ],{
     params ["_values","_args","_display"];
     _pos = _args;
     _values params ["_radius", "_strikeCount", "_strikeDelay", "_explosiveMode"];
+	if ((parseNumber _strikeDelay) == 0) exitWith {
+		["Delay must be a number above 0.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;
+		_display closeDisplay 1;
+	};
     HYPER_fnc_strikeLightning = {
-      params ["_pos","_radius","_explosiveMode"];
+      params ["_pos","_radius", "_strikeCount" , "_strikeDelay", "_explosiveMode"];
       _strikeCore = _pos;
       _number_of_strikes = _strikeCount;
       _strike_radius = _radius;
-      _strike_delay = _strikeDelay;
+      _strike_delay = parseNumber _strikeDelay;
       private _tempTarget = createSimpleObject ["Land_HelipadEmpty_F", _strikeCore];
       for "_i" from 1 to _number_of_strikes do {   
         _randPos = [[[_strikeCore, _strike_radius]], []] call BIS_fnc_randomPos;   
@@ -10913,7 +10917,7 @@ MAZ_EZM_fnc_initFunction = {
       };
       deleteVehicle _tempTarget;
     };
-    [_pos, _radius, _explosiveMode] spawn HYPER_fnc_strikeLightning;
+    [_pos, _radius, _strikeCount, _strikeDelay, _explosiveMode] spawn HYPER_fnc_strikeLightning;
     _display closeDisplay 1; 
    },{ 
     params ["_values","_args","_display"]; 
