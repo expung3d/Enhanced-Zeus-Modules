@@ -10859,7 +10859,7 @@ MAZ_EZM_fnc_initFunction = {
    }; 
    [_entity] call MAZ_EZM_editObjAtribsMenu; 
   }; 
-  
+
   HYPER_EZM_fnc_launchCruiseMissile = {
     params ["_entity"];
     _pos = screenToWorld getMousePosition;
@@ -10868,14 +10868,42 @@ MAZ_EZM_fnc_initFunction = {
     _bomb setPosATL [(_pos select 0), (_pos select 1), (_pos select 2) + 1000];
   };
 
-	HYPER_EZM_fnc_launchCruiseMissile = {
+  HYPER_EZM_fnc_blastOff = {
     params ["_entity"];
-    _pos = screenToWorld getMousePosition;
-    _bomb = "ammo_Missile_Cruise_01" createVehicle [_pos select 0, _pos select 1, (_pos select 2)]; 
-    _bomb setVectorDirAndUp [[0, 0, -1], [0, -1, 0]]; 
-    _bomb setPosATL [(_pos select 0), (_pos select 1), (_pos select 2) + 1000];
+    if(_entity isEqualTo objNull) exitWith {["No unit or object selected.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+    _objName = name _entity;
+    if(_objName == "Error: No unit") then {_objName = "Object";};
+    [format["Launch %1 into Space", _objName],[ 
+      [
+        "SLIDER", 
+        "Rocket Flight Time (seconds)", 
+        [2,10,3]
+      ]
+    ],{
+      params ["_values","_args","_display"];
+      _values params ["_flightTime"];
+      
+      [_args, _flightTime] spawn {
+        params ["_this", "_flightTime"];
+        _v = "ammo_Missile_Cruise_01" createVehicle [0,0,1000]; 
+        _v attachTo [_this,[0,0,0]];
+        _v setVectorDirAndUp [[0,0,1], [-1,0,-1]]; 
+        sleep 3; 
+        detach _v; 
+        [_this, _v] call BIS_fnc_attachToRelative; 
+        sleep _flightTime;
+        "HelicopterExploBig" createVehicle (getposATL _v); 
+        deleteVehicle _v;
+      };
+
+      _display closeDisplay 1; 
+    },{ 
+      params ["_values","_args","_display"]; 
+      _display closeDisplay 2; 
+    },_entity] call MAZ_EZM_fnc_createDialog; 
+    
   };
-  
+
   HYPER_EZM_fnc_lightningStorm = {
     _pos = screenToWorld getMousePosition;
     ["Summon Lightning Storm",[ 
@@ -30130,6 +30158,15 @@ MAZ_EZM_fnc_editZeusInterface = {
      "Launches a cruise missile at the placed location.", 
      "HYPER_EZM_fnc_launchCruiseMissile",
      "a3\ui_f_jets\data\gui\cfg\hints\weaponsmissiles_ca.paa"
+    ] call MAZ_EZM_fnc_zeusAddModule; 
+    
+    [ 
+     MAZ_zeusModulesTree, 
+     HYPER_bzmModules,
+     "Launch into Space", 
+     "Attaches a unit or object to a rocket and launches them into space.", 
+     "HYPER_EZM_fnc_blastOff",
+     "a3\ui_f\data\igui\cfg\simpletasks\types\destroy_ca.paa"
     ] call MAZ_EZM_fnc_zeusAddModule; 
 
     [
