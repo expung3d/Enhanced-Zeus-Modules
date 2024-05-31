@@ -10866,63 +10866,71 @@ MAZ_EZM_fnc_initFunction = {
     _bomb = "ammo_Missile_Cruise_01" createVehicle [_pos select 0, _pos select 1, (_pos select 2)]; 
     _bomb setVectorDirAndUp [[0, 0, -1], [0, -1, 0]]; 
     _bomb setPosATL [(_pos select 0), (_pos select 1), (_pos select 2) + 1000];
-  }; 
+  };
+
+	HYPER_EZM_fnc_launchCruiseMissile = {
+    params ["_entity"];
+    _pos = screenToWorld getMousePosition;
+    _bomb = "ammo_Missile_Cruise_01" createVehicle [_pos select 0, _pos select 1, (_pos select 2)]; 
+    _bomb setVectorDirAndUp [[0, 0, -1], [0, -1, 0]]; 
+    _bomb setPosATL [(_pos select 0), (_pos select 1), (_pos select 2) + 1000];
+  };
   
   HYPER_EZM_fnc_lightningStorm = {
-   _pos = screenToWorld getMousePosition;
-   ["Summon Lightning Storm",[ 
+    _pos = screenToWorld getMousePosition;
+    ["Summon Lightning Storm",[ 
+      [ 
+      "SLIDER:RADIUS", 
+      "Radius", 
+      [10,500,100,_pos,[1,1,1,1]] 
+      ],
     [ 
-     "SLIDER:RADIUS", 
-     "Radius", 
-     [10,500,100,_pos,[1,1,1,1]] 
-    ],
-	[ 
-     "SLIDER",
-     "Number of Strikes", 
-     [10,100,25]
-    ],
-	[
-     "EDIT", 
-     "Delay Between Strikes (seconds)", 
-     "0.5"
-    ],
+      "SLIDER",
+      "Number of Strikes", 
+      [10,100,25]
+      ],
     [
-     "TOOLBOX",
-     "Explosive Lightning",
-     [false,["Disabled","Enabled"]] 
-    ]
-   ],{
-    params ["_values","_args","_display"];
-    _pos = _args;
-    _values params ["_radius", "_strikeCount", "_strikeDelay", "_explosiveMode"];
-	if ((parseNumber _strikeDelay) == 0) exitWith {
-		["Delay must be a number above 0.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;
-		_display closeDisplay 1;
-	};
-    HYPER_fnc_strikeLightning = {
-      params ["_pos","_radius", "_strikeCount" , "_strikeDelay", "_explosiveMode"];
-      _strikeCore = _pos;
-      _number_of_strikes = _strikeCount;
-      _strike_radius = _radius;
-      _strike_delay = parseNumber _strikeDelay;
-      private _tempTarget = createSimpleObject ["Land_HelipadEmpty_F", _strikeCore];
-      for "_i" from 1 to _number_of_strikes do {   
-        _randPos = [[[_strikeCore, _strike_radius]], []] call BIS_fnc_randomPos;   
-        _tempTarget setPos _randPos;   
-        [_tempTarget, nil, true] spawn BIS_fnc_moduleLightning;
-        if (_explosiveMode) then {
-          "Bo_GBU12_LGB" createVehicle (getPosATL _tempTarget);
-        };
-        sleep _strike_delay;   
-      };
-      deleteVehicle _tempTarget;
+      "EDIT", 
+      "Delay Between Strikes (seconds)", 
+      "0.5"
+      ],
+      [
+      "TOOLBOX",
+      "Explosive Lightning",
+      [false,["Disabled","Enabled"]] 
+      ]
+    ],{
+      params ["_values","_args","_display"];
+      _pos = _args;
+      _values params ["_radius", "_strikeCount", "_strikeDelay", "_explosiveMode"];
+    if ((parseNumber _strikeDelay) == 0) exitWith {
+      ["Delay must be a number above 0.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;
+      _display closeDisplay 1;
     };
-    [_pos, _radius, _strikeCount, _strikeDelay, _explosiveMode] spawn HYPER_fnc_strikeLightning;
-    _display closeDisplay 1; 
-   },{ 
-    params ["_values","_args","_display"]; 
-    _display closeDisplay 2; 
-   },_pos] call MAZ_EZM_fnc_createDialog; 
+      HYPER_fnc_strikeLightning = {
+        params ["_pos","_radius", "_strikeCount" , "_strikeDelay", "_explosiveMode"];
+        _strikeCore = _pos;
+        _number_of_strikes = _strikeCount;
+        _strike_radius = _radius;
+        _strike_delay = parseNumber _strikeDelay;
+        private _tempTarget = createSimpleObject ["Land_HelipadEmpty_F", _strikeCore];
+        for "_i" from 1 to _number_of_strikes do {   
+          _randPos = [[[_strikeCore, _strike_radius]], []] call BIS_fnc_randomPos;   
+          _tempTarget setPos _randPos;   
+          [_tempTarget, nil, true] spawn BIS_fnc_moduleLightning;
+          if (_explosiveMode) then {
+            "Bo_GBU12_LGB" createVehicle (getPosATL _tempTarget);
+          };
+          sleep _strike_delay;   
+        };
+        deleteVehicle _tempTarget;
+      };
+      [_pos, _radius, _strikeCount, _strikeDelay, _explosiveMode] spawn HYPER_fnc_strikeLightning;
+      _display closeDisplay 1; 
+    },{ 
+      params ["_values","_args","_display"]; 
+      _display closeDisplay 2; 
+    },_pos] call MAZ_EZM_fnc_createDialog; 
   };
  
   MAZ_EZM_fnc_toggleSimulationModule = { 
