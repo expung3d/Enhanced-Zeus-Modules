@@ -10874,7 +10874,17 @@ MAZ_EZM_fnc_initFunction = {
     [ 
      "SLIDER:RADIUS", 
      "Radius", 
-     [10,250,100,_pos,[1,1,1,1]] 
+     [10,500,100,_pos,[1,1,1,1]] 
+    ],
+	[ 
+     "SLIDER",
+     "Number of Strikes", 
+     [10,100,25]
+    ],
+	[
+     "SLIDER", 
+     "Delay Between Strikes", 
+     [0.1,5,0.5] 
     ],
     [
      "TOOLBOX",
@@ -10884,22 +10894,22 @@ MAZ_EZM_fnc_initFunction = {
    ],{
     params ["_values","_args","_display"];
     _pos = _args;
-    _values params ["_radius", "_explosiveMode"];
+    _values params ["_radius", "_strikeCount", "_strikeDelay", "_explosiveMode"];
     HYPER_fnc_strikeLightning = {
       params ["_pos","_radius","_explosiveMode"];
       _strikeCore = _pos;
-      number_of_strikes = 100;
-      strike_radius = _radius;
-      strike_delay = 0.1;
+      _number_of_strikes = _strikeCount;
+      _strike_radius = _radius;
+      _strike_delay = _strikeDelay;
       private _tempTarget = createSimpleObject ["Land_HelipadEmpty_F", _strikeCore];
-      for "_i" from 1 to number_of_strikes do {   
-        _randPos = [[[_strikeCore, strike_radius]], []] call BIS_fnc_randomPos;   
+      for "_i" from 1 to _number_of_strikes do {   
+        _randPos = [[[_strikeCore, _strike_radius]], []] call BIS_fnc_randomPos;   
         _tempTarget setPos _randPos;   
         [_tempTarget, nil, true] spawn BIS_fnc_moduleLightning;
         if (_explosiveMode) then {
           "Bo_GBU12_LGB" createVehicle (getPosATL _tempTarget);
         };
-        sleep strike_delay;   
+        sleep _strike_delay;   
       };
       deleteVehicle _tempTarget;
     };
