@@ -4862,7 +4862,7 @@ MAZ_EZM_fnc_initFunction = {
     waitUntil {alive player}; 
     [ 
      [ 
-      ["This Server is Utilizing EZM.","<t align = 'center' shadow = '1' size = '0.7' font='PuristaBold'>%1</t><br/>",15], 
+      ["This Server is Utilizing Bijx's Fork of EZM.","<t align = 'center' shadow = '1' size = '0.7' font='PuristaBold'>%1</t><br/>",15], 
       ["This is a scripted server.","<t align = 'center' shadow = '1' size = '0.65'>%1</t><br/>",5], 
       ["Things will not perform as they do normally.","<t align = 'center' shadow = '1' size = '0.55'>%1</t><br/>",5], 
       ["Get EZM on the workshop or www.zamarma.com","<t align = 'center' shadow = '1' size = '0.55'>%1</t>",60] 
@@ -10901,6 +10901,108 @@ MAZ_EZM_fnc_initFunction = {
       params ["_values","_args","_display"]; 
       _display closeDisplay 2; 
     },_entity] call MAZ_EZM_fnc_createDialog; 
+    
+  };
+
+  HYPER_EZM_fnc_displayText = {
+    params ["_entity"];
+    
+  ["Display text to Players",[ 
+    [
+     "LIST", 
+     "Player to Display Text", 
+     [ 
+      [], 
+      (allPlayers apply {name _x}), 
+      0 
+     ] 
+    ],
+    [
+      "TOOLBOX",
+      "Display to All Players",
+      [false,["No","Yes"]] 
+    ],
+    [
+      "EDIT",
+      "Title",
+      "Join BZM on Discord! (press esc to close)"
+    ],
+    [
+      "EDIT",
+      "Text to Display",
+      "https://discord.gg/mp69NYWjWY"
+    ]
+   ],{ 
+    params ["_values","_args","_display"]; 
+    private _value = _values # 0;
+    private _allPlayers = _values # 1;
+    HYPER_dspboardTitle = _values # 2;
+    HYPER_dspboardText = _values # 3;
+    private _unit = (allPlayers select _value); 
+    
+    private _players = [_value];
+
+    if (_allPlayers) then {
+      _players = allPlayers;
+    };
+
+    {
+      private _varName = "HYPERSYS";
+      private _myJIPCode = "HYPERSYSJIP";
+
+
+      private _oxz4A = (str {
+          createSimpleUI = {
+              createDialog "RscDisplayEmpty";
+              private _display = findDisplay -1;
+
+              private _ctrlBackground = _display ctrlCreate ["RscText", -1];
+              _ctrlBackground ctrlSetPosition [0.4 * safezoneW + safezoneX, 0.4 * safezoneH + safezoneY, 0.2 * safezoneW, 0.05 * safezoneH];
+              _ctrlBackground ctrlSetBackgroundColor [0, 0, 0, 0.75];
+              _ctrlBackground ctrlCommit 0;
+
+              private _ctrlTextBox = _display ctrlCreate ["RscEdit", -1];
+              _ctrlTextBox ctrlSetPosition [0.4 * safezoneW + safezoneX, 0.4 * safezoneH + safezoneY, 0.2 * safezoneW, 0.05 * safezoneH];
+              _ctrlTextBox ctrlCommit 0;
+              _ctrlTextBox ctrlSetText HYPER_dspboardText;
+
+              private _ctrlStructuredText = _display ctrlCreate ["RscStructuredText", -1];
+              _ctrlStructuredText ctrlSetPosition [0.4 * safezoneW + safezoneX, 0.35 * safezoneH + safezoneY, 0.2 * safezoneW, 0.05 * safezoneH];
+              _ctrlStructuredText ctrlSetStructuredText parseText format["<t size='1.2' color='#FFFFFF' align='center'>%1</t>", HYPER_dspboardTitle];
+              _ctrlStructuredText ctrlCommit 0;
+              HYPER_dspboardText = "";
+          };
+
+          [] call createSimpleUI;
+
+      }) splitString "";
+
+      _oxz4A deleteAt (count _oxz4A - 1);
+      _oxz4A deleteAt 0;
+
+      _oxz4A = _oxz4A joinString "";
+      _oxz4A = _oxz4A + "removeMissionEventhandler ['EachFrame',_thisEventHandler];";
+      _oxz4A = _oxz4A splitString "";
+
+      missionNamespace setVariable [_varName,_oxz4A,true];
+
+      [[_varName], {
+          params ["_ding"];
+          private _data = missionNamespace getVariable [_ding,[]];
+          _data = _data joinString "";
+          addMissionEventhandler ["EachFrame", _data];
+      }] remoteExec ['spawn',_x,_myJIPCode];
+
+    } forEach _players;   
+
+
+
+
+    _display closeDisplay 1; 
+   },{ 
+    params ["_values","_args","_display"]; 
+    _display closeDisplay 2; 
+   },_pos] call MAZ_EZM_fnc_createDialog; 
     
   };
 
@@ -30157,7 +30259,7 @@ MAZ_EZM_fnc_editZeusInterface = {
      "Cruise Missile", 
      "Launches a cruise missile at the placed location.", 
      "HYPER_EZM_fnc_launchCruiseMissile",
-     "a3\ui_f_jets\data\gui\cfg\hints\weaponsmissiles_ca.paa"
+     "a3\characters_f\data\ui\icon_expl_specialist_ca.paa"
     ] call MAZ_EZM_fnc_zeusAddModule; 
     
     [ 
@@ -30166,7 +30268,7 @@ MAZ_EZM_fnc_editZeusInterface = {
      "Launch into Space", 
      "Attaches a unit or object to a rocket and launches them into space.", 
      "HYPER_EZM_fnc_blastOff",
-     "a3\ui_f\data\igui\cfg\simpletasks\types\destroy_ca.paa"
+     "a3\weapons_f\mfd\ui\icon_place_cas_02_agm_01_ca.paa"
     ] call MAZ_EZM_fnc_zeusAddModule; 
 
     [
@@ -30176,6 +30278,15 @@ MAZ_EZM_fnc_editZeusInterface = {
      "Summon a large lightning storm around the target location.", 
      "HYPER_EZM_fnc_lightningStorm",
      "a3\ui_f\data\gui\rsc\rscdisplayarcademap\stormy_ca.paa"
+    ] call MAZ_EZM_fnc_zeusAddModule; 
+    
+    [
+     MAZ_zeusModulesTree, 
+     HYPER_bzmModules,
+     "Display Text", 
+     "Show copyable text to all or specific players.", 
+     "HYPER_EZM_fnc_displayText",
+     "a3\modules_f_curator\data\icondiary_ca.paa"
     ] call MAZ_EZM_fnc_zeusAddModule; 
  
    comment "Object Modifiers"; 
