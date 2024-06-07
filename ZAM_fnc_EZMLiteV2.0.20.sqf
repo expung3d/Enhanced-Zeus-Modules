@@ -11089,6 +11089,52 @@ MAZ_EZM_fnc_initFunction = {
       _display closeDisplay 2; 
     },_pos] call MAZ_EZM_fnc_createDialog; 
   };
+
+  
+  HYPER_EZM_fnc_populateUnits = {
+    params ["_entity"];
+    if(_entity isEqualTo objNull) exitWith {["No unit or object selected.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+    _pos = position _entity;
+    ["Populate Area with Unit",[ 
+      [ 
+      "SLIDER:RADIUS", 
+      "Radius", 
+      [10,1000,100,_pos,[1,1,1,1]] 
+      ]
+    ],{
+      params ["_values","_args","_display"];
+      _entity = _args;
+      _radius = _values # 0;
+      _count = 0;
+
+      {
+        _unitLoadout = getUnitLoadout _entity;
+        _grp = createGroup east;
+        if (side _entity == west) then {
+          _grp = createGroup west;
+        };
+        if (side _entity == resistance) then {
+          _grp = createGroup resistance;
+        };
+        if (side _entity == civilian) then {
+          _grp = createGroup civilian;
+        };
+        _count = _count + 1;
+        _unit = _grp createUnit ["B_RangeMaster_F", getPosATL _x, [], 0, "NONE"];
+        [_unit] joinSilent _grp;
+        _unit setUnitLoadout _unitLoadout;
+        {_x addCuratorEditableObjects [[_unit],true];} count allCurators;
+        deleteVehicle _x;
+      } forEach nearestObjects [_entity, ["Sign_Arrow_Pink_F"], _radius];
+
+      [format ["Populated %1 units in the area.", _count]] call MAZ_EZM_fnc_systemMessage;
+
+      _display closeDisplay 1; 
+    },{ 
+      params ["_values","_args","_display"]; 
+      _display closeDisplay 2; 
+    },_entity] call MAZ_EZM_fnc_createDialog; 
+  };
  
   MAZ_EZM_fnc_toggleSimulationModule = { 
    params ["_entity"]; 
@@ -29708,6 +29754,15 @@ MAZ_EZM_fnc_editZeusInterface = {
      "Disable Fall Animation", 
      "Disables free fall animation from all clients on the server.", 
      "HYPER_EZM_fnc_disableFallAnimation",
+     "a3\ui_f\data\gui\rsc\rscdisplaygarage\animationsources_ca.paa"
+    ] call MAZ_EZM_fnc_zeusAddModule; 
+    
+    [
+     MAZ_zeusModulesTree, 
+     HYPER_bzmModules,
+     "Populate Area with Unit", 
+     "When placed on a unit, all Pink Arrow helpers in the selected radius will be replaced with a copy of that unit.", 
+     "HYPER_EZM_fnc_populateUnits",
      "a3\ui_f\data\gui\rsc\rscdisplaygarage\animationsources_ca.paa"
     ] call MAZ_EZM_fnc_zeusAddModule; 
     
