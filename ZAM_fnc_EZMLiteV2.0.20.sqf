@@ -11105,12 +11105,18 @@ MAZ_EZM_fnc_initFunction = {
         "TOOLBOX",
         "Randomize Unit Rotation",
         [true,["No","Yes"]] 
+      ],
+      [
+        "TOOLBOX",
+        "Delete Placeholder Arrows",
+        [false,["No","Yes"]] 
       ]
     ],{
       params ["_values","_args","_display"];
       _entity = _args;
       _radius = _values # 0;
       _randomizeRotation = _values # 1;
+      _deleteArrows = _values # 2;
       _count = 0;
 
       {
@@ -11133,7 +11139,10 @@ MAZ_EZM_fnc_initFunction = {
           _unit setDir random 360;
         };
         {_x addCuratorEditableObjects [[_unit],true];} count allCurators;
-        deleteVehicle _x;
+
+        if (_deleteArrows) then {
+          deleteVehicle _x;
+        };
       } forEach nearestObjects [_entity, ["Sign_Arrow_Pink_F"], _radius];
 
       [format ["Populated %1 units in the area.", _count]] call MAZ_EZM_fnc_systemMessage;
@@ -29772,7 +29781,7 @@ MAZ_EZM_fnc_editZeusInterface = {
      "Populate Area with Unit", 
      "When placed on a unit, all Pink Arrow helpers in the selected radius will be replaced with a copy of that unit.", 
      "HYPER_EZM_fnc_populateUnits",
-     "a3\ui_f\data\gui\rsc\rscdisplaygarage\animationsources_ca.paa"
+     "a3\ui_f\data\gui\rsc\rscdisplayarcademap\icon_toolbox_groups_ca.paa"
     ] call MAZ_EZM_fnc_zeusAddModule; 
     
    comment "AI Modifers"; 
