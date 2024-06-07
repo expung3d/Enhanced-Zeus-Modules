@@ -11133,8 +11133,9 @@ MAZ_EZM_fnc_initFunction = {
         };
         _count = _count + 1;
         _unit = _grp createUnit ["B_RangeMaster_F", getPosATL _x, [], 0, "NONE"];
+        _unit setPosWorld (getPosWorld _x);
         [_unit] joinSilent _grp;
-        _unit setUnitLoadout _unitLoadout;
+        _unit setUnitLoadout [_unitLoadout,true];
         if (_randomizeRotation) then {
           _unit setDir random 360;
         };
