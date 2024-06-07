@@ -11117,36 +11117,47 @@ MAZ_EZM_fnc_initFunction = {
       _radius = _values # 0;
       _randomizeRotation = _values # 1;
       _deleteArrows = _values # 2;
-      _count = 0;
 
-      {
-        _unitLoadout = getUnitLoadout _entity;
-        _grp = createGroup east;
-        if (side _entity == west) then {
-          _grp = createGroup west;
-        };
-        if (side _entity == resistance) then {
-          _grp = createGroup resistance;
-        };
-        if (side _entity == civilian) then {
-          _grp = createGroup civilian;
-        };
-        _count = _count + 1;
-        _unit = _grp createUnit ["B_RangeMaster_F", getPosATL _x, [], 0, "NONE"];
-        _unit setPosWorld (getPosWorld _x);
-        [_unit] joinSilent _grp;
-        _unit setUnitLoadout [_unitLoadout,true];
-        if (_randomizeRotation) then {
-          _unit setDir random 360;
-        };
-        {_x addCuratorEditableObjects [[_unit],true];} count allCurators;
+      HYPER_fnc_spawnUnits = {
+        params ["_entity", "_radius", "_randomizeRotation", "_deleteArrows"];
+        _count = 0;
+        {
+          _unitLoadout = getUnitLoadout _entity;
+          _unitGoggles = goggles _entity;
+          _grp = createGroup east;
+          if (side _entity == west) then {
+            _grp = createGroup west;
+          };
+          if (side _entity == resistance) then {
+            _grp = createGroup resistance;
+          };
+          if (side _entity == civilian) then {
+            _grp = createGroup civilian;
+          };
+          _count = _count + 1;
+          _unit = _grp createUnit ["B_Soldier_F", getPosATL _x, [], 0, "NONE"];
+          sleep 0.05;
+          _unit setVariable ["BIS_enableRandomization", false];
+          _unit setPosWorld (getPosWorld _x);
+          [_unit] joinSilent _grp;
+          _unit setUnitLoadout [_unitLoadout,true];
+          removeGoggles _unit;
+          _unit addGoggles _unitGoggles;
+          if (_randomizeRotation) then {
+            hint "random rotation";
+            _unit setDir random 360;
+          };
+          {_x addCuratorEditableObjects [[_unit],true];} count allCurators;
 
-        if (_deleteArrows) then {
-          deleteVehicle _x;
-        };
-      } forEach nearestObjects [_entity, ["Sign_Arrow_Pink_F"], _radius];
+          if (_deleteArrows) then {
+            deleteVehicle _x;
+          };
+        } forEach nearestObjects [_entity, ["Sign_Arrow_Pink_F"], _radius];
 
-      [format ["Populated %1 units in the area.", _count]] call MAZ_EZM_fnc_systemMessage;
+        [format ["Populated %1 units in the area.", _count]] call MAZ_EZM_fnc_systemMessage;
+      };
+
+      [_entity, _radius, _randomizeRotation, _deleteArrows] spawn HYPER_fnc_spawnUnits;
 
       _display closeDisplay 1; 
     },{ 
