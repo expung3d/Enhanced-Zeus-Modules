@@ -11096,15 +11096,21 @@ MAZ_EZM_fnc_initFunction = {
     if(_entity isEqualTo objNull) exitWith {["No unit or object selected.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
     _pos = position _entity;
     ["Populate Area with Unit",[ 
-      [ 
+      [
       "SLIDER:RADIUS", 
       "Radius", 
       [10,1000,100,_pos,[1,1,1,1]] 
+      ],
+      [
+        "TOOLBOX",
+        "Randomize Unit Rotation",
+        [true,["No","Yes"]] 
       ]
     ],{
       params ["_values","_args","_display"];
       _entity = _args;
       _radius = _values # 0;
+      _randomizeRotation = _values # 1;
       _count = 0;
 
       {
@@ -11123,6 +11129,9 @@ MAZ_EZM_fnc_initFunction = {
         _unit = _grp createUnit ["B_RangeMaster_F", getPosATL _x, [], 0, "NONE"];
         [_unit] joinSilent _grp;
         _unit setUnitLoadout _unitLoadout;
+        if (_randomizeRotation) then {
+          _unit setDir random 360;
+        };
         {_x addCuratorEditableObjects [[_unit],true];} count allCurators;
         deleteVehicle _x;
       } forEach nearestObjects [_entity, ["Sign_Arrow_Pink_F"], _radius];
