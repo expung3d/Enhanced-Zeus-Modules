@@ -10868,6 +10868,28 @@ MAZ_EZM_fnc_initFunction = {
     _bomb setPosATL [(_pos select 0), (_pos select 1), (_pos select 2) + 1000];
   };
 
+  HYPER_EZM_fnc_launchMissileAt = {
+    params ["_entity"];
+    _pos = screenToWorld getMousePosition;
+    if (isNull HYPER_cannonPoint) exitWith {["Cannon point does not exist on map.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+    _targetObj = "Land_HelipadEmpty_F" createVehicle _pos;
+    private _origin = getPosASL HYPER_cannonPoint;
+    private _target = getPosASL _targetObj;
+
+    private _vdir = _origin vectorFromTo _target;
+    private _vlat = vectorNormalized (_vdir vectorCrossProduct [0,0,1]);
+    private _vup = _vlat vectorCrossProduct _vdir;
+
+    private _vel = _vdir vectorMultiply 100;
+
+    _spawnPoint = getPosWorld HYPER_cannonPoint;
+    _bomb = "ammo_Missile_Cruise_01" createVehicle [_spawnPoint select 0, _spawnPoint select 1, (_spawnPoint select 2)]; 
+    _bomb setPosWorld _spawnPoint;
+    _bomb setVectorDirAndUp [_vdir, _vup];
+    _bomb setVelocity _vel;
+  };
+
+
   HYPER_EZM_fnc_blastOff = {
     params ["_entity"];
     if(_entity isEqualTo objNull) exitWith {["No unit or object selected.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
@@ -11193,6 +11215,22 @@ MAZ_EZM_fnc_initFunction = {
    }; 
    playSound "addItemOk"; 
   }; 
+
+  HYPER_EZM_fnc_invincibleAllPlayersOn = { 
+    {
+      [_x,false] remoteExec ["allowDamage",0]; 
+    } forEach allPlayers; 
+    ["All players are now invincible.","addItemOk"] call MAZ_EZM_fnc_systemMessage; 
+   playSound "addItemOk"; 
+  };
+
+  HYPER_EZM_fnc_invincibleAllPlayersOff = { 
+    {
+      [_x,true] remoteExec ["allowDamage",0]; 
+    } forEach allPlayers; 
+    ["All players are no longer invincible.","addItemOk"] call MAZ_EZM_fnc_systemMessage; 
+   playSound "addItemOk"; 
+  };
  
   MAZ_EZM_fnc_hideObjectModule = { 
    params ["_entity"]; 
@@ -29750,7 +29788,7 @@ MAZ_EZM_fnc_editZeusInterface = {
      "HYPER_EZM_fnc_launchCruiseMissile",
      "a3\characters_f\data\ui\icon_expl_specialist_ca.paa"
     ] call MAZ_EZM_fnc_zeusAddModule; 
-    
+
     [ 
      MAZ_zeusModulesTree, 
      HYPER_bzmModules,
@@ -29790,11 +29828,43 @@ MAZ_EZM_fnc_editZeusInterface = {
     [
      MAZ_zeusModulesTree, 
      HYPER_bzmModules,
+     "All Players Invincible ON", 
+     "Makes all players invincible.", 
+     "HYPER_EZM_fnc_invincibleAllPlayersOn",
+     "\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\kill_ca.paa"
+    ] call MAZ_EZM_fnc_zeusAddModule; 
+    [
+     MAZ_zeusModulesTree, 
+     HYPER_bzmModules,
+     "All Players Invincible OFF", 
+     "Makes all players invincible.", 
+     "HYPER_EZM_fnc_invincibleAllPlayersOff",
+     "\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\kill_ca.paa"
+    ] call MAZ_EZM_fnc_zeusAddModule; 
+    [
+     MAZ_zeusModulesTree, 
+     HYPER_bzmModules,
      "Populate Area with Unit", 
      "When placed on a unit, all Pink Arrow helpers in the selected radius will be replaced with a copy of that unit.", 
      "HYPER_EZM_fnc_populateUnits",
      "a3\ui_f\data\gui\rsc\rscdisplayarcademap\icon_toolbox_groups_ca.paa"
     ] call MAZ_EZM_fnc_zeusAddModule; 
+
+    comment "BZM Mission Tools";
+    HYPER_bzmMissionModules = [ 
+     MAZ_zeusModulesTree, 
+     "BZM Mission Tools", 
+     "a3\missions_f_curator\data\img\portraitmptypegamemaster_ca.paa" 
+    ] call MAZ_EZM_fnc_zeusAddCategory; 
+    [ 
+     MAZ_zeusModulesTree, 
+     HYPER_bzmMissionModules,
+     "Launch Missile At", 
+     "Launches a missile at the module position. Must have a spawn point called HYPER_cannonPoint to work properly.", 
+     "HYPER_EZM_fnc_launchMissileAt",
+     "a3\characters_f\data\ui\icon_expl_specialist_ca.paa"
+    ] call MAZ_EZM_fnc_zeusAddModule;
+
     
    comment "AI Modifers"; 
     MAZ_EditAITree = [ 
