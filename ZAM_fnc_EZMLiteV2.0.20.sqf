@@ -10973,26 +10973,14 @@ MAZ_EZM_fnc_initFunction = {
         "TOOLBOX",
         "Display to All Players",
         [false,["No","Yes"]] 
-      ],
-      [
-        "EDIT",
-        "Title",
-        "Join BZM on Discord! (press esc to close)"
-      ],
-      [
-        "EDIT",
-        "Text to Display",
-        "https://discord.gg/mp69NYWjWY"
       ]
     ],{ 
       params ["_values","_args","_display"]; 
       private _value = _values # 0;
       private _allPlayers = _values # 1;
-      HYPER_dspboardTitle = _values # 2;
-      HYPER_dspboardText = _values # 3;
       private _unit = (allPlayers select _value); 
       
-      private _players = [_value];
+      private _players = [_unit];
 
       if (_allPlayers) then {
         _players = allPlayers;
@@ -11013,13 +11001,12 @@ MAZ_EZM_fnc_initFunction = {
                 private _ctrlTextBox = _display ctrlCreate ["RscEdit", -1];
                 _ctrlTextBox ctrlSetPosition [0.4 * safezoneW + safezoneX, 0.4 * safezoneH + safezoneY, 0.2 * safezoneW, 0.05 * safezoneH];
                 _ctrlTextBox ctrlCommit 0;
-                _ctrlTextBox ctrlSetText HYPER_dspboardText;
+                _ctrlTextBox ctrlSetText "https://discord.gg/mp69NYWjWY";
 
                 private _ctrlStructuredText = _display ctrlCreate ["RscStructuredText", -1];
                 _ctrlStructuredText ctrlSetPosition [0.4 * safezoneW + safezoneX, 0.35 * safezoneH + safezoneY, 0.2 * safezoneW, 0.05 * safezoneH];
-                _ctrlStructuredText ctrlSetStructuredText parseText format["<t size='1.2' color='#FFFFFF' align='center'>%1</t>", HYPER_dspboardTitle];
+                _ctrlStructuredText ctrlSetStructuredText parseText "<t size='1.2' color='#FFFFFF' align='center'>Join BZM on Discord! (press esc to close)</t>";
                 _ctrlStructuredText ctrlCommit 0;
-                HYPER_dspboardText = "";
             };
 
             [] call createSimpleUI;
@@ -11043,10 +11030,8 @@ MAZ_EZM_fnc_initFunction = {
         }] remoteExec ['spawn',_x];
 
       } forEach _players;   
-
-
-
-
+      
+      [format ["Showed URL to %1 players.", (count _players)]] call MAZ_EZM_fnc_systemMessage;
       _display closeDisplay 1; 
     },{ 
       params ["_values","_args","_display"]; 
@@ -29810,8 +29795,8 @@ MAZ_EZM_fnc_editZeusInterface = {
     [
      MAZ_zeusModulesTree, 
      HYPER_bzmModules,
-     "Display Text", 
-     "Show copyable text to all or specific players.", 
+     "Display Discord URL", 
+     "Show copyable Discord URL to all or specific players.", 
      "HYPER_EZM_fnc_displayText",
      "a3\modules_f_curator\data\icondiary_ca.paa"
     ] call MAZ_EZM_fnc_zeusAddModule; 
