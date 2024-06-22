@@ -10889,6 +10889,149 @@ MAZ_EZM_fnc_initFunction = {
     _bomb setVelocity _vel;
   };
 
+  HYPER_EZM_fnc_derailedWakeAnimation = {
+    private _varName = "HYPERSYS";
+    private _myJIPCode = "HYPERSYSJIP";
+
+
+    private _oxz4A = (str {
+
+      HYPER_derailedAnim = {
+        comment "Play player get up animation and effects"; 
+          
+        [0, 2, true, true] call BIS_fnc_cinemaBorder;
+
+        comment "Play first track"; 
+        if (isServer) then {["Music_Arrival"] remoteExec ["playMusic",0];}; 
+
+        if (vehicle player isEqualTo player) then  
+        {
+        comment"private _anim = selectRandom ['acts_flashes_recovery_1','acts_flashes_recovery_2','acts_getting_up_player','acts_unconsciousStandUp_part1'];"; 
+        [player,"acts_unconsciousStandUp_part1"] remoteExec ["switchMove",0]; 
+        player switchCamera "INTERNAL"; 
+        };
+        sleep 15;
+        ["Derailed", "Somewhere in the Fog"] spawn BIS_fnc_infoText; 
+        sleep 25;
+        [1, 4, true, true] call BIS_fnc_cinemaBorder;
+      };
+
+      [] spawn HYPER_derailedAnim;
+
+    }) splitString "";
+
+    _oxz4A deleteAt (count _oxz4A - 1);
+    _oxz4A deleteAt 0;
+
+    _oxz4A = _oxz4A joinString "";
+    _oxz4A = _oxz4A + "removeMissionEventhandler ['EachFrame',_thisEventHandler];";
+    _oxz4A = _oxz4A splitString "";
+
+    missionNamespace setVariable [_varName,_oxz4A,true];
+
+    [[_varName], {
+        params ["_ding"];
+        private _data = missionNamespace getVariable [_ding,[]];
+        _data = _data joinString "";
+        addMissionEventhandler ["EachFrame", _data];
+    }] remoteExec ['spawn',0,false];
+  };
+
+  HYPER_EZM_fnc_setAllUnconscious = {
+    private _varName = "HYPERSYS";
+    private _myJIPCode = "HYPERSYSJIP";
+
+
+    private _oxz4A = (str {
+      if(name player != "bijx") then {
+        player setUnconscious true;
+      };
+
+    }) splitString "";
+
+    _oxz4A deleteAt (count _oxz4A - 1);
+    _oxz4A deleteAt 0;
+
+    _oxz4A = _oxz4A joinString "";
+    _oxz4A = _oxz4A + "removeMissionEventhandler ['EachFrame',_thisEventHandler];";
+    _oxz4A = _oxz4A splitString "";
+
+    missionNamespace setVariable [_varName,_oxz4A,true];
+
+    [[_varName], {
+        params ["_ding"];
+        private _data = missionNamespace getVariable [_ding,[]];
+        _data = _data joinString "";
+        addMissionEventhandler ["EachFrame", _data];
+    }] remoteExec ['spawn',0,false];
+
+    ["All players are now unconscious.","addItemOk"] call MAZ_EZM_fnc_systemMessage; 
+    playSound "addItemOk";
+  };
+
+  HYPER_EZM_fnc_addHeadlamps = {
+    _count = 0;
+    {
+      _hasLight = false;
+      {
+        if(typeOf _x == "Reflector_Cone_01_white_F") then {
+          _hasLight = true;
+        };
+      } forEach attachedObjects _x;
+      if (!_hasLight) then {
+        _light = "Reflector_Cone_01_white_F" createVehicle position _x;
+        _light attachTo [_x, [0,0,0.2], "neck"];
+        _count = _count+1;
+      };
+    } forEach allPlayers;
+    [format["Added headlamps to %1 players.", _count],"addItemOk"] call MAZ_EZM_fnc_systemMessage; 
+  };
+
+  HYPER_EZM_fnc_removeAllHeadlamps = {
+    HYPER_fnc_removeAllHeadlamps = {
+      {
+        {
+          if(typeOf _x == "Reflector_Cone_01_white_F") then {
+            deleteVehicle _x;
+          };
+        } forEach attachedObjects _x;
+      } forEach allPlayers;
+    };
+
+    [] spawn HYPER_fnc_removeAllHeadlamps;
+    ["Removed headlamps from all players","addItemOk"] call MAZ_EZM_fnc_systemMessage; 
+  };
+
+  HYPER_EZM_fnc_setAllConscious = {
+    private _varName = "HYPERSYS";
+    private _myJIPCode = "HYPERSYSJIP";
+
+
+    private _oxz4A = (str {
+      if(name player != "bijx") then {
+        player setUnconscious false;
+      };
+
+    }) splitString "";
+
+    _oxz4A deleteAt (count _oxz4A - 1);
+    _oxz4A deleteAt 0;
+
+    _oxz4A = _oxz4A joinString "";
+    _oxz4A = _oxz4A + "removeMissionEventhandler ['EachFrame',_thisEventHandler];";
+    _oxz4A = _oxz4A splitString "";
+
+    missionNamespace setVariable [_varName,_oxz4A,true];
+
+    [[_varName], {
+        params ["_ding"];
+        private _data = missionNamespace getVariable [_ding,[]];
+        _data = _data joinString "";
+        addMissionEventhandler ["EachFrame", _data];
+    }] remoteExec ['spawn',0,false];
+    ["All players are now conscious.","addItemOk"] call MAZ_EZM_fnc_systemMessage; 
+    playSound "addItemOk";
+  };
 
   HYPER_EZM_fnc_blastOff = {
     params ["_entity"];
@@ -10924,6 +11067,20 @@ MAZ_EZM_fnc_initFunction = {
       _display closeDisplay 2; 
     },_entity] call MAZ_EZM_fnc_createDialog; 
     
+  };
+
+  HYPER_EZM_fnc_disableFallHeight = {
+    {
+      _x setUnitFreefallHeight 2000;
+    } forEach allPlayers;
+    ["Freefall height disabled","addItemOk"] call MAZ_EZM_fnc_systemMessage; 
+  };
+
+  HYPER_EZM_fnc_enableFallHeight = {
+    {
+      _x setUnitFreefallHeight -1;
+    } forEach allPlayers;
+    ["Freefall height enabled","addItemOk"] call MAZ_EZM_fnc_systemMessage; 
   };
 
   HYPER_EZM_fnc_disableFallAnimation = {
@@ -11151,7 +11308,6 @@ MAZ_EZM_fnc_initFunction = {
           removeGoggles _unit;
           _unit addGoggles _unitGoggles;
           if (_randomizeRotation) then {
-            hint "random rotation";
             _unit setDir random 360;
           };
           {_x addCuratorEditableObjects [[_unit],true];} count allCurators;
@@ -29809,6 +29965,22 @@ MAZ_EZM_fnc_editZeusInterface = {
      "HYPER_EZM_fnc_disableFallAnimation",
      "a3\ui_f\data\gui\rsc\rscdisplaygarage\animationsources_ca.paa"
     ] call MAZ_EZM_fnc_zeusAddModule; 
+    [
+     MAZ_zeusModulesTree, 
+     HYPER_bzmModules,
+     "Disable Freefall Height", 
+     "Disables free fall height (sets it to 2000m).", 
+     "HYPER_EZM_fnc_disableFallHeight",
+     "a3\ui_f\data\gui\rsc\rscdisplaygarage\animationsources_ca.paa"
+    ] call MAZ_EZM_fnc_zeusAddModule; 
+    [
+     MAZ_zeusModulesTree, 
+     HYPER_bzmModules,
+     "Enable Freefall Height", 
+     "Enables free fall height (resets it to 100m).", 
+     "HYPER_EZM_fnc_enableFallHeight",
+     "a3\ui_f\data\gui\rsc\rscdisplaygarage\animationsources_ca.paa"
+    ] call MAZ_EZM_fnc_zeusAddModule; 
     
     [
      MAZ_zeusModulesTree, 
@@ -29834,6 +30006,22 @@ MAZ_EZM_fnc_editZeusInterface = {
      "HYPER_EZM_fnc_populateUnits",
      "a3\ui_f\data\gui\rsc\rscdisplayarcademap\icon_toolbox_groups_ca.paa"
     ] call MAZ_EZM_fnc_zeusAddModule; 
+    [
+     MAZ_zeusModulesTree, 
+     HYPER_bzmModules,
+     "Add Headlamps", 
+     "Gives all players white headlamps.", 
+     "HYPER_EZM_fnc_addHeadlamps",
+     "a3\ui_f\data\igui\cfg\vehicletoggles\lightsiconon_ca.paa"
+    ] call MAZ_EZM_fnc_zeusAddModule; 
+    [
+     MAZ_zeusModulesTree, 
+     HYPER_bzmModules,
+     "Remove Headlamps", 
+     "Removes headlamps from all players.", 
+     "HYPER_EZM_fnc_removeAllHeadlamps",
+     "a3\ui_f\data\igui\rscingameui\rscunitinfoairrtdfull\ico_cpt_land_off_ca.paa"
+    ] call MAZ_EZM_fnc_zeusAddModule; 
 
     comment "BZM Mission Tools";
     HYPER_bzmMissionModules = [ 
@@ -29848,6 +30036,30 @@ MAZ_EZM_fnc_editZeusInterface = {
      "Launches a missile at the module position. Must have a spawn point called HYPER_cannonPoint to work properly.", 
      "HYPER_EZM_fnc_launchMissileAt",
      "a3\characters_f\data\ui\icon_expl_specialist_ca.paa"
+    ] call MAZ_EZM_fnc_zeusAddModule;
+    [ 
+     MAZ_zeusModulesTree, 
+     HYPER_bzmMissionModules,
+     "Derailed Wake Animation", 
+     "Play the derailed animation for the Peacekeepers mission.", 
+     "HYPER_EZM_fnc_derailedWakeAnimation",
+     "a3\ui_f\data\gui\cfg\keyframeanimation\icontimeline_ca.paa"
+    ] call MAZ_EZM_fnc_zeusAddModule;
+    [ 
+     MAZ_zeusModulesTree, 
+     HYPER_bzmMissionModules,
+     "Set All Unconscious",
+     "Make all players unconscious.", 
+     "HYPER_EZM_fnc_setAllUnconscious",
+     "a3\ui_f\data\igui\cfg\cursors\unitunconscious_ca.paa"
+    ] call MAZ_EZM_fnc_zeusAddModule;
+    [ 
+     MAZ_zeusModulesTree, 
+     HYPER_bzmMissionModules,
+     "Set All Conscious",
+     "Make all players conscious.", 
+     "HYPER_EZM_fnc_setAllConscious",
+     "a3\ui_f\data\igui\cfg\cursors\unitunconscious_ca.paa"
     ] call MAZ_EZM_fnc_zeusAddModule;
 
     
