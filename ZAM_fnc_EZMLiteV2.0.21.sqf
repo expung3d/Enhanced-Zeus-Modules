@@ -3809,6 +3809,7 @@ comment "Virtual Garage";
 		params ["_vehicle"];
 		addCuratorSelected [_vehicle]; 
 		if(isNull (findDisplay 312)) exitWith {["Not in Zeus interface!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+		if(count (uiNamespace getVariable ["EZM_garageControls",[]]) > 0) exitWith {["Garage interface is already opened!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 		disableSerialization;
 		with uiNamespace do {
 			private _display = findDisplay 312;
@@ -3883,6 +3884,7 @@ comment "Virtual Garage";
 			{
 				ctrlDelete _x;
 			}forEach EZM_garageControls;
+			EZM_garageControls = [];
 		};
 	};
 
@@ -8661,6 +8663,27 @@ MAZ_EZM_fnc_initFunction = {
 		MAZ_EZM_fnc_getDefaultInteriors = {
 			call MAZ_EZM_fnc_resetInteriorsData;
 			call MAZ_EZM_fnc_loadDefaultInteriorsData;
+		};
+
+		MAZ_EZM_fnc_weeklyUpdate = {
+			private _shouldWeeklyUpdate = profileNamespace getVariable ["MAZ_EZM_BuildingWeekly",true];
+			if(!_shouldWeeklyUpdate) exitWith {false};
+			private _lastSave = profileNamespace getVariable ["MAZ_EZM_BuildingLastSave",nil];
+			if(isNil "_lastSave") then {
+				_lastSave = 0;
+			};
+			systemTimeUTC params ["_year","_month","_day"];
+			"Calculate days since June 1st 2024";
+
+			private _refYear = 2024;
+			private _refMonth = 6;
+			private _refDay = 1;
+
+			_month = _month + ((_year - _refYear) * 12);
+			_day = _day + ((_month - refMonth) * 30);
+
+			
+
 		};
 
 		MAZ_EZM_fnc_checkForInteriorData = {
@@ -16978,7 +17001,7 @@ MAZ_EZM_fnc_initFunction = {
 		comment "Planes";
 			
 			MAZ_EZM_CSATP_fnc_createNeophronCASModule = { 
-				private _vehicle = ["O_Plane_CAS_02_F"] call MAZ_EZM_fnc_createVehicle;
+				private _vehicle = ["O_Plane_CAS_02_dynamicLoadout_F"] call MAZ_EZM_fnc_createVehicle;
 				_vehicle allowCrewInImmobile true;
 			
 				if(MAZ_EZM_spawnWithCrew) then { 
@@ -16995,7 +17018,7 @@ MAZ_EZM_fnc_initFunction = {
 			}; 
 
 			MAZ_EZM_CSATP_fnc_createBuzzardCASModule = { 
-				private _vehicle = ["I_Plane_Fighter_03_CAS_F",[
+				private _vehicle = ["I_Plane_Fighter_03_dynamicLoadout_F",[
 					"a3\Air_F_Gamma\Plane_Fighter_03\Data\Plane_Fighter_03_body_1_brownhex_CO.paa",
 					"a3\Air_F_Gamma\Plane_Fighter_03\Data\Plane_Fighter_03_body_2_brownhex_CO.paa"
 				]] call MAZ_EZM_fnc_createVehicle;
@@ -21276,7 +21299,7 @@ MAZ_EZM_fnc_initFunction = {
             };
 
             MAZ_EZM_AAFP_fnc_createBuzzardModule = { 
-				private _vehicle = ["I_Plane_Fighter_03_CAS_F"] call MAZ_EZM_fnc_createVehicle;
+				private _vehicle = ["I_Plane_Fighter_03_dynamicLoadout_F"] call MAZ_EZM_fnc_createVehicle;
 				_vehicle allowCrewInImmobile true;
 			
 				if(MAZ_EZM_spawnWithCrew) then { 
@@ -29879,12 +29902,13 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_editAreaMarker = {
 			params ["_marker","_values"];
-			_values params ["_markerText","_markerPos","_markerSize","_markerBrush","_markerColor","_markerShape"];
+			_values params ["_markerText","_markerPos","_markerSize","_markerBrush","_markerColor","_markerShape","_markerAlpha"];
 			_marker setMarkerText _markerText;
 			_marker setMarkerPos _markerPos;
 			_marker setMarkerSize _markerSize;
 			_marker setMarkerBrush _markerBrush;
 			_marker setMarkerColor _markerColor;
+			_marker setMarkerAlpha _markerAlpha
 			_marker setMarkerShape (["ELLIPSE","RECTANGLE"] select _markerShape);
 		};
 
@@ -29948,6 +29972,18 @@ MAZ_EZM_fnc_initFunction = {
 					"TOOLBOX",
 					"Marker Shape:",
 					[_markerShapeSelect,[["ELLIPSE","Circle marker type."],["RECTANGLE","Rectangle marker type."]]]
+				],
+				[
+					"SLIDER",
+					"Marker Alpha:",
+					[
+						0,
+						1,
+						1,
+						objNull,
+						[1,1,1,1],
+						true
+					]
 				]
 			],{
 				params ["_values","_args","_display"];
@@ -41362,6 +41398,10 @@ MAZ_EZM_editZeusLogic = {
 		"MAZ_zeusEH_markerPlaced",
 		_zeusLogic addEventhandler ["CuratorMarkerPlaced",{
 			params ["_curator", "_marker"];
+			private _tab = RscDisplayCurator_sections select 0;
+			if(_tab == 1) exitWith {comment "IN GROUPS TAB";};
+			if(missionNamespace getVariable ["MAZ_EZM_isInGroupTabVar",false]) exitWith {};
+
 			if(isNil "MAZ_EZM_markerColorDefault") then {
 				MAZ_EZM_markerColorDefault = "Default";
 			};
@@ -41442,6 +41482,27 @@ MAZ_EZM_editZeusLogic = {
 				};
 			};
 		}]
+	];
+
+	if((_zeusLogic getVariable ["MAZ_zeusEH_pinged",-200]) != -200) then {
+		_zeusLogic removeEventHandler ['CuratorPinged',(_zeusLogic getVariable 'MAZ_zeusEH_pinged')];
+	};
+	_zeusLogic setVariable [
+		"MAZ_zeusEH_pinged",
+		_zeusLogic addEventHandler [
+			"CuratorPinged", {
+				params ["_curator", "_player"];
+				if(isNil "MAZ_EZM_pingPad") then {
+					MAZ_EZM_pingPad = "Land_HelipadEmpty_F" createVehicle [0,0,0];
+				};
+				if(isNull MAZ_EZM_pingPad) then {
+					MAZ_EZM_pingPad = "Land_HelipadEmpty_F" createVehicle [0,0,0];
+				};
+				detach MAZ_EZM_pingPad;
+				MAZ_EZM_pingPad attachTo [_player,[0,0,0]];
+				missionNamespace setVariable ["bis_fnc_curatorPinged_player",MAZ_EZM_pingPad];
+			}
+		]
 	];
 };
 
@@ -41971,11 +42032,10 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 };
 
 private _changelog = [
-	"Added LDF+ Faction",
-	"Added new EZM eventhandler 'onZeusInterfaceClosed'",
+	"Added fix so when a player pings, if the body of the pinger is deleted your camera isn't teleported to [0,0,0]",
+	"Fixed issue where markers placed from compositions would all be set as the last used marker color",
 	"Fixed issue where some aircraft weren't the dynamic loadout variant",
-	"Fixed issue where the wrong position was provided to certain functions",
-	"Removed systemChat messages that showed up when using garrison town module"
+	"Fixed issue where the vehicle appearance UI could be opened more than once for a vehicle"
 ];
 
 private _changelogString = "";
@@ -42014,6 +42074,9 @@ private _changelogString = "";
 	if(_createZeusUnit) then {
 		[_joinSide,_sideToJoin] spawn MAZ_EZM_fnc_createUnitForZeus;
 	} else {
+		if(_joinSide) then {
+			[player] joinSilent (createGroup [_sideToJoin,true]);
+		};
 		if (isNil "MAZ_EZM_mainLoop_Active") then {
 			[] spawn MAZ_EZM_fnc_initMainLoop;
 		};
