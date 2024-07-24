@@ -4878,6 +4878,10 @@ MAZ_EZM_fnc_initFunction = {
 				M9_EZM_EH_plugOverlayFix = addMissionEventHandler ["EachFrame", {
 					(uinamespace getvariable ["RscTilesGroup", displayNull]) closeDisplay 0;
 				}]; 
+				sleep 90;
+				if (!isNil 'M9_EZM_EH_plugOverlayFix') then {
+					removeMissionEventHandler ['EachFrame', M9_EZM_EH_plugOverlayFix];
+				};
 			}] remoteExec ['spawn', 0, 'EZM_PLUG_JIP'];
 		};
 
@@ -41492,10 +41496,7 @@ MAZ_EZM_editZeusLogic = {
 		_zeusLogic addEventHandler [
 			"CuratorPinged", {
 				params ["_curator", "_player"];
-				if(isNil "MAZ_EZM_pingPad") then {
-					MAZ_EZM_pingPad = "Land_HelipadEmpty_F" createVehicle [0,0,0];
-				};
-				if(isNull MAZ_EZM_pingPad) then {
+				if(isNil "MAZ_EZM_pingPad" || {isNull MAZ_EZM_pingPad}) then {
 					MAZ_EZM_pingPad = "Land_HelipadEmpty_F" createVehicle [0,0,0];
 				};
 				detach MAZ_EZM_pingPad;
@@ -42035,7 +42036,8 @@ private _changelog = [
 	"Added fix so when a player pings, if the body of the pinger is deleted your camera isn't teleported to [0,0,0]",
 	"Fixed issue where markers placed from compositions would all be set as the last used marker color",
 	"Fixed issue where some aircraft weren't the dynamic loadout variant",
-	"Fixed issue where the vehicle appearance UI could be opened more than once for a vehicle"
+	"Fixed issue where the vehicle appearance UI could be opened more than once for a vehicle",
+	"Fixed issue where textTiles functions would not work with EZM"
 ];
 
 private _changelogString = "";
