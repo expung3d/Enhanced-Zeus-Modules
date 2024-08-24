@@ -11005,17 +11005,22 @@ MAZ_EZM_fnc_initFunction = {
     params ["_entity"]; 
     if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};    
 
+    [format["Given bullet cam to %1 for 60 seconds.", (name _entity)],"addItemOk"] call MAZ_EZM_fnc_systemMessage; 
 
     private _varName = "HYPERSYS";
     private _myJIPCode = "HYPERSYSJIP";
 
 
     private _oxz4A = (str {
-      _unit = player; 
-      _unit call BIS_fnc_diagBulletCam; 
-      _ehIndex = _unit getVariable "BIS_fnc_diagBulletCam_fired"; 
-      sleep 60; 
-      _unit removeEventHandler ["fired", _ehIndex];
+      [] spawn {
+        systemChat "[BZM] You have been given bullet cam for 60 seconds.";
+        _unit = player; 
+        _unit call BIS_fnc_diagBulletCam; 
+        _ehIndex = _unit getVariable "BIS_fnc_diagBulletCam_fired"; 
+        sleep 60; 
+        _unit removeEventHandler ["fired", _ehIndex];
+        systemChat "[BZM] You no longer have bullet cam.";
+      };
 
     }) splitString "";
 
@@ -39116,7 +39121,8 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
  
 private _changelog = [ 
  "Cover map module",
- "Toggle player invincibility"
+ "Toggle player invincibility",
+ "Bullet Cam"
 ]; 
  
 private _changelogString = ""; 
