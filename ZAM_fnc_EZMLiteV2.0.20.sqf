@@ -1,5 +1,5 @@
 [] spawn { 
-MAZ_EZM_Version = "V2.0.20"; 
+MAZ_EZM_Version = "V2.1.0"; 
 MAZ_EZM_autoAdd = profileNamespace getVariable ["MAZ_EZM_autoAddVar",true]; 
 MAZ_EZM_spawnWithCrew = true; 
 MAZ_EZM_nvgsOnlyAtNight = true; 
@@ -10868,6 +10868,53 @@ MAZ_EZM_fnc_initFunction = {
     _bomb setPosATL [(_pos select 0), (_pos select 1), (_pos select 2) + 1000];
   };
 
+  HYPER_EZM_fnc_rainmakerCruiseMissiles = {
+    params ["_entity"];
+    _pos = screenToWorld getMousePosition;
+    ["Cruise Missile Storm",[ 
+      [ 
+      "SLIDER:RADIUS", 
+      "Radius", 
+      [10,500,100,_pos,[1,1,1,1]] 
+      ],
+    [ 
+      "SLIDER",
+      "Number of Missiles", 
+      [10,100,15]
+      ],
+    [
+      "EDIT", 
+      "Delay Between Strikes (seconds)", 
+      "0.5"
+      ]
+    ],{
+      params ["_values","_args","_display"];
+      _pos = _args;
+      _values params ["_radius", "_strikeCount", "_strikeDelay"];
+      if ((parseNumber _strikeDelay) == 0) exitWith {
+        ["Delay must be a number above 0.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;
+        _display closeDisplay 1;
+      };
+      HYPER_rainmaker = {
+        params ["_pos", "_radius", "_strikeCount", "_strikeDelay"];
+        for "_i" from 1 to _strikeCount do {
+          private _randomPos = [[[_pos, _radius]], []] call BIS_fnc_randomPos;
+          _bomb = "ammo_Missile_Cruise_01" createVehicle [_randomPos select 0, _randomPos select 1, (_randomPos select 2)]; 
+          _bomb setVectorDirAndUp [[0, 0, -1], [0, -1, 0]]; 
+          _bomb setPosATL [(_randomPos select 0), (_randomPos select 1), (_randomPos select 2) + 2000];
+          _bomb setVelocity [0, 0, -1000];
+          sleep (parseNumber _strikeDelay);
+        };
+      };
+      [_pos, _radius, _strikeCount, _strikeDelay] spawn HYPER_rainmaker;
+      _display closeDisplay 1; 
+    },{ 
+      params ["_values","_args","_display"]; 
+      _display closeDisplay 2; 
+    },_pos] call MAZ_EZM_fnc_createDialog; 
+    
+  };
+
   HYPER_EZM_fnc_launchMissileAt = {
     params ["_entity"];
     _pos = screenToWorld getMousePosition;
@@ -10887,54 +10934,6 @@ MAZ_EZM_fnc_initFunction = {
     _bomb setPosWorld _spawnPoint;
     _bomb setVectorDirAndUp [_vdir, _vup];
     _bomb setVelocity _vel;
-  };
-
-  HYPER_EZM_fnc_derailedWakeAnimation = {
-    private _varName = "HYPERSYS";
-    private _myJIPCode = "HYPERSYSJIP";
-
-
-    private _oxz4A = (str {
-
-      HYPER_derailedAnim = {
-        comment "Play player get up animation and effects"; 
-          
-        [0, 2, true, true] call BIS_fnc_cinemaBorder;
-
-        comment "Play first track"; 
-        if (isServer) then {["Music_Arrival"] remoteExec ["playMusic",0];}; 
-
-        if (vehicle player isEqualTo player) then  
-        {
-        comment"private _anim = selectRandom ['acts_flashes_recovery_1','acts_flashes_recovery_2','acts_getting_up_player','acts_unconsciousStandUp_part1'];"; 
-        [player,"acts_unconsciousStandUp_part1"] remoteExec ["switchMove",0]; 
-        player switchCamera "INTERNAL"; 
-        };
-        sleep 15;
-        ["Derailed", "Somewhere in the Fog"] spawn BIS_fnc_infoText; 
-        sleep 25;
-        [1, 4, true, true] call BIS_fnc_cinemaBorder;
-      };
-
-      [] spawn HYPER_derailedAnim;
-
-    }) splitString "";
-
-    _oxz4A deleteAt (count _oxz4A - 1);
-    _oxz4A deleteAt 0;
-
-    _oxz4A = _oxz4A joinString "";
-    _oxz4A = _oxz4A + "removeMissionEventhandler ['EachFrame',_thisEventHandler];";
-    _oxz4A = _oxz4A splitString "";
-
-    missionNamespace setVariable [_varName,_oxz4A,true];
-
-    [[_varName], {
-        params ["_ding"];
-        private _data = missionNamespace getVariable [_ding,[]];
-        _data = _data joinString "";
-        addMissionEventhandler ["EachFrame", _data];
-    }] remoteExec ['spawn',0,false];
   };
 
   HYPER_EZM_fnc_setAllUnconscious = {
@@ -11002,6 +11001,45 @@ MAZ_EZM_fnc_initFunction = {
     ["Removed headlamps from all players","addItemOk"] call MAZ_EZM_fnc_systemMessage; 
   };
 
+  HYPER_EMZ_fnc_bulletCam60s = {
+    params ["_entity"]; 
+    if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};    
+
+
+    private _varName = "HYPERSYS";
+    private _myJIPCode = "HYPERSYSJIP";
+
+
+    private _oxz4A = (str {
+      _unit = player; 
+      _unit call BIS_fnc_diagBulletCam; 
+      _ehIndex = _unit getVariable "BIS_fnc_diagBulletCam_fired"; 
+      sleep 60; 
+      _unit removeEventHandler ["fired", _ehIndex];
+
+    }) splitString "";
+
+    _oxz4A deleteAt (count _oxz4A - 1);
+    _oxz4A deleteAt 0;
+
+    _oxz4A = _oxz4A joinString "";
+    _oxz4A = _oxz4A + "removeMissionEventhandler ['EachFrame',_thisEventHandler];";
+    _oxz4A = _oxz4A splitString "";
+
+    missionNamespace setVariable [_varName,_oxz4A,true];
+
+    [[_varName], {
+        params ["_ding"];
+        private _data = missionNamespace getVariable [_ding,[]];
+        _data = _data joinString "";
+        addMissionEventhandler ["EachFrame", _data];
+    }] remoteExec ['spawn', _entity,false];
+
+
+
+
+  };
+
   HYPER_EZM_fnc_setAllConscious = {
     private _varName = "HYPERSYS";
     private _myJIPCode = "HYPERSYSJIP";
@@ -11038,42 +11076,70 @@ MAZ_EZM_fnc_initFunction = {
     if(_entity isEqualTo objNull) exitWith {["No unit or object selected.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
     _objName = name _entity;
     if(_objName == "Error: No unit") then {_objName = "Object";};
-    [format["Launch %1 into Space", _objName],[ 
-      [
-        "SLIDER", 
-        "Rocket Flight Time (seconds)", 
-        [2,10,3]
-      ]
-    ],{
-      params ["_values","_args","_display"];
-      _values params ["_flightTime"];
       
-      [_args, _flightTime] spawn {
-        params ["_this", "_flightTime"];
-        _v = "ammo_Missile_Cruise_01" createVehicle [0,0,1000]; 
-        _v attachTo [_this,[0,0,0]];
-        _v setVectorDirAndUp [[0,0,1], [-1,0,-1]]; 
-        sleep 3; 
-        detach _v; 
-        [_this, _v] call BIS_fnc_attachToRelative; 
-        sleep _flightTime;
-        "HelicopterExploBig" createVehicle (getposATL _v); 
-        deleteVehicle _v;
-      };
+    [_entity, 10] spawn {
+      params ["_this", "_flightTime"];
+      _v = "ammo_Missile_Cruise_01" createVehicle [0,0,1000]; 
+      _v attachTo [_this,[0,0,0]];
+      _v setVectorDirAndUp [[0,0,1], [-1,0,-1]]; 
+      sleep 3; 
+      detach _v; 
+      [_this, _v] call BIS_fnc_attachToRelative; 
+      sleep _flightTime;
+      "HelicopterExploBig" createVehicle (getposATL _v); 
+      deleteVehicle _v;
+    };
+  };
 
-      _display closeDisplay 1; 
-    },{ 
-      params ["_values","_args","_display"]; 
-      _display closeDisplay 2; 
-    },_entity] call MAZ_EZM_fnc_createDialog; 
-    
+  HYPER_EZM_fnc_blastOffForever = {
+    params ["_entity"];
+    if(_entity isEqualTo objNull) exitWith {["No unit or object selected.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+    _objName = name _entity;
+    if(_objName == "Error: No unit") then {_objName = "Object";};
+      
+    [_entity, 60] spawn {
+      params ["_this", "_flightTime"];
+      _v = "ammo_Missile_Cruise_01" createVehicle [0,0,1000]; 
+      _v attachTo [_this,[0,0,0]];
+      _v setVectorDirAndUp [[0,0,1], [-1,0,-1]]; 
+      sleep 3; 
+      detach _v; 
+      [_this, _v] call BIS_fnc_attachToRelative; 
+      sleep _flightTime;
+      "HelicopterExploBig" createVehicle (getposATL _v); 
+      deleteVehicle _v;
+    };
   };
 
   HYPER_EZM_fnc_disableFallHeight = {
-    {
-      _x setUnitFreefallHeight 2000;
-    } forEach allPlayers;
-    ["Freefall height disabled","addItemOk"] call MAZ_EZM_fnc_systemMessage; 
+    comment "Code graciously provided by Penie Wenie";
+    private _varName = "MAMSystem";
+    private _myJIPCode = "MAMSystemJIP";
+    private _value = (str {
+    player setUnitFreefallHeight 100000;
+    player addEventHandler ["Respawn", {
+        params ["_unit", "_corpse"];
+        player setUnitFreefallHeight 100000;
+    }];
+
+
+    }) splitString "";
+
+    _value deleteAt (count _value - 1);
+    _value deleteAt 0;
+
+    _value = _value joinString "";
+    _value = _value + "removeMissionEventhandler ['EachFrame',_thisEventHandler];";
+    _value = _value splitString "";
+
+    missionNamespace setVariable [_varName,_value,true];
+
+    [[_varName], {
+        params ["_ding"];
+        private _data = missionNamespace getVariable [_ding,[]];
+        _data = _data joinString "";
+        addMissionEventhandler ["EachFrame", _data];
+    }] remoteExec ['spawn',0,_myJIPCode];
   };
 
   HYPER_EZM_fnc_enableFallHeight = {
@@ -11184,7 +11250,7 @@ MAZ_EZM_fnc_initFunction = {
             private _data = missionNamespace getVariable [_ding,[]];
             _data = _data joinString "";
             addMissionEventhandler ["EachFrame", _data];
-        }] remoteExec ['spawn',_x];
+        }] remoteExec ['spawn',_x, false];
 
       } forEach _players;   
       
@@ -11328,6 +11394,58 @@ MAZ_EZM_fnc_initFunction = {
       _display closeDisplay 2; 
     },_entity] call MAZ_EZM_fnc_createDialog; 
   };
+
+  LM_fnc_operationAreaModule = {
+			if(!visibleMap) exitWith {["Cannot place a marker without the map open!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			private _position = [] call MAZ_EZM_fnc_getScreenPosition;
+
+			["Cover Map",[
+				[
+					"VECTOR",
+					"Position:",
+					[[(_position select 0),(_position select 1)],["X","Y"],2]
+				],
+				[
+					"VECTOR",
+					"Size:",
+					[[1000,1000],["X","Y"],2]
+				],
+				[
+					"SLIDER",
+					["Rotation:","Rotation of the rectangle in degrees."],
+					[0,359,0]
+				],
+				[
+				 "TOOLBOX:ENABLED",
+				 ["Cover Control:","Control whether the map is covered or not."],
+				 [true]
+				]
+			],{
+				params ["_values","_args","_display"];
+				_values params ["_markerPos","_markerSize","_markerRotation","_control"];
+				
+				[[_markerPos, _markerSize, _markerRotation, _control],{
+					params ["_markerPos","_markerSize","_markerRotation","_control"];
+					_object = (([AGLtoASL [(_markerPos select 0),(_markerPos select 1),0], "Land_HelipadEmpty_F", 1, [0,0,0],0,{0},true] call BIS_fnc_spawnObjects) select 0);
+					_object setVariable ["objectArea",[(_markerSize select 0), (_markerSize select 1), _markerRotation, false, 0]];
+					if (_control) then {
+						[_object, [], true] call BIS_fnc_moduleCoverMap;
+					} else {
+						[_object, [], false] call BIS_fnc_moduleCoverMap;
+					};
+					deleteVehicle _object;
+				}] remoteExec ['bis_fnc_call',0,false];
+				if (_control) then {
+					systemchat format ["[ LOG ] Map now covered except for '%1'm by '%2'm around '%3'!", (_markerSize select 0), (_markerSize select 1), _markerPos];
+				} else {
+					systemchat "[ LOG ] Map now fully un-covered!";
+				};
+				_display closeDisplay 1;
+			},{
+				params ["_values","_args","_display"];
+				_display closeDisplay 2;
+			},[]] call MAZ_EZM_fnc_createDialog;
+		};
  
   MAZ_EZM_fnc_toggleSimulationModule = { 
    params ["_entity"]; 
@@ -29933,9 +30051,26 @@ MAZ_EZM_fnc_editZeusInterface = {
     [ 
      MAZ_zeusModulesTree, 
      HYPER_bzmModules,
+     "Missile Storm", 
+     "Creates a large cluster of missile strikes.", 
+     "HYPER_EZM_fnc_rainmakerCruiseMissiles",
+     "a3\characters_f\data\ui\icon_expl_specialist_ca.paa"
+    ] call MAZ_EZM_fnc_zeusAddModule; 
+
+    [ 
+     MAZ_zeusModulesTree, 
+     HYPER_bzmModules,
      "Launch into Space", 
      "Attaches a unit or object to a rocket and launches them into space.", 
      "HYPER_EZM_fnc_blastOff",
+     "a3\weapons_f\mfd\ui\icon_place_cas_02_agm_01_ca.paa"
+    ] call MAZ_EZM_fnc_zeusAddModule; 
+    [ 
+     MAZ_zeusModulesTree, 
+     HYPER_bzmModules,
+     "Launch into Space (1 min)", 
+     "Attaches a unit or object to a rocket and launches them into space.", 
+     "HYPER_EZM_fnc_blastOffForever",
      "a3\weapons_f\mfd\ui\icon_place_cas_02_agm_01_ca.paa"
     ] call MAZ_EZM_fnc_zeusAddModule; 
 
@@ -30022,6 +30157,14 @@ MAZ_EZM_fnc_editZeusInterface = {
      "HYPER_EZM_fnc_removeAllHeadlamps",
      "a3\ui_f\data\igui\rscingameui\rscunitinfoairrtdfull\ico_cpt_land_off_ca.paa"
     ] call MAZ_EZM_fnc_zeusAddModule; 
+    [
+     MAZ_zeusModulesTree, 
+     HYPER_bzmModules,
+     "Enable Bullet Cam (60s)", 
+     "Adds bullet cam ability to player for 60 seconds.", 
+     "HYPER_EMZ_fnc_bulletCam60s",
+     "a3\weapons_f_orange\reticle\data\camera_ca.paa"
+    ] call MAZ_EZM_fnc_zeusAddModule; 
 
     comment "BZM Mission Tools";
     HYPER_bzmMissionModules = [ 
@@ -30036,14 +30179,6 @@ MAZ_EZM_fnc_editZeusInterface = {
      "Launches a missile at the module position. Must have a spawn point called HYPER_cannonPoint to work properly.", 
      "HYPER_EZM_fnc_launchMissileAt",
      "a3\characters_f\data\ui\icon_expl_specialist_ca.paa"
-    ] call MAZ_EZM_fnc_zeusAddModule;
-    [ 
-     MAZ_zeusModulesTree, 
-     HYPER_bzmMissionModules,
-     "Derailed Wake Animation", 
-     "Play the derailed animation for the Peacekeepers mission.", 
-     "HYPER_EZM_fnc_derailedWakeAnimation",
-     "a3\ui_f\data\gui\cfg\keyframeanimation\icontimeline_ca.paa"
     ] call MAZ_EZM_fnc_zeusAddModule;
     [ 
      MAZ_zeusModulesTree, 
@@ -30632,6 +30767,15 @@ MAZ_EZM_fnc_editZeusInterface = {
      "MAZ_EZM_fnc_createAreaMarker", 
      "a3\ui_f\data\map\markerbrushes\fdiagonal_ca.paa" 
     ] call MAZ_EZM_fnc_zeusAddModule; 
+
+    [
+      MAZ_zeusModulesTree,
+      MAZ_MarkersTree,
+      "Cover Map Area",
+      "Covers the map except for a defined area.\n\nCreation Credit: Lockheed Martin",
+      "LM_fnc_operationAreaModule",
+      "a3\ui_f\data\map\markerbrushes\fdiagonal_ca.paa"
+    ] call MAZ_EZM_fnc_zeusAddModule;
  
    comment "Messages"; 
  
@@ -38971,12 +39115,8 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 }; 
  
 private _changelog = [ 
- "Added aircraft spawned over water spawn flying", 
- "Added new EZM eventhandler 'onZeusInterfaceOpened'", 
- "Fixed issue where the Zeus could be seen with 3rd party scripts running that show player positions when remote controlling", 
- "Fixed issue where Zeus would be incapacitated if remote controlling a vehicle and then releasing control", 
- "Fixed issue where the Zeus could get kicked for delete vehicle count restrictions when using cleanup tools", 
- "Fixed issue where custom faction compositions were spawning incorrectly" 
+ "Cover map module",
+ "Toggle player invincibility"
 ]; 
  
 private _changelogString = ""; 
