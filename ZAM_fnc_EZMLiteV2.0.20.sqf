@@ -11451,6 +11451,1052 @@ MAZ_EZM_fnc_initFunction = {
 				_display closeDisplay 2;
 			},[]] call MAZ_EZM_fnc_createDialog;
 		};
+
+    
+		LM_fnc_weatherSandstormModule = {
+		   ["Sandstorm Creator",[
+			[ 
+			 "SLIDER", 
+			 ["Direction (Degrees):","Bearing of the storm's effects."], 
+			 [0,360,90] 
+			], 
+			[ 
+			 "SLIDER", 
+			 ["Duration (Minutes):","Duration in minutes of the storm's effects."], 
+			 [0,120,30] 
+			],
+			[
+			 "TOOLBOX:ENABLED",
+			 ["Camera Shake:","Control whether the storm will consistently shake the camera and play extra sounds on gusts."],
+			 [true]
+			],
+			[
+			 "TOOLBOX:ENABLED",
+			 ["Wall of Dust:","Control whether branches and small particles are seen flying around."],
+			 [true]
+			],
+			[
+			 "TOOLBOX:ENABLED",
+			 ["Lethal Wall:","Control whether rain fog will be generated."],
+			 [true]
+			],
+			[ 
+			 "SLIDER", 
+			 ["Visbility:","Based on this number more or less fog particles will be generated."], 
+			 [0,1,0.5] 
+			],
+			[
+			 "TOOLBOX:ENABLED",
+			 ["Dust Particles:","Control whether dust particles will be generated."],
+			 [true]
+			],
+			[
+			 "TOOLBOX:ENABLED",
+			 ["Storm Control:","Control whether the storm is enabled or disabled, useful for toggling if already active."],
+			 [true]
+			]
+		   ],{ 
+			params ["_values","_args","_display"]; 
+			_values params ["_direction", "_duration", "_shake", "_wall", "_lethality", "_visibility", "_dustControl","_control"]; 
+			_display closeDisplay 1; 
+			
+			if (_control) then {
+				[[_direction, (_duration * 60), _shake, _wall, _lethality, _visibility,_dustControl],{
+					if (!(isNil "LM_scriptServer_weatherSandstorm" || {isNull LM_scriptServer_weatherSandstorm})) then {terminate LM_scriptServer_weatherSandstorm;};
+					LM_scriptServer_weatherSandstorm = [(_this select 0),(_this select 1),(_this select 2),(_this select 3),(_this select 4),(_this select 5),(_this select 6)] spawn {
+						
+						private ["_vizibility","_stormsource","_x_dev","_y_dev"];
+
+						if (!isServer) exitWith {};
+
+						_direction_duststorm	= _this select 0;
+						_duration_duststorm		= _this select 1;
+						_effect_on_objects		= _this select 2;
+						_dust_wall				= _this select 3;
+						_lethal_wall			= _this select 4;
+						_vizibility				= _this select 5;
+						_dustControl			= _this select 6;
+
+						al_duststorm_on = true;
+						missionNamespace setVariable ["al_duststorm_on", al_duststorm_on];
+
+						al_foglevel		= fog;
+						al_rainlevel	= rain;
+						al_thundlevel	= lightnings;
+						al_windlevel	= wind;
+						al_overforecast	= overcastForecast;
+						missionNamespace setVariable ["al_foglevel", al_foglevel];
+						missionNamespace setVariable ["al_rainlevel", al_rainlevel];
+						missionNamespace setVariable ["al_thundlevel", al_thundlevel];
+						missionNamespace setVariable ["al_windlevel", al_windlevel];
+						missionNamespace setVariable ["al_overforecast", al_overforecast];
+						sleep 0.1;
+
+						[_duration_duststorm] spawn {
+							x_duration_storm = _this select 0;
+							sleep x_duration_storm;
+							if ((missionNamespace getVariable "al_duststorm_on")) then {
+								al_duststorm_on = false;
+								missionNamespace setVariable ["al_duststorm_on", al_duststorm_on];
+
+								60 setFog al_foglevel;
+								60 setRain al_rainlevel;
+								60 setLightnings al_thundlevel;
+								180 setOvercast al_overforecast;
+								setWind [al_windlevel select 0, al_windlevel select 1, true];
+								forceWeatherChange;
+								[[(missionNamespace getVariable "al_duststorm_on")],{
+									if (!hasInterface) exitWith {};
+									
+									deleteVehicle (missionNamespace getVariable "_fum_negru");
+									
+									missionNamespace setVariable ["_al_duststorm_on", (_this select 0)];
+									"FilmGrain" ppEffectEnable false;
+									"colorCorrections" ppEffectEnable false;
+									"DynamicBlur" ppEffectEnable false;
+									titleText ["<t size='1.5' font='PuristaBold'><img image='\A3\Ui_f\data\GUI\Cfg\UnitInsignia\TFAegis_ca.paa'/> <t underline='1' shadow='1' color=" + str([(profileNamespace getVariable ['GUI_BCG_RGB_R', 0.898]),(profileNamespace getVariable ['GUI_BCG_RGB_G', 0.78]),(profileNamespace getVariable ['GUI_BCG_RGB_B', 0.443]),(profileNamespace getVariable ['GUI_BCG_RGB_A', 1])] call BIS_fnc_colorRGBAtoHTML) + ">AEGIS: <t color='#FFFFFF'>9.2.0</t></t> <img image='\A3\Ui_f\data\GUI\Cfg\UnitInsignia\TFAegis_ca.paa'/><br/>The '<t color=" + str([(profileNamespace getVariable ['GUI_BCG_RGB_R', 0.898]),(profileNamespace getVariable ['GUI_BCG_RGB_G', 0.78]),(profileNamespace getVariable ['GUI_BCG_RGB_B', 0.443]),(profileNamespace getVariable ['GUI_BCG_RGB_A', 1])] call BIS_fnc_colorRGBAtoHTML) + ">Sandstorm</t>' departs...</t>", "PLAIN DOWN", -1, false, true];
+									enableCamShake false;
+									resetCamShake;
+									remoteExec ["", "LM_JIP_weatherSandstorm_particles"];
+									remoteExec ["", "LM_JIP_weatherSandstorm_dustWall"];
+									remoteExec ["", "LM_JIP_weatherSandstorm_effectObjects_camShake1"];
+									remoteExec ["", "LM_JIP_weatherSandstorm_init"];
+									remoteExec ["", "LM_JIP_weatherSandstorm"];
+								}] remoteExec ['bis_fnc_call',0,"LM_JIP_weatherSandstorm_init"];
+							};
+						};
+
+						[] spawn {
+							while {(missionNamespace getVariable "al_duststorm_on")} do {
+								["WindBig"] remoteExec ["playSound"];
+								["WindNormal"] remoteExec ["playSound"];
+								["WindSmall"] remoteExec ["playSound"];
+								sleep 2;
+							};
+						};
+
+						[_vizibility] spawn {
+							private ["_vizibility"];
+							_vizibility = _this select 0;
+							_ifog=0;
+							while {_ifog < _vizibility} do {
+								_ifog=_ifog+0.001; 0 setFog _ifog; sleep 0.01;
+							};
+						};
+
+						[[(missionNamespace getVariable "al_duststorm_on"),_effect_on_objects,_dustControl],{
+							params ["_al_duststorm_on",'_effect_on_objects','_dustControl'];
+							if (!hasInterface) exitWith {};
+							
+							missionNamespace setVariable ["_al_duststorm_on", _al_duststorm_on];
+
+							[_effect_on_objects] spawn {
+								if ((_this select 0)) then {
+									while {(missionNamespace getVariable "_al_duststorm_on")} do {
+										enableCamShake true;
+										addCamShake [random [0.25, 0.625, 1],random [5, 10, 15],random [17, 58.5, 100]];
+										sleep 60+random 120;
+									};
+								};
+							};
+
+							[] spawn {
+								grain_sand = 0;
+								while {grain_sand<2} do {
+									"FilmGrain" ppEffectEnable true;
+									"FilmGrain" ppEffectAdjust [0.1,0.1,grain_sand,0.1,0.1,true];
+									"FilmGrain" ppEffectCommit 0;
+									grain_sand = grain_sand + 0.1;
+									sleep 0.5;
+								};
+							};
+
+							[] spawn {
+								sleep 5;
+								col_fct =1;
+								while {col_fct>0.86} do {
+									"colorCorrections" ppEffectAdjust[col_fct, 1, 0.01, [-0.14, 0.17, 0.33, col_fct-1],[col_fct, -0.4, col_fct, col_fct],[-0.57, col_fct, -1.2, col_fct]];
+									"colorCorrections" ppEffectCommit 0;
+									"colorCorrections" ppEffectEnable true;
+									col_fct = col_fct-0.001;
+									sleep 0.1;
+								};
+							};
+
+							sleep 15;
+
+							while {(missionNamespace getVariable "_al_duststorm_on")} do {
+								_leaves_p = (([AGLtoASL (getpos player), "#particlesource", 1, [0,0,0],0,{0},true] call BIS_fnc_spawnObjects) select 0);
+								if (vehicle player != player) then {_leaves_p attachto [vehicle player];} else {_leaves_p attachto [player];};
+								_leaves_p setParticleCircle [100,[0,0,0]];
+								_leaves_p setParticleRandom [25,[50,50,10],[4,4,0],2,1,[0,0,0,0.5],1,0];
+								_leaves_p setParticleParams [["\A3\data_f\ParticleEffects\Hit_Leaves\Leaves_Green", 1, 1, 1], "", "SpaceObject", 1,30,[0,0,0],[50,50,0],2,10,1,0.1,[0.1+random 1,1],[[0.68,0.68,0.68,1],[0.68,0.68,0.68,1]],[1.5,1],1,0,"","",vehicle player,0,true,1,[[0,0,0,0]]];
+								
+								_branches_p = (([AGLtoASL (getpos player), "#particlesource", 1, [0,0,0],0,{0},true] call BIS_fnc_spawnObjects) select 0);
+								if (vehicle player != player) then {_branches_p attachto [vehicle player];} else {_branches_p attachto [player];};
+								_branches_p setParticleRandom [0, [10, 10, 7], [4, 4, 5], 2, 0.1, [0, 0, 0, 0.5], 1, 1];
+								_branches_p setParticleCircle [100, [0, 0, 0]]; 
+								_branches_p setParticleParams [["\A3\data_f\ParticleEffects\Hit_Leaves\Sticks_Green", 1, 1, 1], "", "SpaceObject", 1,27,[0,0,0],[50,50,10],2,0.000001,0.0,0.1,[0.1+random 5],[[0.68,0.68,0.68,1]],[1.5,1],13,13,"","",vehicle player,0,true,1,[[0,0,0,0]]];
+								
+								_alias_local_fog = (([AGLtoASL (getpos player), "#particlesource", 1, [0,0,0],0,{0},true] call BIS_fnc_spawnObjects) select 0);
+								if (_dustControl) then {
+									if (vehicle player != player) then {_alias_local_fog attachto [vehicle player];} else {_alias_local_fog attachto [player];};
+									_alias_local_fog setParticleCircle [10, [3, 3, 0]];
+									_alias_local_fog setParticleRandom [10, [0.25, 0.25, 0], [1, 1, 0], 1, 1, [0, 0, 0, 0.1], 0, 0];
+									_alias_local_fog setParticleParams [["\A3\data_f\cl_basic", 1, 0, 1], "", "Billboard", 1, 12, [0, 0, 0], [-1, -1, 0], 3, 10.15, 7.9, 0.01, [10, 10, 20], [[0.65, 0.5, 0.5, 0], [0.65, 0.6, 0.5, 0.3], [1, 0.95, 0.8, 0]], [0.08], 1, 0, "", "", vehicle player,0,true];
+								};
+								
+								
+								_leaves_p_drop = 0.2+random 0.5;
+								_leaves_p setDropInterval _leaves_p_drop;
+								_branches_p setDropInterval _leaves_p_drop;
+								
+								_alias_drop_fog_factor	= 0.01+random 0.1;
+								
+								_alias_local_fog setDropInterval _alias_drop_fog_factor;
+
+								sleep 5 + random 10;
+								deletevehicle _leaves_p;
+								deletevehicle _branches_p;
+								deletevehicle _alias_local_fog;
+							};
+
+							"DynamicBlur" ppeffectenable true;
+							"DynamicBlur" ppeffectadjust [3];
+							"DynamicBlur" ppeffectcommit 3;
+							sleep 3;
+
+							col_fct =0.86;
+								while {col_fct<1} do {
+									"colorCorrections" ppEffectAdjust[col_fct, 1, 0.01, [1-col_fct, 0.17, 0.33, col_fct-1],[col_fct, -0.4, col_fct, col_fct],[0.299, 0.587, 0.114, 1-col_fct]];
+									"colorCorrections" ppEffectCommit 0;
+									"colorCorrections" ppEffectEnable true;
+									col_fct = col_fct+0.001;
+									sleep 0.0001;
+							};
+
+							"DynamicBlur" ppeffectadjust [0];
+							"DynamicBlur" ppeffectcommit 3;
+							sleep 3;
+							"DynamicBlur" ppEffectEnable false;
+								
+							grain_sand = 0;
+								while {grain_sand>0} do {
+									"FilmGrain" ppEffectEnable true;
+									"FilmGrain" ppEffectAdjust [0.1,0.1,grain_sand,0.1,0.1,true];
+									"FilmGrain" ppEffectCommit 0;
+									grain_sand = grain_sand - 0.1;
+									sleep 0.5;
+								};
+								
+							"FilmGrain" ppEffectEnable false;
+							"colorCorrections" ppEffectEnable false;
+							"DynamicBlur" ppEffectEnable false;
+							if (_effect_on_objects) then {
+								enableCamShake false;
+							};
+						}] remoteExec ['bis_fnc_call',0,"LM_JIP_weatherSandstorm_particles"];
+
+						if (_dust_wall) then 
+						{
+							_rand_pl = [] spawn {
+								_allunits = [];
+								{
+									if (alive _x) then{_allunits pushBack _x}
+								}  foreach (if (isMultiplayer) then {playableUnits} else {switchableUnits});
+								hunt_alias = _allunits call BIS_fnc_selectRandom;
+								missionNamespace setVariable ["hunt_alias", hunt_alias];
+							};
+							waitUntil {scriptDone _rand_pl};
+							_pozobcj = (missionNamespace getVariable "hunt_alias") getRelPos [800,(_direction_duststorm-180)];
+							_stormsource = (([AGLtoASL _pozobcj, "Land_HelipadEmpty_F", 1, [0,0,0],0,{0},true] call BIS_fnc_spawnObjects) select 0);
+							if ((_direction_duststorm>315)or(_direction_duststorm<45)) then {_x_dev=600; _y_dev = 60};
+							if ((_direction_duststorm<225)or(_direction_duststorm>135)) then {_x_dev=600; _y_dev = 60};
+							if ((_direction_duststorm<=135)&&(_direction_duststorm>=45)) then {_x_dev=60; _y_dev = 600};
+							if ((_direction_duststorm>=225)&&(_direction_duststorm<=315)) then {_x_dev=60; _y_dev = 600};
+							[[_stormsource,_duration_duststorm,_x_dev,_y_dev],{
+								private ["_sursa_storm","_fum_negru","_x_dev","_y_dev"];
+
+								if (!hasInterface) exitWith {};
+								
+
+								_sursa_storm			= _this select 0;
+								_duration_duststorm_w	= _this select 1;
+								_x_dev					= _this select 2;
+								_y_dev					= _this select 3;
+
+								_fum_negru = (([ATLtoASL (getPosATL _sursa_storm), "#particlesource", 1, [0,0,0],0,{0},true] call BIS_fnc_spawnObjects) select 0);
+								_fum_negru setParticleCircle [60,[0.2,-0.5,20]];
+								_fum_negru setParticleRandom [5,[_x_dev,_y_dev,20],[0,0,0],7,0.5,[0,0,0,0.1],0,0];
+								_fum_negru setParticleParams [["\A3\data_f\cl_basic.p3d", 1, 0, 1], "", "Billboard", 1, 9, [0,0,0], [0,0,10], 45, 20, 13, 0.1, [35,25,50,70],[[0,0,0,0.5],[0.3,0.2,0.1,0.7],[0.9,0.75,0.6,0.8],[0,0,0,0]],[0.08], 0.1, 0.1, "", "", _sursa_storm];
+								_fum_negru setDropInterval 0.002;
+								
+								missionNamespace setVariable ["_fum_negru", _fum_negru];
+
+								sleep _duration_duststorm_w;
+
+								deleteVehicle _fum_negru;
+							}] remoteExec ['bis_fnc_call',0,"LM_JIP_weatherSandstorm_dustWall"];
+							
+							if (_lethal_wall) then {
+								[_stormsource,_x_dev,_y_dev] spawn {
+									_wall_dest	= _this select 0;
+									_x_dev		= _this select 1;
+									_y_dev		= _this select 2;
+
+									_dir_blow_wall = wind;
+
+									while {(missionNamespace getVariable "al_duststorm_on")} do 
+									{
+										_list_potential_objt = [];
+										_list_potential_objt = nearestObjects [position _wall_dest,["LandVehicle","Man","Air","TREE","SMALL TREE","BUSH"], 600];
+										{
+											if ((position _x) inArea [position _wall_dest, _x_dev/2,_y_dev/2,0,true]) then 
+											{
+												_x setdamage ((getDammage _x) + 0.1); sleep (0.1+(random 0.5));
+											};
+											sleep 0.1;		
+										} forEach _list_potential_objt;
+										sleep 8;
+									};
+								};
+							};
+							[_stormsource,_direction_duststorm] spawn {private ["_stormsource","_direction_duststorm"]; _stormsource = _this select 0; _direction_duststorm = _this select 1; while {(missionNamespace getVariable "al_duststorm_on")} do {_stormsource setPos (_stormsource getRelPos [10,_direction_duststorm]);sleep 5}};
+						};
+
+						raport = 360/_direction_duststorm;
+						raport = round (raport * (10 ^ 2)) / (10 ^ 2);
+						if (raport >= 4) then {fctx = 1; fcty = 1;}	else {if (raport >= 2) then {fctx = 1; fcty = -1;}else { if (raport >=1.33) then {fctx = -1; fcty = -1;}else {fctx = -1; fcty = 1;};};};
+						if ((raport <= 2) and (raport >= 1.33)) then {fctx = -1; fcty = -1;};
+						_unx	= ((_direction_duststorm - floor (_direction_duststorm/90)*90))*fctx;
+						vx = floor (_unx * 0.6);
+						vy = (54 - vx)*fcty;
+						inx = 0;
+						iny = 0;
+						incr = true;
+						incrx = false;
+						incry = false;
+						while {incr} do 
+						{
+							sleep 0.01;
+							if (inx < abs vx) then {inx = inx+0.1;} else {incrx = true};
+							if (iny < abs vy) then {iny = iny+0.1} else {incry = true};
+							if (incrx and incry) then {incr=false};
+							winx = floor (inx*fctx/2);
+							winy = floor (iny*fcty/2);
+							setWind [winx,winy,true];
+						};
+
+						if (_effect_on_objects) then {
+
+							while {(missionNamespace getVariable "al_duststorm_on")} do {
+								[[_duration_duststorm],{
+									addCamShake [0.2,(_this select 0),17];
+								}] remoteExec ['bis_fnc_call',0,"LM_JIP_weatherSandstorm_effectObjects_camShake1"];
+								sleep 1;
+								_rand_pl = [] spawn {
+									_allunits = [];
+									{
+										if (alive _x) then{_allunits pushBack _x}
+									}  foreach (if (isMultiplayer) then {playableUnits} else {switchableUnits});
+									hunt_alias = _allunits call BIS_fnc_selectRandom;
+									missionNamespace setVariable ["hunt_alias", hunt_alias];
+								};
+								waitUntil {scriptDone _rand_pl};
+
+								sleep 60+random 120;
+								
+								al_nearobjects = nearestObjects [(missionNamespace getVariable "hunt_alias"),[],50];
+								ar_obj_eligibl = [];
+								
+								{if((_x isKindOf "LandVehicle") or (_x isKindOf "Man") or (_x isKindOf "Air") or (_x isKindOf "Wreck")) then 
+									{ar_obj_eligibl pushBack _x;};
+								} foreach al_nearobjects;
+								
+								sleep 1;
+								
+								_blowobj= ar_obj_eligibl call BIS_fnc_selectRandom;
+
+								sleep 1;
+								[] spawn {
+									_rafale = ["WindBig","WindNormal","WindSmall","wind1","wind2","wind3","wind4","wind5"] call BIS_fnc_selectRandom;
+									[_rafale] remoteExec ["playSound"];
+								};
+								
+								if (!isNull _blowobj) then {
+									_xblow	= 0.1+random 5;
+									_yblow	= 0.1+random 5;
+							
+									_xx=0;
+									_yy=0;
+									
+									while {(_xx< _xblow) or (_yy< _yblow)} do {
+										_xx = _xx + 0.01;
+										_yy = _yy + 0.01;
+										sleep 0.001;
+									};
+								
+								};
+							};
+						};
+
+						while {(missionNamespace getVariable "al_duststorm_on")} do {
+							_rafale = ["WindBig","WindNormal","WindSmall","wind1","wind2","wind3","wind4","wind5"] call BIS_fnc_selectRandom;
+							[_rafale] remoteExec ["playSound"];
+							sleep 60+random 120;
+						};
+						deleteVehicle _stormsource;
+					};
+				 }] remoteExec ['bis_fnc_call',0,"LM_JIP_weatherSandstorm"];
+				systemchat format ["[ LOG ] Sandstorm weather event now starting lasting '%1' minutes!", _duration];
+			} else {
+				systemchat "[ LOG ] Sandstorm weather event will end in 60 seconds!";
+				[[],{
+					if (!isServer) exitWith {};
+					
+					al_duststorm_on = false;
+					missionNamespace setVariable ["al_duststorm_on", al_duststorm_on];
+
+					60 setFog al_foglevel;
+					60 setRain al_rainlevel;
+					60 setLightnings al_thundlevel;
+					180 setOvercast al_overforecast;
+					setWind [al_windlevel select 0, al_windlevel select 1, true];
+					forceWeatherChange;
+					[[(missionNamespace getVariable "al_duststorm_on")],{
+						if (!hasInterface) exitWith {};
+						
+						deleteVehicle (missionNamespace getVariable "_fum_negru");
+						
+						missionNamespace setVariable ["_al_duststorm_on", (_this select 0)];
+						"FilmGrain" ppEffectEnable false;
+						"colorCorrections" ppEffectEnable false;
+						"DynamicBlur" ppEffectEnable false;
+						titleText ["<t size='1.5' font='PuristaBold'><img image='\A3\Ui_f\data\GUI\Cfg\UnitInsignia\TFAegis_ca.paa'/> <t underline='1' shadow='1' color=" + str([(profileNamespace getVariable ['GUI_BCG_RGB_R', 0.898]),(profileNamespace getVariable ['GUI_BCG_RGB_G', 0.78]),(profileNamespace getVariable ['GUI_BCG_RGB_B', 0.443]),(profileNamespace getVariable ['GUI_BCG_RGB_A', 1])] call BIS_fnc_colorRGBAtoHTML) + ">AEGIS: <t color='#FFFFFF'>9.2.0</t></t> <img image='\A3\Ui_f\data\GUI\Cfg\UnitInsignia\TFAegis_ca.paa'/><br/>The '<t color=" + str([(profileNamespace getVariable ['GUI_BCG_RGB_R', 0.898]),(profileNamespace getVariable ['GUI_BCG_RGB_G', 0.78]),(profileNamespace getVariable ['GUI_BCG_RGB_B', 0.443]),(profileNamespace getVariable ['GUI_BCG_RGB_A', 1])] call BIS_fnc_colorRGBAtoHTML) + ">Sandstorm</t>' departs...</t>", "PLAIN DOWN", -1, false, true];
+						enableCamShake false;
+						resetCamShake;
+						remoteExec ["", "LM_JIP_weatherSandstorm_particles"];
+						remoteExec ["", "LM_JIP_weatherSandstorm_dustWall"];
+						remoteExec ["", "LM_JIP_weatherSandstorm_effectObjects_camShake1"];
+						remoteExec ["", "LM_JIP_weatherSandstorm_init"];
+						remoteExec ["", "LM_JIP_weatherSandstorm"];
+					}] remoteExec ['bis_fnc_call',0,"LM_JIP_weatherSandstorm_init"];
+				}] remoteExec ['bis_fnc_call',0,"LM_JIP_weatherSandstorm"];
+				[[],{
+					sleep 60;
+					if (!(isNil "LM_scriptServer_weatherSandstorm" || {isNull LM_scriptServer_weatherSandstorm})) then {terminate LM_scriptServer_weatherSandstorm;};
+					remoteExec ["", "LM_JIP_weatherSandstorm_cleanUp"];
+				}] remoteExec ['bis_fnc_call',0,"LM_JIP_weatherSandstorm_cleanUp"];
+				systemchat "[ LOG ] Sandstorm weather event now ended!";
+			};
+		   },{ 
+			params ["_values","_args","_display"]; 
+			_display closeDisplay 2; 
+		   },[]] call MAZ_EZM_fnc_createDialog; 
+		};
+
+    LM_fnc_weatherSnowstormModule = { 
+		   ["Snowstorm Creator",[ 
+			[
+				"LIST",
+				["Snowfall Particles:","Control whether particles for snowflakes will appear."],
+				[
+					[0.01,0.005,0.00125,0.0003125,0.0000390625,0],
+					[
+						["Sprinkle","",""],
+						["Normal","",""],
+						["Heavy","",""],
+						["Intense","",""],
+						["Blinding","",""],
+						["Off","",""]
+					],
+					0,
+					6
+				]
+			],
+			[ 
+			 "SLIDER", 
+			 ["Duration (Minutes):","Duration in minutes of the storm's effects."], 
+			 [0,120,30]
+			],
+			[ 
+			 "SLIDER", 
+			 ["Ambient Sounds (Seconds):","Random number will be generated based on your input to set the frequency for ambient sounds."], 
+			 [0,120,120]
+			],
+			[
+			 "TOOLBOX:ENABLED",
+			 ["Breath Vapors:","Control whether particles for player breath will appear."],
+			 [true]
+			],
+			[ 
+			 "SLIDER", 
+			 ["Snow Burst Interval (Seconds):","If higher than 0 burst of snow will be generated at intervals based on your value."], 
+			 [0,120,120] 
+			],
+			[
+			 "TOOLBOX:ENABLED",
+			 ["Camera Shake:","Control whether strong gusts will shake the camera and play extra sound."],
+			 [true]
+			],
+			[
+			 "TOOLBOX:ENABLED",
+			 ["Vanilla Fog:","Control whether the storm can change vanilla fog values."],
+			 [true]
+			],
+			[
+			 "TOOLBOX:ENABLED",
+			 ["Fog Particles:","Control whether particles for fog will appear."],
+			 [true]
+			],
+			[
+			 "TOOLBOX:ENABLED",
+			 ["Intensify Wind:","Control whether the storm can change vanilla wind values."],
+			 [false]
+			],
+			[
+			 "TOOLBOX:ENABLED",
+			 ["Sneezing Units:","Control whether units will sneeze/caugh and will shiver when snow burst occurs."],
+			 [true]
+			],
+			[
+			 "TOOLBOX:ENABLED",
+			 ["Storm Control:","Control whether the storm is enabled or disabled, useful for toggling if already active."],
+			 [true]
+			]
+		   ],{ 
+			params ["_values","_args","_display"]; 
+			_values params ["_snowfall", "_duration", "_ambient", "_breath", "_bursts", "_shake", "_vfog", "_pfog", "_wind", "_sneeze", "_control"]; 
+			_display closeDisplay 1; 
+			
+			if (_control) then {
+				 [[_snowfall, (_duration * 60), _ambient, _breath, _bursts, _shake, _vfog, _pfog, _wind, _sneeze],{
+					params ["_snowfall","_duration_storm","_ambient_sounds_al","_breath_vapors","_snow_burst","_effect_on_objects","_vanilla_fog","_local_fog","_intensifywind","_unitsneeze"];
+					if (!(isNil "LM_scriptServer_weatherSnowstorm" || {isNull LM_scriptServer_weatherSnowstorm})) then {terminate LM_scriptServer_weatherSnowstorm;};
+					LM_scriptServer_weatherSnowstorm = [_snowfall,_duration_storm,_ambient_sounds_al,_breath_vapors,_snow_burst,_effect_on_objects,_vanilla_fog,_local_fog,_intensifywind,_unitsneeze] spawn {
+						
+						if (!isServer) exitWith {};
+						params ["_snowfall","_duration_storm","_ambient_sounds_al","_breath_vapors","_snow_burst","_effect_on_objects","_vanilla_fog","_local_fog","_intensifywind","_unitsneeze"];
+						
+						[] spawn {
+							if (!isServer) exitWith {};
+							if ((typeName (missionNamespace getVariable ["hunt_alias",""])) == "OBJECT") exitwith {};
+
+							while {true} do 
+							{
+								_allunits = [];
+								{if (alive _x) then {_allunits pushBack _x};}  foreach (if (isMultiplayer) then {playableUnits} else {switchableUnits});
+								hunt_alias = selectRandom _allunits;
+								missionNamespace setVariable ["hunt_alias", hunt_alias];
+								sleep 60;
+							};
+						};
+						sleep 2;
+						if (_vanilla_fog) then {
+							al_foglevel = fog;
+							missionNamespace setVariable ["al_foglevel", al_foglevel];
+							0 setFog (random [0, 0.5, 1]);
+							0 setOvercast 0.75;
+							0 setLightnings 0;
+							0 setRain 0;
+							forceWeatherChange;
+							999999 setLightnings 0;
+							999999 setRain 0;
+						};
+						[_duration_storm] spawn {
+							params ["_duration_storm"];
+							al_snowstorm_om=true;
+							missionNamespace setVariable ["al_snowstorm_om", al_snowstorm_om];
+							[[],{
+								"colorCorrections" ppEffectEnable true;
+								"colorCorrections" ppEffectAdjust [1.0, 1.0, 0.0,[1.0, 1.0, 1.0, 0.0],[1.0, 1.0, 0.9, 0.35],[0.3,0.3,0.3,-0.1]];
+								"colorCorrections" ppEffectCommit 0;
+							}] remoteExec ['bis_fnc_call',0,"LM_JIP_weatherSnowstorm_ppeffect"];
+							sleep _duration_storm;
+							if ((missionNamespace getVariable "al_snowstorm_om")) then {
+								al_snowstorm_om=false;
+								missionNamespace setVariable ["al_snowstorm_om", al_snowstorm_om];
+								if (!isNil "al_foglevel") then {
+									0 setFog (missionNamespace getVariable "al_foglevel");
+								};
+								forceWeatherChange;
+								[[(missionNamespace getVariable "al_snowstorm_om")],{
+									if (!hasInterface) exitWith {};
+									
+									pos_p = "deep_sea";
+									missionNamespace setVariable ["pos_p", pos_p];
+									
+									missionNamespace setVariable ["_al_snowstorm_om", (_this select 0)];
+									"FilmGrain" ppEffectEnable false;
+									"colorCorrections" ppEffectEnable false;
+									"DynamicBlur" ppEffectEnable false;
+									titleText ["<t size='1.5' font='PuristaBold'><img image='\A3\Ui_f\data\GUI\Cfg\UnitInsignia\TFAegis_ca.paa'/> <t underline='1' shadow='1' color=" + str([(profileNamespace getVariable ['GUI_BCG_RGB_R', 0.898]),(profileNamespace getVariable ['GUI_BCG_RGB_G', 0.78]),(profileNamespace getVariable ['GUI_BCG_RGB_B', 0.443]),(profileNamespace getVariable ['GUI_BCG_RGB_A', 1])] call BIS_fnc_colorRGBAtoHTML) + ">AEGIS: <t color='#FFFFFF'>9.2.0</t></t> <img image='\A3\Ui_f\data\GUI\Cfg\UnitInsignia\TFAegis_ca.paa'/><br/>The '<t color=" + str([(profileNamespace getVariable ['GUI_BCG_RGB_R', 0.898]),(profileNamespace getVariable ['GUI_BCG_RGB_G', 0.78]),(profileNamespace getVariable ['GUI_BCG_RGB_B', 0.443]),(profileNamespace getVariable ['GUI_BCG_RGB_A', 1])] call BIS_fnc_colorRGBAtoHTML) + ">Snowstorm</t>' departs...</t>", "PLAIN DOWN", -1, false, true];
+									enableCamShake false;
+									resetCamShake;
+									remoteExec ["", "LM_JIP_weatherSnowstorm_ppeffect"];
+									remoteExec ["", "LM_JIP_weatherSnowstorm_posFetch"];
+									remoteExec ["", "LM_JIP_weatherSnowstorm_fog"];
+									remoteExec ["", "LM_JIP_weatherSnowstorm_ambientSounds"];
+									remoteExec ["", "LM_JIP_weatherSnowstorm_breakVapors"];
+									remoteExec ["", "LM_JIP_weatherSnowstorm_sneeze"];
+									remoteExec ["", "LM_JIP_weatherSnowstorm_snowFlakes"];
+									remoteExec ["", "LM_JIP_weatherSnowstorm_snowBurst"];
+									remoteExec ["", "LM_JIP_weatherSnowstorm_intensifyWind"];
+									remoteExec ["", "LM_JIP_weatherSnowstorm_init"];
+									remoteExec ["", "LM_JIP_weatherSnowstorm"];
+								}] remoteExec ['bis_fnc_call',0,"LM_JIP_weatherSnowstorm_init"];
+							};
+						};
+						sleep 5;
+						
+						[[(missionNamespace getVariable "al_snowstorm_om")],{
+							params ["_al_snowstorm_om"];
+							if (!hasInterface) exitWith {};
+							
+							missionNamespace setVariable ["_al_snowstorm_om", _al_snowstorm_om];
+							if (!isNil {player getVariable "ck_ON"}) exitwith {};
+							player setVariable ["ck_ON",true];
+							player setVariable ["JIP",false];
+
+							alias_snow = (([AGLtoASL [0,0,0], "Land_HelipadEmpty_F", 1, [0,0,0],0,{0},true] call BIS_fnc_spawnObjects) select 0);
+
+							KK_fnc_inHouse = 
+							{
+								_house = lineIntersectsSurfaces [getPosWorld _this,getPosWorld _this vectorAdd [0,0,50],_this,objNull,true,1,"GEOM","NONE"];
+								if ((alive player)) then {
+									if ((didJIP) && !(player getVariable "JIP")) exitWith {
+										player setVariable ["JIP",true];
+										pos_p = "deep_sea";
+										missionNamespace setVariable ["pos_p", pos_p];
+									};
+									if (((_house select 0) select 3) isKindOf "house") exitWith	{
+										pos_p = "in_da_house";
+										missionNamespace setVariable ["pos_p", pos_p];
+										cladire = ((_house select 0) select 3); 
+										missionNamespace setVariable ["cladire", cladire];
+										casa= typeOf ((_house select 0) select 3); 
+										missionNamespace setVariable ["casa", casa];
+										raza_snow = sizeof casa;
+										missionNamespace setVariable ["raza_snow", raza_snow];
+									};
+									if ((getPosASL player select 2 < 0)&&(getPosASL player select 2 > -3)) exitWith	{
+										pos_p = "under_water"; 
+										missionNamespace setVariable ["pos_p", pos_p];
+										alias_snow setPosASL [getPosASL player #0,getPosASL player #1,1];
+										missionNamespace setVariable ["alias_snow", alias_snow];
+									};
+									if (getPosASL player select 2 < -3) exitWith {
+										pos_p = "deep_sea";
+										missionNamespace setVariable ["pos_p", pos_p];
+									};
+									if ((player != vehicle player)&&(getPosASL player select 2 > 0)) exitWith {
+										pos_p = "player_car";
+										missionNamespace setVariable ["pos_p", pos_p];
+									};
+									pos_p = "open";
+									missionNamespace setVariable ["pos_p", pos_p];
+								} else {
+									pos_p = "deep_sea";
+									missionNamespace setVariable ["pos_p", pos_p];
+								};
+							};
+							while {!isNull player} do {while {(missionNamespace getVariable "_al_snowstorm_om")} do {player call KK_fnc_inHouse; sleep 0.5}; waitUntil {sleep 10; (missionNamespace getVariable "_al_snowstorm_om")}};
+						}] remoteExec ['bis_fnc_call',0,"LM_JIP_weatherSnowstorm_posFetch"];
+						
+						if (_local_fog) then {
+							[[(missionNamespace getVariable "al_snowstorm_om")],{
+								params ["_al_snowstorm_om"];
+								if (!hasInterface) exitWith {};
+								
+								missionNamespace setVariable ["_al_snowstorm_om", _al_snowstorm_om];
+								waitUntil {isNil (missionNamespace getVariable "pos_p")};
+								0 setOvercast 0.75;
+								0 setLightnings 0;
+								0 setRain 0;
+								forceWeatherChange;
+								999999 setLightnings 0;
+								999999 setRain 0;
+								while {(!isNull player) and ((missionNamespace getVariable "_al_snowstorm_om"))} do 
+								{
+									if ((missionNamespace getVariable "pos_p")=="open") then 
+									{
+										_alias_local_fog = (([AGLtoASL (getpos player), "#particlesource", 1, [0,0,0],0,{0},true] call BIS_fnc_spawnObjects) select 0);
+										_alias_local_fog setParticleCircle [10,[3,3,0]];
+										_alias_local_fog setParticleRandom [2,[0.25,0.25,0],[1,1,0],1,1,[0,0,0,0.1],0,0];
+										_alias_local_fog setParticleParams [["\A3\data_f\cl_basic",1,0,1],"","Billboard",1,8,[0,0,0],[-1,-1,0],3,10.15,7.9,0.03,[5,10,10],[[0.5,0.5,0.5,0],[0.5,0.5,0.5,0.1],[1,1,1,0]],[1],1, 0,"","",player];
+										_alias_local_fog setDropInterval 0.1;
+										waitUntil {(missionNamespace getVariable "pos_p")!="open"};
+										deleteVehicle _alias_local_fog;
+									};
+									if ((missionNamespace getVariable "pos_p")=="player_car") then 
+									{
+										_alias_local_fog = (([AGLtoASL (getpos player), "#particlesource", 1, [0,0,0],0,{0},true] call BIS_fnc_spawnObjects) select 0);
+										_alias_local_fog setParticleCircle [30,[3,3,0]];
+										_alias_local_fog setParticleRandom [0,[0.25,0.25,0],[1,1,0],1,1,[0,0,0,0.1],0,0];
+										_alias_local_fog setParticleParams [["\A3\data_f\cl_basic",1,0,1],"","Billboard",1,4,[0,0,0],[-1,-1,0],3,10.15,7.9,0.03,[5,10,20],[[0.5,0.5,0.5,0],[0.5,0.5,0.5,0.1],[1,1,1,0]],[1],1, 0,"","",player];
+										_alias_local_fog setDropInterval 0.1;		
+										waitUntil {(missionNamespace getVariable "pos_p")!="player_car"};
+										deleteVehicle _alias_local_fog;
+									};
+									if ((missionNamespace getVariable "pos_p")=="in_da_house") then  
+									{
+										_alias_local_fog = (([AGLtoASL (getpos player), "#particlesource", 1, [0,0,0],0,{0},true] call BIS_fnc_spawnObjects) select 0);
+										_alias_local_fog setParticleCircle [(missionNamespace getVariable "raza_snow"),[3,3,0]];
+										_alias_local_fog setParticleRandom [0,[0.25,0.25,0],[1,1,0],1,1,[0,0,0,0.1],0,0];
+										_alias_local_fog setParticleParams [["\A3\data_f\cl_basic",1,0,1],"","Billboard",1,4,[0,0,0],[-1,-1,0],3,10.15,7.9,0.03,[5,10,20],[[0.5,0.5,0.5,0],[0.5,0.5,0.5,0.1],[1,1,1,0]],[1],1, 0,"","",player];
+										_alias_local_fog setDropInterval 0.1;		
+										waitUntil {(missionNamespace getVariable "pos_p")!="in_da_house"};
+										deleteVehicle _alias_local_fog;
+									};	
+									if ((missionNamespace getVariable "pos_p")=="under_water") then {waitUntil {sleep 5; (missionNamespace getVariable "pos_p")!="under_water"}};
+									if ((missionNamespace getVariable "pos_p")=="deep_sea") then {waitUntil {sleep 5; (missionNamespace getVariable "pos_p")!="deep_sea"}};
+								};
+							}] remoteExec ['bis_fnc_call',0,"LM_JIP_weatherSnowstorm_fog"];
+						};
+						
+						if (_ambient_sounds_al>0) then {
+							[[_ambient_sounds_al, (missionNamespace getVariable "al_snowstorm_om"), (missionNamespace getVariable "hunt_alias")],{
+								params ["_ambient_sounds_al", "_al_snowstorm_om", "_hunt_alias"];
+								
+								missionNamespace setVariable ["_al_snowstorm_om", _al_snowstorm_om];
+
+								lup_01 = "A3\Sounds_F\environment\animals\dog1.wss";
+								lup_02 = "A3\Sounds_F\environment\animals\hen1.wss";
+								lup_03 = "A3\Sounds_F\environment\animals\scared_animal7.wss";
+
+								while {(missionNamespace getVariable "_al_snowstorm_om")} do 
+								{
+									sleep 120+random _ambient_sounds_al;
+									if ((missionNamespace getVariable "pos_p") in ["open","in_da_house","player_car"]) then 
+									{
+										_natura = selectRandom [lup_01,lup_02,lup_03];
+										_relpos = _hunt_alias getRelPos [100+random 200,360];
+										playSound3D [_natura,"",false,[_relpos#0,_relpos#1,50+random 100],0.2,0.7,2000];
+									};
+								};
+							}] remoteExec ['bis_fnc_call',0,"LM_JIP_weatherSnowstorm_ambientSounds"];
+						};
+						
+						if (_breath_vapors) then {
+							[[],{
+								private ["_footmobile","_alias_breath"];
+								if (!hasInterface) exitWith {};
+								_alias_breath = (([AGLtoASL [0,0,0], "#particlesource", 1, [0,0,0],0,{0},true] call BIS_fnc_spawnObjects) select 0);
+								_alias_breath attachto [player,[0,0.2,0],"head"];
+								while {!isnull player} do 
+								{
+									if ((alive player)&&(eyePos player select 2 > 0)) then 
+									{
+										_footmobile= player nearEntities ["Man",20];
+										_alias_breath attachto [selectrandom _footmobile,[0,0.1,0],"head"];
+										_flow = (getposasl _alias_breath vectorFromTo (_alias_breath getRelPos [10,90])) vectorMultiply 0.5;
+										drop [["\A3\data_f\ParticleEffects\Universal\Universal",16,12,8,1],"","Billboard",0.15,0.3,[0,0,0],[_flow#0,_flow#1,-0.2],3,1.2,1,0,[0.1,.2,.3],[[1,1,1,0.05],[1,1,1,0.2],[1,1,1,0.05]],[0.1],0,0.04,"","",_alias_breath,90];
+										sleep 0.10;
+										drop [["\A3\data_f\ParticleEffects\Universal\Universal",16,12,8,1],"","Billboard",1,1,[0,0,0],[0,0,0.1],1,1.275,1,1,[.3,.5,.7],[[1,1,1,0.1],[1,1,1,0.03],[1,1,1,0]],[0.8],1,0.5,"","",[0,0,0],90];
+										sleep 0.05;
+										drop [["\A3\data_f\ParticleEffects\Universal\Universal",16,12,8,1],"","Billboard",0.15,0.3,[0,0,0],[_flow#0/2,_flow#1/2,-0.2],3,1.2,1,0,[0.1,.2,.3],[[1,1,1,0.05],[1,1,1,0.1],[1,1,1,0]],[0.1],0,0.04,"","",_alias_breath,90];
+										sleep 3+random 5;
+									} else {sleep 5};
+								};
+							}] remoteExec ['bis_fnc_call',0,"LM_JIP_weatherSnowstorm_breakVapors"];
+						};
+						
+						if (_unitsneeze) then {
+							[[_effect_on_objects],{
+								if (!hasInterface) exitWith {};
+								private ["_sik_unit"];
+								params ["_effect_on_objects"];
+								sneeze = true;
+								while {sneeze} do {
+									if ((missionNamespace getVariable "pos_p") in ["open","in_da_house","player_car"]) then 
+									{
+										enableCamShake true;
+										if (eyePos player select 2 > 0) then {_tuse = selectRandom ["WoundedGuyA_01", "WoundedGuyA_02", "WoundedGuyA_03", "WoundedGuyA_04", "WoundedGuyA_05", "WoundedGuyA_06", "WoundedGuyA_07", "WoundedGuyA_08", "WoundedGuyB_01", "WoundedGuyB_02", "WoundedGuyB_03", "WoundedGuyB_04", "WoundedGuyB_05", "WoundedGuyB_06", "WoundedGuyB_07", "WoundedGuyB_08", "WoundedGuyC_01", "WoundedGuyC_02", "WoundedGuyC_03", "WoundedGuyC_04", "WoundedGuyC_05"];_sik_unit=selectrandom allUnits; [_sik_unit,[_tuse,100]] remoteExec ["say3d",0]};
+										if (_effect_on_objects) then {
+											if (player == _sik_unit) then {addCamShake [5,1,7]};
+										};
+									};
+									sleep 120+random 300;
+								};	
+							}] remoteExec ['bis_fnc_call',0,"LM_JIP_weatherSnowstorm_sneeze"];
+						};
+						
+						if (!(_snowfall == 0)) then {
+							[[_snowfall, (missionNamespace getVariable "al_snowstorm_om")],{
+								if (!hasInterface) exitWith {};
+								params ["_snowfall", "_al_snowstorm_om"];
+								
+								missionNamespace setVariable ["_al_snowstorm_om", _al_snowstorm_om];
+
+								waitUntil {isNil (missionNamespace getVariable "pos_p")};
+								while {(missionNamespace getVariable "_al_snowstorm_om")} do 
+								{
+									if ((missionNamespace getVariable "pos_p")=="open") then 
+									{
+										_fulg_nea = (([ATLtoASL (getposATL player), "#particlesource", 1, [0,0,0],0,{0},true] call BIS_fnc_spawnObjects) select 0);
+										_fulg_nea setParticleCircle [0,[0,0,0]];
+										_fulg_nea setParticleRandom [0,[20,20,9],[0,0,0],0,0.1,[0,0,0,0.1],0,0];
+										_fulg_nea setParticleParams [["\A3\data_f\ParticleEffects\Universal\Universal.p3d",16,12,8,1],"","Billboard",1,7,[0,0,10],[0,0,0],3,1.7,1,1,[0.1],[[1,1,1,1]],[1],0.3,1,"","",player];
+										_fulg_nea setDropInterval _snowfall;
+										waitUntil {(missionNamespace getVariable "pos_p")!="open"};
+										deleteVehicle _fulg_nea;
+									};
+									if ((missionNamespace getVariable "pos_p")=="player_car") then 
+									{
+										_fulg_nea = (([ATLtoASL (getposATL player), "#particlesource", 1, [0,0,0],0,{0},true] call BIS_fnc_spawnObjects) select 0);
+										_fulg_nea setParticleCircle [0,[0,0,0]];
+										_fulg_nea setParticleRandom [0,[20,20,9],[0,0,0],0,0.1,[0,0,0,0.1],0,0];
+										_fulg_nea setParticleParams [["\A3\data_f\ParticleEffects\Universal\Universal.p3d",16,12,8,1],"","Billboard",1,7,[0,0,10],[0,0,0],3,1.7,1,1,[0.1],[[1,1,1,1]],[1],0.3,1,"","",player];
+										_fulg_nea setDropInterval _snowfall;
+										waitUntil {(missionNamespace getVariable "pos_p")!="player_car"};
+										deleteVehicle _fulg_nea;	
+									};
+									if ((missionNamespace getVariable "pos_p")=="under_water") then  
+									{
+										_fulg_nea = (([(getposASL (missionNamespace getVariable "alias_snow")), "#particlesource", 1, [0,0,0],0,{0},true] call BIS_fnc_spawnObjects) select 0);
+										_fulg_nea setParticleCircle [0,[0,0,0]];
+										_fulg_nea setParticleRandom [0,[25,25,0],[0,0,0],0,0.1,[0,0,0,0.1],1,1];
+										_fulg_nea setParticleParams [["\A3\data_f\ParticleEffects\Universal\Universal.p3d",16,12,8,1],"","Billboard",1,4,[0,0,15],[0,0,0],3,2,1,0.7,[0.1],[[1,1,1,1]],[1],1,1,"","",(missionNamespace getVariable "alias_snow")];
+										_fulg_nea setDropInterval _snowfall;
+										waitUntil {(missionNamespace getVariable "pos_p")!="under_water"};
+										deleteVehicle _fulg_nea;
+									};
+									if ((missionNamespace getVariable "pos_p")=="deep_sea") then {waitUntil {(missionNamespace getVariable "pos_p")!="deep_sea"}};
+									if ((missionNamespace getVariable "pos_p")=="in_da_house") then
+									{
+										_fulg_nea_1 = (([ATLtoASL (getposATL (missionNamespace getVariable "cladire")), "#particlesource", 1, [0,0,0],0,{0},true] call BIS_fnc_spawnObjects) select 0);
+										_fulg_nea_1 setParticleCircle [(missionNamespace getVariable "raza_snow"),[0,0,0]];
+										_fulg_nea_1 setParticleRandom [0,[5,5,0],[0,0,0],0,0,[0,0,0,0],0,0.5];
+										_fulg_nea_1 setParticleParams [["\A3\data_f\ParticleEffects\Universal\Universal.p3d",16,12,8,1],"","Billboard",1,0.2,[0,0,1],[0,0,0],3,2,1,0,[0.1],[[1,1,1,1]],[1],0,1,"","",(missionNamespace getVariable "cladire"),0,true];
+										_fulg_nea_1 setDropInterval (_snowfall*2);		
+										waitUntil {(missionNamespace getVariable "pos_p")!="in_da_house"};
+										deleteVehicle _fulg_nea_1;
+									};	
+								};
+							}] remoteExec ['bis_fnc_call',0,"LM_JIP_weatherSnowstorm_snowFlakes"];
+						};
+						
+						if (_snow_burst>0) then {
+							[_effect_on_objects] spawn {
+								params ["_effect_on_objects"];
+								while {(missionNamespace getVariable "al_snowstorm_om")} do 
+								{
+									snow_gust=selectrandom [["WindBig",12],["wind1",8.5],["wind2",17],["wind3",13],["wind4",16],["wind5",13.5]];
+									missionNamespace setVariable ["snow_gust", snow_gust];
+									vit_x = (selectrandom [1,-1])*round(2+random 5); 
+									vit_y = (selectrandom [1,-1])*round(2+random 5);
+									missionNamespace setVariable ["vit_x", vit_x];
+									missionNamespace setVariable ["vit_y", vit_y];
+									sleep 60+random 120;
+								};
+							};
+							interval_burst = _snow_burst;
+							missionNamespace setVariable ["interval_burst", interval_burst];
+							sleep 10; 
+							
+							[[_unitsneeze, (missionNamespace getVariable "al_snowstorm_om"), (missionNamespace getVariable "hunt_alias"), (missionNamespace getVariable "snow_gust"), (missionNamespace getVariable "vit_x"), (missionNamespace getVariable "vit_y") ,(missionNamespace getVariable "interval_burst"),_effect_on_objects],{
+								if (!hasInterface) exitWith {};
+								params ["_unit_cold", "_al_snowstorm_om", "_hunt_alias", "_snow_gust", "_vit_x", "_vit_y", "_interval_burst","_effect_on_objects"];
+								
+								missionNamespace setVariable ["_al_snowstorm_om", _al_snowstorm_om];
+								if (_unit_cold) then {
+									player_act_cold = true;
+									missionNamespace setVariable ["player_act_cold", player_act_cold];
+								} else {
+									player_act_cold = false;
+									missionNamespace setVariable ["player_act_cold", player_act_cold];
+								};
+								while {(missionNamespace getVariable "_al_snowstorm_om")} do 
+								{
+									if (((missionNamespace getVariable "pos_p")=="open")&&(player == _hunt_alias)) then 
+									{
+										rafala = true;
+										missionNamespace setVariable ["rafala", rafala];
+										_pozitie_x = (selectrandom [1,-1])*round(random 50); _pozitie_y = (selectrandom [1,-1])*round(random 50);
+										
+										[_pozitie_x,_pozitie_y,_vit_x,_vit_y,_snow_gust,_hunt_alias,_effect_on_objects] spawn {
+											if ((!hasInterface)or((missionNamespace getVariable "pos_p")!="open")) exitWith {};
+											params ["_pozitie_x","_pozitie_y","_vit_x","_vit_y","_snow_gust","_hunt_alias","_effect_on_objects"];
+
+											drop [["\A3\data_f\cl_basic",1,0,1],"","Billboard",0.5,(_snow_gust#1)/2,[_pozitie_x,_pozitie_y,0],[_vit_x,_vit_y,0],13,1.3,1,0.1,[1,10,15],[[1,1,1,0],[1,1,1,.1],[1,1,1,0]],[1],1,0,"","",_hunt_alias,0,true,0.1];
+											sleep 0.4;
+											_snow_fog = (([ATLtoASL (getposATL player), "#particlesource", 1, [0,0,0],0,{0},true] call BIS_fnc_spawnObjects) select 0);
+											_snow_fog setParticleCircle [5+random 10,[0,0,0]];
+											_snow_fog setParticleRandom [1,[1,1,0.1],[0,0,0],0,0.01,[0,0,0,0.01],1,1];
+											_snow_fog setParticleParams [["\A3\data_f\cl_basic",1,0,1],"","Billboard",1,5,[0,0,0],[_vit_x,_vit_y,0],15,10,8,0.07,[1,5,10],[[1,1,1,0.01],[1,1,1,0.02],[1,1,1,0]],[1],1,0,"","",player];
+											_snow_fog setDropInterval 0.01;
+											[_snow_fog] spawn {params["_snow_fog"];sleep 0.4;deleteVehicle _snow_fog};
+
+											_snow_cloud = (([ATLtoASL (getposATL player), "#particlesource", 1, [0,0,0],0,{0},true] call BIS_fnc_spawnObjects) select 0);
+											_snow_cloud setParticleCircle [3,[0,0,0]];
+											_snow_cloud setParticleRandom [0.1,[1,1,0.1],[0,0,0],0,0.01,[0,0,0,0.01],1,0];
+											_snow_cloud setParticleParams [["\A3\data_f\ParticleEffects\Universal\Universal",16,13,6,0],"","Billboard",1,2,[0,0,0],[_vit_x,_vit_y,0],7+random 33,1.2,1,0.02+random 0.09,[1,1,5,8],[[1,1,1,0],[1,1,1,0],[1,1,1,0.1],[1,1,1,0]],[1000],1,0,"","",player];
+											_snow_cloud setDropInterval 0.1;
+											[_snow_cloud] spawn {params["_snow_cloud"];sleep 1;deleteVehicle _snow_cloud};
+											sleep 0.2;
+											playSound "WindBig";
+											playSound "WindNormal";
+											playSound "WindSmall";
+
+											_fulgi = (([ATLtoASL (getposATL player), "#particlesource", 1, [0,0,0],0,{0},true] call BIS_fnc_spawnObjects) select 0);
+											_fulgi setParticleCircle [0,[0,0,0]];
+											_fulgi setParticleRandom [0,[10,10,5],[0,0,0],0,0.1,[0,0,0,0.1],0,0];
+											_fulgi setParticleParams [["\A3\data_f\ParticleEffects\Universal\Universal.p3d",16,12,8,1],"","Billboard",1,5,[0,0,7],[_vit_x,_vit_y,0],0,1.7,1,0,[0.1],[[1,1,1,1]],[1],0,0,"","",player];
+											_fulgi setDropInterval 0.01;
+
+											_snow_flakes = (([ATLtoASL (getposATL player), "#particlesource", 1, [0,0,0],0,{0},true] call BIS_fnc_spawnObjects) select 0);
+											_snow_flakes setParticleCircle [0,[0,0,0]];
+											_snow_flakes setParticleRandom [0,[5,5,9],[0,0,0],0,0.1,[0,0,0,0.1],0,0];
+											_snow_flakes setParticleParams [["\A3\data_f\ParticleEffects\Universal\Universal.p3d",16,12,8,1],"","Billboard",1,3,[0,0,10],[_vit_x*2,_vit_y*2,0],3,1.7,1,0,[0.2],[[1,1,1,1]],[1],0.3,1,"","",player];
+											_snow_flakes setDropInterval 0.01;
+
+											if ((missionNamespace getVariable "player_act_cold")) then {
+												enableCamShake true;
+												
+												0 = [] spawn
+												{
+													"FilmGrain" ppEffectEnable true;
+													for "_i" from 0 to 0.1 step 0.01 do
+													{
+														"FilmGrain" ppEffectAdjust [_i,1,5,0.5,0.3,true];
+														sleep 0.3;
+														"FilmGrain" ppEffectCommit 0;
+													};
+													sleep 5;
+													_i=0.1;
+													while {_i>0} do 
+													{
+														_i = _i-0.01;
+														"FilmGrain" ppEffectAdjust [_i,1,5,0.5,0.3,true];
+														sleep 0.5;		
+														"FilmGrain" ppEffectCommit 0;
+													};
+													"FilmGrain" ppEffectEnable false;
+												};
+												if (goggles player=="") then 
+												{
+													0 = ["RadialBlur",100,[0.11,1,0.33,0.16]] spawn
+													{
+														params ["_name", "_priority", "_effect", "_handle"];
+														sleep 2;
+														call BIS_fnc_fatigueEffect;
+														"RadialBlur" ppEffectEnable true;
+														"RadialBlur" ppEffectAdjust _effect;
+														"RadialBlur" ppEffectCommit 4;
+														waitUntil {ppEffectCommitted "RadialBlur"};
+														call BIS_fnc_fatigueEffect;
+														_i = 0.11;
+														sleep 2;
+														while {_i>0} do 
+														{
+															_i = _i-0.01;
+															"RadialBlur" ppEffectAdjust [_i,1,0.33,0.16];
+															sleep 0.5;		
+															"RadialBlur" ppEffectCommit 0;
+														};
+														"RadialBlur" ppEffectEnable false;
+													};
+												};
+												
+												sleep 1;
+												_tremurici = selectRandom ["WoundedGuyA_02","WoundedGuyB_02","NoSound","WoundedGuyC_02","WoundedGuyB_03","WoundedGuyB_04"]; 
+												playSound _tremurici;
+												if (_effect_on_objects) then {
+													addCamShake [0.5,(_snow_gust#1)*2,25];
+												};
+											};
+											sleep (_snow_gust#1)/2;
+											deleteVehicle _snow_flakes;	
+											deleteVehicle _fulgi;
+										};
+										
+										sleep (_snow_gust#1);
+										rafala = false;
+										missionNamespace setVariable ["rafala", rafala];
+									};
+									sleep 20+random _interval_burst;
+								};
+							}] remoteExec ['bis_fnc_call',0,"LM_JIP_weatherSnowstorm_snowBurst"];
+						};
+						
+						if (_intensifywind) then {
+							[[(missionNamespace getVariable "al_snowstorm_om")],{
+								params ["_al_snowstorm_om"];
+								if (!hasInterface) exitWith {};
+								
+								missionNamespace setVariable ["_al_snowstorm_om", _al_snowstorm_om];
+								while {(missionNamespace getVariable "_al_snowstorm_om")} do {
+									["WindBig"] remoteExec ["playSound"];
+									["WindNormal"] remoteExec ["playSound"];
+									["WindSmall"] remoteExec ["playSound"];
+									sleep 2;
+								};
+							}] remoteExec ['bis_fnc_call',0,"LM_JIP_weatherSnowstorm_intensifyWind"];
+							
+							al_windlevel	= wind;	
+							for "_i" from 1 to 5 step 0.1 do {
+								setWind [(al_windlevel#0)*_i,(al_windlevel#1)*_i,true]; 
+								sleep 4;
+							};
+							waitUntil {sleep 60; !(missionNamespace getVariable "al_snowstorm_om")};
+							al_windlevel	= wind;	
+							for "_i" from 1 to 5 step 0.1 do {
+								setWind [(al_windlevel#0)/_i,(al_windlevel#1)/_i,true]; 
+								sleep 4
+							};
+						};
+					};
+				}] remoteExec ['bis_fnc_call',0,"LM_JIP_weatherSnowstorm"];
+				systemchat format ["[ LOG ] Snowstorm weather event now starting lasting '%1' minutes!", _duration];
+				} else {
+					systemchat "[ LOG ] Snowstorm weather event will end in 60 seconds!";
+					[[],{
+						if (!isServer) exitWith {};
+						
+						al_snowstorm_om=false;
+						missionNamespace setVariable ["al_snowstorm_om", al_snowstorm_om];
+						if (!isNil "al_foglevel") then {
+							0 setFog (missionNamespace getVariable "al_foglevel");
+						};
+						forceWeatherChange;
+						[[(missionNamespace getVariable "al_snowstorm_om")],{
+							if (!hasInterface) exitWith {};
+							
+							pos_p = "deep_sea";
+							missionNamespace setVariable ["pos_p", pos_p];
+							
+							missionNamespace setVariable ["_al_snowstorm_om", (_this select 0)];
+							"FilmGrain" ppEffectEnable false;
+							"colorCorrections" ppEffectEnable false;
+							"DynamicBlur" ppEffectEnable false;
+							titleText ["<t size='1.5' font='PuristaBold'><img image='\A3\Ui_f\data\GUI\Cfg\UnitInsignia\TFAegis_ca.paa'/> <t underline='1' shadow='1' color=" + str([(profileNamespace getVariable ['GUI_BCG_RGB_R', 0.898]),(profileNamespace getVariable ['GUI_BCG_RGB_G', 0.78]),(profileNamespace getVariable ['GUI_BCG_RGB_B', 0.443]),(profileNamespace getVariable ['GUI_BCG_RGB_A', 1])] call BIS_fnc_colorRGBAtoHTML) + ">AEGIS: <t color='#FFFFFF'>9.2.0</t></t> <img image='\A3\Ui_f\data\GUI\Cfg\UnitInsignia\TFAegis_ca.paa'/><br/>The '<t color=" + str([(profileNamespace getVariable ['GUI_BCG_RGB_R', 0.898]),(profileNamespace getVariable ['GUI_BCG_RGB_G', 0.78]),(profileNamespace getVariable ['GUI_BCG_RGB_B', 0.443]),(profileNamespace getVariable ['GUI_BCG_RGB_A', 1])] call BIS_fnc_colorRGBAtoHTML) + ">Snowstorm</t>' departs...</t>", "PLAIN DOWN", -1, false, true];
+							enableCamShake false;
+							resetCamShake;
+							remoteExec ["", "LM_JIP_weatherSnowstorm_ppeffect"];
+							remoteExec ["", "LM_JIP_weatherSnowstorm_posFetch"];
+							remoteExec ["", "LM_JIP_weatherSnowstorm_fog"];
+							remoteExec ["", "LM_JIP_weatherSnowstorm_ambientSounds"];
+							remoteExec ["", "LM_JIP_weatherSnowstorm_breakVapors"];
+							remoteExec ["", "LM_JIP_weatherSnowstorm_sneeze"];
+							remoteExec ["", "LM_JIP_weatherSnowstorm_snowFlakes"];
+							remoteExec ["", "LM_JIP_weatherSnowstorm_snowBurst"];
+							remoteExec ["", "LM_JIP_weatherSnowstorm_intensifyWind"];
+							remoteExec ["", "LM_JIP_weatherSnowstorm_init"];
+							remoteExec ["", "LM_JIP_weatherSnowstorm"];
+					}] remoteExec ['bis_fnc_call',0,"LM_JIP_weatherSnowstorm_init"];
+					[[],{
+						sleep 60;
+						if (!(isNil "LM_scriptServer_weatherSnowstorm" || {isNull LM_scriptServer_weatherSnowstorm})) then {terminate LM_scriptServer_weatherSnowstorm;};
+						remoteExec ["", "LM_JIP_weatherSnowstorm_cleanUp"];
+					}] remoteExec ['bis_fnc_call',0,"LM_JIP_weatherSnowstorm_cleanUp"];
+				}] remoteExec ['bis_fnc_call',0,"LM_JIP_weatherSnowstorm"];
+				systemchat "[ LOG ] Snowstorm weather event now ended!";
+			 };
+		   },{ 
+			params ["_values","_args","_display"]; 
+			_display closeDisplay 2; 
+		   },[]] call MAZ_EZM_fnc_createDialog; 
+		};
  
   MAZ_EZM_fnc_toggleSimulationModule = { 
    params ["_entity"]; 
@@ -30169,7 +31215,7 @@ MAZ_EZM_fnc_editZeusInterface = {
      "Adds bullet cam ability to player for 60 seconds.", 
      "HYPER_EMZ_fnc_bulletCam60s",
      "a3\weapons_f_orange\reticle\data\camera_ca.paa"
-    ] call MAZ_EZM_fnc_zeusAddModule; 
+    ] call MAZ_EZM_fnc_zeusAddModule;
 
     comment "BZM Mission Tools";
     HYPER_bzmMissionModules = [ 
@@ -30201,6 +31247,23 @@ MAZ_EZM_fnc_editZeusInterface = {
      "HYPER_EZM_fnc_setAllConscious",
      "a3\ui_f\data\igui\cfg\cursors\unitunconscious_ca.paa"
     ] call MAZ_EZM_fnc_zeusAddModule;
+    [
+      MAZ_zeusModulesTree,
+      HYPER_bzmMissionModules,
+      "Sand Storm",
+      "Starts a Sandstorm weather event.\n\nCreation Credit: ALIAScartoons",
+      "LM_fnc_weatherSandstormModule",
+      "a3\modules_f_curator\data\portraitweather_ca.paa"
+    ] call MAZ_EZM_fnc_zeusAddModule;
+    [
+      MAZ_zeusModulesTree,
+      HYPER_bzmMissionModules,
+      "Snow Storm",
+      "Starts a Snowstorm weather event.\n\nCreation Credit: ALIAScartoons",
+      "LM_fnc_weatherSnowstormModule",
+      "a3\modules_f_curator\data\portraitweather_ca.paa"
+    ] call MAZ_EZM_fnc_zeusAddModule;
+    
 
     
    comment "AI Modifers"; 
