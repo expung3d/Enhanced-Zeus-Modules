@@ -10136,6 +10136,102 @@ MAZ_EZM_fnc_initFunction = {
     _display closeDisplay 2; 
    },[]] call MAZ_EZM_fnc_createDialog; 
   }; 
+
+    HYPER_EZM_fnc_createCountdownModuleVR = { 
+   ["Create Countdown",[ 
+    [ 
+     "SLIDER", 
+     "Minutes:", 
+     [0,60,5] 
+    ], 
+    [ 
+     "SIDES", 
+     "Sides Who See The Message", 
+     [west,east,independent,civilian] 
+    ] 
+   ],{ 
+    params ["_values","_args","_display"]; 
+    _values params ["_minutes","_side"]; 
+    private _sides = _side call MAZ_EZM_fnc_getSidesFromString; 
+    _sides = _sides + [sideLogic]; 
+    private _timer = (_minutes * 60); 
+    [[_timer],{ 
+     params ["_timer"];
+     if(!(player getVariable ["MAZ_EZM_timerActiveVR",false])) then { 
+      private _timerInt = 0; 
+      player setVariable ["MAZ_EZM_timerActiveVR",true,true]; 
+      
+      LM_fnc_timeoutCountdown = {
+
+        params [
+          ["_time", 30, [0]],
+          ["_colour", "#FFFFFF", [""]]
+        ];
+        private _timeout = time + _time;
+        RscFiringDrillTime_done = false;
+        1 cutRsc ["RscFiringDrillTime", "PLAIN"];
+        while { time < _timeout } do
+        {
+          private _testTime = time / _timeout;
+          if (_testTime < 0.25) then
+          {
+            _colour = "#00FF00";
+          }
+          else
+          {
+            if (_testTime < 0.5) then
+            {
+              _colour = "#FFFF00";
+            }
+            else
+            {
+              if (_testTime < 0.75) then
+              {
+                _colour = "#FFA500";
+              }
+              else
+              {
+                _colour = "#FF0000";
+              };
+            };
+          };
+          private _remainingTime = _timeout - time;
+          private _timeFormat = [_remainingTime, "MM:SS.MS", true] call BIS_fnc_secondsToString;
+          private _text = format ["<t align='left' color='%1'><img image='%2' />%3:%4<t size='0.8'>.%5</t>",
+            _colour,
+            "A3\Modules_F_Beta\data\FiringDrills\timer_ca",
+            _timeFormat select 0,
+            _timeFormat select 1,
+            _timeFormat select 2
+          ];
+          RscFiringDrillTime_current = parseText _text;
+          sleep 0.01;
+        };
+        private _timeFormat = [0, "MM:SS.MS", true] call BIS_fnc_secondsToString;
+        RscFiringDrillTime_current = parseText format ["<t align='left' color='%1'><img image='%2' />%3:%4<t size='0.8'>.%5</t>",
+          _colour,
+          "A3\Modules_F_Beta\data\FiringDrills\timer_ca",
+          _timeFormat select 0,
+          _timeFormat select 1,
+          _timeFormat select 2];
+        sleep 4;
+        RscFiringDrillTime_done = true;
+        player setVariable ["MAZ_EZM_timerActiveVR",false,true]; 
+      };
+      
+      [_timer, "#FF5500"] spawn LM_fnc_timeoutCountdown;
+
+
+
+      
+     }; 
+    }]remoteExec ['spawn',_sides]; 
+    _display closeDisplay 1; 
+   },{ 
+    params ["_values","_args","_display"]; 
+    _display closeDisplay 2; 
+   },[]] call MAZ_EZM_fnc_createDialog; 
+  }; 
  
  comment "Send Messages"; 
  
@@ -31814,6 +31910,14 @@ MAZ_EZM_fnc_editZeusInterface = {
      "Create Countdown", 
      "Creates an on screen countdown for players of specified side.", 
      "MAZ_EZM_fnc_createCountdownModule", 
+     "a3\ui_f\data\igui\cfg\actions\settimer_ca.paa" 
+    ] call MAZ_EZM_fnc_zeusAddModule; 
+    [ 
+     MAZ_zeusModulesTree, 
+     MAZ_GameplayTree, 
+     "Create VR Countdown", 
+     "Creates an on screen countdown for players of specified side.", 
+     "HYPER_EZM_fnc_createCountdownModuleVR", 
      "a3\ui_f\data\igui\cfg\actions\settimer_ca.paa" 
     ] call MAZ_EZM_fnc_zeusAddModule; 
  
