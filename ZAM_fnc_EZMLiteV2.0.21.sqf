@@ -2986,7 +2986,7 @@ comment "Context Menu";
 				private _picture = _display ctrlCreate ["RscPicture",-1,_controlGroup];
 				_picture ctrlSetText _img;
 				_picture ctrlSetTextColor _color;
-				_picture ctrlSetPosition [0,_yPos,["W",0.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",0.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
+				_picture ctrlSetPosition [0,_groupHeight,["W",0.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",0.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
 				_picture ctrlCommit 0;
 			};
 			_ctrl ctrlSetText _displayName;
@@ -3322,7 +3322,7 @@ comment "Context Menu";
 					[objNull,_pos] call MAZ_EZM_fnc_teleportPlayerModule;
 				},
 				{true},
-				"",
+				"a3\ui_f\data\gui\rsc\rscdisplaymain\menu_singleplayer_ca.paa",
 				[1,1,1,1]
 			],
 			[
@@ -3334,7 +3334,7 @@ comment "Context Menu";
 					}forEach allPlayers;
 				},
 				{true},
-				"",
+				"a3\ui_f\data\gui\rsc\rscdisplaymain\menu_multiplayer_ca.paa",
 				[1,1,1,1]
 			],
 			[
@@ -3372,7 +3372,7 @@ comment "Context Menu";
 
 					_return
 				},
-				"",
+				"a3\3den\data\cfgwaypoints\getin_ca.paa",
 				[1,1,1,1]
 			]
 		]
@@ -3490,6 +3490,17 @@ comment "Context Menu";
 					(!isNil "MAZ_EZM_copiedUnitLoadout")
 				},
 				"",
+				[1,1,1,1]
+			],
+			[
+				"Set Zeus Loadout",
+				{
+					params ["_pos","_entity"];
+					profileNamespace setVariable ["MAZ_EZM_ZeusLoadout",getUnitLoadout _entity];
+					["Zeus loadout saved","addItemOK"] call MAZ_EZM_fnc_systemMessage;
+				},
+				{true},
+				"a3\ui_f_curator\data\logos\arma3_zeus_icon_ca.paa",
 				[1,1,1,1]
 			]
 		]
@@ -4078,7 +4089,13 @@ MAZ_EZM_fnc_createUnitForZeus = {
 
 	waitUntil{getAssignedCuratorLogic player == _zeusLogic};
 	["Curator assigned."] call MAZ_EZM_fnc_systemMessage;
-	_zeusObject setUnitLoadout [[],[],["hgun_Pistol_heavy_01_green_F","","","",["11Rnd_45ACP_Mag",11],[],""],["U_Marshal",[["11Rnd_45ACP_Mag",2,11]]],["V_PlateCarrier_Kerry",[["11Rnd_45ACP_Mag",1,11]]],[],"H_Beret_02","G_Spectacles",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch",""]];
+	private _zeusLoadout = profileNamespace getVariable "MAZ_EZM_ZeusLoadout";
+	if(isNil "_zeusLoadout") then {
+		_zeusObject setUnitLoadout [[],[],["hgun_Pistol_heavy_01_green_F","","","",["11Rnd_45ACP_Mag",11],[],""],["U_Marshal",[["11Rnd_45ACP_Mag",2,11]]],["V_PlateCarrier_Kerry",[["11Rnd_45ACP_Mag",1,11]]],[],"H_Beret_02","G_Spectacles",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch",""]];
+		profileNamespace setVariable ["MAZ_EZM_ZeusLoadout",getUnitLoadout player];
+	} else {
+		_zeusObject setUnitLoadout _zeusLoadout;
+	};
 	sleep 0.1;
 	while {(isNull (findDisplay 312))} do 
 	{
@@ -8690,14 +8707,6 @@ MAZ_EZM_fnc_initFunction = {
 
 		};
 
-		MAZ_EZM_fnc_checkForInteriorData = {
-			private _data = profileNamespace getVariable ["MAZ_EZM_BuildingCompositionData",[]];
-			if(_data isEqualTo []) then {
-				call MAZ_EZM_fnc_getDefaultInteriors;
-			};
-		};
-		call MAZ_EZM_fnc_checkForInteriorData;
-
 		MAZ_EZM_fnc_interiorTypeInArray = {
 			params ["_type","_array"];
 			private _return = false;
@@ -9213,6 +9222,14 @@ MAZ_EZM_fnc_initFunction = {
 			};
 			[_entity] call MAZ_EZM_fnc_removeBuildingInterior;
 		};
+		
+		MAZ_EZM_fnc_checkForInteriorData = {
+			private _data = profileNamespace getVariable ["MAZ_EZM_BuildingCompositionData",[]];
+			if(_data isEqualTo []) then {
+				call MAZ_EZM_fnc_getDefaultInteriors;
+			};
+		};
+		call MAZ_EZM_fnc_checkForInteriorData;
 
 	comment "Clean Up";
 
@@ -29912,7 +29929,7 @@ MAZ_EZM_fnc_initFunction = {
 			_marker setMarkerSize _markerSize;
 			_marker setMarkerBrush _markerBrush;
 			_marker setMarkerColor _markerColor;
-			_marker setMarkerAlpha _markerAlpha
+			_marker setMarkerAlpha _markerAlpha;
 			_marker setMarkerShape (["ELLIPSE","RECTANGLE"] select _markerShape);
 		};
 
@@ -32716,15 +32733,6 @@ MAZ_EZM_fnc_editZeusInterface = {
 					'Open the Sound Board GUI and play any sound from the game files.\nYou can preview sounds to play them only on your client,\nor you can play them on all clients.',
 					'M9sd_fnc_moduleSoundBoard',
 					'a3\modules_f_curator\data\portraitSound_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_SoundsTree,
-					"TBD",
-					"TBD.",
-					"MAZ_EZM_fnc_playSoundObjectModule",
-					'\A3\ui_f\data\IGUI\RscIngameUI\RscDisplayChannel\MuteVON_ca.paa'
 				] call MAZ_EZM_fnc_zeusAddModule;
 			
 			comment "Special Effects";
@@ -42034,10 +42042,15 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 
 private _changelog = [
 	"Added fix so when a player pings, if the body of the pinger is deleted your camera isn't teleported to [0,0,0]",
+	"Added custom Zeus Loadouts, you can change from the default white polo uniform",
+	"Added context menu subaction icons to existing actions",
 	"Fixed issue where markers placed from compositions would all be set as the last used marker color",
 	"Fixed issue where some aircraft weren't the dynamic loadout variant",
 	"Fixed issue where the vehicle appearance UI could be opened more than once for a vehicle",
-	"Fixed issue where textTiles functions would not work with EZM"
+	"Fixed issue where textTiles functions would not work with EZM",
+	"Fixed issue where initial compositions would not load",
+	"Fixed issue where context menu subaction icons wouldn't appear",
+	"Removed dumb TBD module form the Sounds section"
 ];
 
 private _changelogString = "";
