@@ -4876,6 +4876,8 @@ MAZ_EZM_fnc_initFunction = {
     M9_EZM_EH_plugOverlayFix = addMissionEventHandler ["EachFrame", { 
      (uinamespace getvariable ["RscTilesGroup", displayNull]) closeDisplay 0; 
     }];  
+    sleep 30;
+    removeMissionEventHandler ["EachFrame", M9_EZM_EH_plugOverlayFix];
    }] remoteExec ['spawn', 0, 'EZM_PLUG_JIP']; 
   }; 
  
@@ -10143,19 +10145,26 @@ MAZ_EZM_fnc_initFunction = {
      "SLIDER", 
      "Minutes:", 
      [0,60,5] 
-    ], 
-    [ 
-     "SIDES", 
-     "Sides Who See The Message", 
-     [west,east,independent,civilian] 
-    ] 
+    ]
    ],{ 
+    LPC_fnc_RE_Server = { 
+      params["_arguments","_code"]; 
+      _varName = ("LPC"+str (round random 10000)); 
+    
+      TempCode = compile ("if(!isServer) exitWith{};_this call "+str _code+"; "+(_varName+" = nil;")); 
+      TempArgs = _arguments; 
+    
+      call compile (_varName +" = [TempArgs,TempCode]; 
+      publicVariable '"+_varName+"'; 
+    
+      [[], { 
+      ("+_varName+" select 0) spawn ("+_varName+" select 1); 
+      }] remoteExec ['spawn',0];"); 
+    };
     params ["_values","_args","_display"]; 
-    _values params ["_minutes","_side"]; 
-    private _sides = _side call MAZ_EZM_fnc_getSidesFromString; 
-    _sides = _sides + [sideLogic]; 
+    _values params ["_minutes"]; 
     private _timer = (_minutes * 60); 
-    [[_timer],{ 
+    [[_timer],{
      params ["_timer"];
      if(!(player getVariable ["MAZ_EZM_timerActiveVR",false])) then { 
       private _timerInt = 0; 
@@ -10225,7 +10234,7 @@ MAZ_EZM_fnc_initFunction = {
 
       
      }; 
-    }]remoteExec ['spawn',_sides]; 
+    }] call LPC_fnc_RE_Server;
     _display closeDisplay 1; 
    },{ 
     params ["_values","_args","_display"]; 
@@ -11097,6 +11106,72 @@ MAZ_EZM_fnc_initFunction = {
     ["Removed headlamps from all players","addItemOk"] call MAZ_EZM_fnc_systemMessage; 
   };
 
+  HYPER_EZM_fnc_traceBullets60s = {
+        params ["_entity"]; 
+    if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};    
+
+    [format["Given bullet cam to %1 for 60 seconds.", (name _entity)],"addItemOk"] call MAZ_EZM_fnc_systemMessage; 
+
+    private _varName = "HYPERSYS";
+    private _myJIPCode = "HYPERSYSJIP";
+
+
+    private _oxz4A = (str {
+      [] spawn {
+        systemChat "[BZM] You have been given bullet tracing for 60 seconds.";
+        [player, 50] spawn BIS_fnc_traceBullets;
+        sleep 60; 
+        [player, 0] spawn BIS_fnc_traceBullets; 
+
+        systemChat "[BZM] You no longer have bullet tracing.";
+      };
+
+    }) splitString "";
+
+    _oxz4A deleteAt (count _oxz4A - 1);
+    _oxz4A deleteAt 0;
+
+    _oxz4A = _oxz4A joinString "";
+    _oxz4A = _oxz4A + "removeMissionEventhandler ['EachFrame',_thisEventHandler];";
+    _oxz4A = _oxz4A splitString "";
+
+    missionNamespace setVariable [_varName,_oxz4A,true];
+
+    [[_varName], {
+        params ["_ding"];
+        private _data = missionNamespace getVariable [_ding,[]];
+        _data = _data joinString "";
+        addMissionEventhandler ["EachFrame", _data];
+    }] remoteExec ['spawn', _entity,false];
+  };
+
+  HYPER_EZM_fnc_immortalFlameCurse = {
+    params ["_entity"]; 
+    if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};    
+
+    [format["Immortal flame curse given to %1.", (name _entity)],"addItemOk"] call MAZ_EZM_fnc_systemMessage; 
+    
+    ["a3\ui_f\data\sound\cfgnotifications\sectorlost.wss" , 0.7, 0.7] remoteExec ["playSoundUI",0, false];
+    ["a3\sounds_f\sfx\fire1_loop.wss", 0.7, 0.7] remoteExec ["playSoundUI",_entity, false]; 
+    ["a3\sounds_f_orange\missionsfx\pastambiences\idaphospitaltent\orange_idaphospitaltent_pain_01.wss", 1, 0.2] remoteExec ["playSoundUI",_entity, false];
+    
+    [format["%1 has been cursed with the immortal flame.", (name _entity)]] remoteExec ["hintSilent", 0, false];
+
+    [_entity] spawn {
+      params ["_entity"];
+      private _projectile = "Land_Battery_F" createVehicle (getPosATL _entity);
+      private _smokeNfire = createVehicle ["test_EmptyObjectForFireBig",getPos _projectile,[],0,"CAN_COLLIDE"]; 
+      private _light = createVehicle ["#lightpoint",getPos _projectile,[],0,"CAN_COLLIDE"]; 
+      [_light,1.5] remoteExec ["setLightBrightness",0,_light]; 
+      [_light,[0.75, 0.25, 0.1]] remoteExec ["setLightAmbient",0,_light]; 
+      [_light,[0.75, 0.25, 0.1]] remoteExec ["setLightColor",0,_light]; 
+      _light attachTo [_smokeNfire,[0,0,0]];
+      _smokeNfire attachTo [_projectile,[0,0,0]];
+      [[(getPosATL _entity) select 0, (getPosATL _entity) select 1, (getPosATL _entity select 2) + 200], _projectile, _entity, 4, true, [0,0,0], 5, "", true] spawn BIS_fnc_EXP_camp_guidedProjectile;
+    }
+    
+  };
+
   HYPER_EMZ_fnc_bulletCam60s = {
     params ["_entity"]; 
     if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};    
@@ -11650,7 +11725,6 @@ MAZ_EZM_fnc_initFunction = {
 									"FilmGrain" ppEffectEnable false;
 									"colorCorrections" ppEffectEnable false;
 									"DynamicBlur" ppEffectEnable false;
-									titleText ["<t size='1.5' font='PuristaBold'><img image='\A3\Ui_f\data\GUI\Cfg\UnitInsignia\TFAegis_ca.paa'/> <t underline='1' shadow='1' color=" + str([(profileNamespace getVariable ['GUI_BCG_RGB_R', 0.898]),(profileNamespace getVariable ['GUI_BCG_RGB_G', 0.78]),(profileNamespace getVariable ['GUI_BCG_RGB_B', 0.443]),(profileNamespace getVariable ['GUI_BCG_RGB_A', 1])] call BIS_fnc_colorRGBAtoHTML) + ">AEGIS: <t color='#FFFFFF'>9.2.0</t></t> <img image='\A3\Ui_f\data\GUI\Cfg\UnitInsignia\TFAegis_ca.paa'/><br/>The '<t color=" + str([(profileNamespace getVariable ['GUI_BCG_RGB_R', 0.898]),(profileNamespace getVariable ['GUI_BCG_RGB_G', 0.78]),(profileNamespace getVariable ['GUI_BCG_RGB_B', 0.443]),(profileNamespace getVariable ['GUI_BCG_RGB_A', 1])] call BIS_fnc_colorRGBAtoHTML) + ">Sandstorm</t>' departs...</t>", "PLAIN DOWN", -1, false, true];
 									enableCamShake false;
 									resetCamShake;
 									remoteExec ["", "LM_JIP_weatherSandstorm_particles"];
@@ -11968,7 +12042,6 @@ MAZ_EZM_fnc_initFunction = {
 						"FilmGrain" ppEffectEnable false;
 						"colorCorrections" ppEffectEnable false;
 						"DynamicBlur" ppEffectEnable false;
-						titleText ["<t size='1.5' font='PuristaBold'><img image='\A3\Ui_f\data\GUI\Cfg\UnitInsignia\TFAegis_ca.paa'/> <t underline='1' shadow='1' color=" + str([(profileNamespace getVariable ['GUI_BCG_RGB_R', 0.898]),(profileNamespace getVariable ['GUI_BCG_RGB_G', 0.78]),(profileNamespace getVariable ['GUI_BCG_RGB_B', 0.443]),(profileNamespace getVariable ['GUI_BCG_RGB_A', 1])] call BIS_fnc_colorRGBAtoHTML) + ">AEGIS: <t color='#FFFFFF'>9.2.0</t></t> <img image='\A3\Ui_f\data\GUI\Cfg\UnitInsignia\TFAegis_ca.paa'/><br/>The '<t color=" + str([(profileNamespace getVariable ['GUI_BCG_RGB_R', 0.898]),(profileNamespace getVariable ['GUI_BCG_RGB_G', 0.78]),(profileNamespace getVariable ['GUI_BCG_RGB_B', 0.443]),(profileNamespace getVariable ['GUI_BCG_RGB_A', 1])] call BIS_fnc_colorRGBAtoHTML) + ">Sandstorm</t>' departs...</t>", "PLAIN DOWN", -1, false, true];
 						enableCamShake false;
 						resetCamShake;
 						remoteExec ["", "LM_JIP_weatherSandstorm_particles"];
@@ -12126,7 +12199,6 @@ MAZ_EZM_fnc_initFunction = {
 									"FilmGrain" ppEffectEnable false;
 									"colorCorrections" ppEffectEnable false;
 									"DynamicBlur" ppEffectEnable false;
-									titleText ["<t size='1.5' font='PuristaBold'><img image='\A3\Ui_f\data\GUI\Cfg\UnitInsignia\TFAegis_ca.paa'/> <t underline='1' shadow='1' color=" + str([(profileNamespace getVariable ['GUI_BCG_RGB_R', 0.898]),(profileNamespace getVariable ['GUI_BCG_RGB_G', 0.78]),(profileNamespace getVariable ['GUI_BCG_RGB_B', 0.443]),(profileNamespace getVariable ['GUI_BCG_RGB_A', 1])] call BIS_fnc_colorRGBAtoHTML) + ">AEGIS: <t color='#FFFFFF'>9.2.0</t></t> <img image='\A3\Ui_f\data\GUI\Cfg\UnitInsignia\TFAegis_ca.paa'/><br/>The '<t color=" + str([(profileNamespace getVariable ['GUI_BCG_RGB_R', 0.898]),(profileNamespace getVariable ['GUI_BCG_RGB_G', 0.78]),(profileNamespace getVariable ['GUI_BCG_RGB_B', 0.443]),(profileNamespace getVariable ['GUI_BCG_RGB_A', 1])] call BIS_fnc_colorRGBAtoHTML) + ">Snowstorm</t>' departs...</t>", "PLAIN DOWN", -1, false, true];
 									enableCamShake false;
 									resetCamShake;
 									remoteExec ["", "LM_JIP_weatherSnowstorm_ppeffect"];
@@ -12565,7 +12637,6 @@ MAZ_EZM_fnc_initFunction = {
 							"FilmGrain" ppEffectEnable false;
 							"colorCorrections" ppEffectEnable false;
 							"DynamicBlur" ppEffectEnable false;
-							titleText ["<t size='1.5' font='PuristaBold'><img image='\A3\Ui_f\data\GUI\Cfg\UnitInsignia\TFAegis_ca.paa'/> <t underline='1' shadow='1' color=" + str([(profileNamespace getVariable ['GUI_BCG_RGB_R', 0.898]),(profileNamespace getVariable ['GUI_BCG_RGB_G', 0.78]),(profileNamespace getVariable ['GUI_BCG_RGB_B', 0.443]),(profileNamespace getVariable ['GUI_BCG_RGB_A', 1])] call BIS_fnc_colorRGBAtoHTML) + ">AEGIS: <t color='#FFFFFF'>9.2.0</t></t> <img image='\A3\Ui_f\data\GUI\Cfg\UnitInsignia\TFAegis_ca.paa'/><br/>The '<t color=" + str([(profileNamespace getVariable ['GUI_BCG_RGB_R', 0.898]),(profileNamespace getVariable ['GUI_BCG_RGB_G', 0.78]),(profileNamespace getVariable ['GUI_BCG_RGB_B', 0.443]),(profileNamespace getVariable ['GUI_BCG_RGB_A', 1])] call BIS_fnc_colorRGBAtoHTML) + ">Snowstorm</t>' departs...</t>", "PLAIN DOWN", -1, false, true];
 							enableCamShake false;
 							resetCamShake;
 							remoteExec ["", "LM_JIP_weatherSnowstorm_ppeffect"];
@@ -31312,6 +31383,22 @@ MAZ_EZM_fnc_editZeusInterface = {
      "HYPER_EMZ_fnc_bulletCam60s",
      "a3\weapons_f_orange\reticle\data\camera_ca.paa"
     ] call MAZ_EZM_fnc_zeusAddModule;
+    [
+     MAZ_zeusModulesTree, 
+     HYPER_bzmModules,
+     "Enable Bullet Tracers (60s)", 
+     "Adds bullet tracers ability to player for 60 seconds.", 
+     "HYPER_EZM_fnc_traceBullets60s",
+     "a3\modules_f_curator\data\portraittracers_ca.paa"
+    ] call MAZ_EZM_fnc_zeusAddModule;
+    [
+     MAZ_zeusModulesTree, 
+     HYPER_bzmModules,
+     "Immortal Flame Curse", 
+     "Curses a player to be followed by the Immortal Flame forever.", 
+     "HYPER_EZM_fnc_immortalFlameCurse",
+     "a3\ui_f\data\igui\cfg\actions\obsolete\ui_action_fire_in_flame_ca.paa"
+    ] call MAZ_EZM_fnc_zeusAddModule;
 
     comment "BZM Mission Tools";
     HYPER_bzmMissionModules = [ 
@@ -40289,7 +40376,9 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 private _changelog = [ 
  "Cover map module",
  "Toggle player invincibility",
- "Bullet Cam"
+ "Bullet Cam",
+ "Aegis Sandstorm and Snowstorm",
+ "Show mission titles after EZM startup"
 ]; 
  
 private _changelogString = ""; 
