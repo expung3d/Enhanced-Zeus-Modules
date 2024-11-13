@@ -13633,67 +13633,13 @@ MAZ_EZM_fnc_initFunction = {
 			],{
 				params ["_values","_args","_display"];
 				_values params ["_disable"];
-				if(_disable) then {
-					call MAZ_EZM_fnc_disableGameModerator;
-				} else {
-					call MAZ_EZM_fnc_enableGameModerator;
-				};
+				missionNamespace setVariable ["MAZ_EZM_disableModerator",_disable,true];
+				
 				_display closeDisplay 1;
 			},{
 				params ["_values","_args","_display"];
 				_display closeDisplay 2;
 			},[]] call MAZ_EZM_fnc_createDialog;
-		};
-
-		MAZ_EZM_fnc_disableGameModerator = {
-			private _zeus = (allCurators select {str _x == "bis_curator"}) select 0;
-			private _mod = (allCurators select {str _x == "bis_curator_1"}) select 0;
-
-			missionNamespace setVariable ["MAZ_EZM_disableModerator",true,true];
-
-			[[], {
-				waitUntil {alive player && !isNull (findDisplay 46)};
-				private _mod = (allCurators select {str _x == "bis_curator_1"}) select 0;
-				if((getAssignedCuratorLogic player) != _mod) exitWith {};
-				if(missionNamespace getVariable ["MAZ_EZM_disableModerator",false]) then {
-					sleep 1;
-					while{!isNull (findDisplay 312)} do {
-						(findDisplay 312) closeDisplay 0;
-					};
-					["Initialize",[player]] call BIS_fnc_EGSpectator;
-					player allowDamage false;
-					[player, true] remoteExec ['hideObject',2];
-				} else {
-					["Terminate"] call BIS_fnc_EGSpectator; 
-					openCuratorInterface; 
-				};
-			}] remoteExec ['spawn',-2,"EZM_Moderator_JIP"];
-		};
-
-		MAZ_EZM_fnc_enableGameModerator = {
-			private _zeus = (allCurators select {str _x == "bis_curator"}) select 0;
-			private _mod = (allCurators select {str _x == "bis_curator_1"}) select 0;
-
-			missionNamespace setVariable ["MAZ_EZM_disableModerator",false,true];
-
-			[[], {
-				waitUntil {alive player && !isNull (findDisplay 46)};
-				private _mod = (allCurators select {str _x == "bis_curator_1"}) select 0;
-				if((getAssignedCuratorLogic player) != _mod) exitWith {};
-				if(missionNamespace getVariable ["MAZ_EZM_disableModerator",false]) then {
-					sleep 1;
-					while{!isNull (findDisplay 312)} do {
-						(findDisplay 312) closeDisplay 0;
-					};
-					["Initialize",[player]] call BIS_fnc_EGSpectator;
-					player allowDamage false;
-					[player, true] remoteExec ['hideObject',2];
-				} else {
-					["Terminate"] call BIS_fnc_EGSpectator; 
-					openCuratorInterface; 
-				};
-			}] remoteExec ['spawn',-2,"EZM_Moderator_JIP"];
-
 		};
 
 	comment "Auto-Add to Interface";
@@ -17929,8 +17875,36 @@ MAZ_EZM_fnc_initMainLoop = {
 
 if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 	call MAZ_EZM_fnc_ezmShamelessPlug;
-	call MAZ_EZM_fnc_disableGameModerator;
-	["Game Moderator has been disabled. If you'd like to enable it go to the Zeus Settings modules section."] call MAZ_EZM_fnc_systemMessage;
+	if(getAssignedCuratorLogic player == (missionNamespace getVariable ["bis_curator",objNull])) then {
+		call MAZ_EZM_fnc_disableGameModerator;
+		["Game Moderator has been disabled. If you'd like to enable it go to the Zeus Settings modules section."] call MAZ_EZM_fnc_systemMessage;
+	};
+	[[], {
+		waitUntil {alive player && !isNull (findDisplay 46)};
+		private _mod = missionNamespace getVariable ["bis_curator_1",objNull];
+		private _curator = getAssignedCuratorLogic player;
+		if(isNull _curator) exitWith {};
+		if(_curator != _mod) exitWith {};
+		private _loaded = false;
+		while{true} do {
+			waitUntil {!(isNull (findDisplay 312)) || _loaded};
+			_loaded = true;
+			if(missionNamespace getVariable ["MAZ_EZM_disableModerator",false]) then {
+				while{!isNull (findDisplay 312)} do {
+					(findDisplay 312) closeDisplay 0;
+				};
+				if(isNull (["GetDisplay"] call BIS_fnc_EGSpectator) || isNull (["GetCamera"] call BIS_fnc_EGSpectator) || !(["IsSpectating"] call BIS_fnc_EGSpectator)) then {
+					["Terminate"] call BIS_fnc_EGSpectator;
+					["Initialize",[player]] call BIS_fnc_EGSpectator;
+				};
+			} else {
+				if(["Terminate"] call BIS_fnc_EGSpectator) then {
+					openCuratorInterface;
+				};
+			};
+			sleep 1;
+		};
+	}] remoteExec ['spawn',-2,"EZM_Moderator_JIP"];
 	missionNamespace setVariable ["MAZ_EZM_shamelesslyPlugged",true,true];
 };
 
