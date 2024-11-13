@@ -1,3 +1,7 @@
+if(!isNull (findDisplay 312) && {!isNil "this"} && {!isNull this}) then {
+	deleteVehicle this;
+};
+
 [] spawn {
 MAZ_EZM_Version = "V2.0.22";
 MAZ_EZM_autoAdd = profileNamespace getVariable ["MAZ_EZM_autoAddVar",true];
@@ -13634,7 +13638,7 @@ MAZ_EZM_fnc_initFunction = {
 				params ["_values","_args","_display"];
 				_values params ["_disable"];
 				missionNamespace setVariable ["MAZ_EZM_disableModerator",_disable,true];
-				
+
 				_display closeDisplay 1;
 			},{
 				params ["_values","_args","_display"];
