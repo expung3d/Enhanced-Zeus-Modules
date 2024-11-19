@@ -15,7 +15,7 @@ if(!isNil "MAZ_EZM_MDF") exitWith {
     ["MDF is already loaded!", "addItemFailed"] call MAZ_EZM_fnc_systemMessage;
 };
 
-MAZ_EZM_MDF_Ver = "1.0";
+MAZ_EZM_MDF_Ver = "1.1";
 MAZ_EZM_MDF = true;
 
 comment "Anti-Air";
@@ -407,7 +407,7 @@ comment "Men";
 
     MAZ_EZM_MDF_fnc_addMDFIdentitiesToUnit = {
         params ["_unit"];
-        sleep 0.2;
+        sleep 0.1;
         private _frenchVoice = [
             "Male01FRE",
             "Male02FRE",
@@ -484,6 +484,8 @@ comment "Men";
 
     MAZ_EZM_MDF_fnc_addMDFUniformTextures = {
         params ["_unit"];
+        sleep 0.1;
+
         switch (uniform _unit) do {
             case "U_BG_Guerrilla_6_1";
             case "U_C_Paramedic_01_F";
@@ -709,7 +711,7 @@ comment "Men";
         [_unit,["arifle_Mk20_plain_F",["30Rnd_556x45_Stanag",5],["optic_hamr","acc_flashlight"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3] call MAZ_EZM_fnc_addItemAndWeapons;
 
         _unit addBackpack "B_RadioBag_01_black_F";
-        [(unitbackpack _unit),[0,"A3\characters_f_exp\Syndikat\Data\U_I_C_Soldier_Para_4_F_2_co.paa"]] remoteExec ['setObjectTexture',0,_unit];
+        (unitBackpack _unit) setObjectTextureGlobal [0,"A3\characters_f_exp\Syndikat\Data\U_I_C_Soldier_Para_4_F_2_co.paa"];
 
         _unit
     };
