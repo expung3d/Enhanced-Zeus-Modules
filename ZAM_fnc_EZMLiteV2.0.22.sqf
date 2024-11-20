@@ -4855,10 +4855,7 @@ MAZ_EZM_fnc_initFunction = {
 			params ["_object"];
 			_object addEventhandler ["Killed", {
 				params ["_unit", "_killer", "_instigator", "_useEffects"];
-				{
-					detach _x;
-					deleteVehicle _x;
-				}forEach (attachedObjects _unit);
+				[_unit] call MAZ_EZM_fnc_deleteAttached;
 			}];
 		};
 
@@ -4866,11 +4863,20 @@ MAZ_EZM_fnc_initFunction = {
 			params ["_object"];
 			_object addEventhandler ["Deleted", {
 				params ["_object"];
-				{
-					detach _x;
-					deleteVehicle _x;
-				}forEach (attachedObjects _object);
+				[_object] call MAZ_EZM_fnc_deleteAttached;
 			}];
+		};
+
+		MAZ_EZM_fnc_deleteAttached = {
+			params ["_object"];
+			{
+				detach _x;
+				{
+					deleteVehicle _x;
+				}forEach (crew _x);
+				[_x] call MAZ_EZM_fnc_deleteAttached;
+				deleteVehicle _x;
+			}forEach (attachedObjects _object);
 		};
 
 		MAZ_EZM_fnc_cleanerWaitTilNoPlayers = {
@@ -13015,7 +13021,7 @@ MAZ_EZM_fnc_initFunction = {
 					_modelString = (str _x) splitString " .";
 					_type = format ['land_%1',_modelString select (count _modelString) - 2];
 					
-					if((toLower _type) in _blackListFences) then {} else {
+					if !((toLower _type) in _blackListFences) then {
 						_count = _count + 1;
 						_position = getPosASL _x;
 						_vectorDirUp = [vectorDir _x,vectorUp _x];
@@ -17875,7 +17881,7 @@ MAZ_EZM_fnc_initMainLoop = {
 if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 	call MAZ_EZM_fnc_ezmShamelessPlug;
 	if(getAssignedCuratorLogic player == (missionNamespace getVariable ["bis_curator",objNull])) then {
-		call MAZ_EZM_fnc_disableGameModerator;
+		missionNamespace setVariable ["MAZ_EZM_disableModerator",true,true];
 		["Game Moderator has been disabled. If you'd like to enable it go to the Zeus Settings modules section."] call MAZ_EZM_fnc_systemMessage;
 	};
 	[[], {
@@ -17908,7 +17914,9 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 };
 
 private _changelog = [
-	"Fixed 3D Speak module appearing through terrain and across the map"
+	"Fixed 3D Speak module appearing through terrain and across the map",
+	"Fixed crew didn't get deleted from attached objects",
+	"Fixed issue where Game Mod wasn't disabled automatically"
 ];
 
 private _changelogString = "";
@@ -17973,7 +17981,7 @@ comment "
  - More waypoints 
  - Composition wrecks do not attach objects correctly 
  - Other seasonal modules 
- - Add more building interiors
+ - Add more building interiors (Malden)
 ";
 
 };
