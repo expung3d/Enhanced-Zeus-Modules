@@ -2305,7 +2305,7 @@ comment "Men (Paramilitary)";
         private _textureData = switch (uniform _unit) do { 
             case "U_I_C_Soldier_Para_4_F": { 
                 private _textureTop = selectRandom ["a3\characters_f_enoch\uniforms\data\i_e_soldier_01_tanktop_co.paa","a3\characters_f_exp\syndikat\data\u_i_c_soldier_bandit_5_f_1_co.paa"]; 
-                private _textureBottom = selectRandom ["a3\characters_f_bootcamp\guerrilla\data\ig_guerrilla_6_1_co.paa","A3\characters_f_exp\Syndikat\Data\U_I_C_Soldier_Para_4_F_2_co.paa","a3\characters_f_beta\indep\data\ia_soldier_01_clothing_co.paa"]; 
+                private _textureBottom = "a3\characters_f_beta\indep\data\ia_soldier_01_clothing_co.paa"; 
                 [_textureTop,_textureBottom]
             };
         }; 

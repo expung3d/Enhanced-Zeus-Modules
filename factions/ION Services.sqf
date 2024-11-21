@@ -2313,7 +2313,11 @@ comment "ION Units";
             removeVest _unit;  
             removeHeadgear _unit;
             _unit addUniform "U_B_CTRG_Soldier_2_Arid_F";
-            _unit setObjectTextureGlobal [0,'\a3\characters_f\BLUFOR\Data\clothing_wdl_co.paa'];
+
+            _unit spawn {
+                sleep 0.1;
+                _this setObjectTextureGlobal [0,'\a3\characters_f\BLUFOR\Data\clothing_wdl_co.paa'];
+            };
 
             [_unit,""] remoteExec ["switchMove"]; 
             
