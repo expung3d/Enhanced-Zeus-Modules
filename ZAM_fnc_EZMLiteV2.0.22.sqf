@@ -17534,10 +17534,17 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 	[[], {
 		waitUntil {alive player && !isNull (findDisplay 46)};
 		private _mod = missionNamespace getVariable ["bis_curator_1",objNull];
+		private _time = time + 2;
+		waitUntil {uiSleep 0.1; !isNull (getAssignedCuratorLogic player) || time > _time};
 		private _curator = getAssignedCuratorLogic player;
 		if(isNull _curator) exitWith {};
 		if(_curator != _mod) exitWith {};
 		private _loaded = false;
+		if(missionNamespace getVariable ["MAZ_EZM_disableModerator",false]) then {
+			(format ["%1 connected as Game Moderator, their slot is disabled.",name player]) remoteExec ["systemChat"];
+		} else {
+			(format ["%1 connected as Game Moderator, their slot is enabled.",name player]) remoteExec ["systemChat"];
+		};
 		while{true} do {
 			waitUntil {!(isNull (findDisplay 312)) || _loaded};
 			_loaded = true;
