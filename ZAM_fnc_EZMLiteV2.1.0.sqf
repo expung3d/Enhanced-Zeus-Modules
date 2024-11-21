@@ -12599,12 +12599,12 @@ MAZ_EZM_fnc_initFunction = {
 			if(count _lightData == 0) exitWith {[_particle,objNull]};
 			if(count _lightData == 1) exitWith {objNull};
 			private _light = createVehicle ["#lightpoint",[0,0,0], [], 0, "CAN_COLLIDE"];
-			_light setLightBrightness (_lightData # 0);
-			_light setLightColor (_lightData # 1);
-			_light setLightAmbient (_lightData # 2);
-			_light setLightIntensity (_lightData # 3);
-			_light setLightAttenuation (_lightData # 4);
-			_light setLightDayLight true;
+			[_light,_lightData # 0] remoteExec ["setLightBrightness",0,_light];
+			[_light,_lightData # 1] remoteExec ["setLightColor",0,_light];
+			[_light,_lightData # 2] remoteExec ["setLightAmbient",0,_light];
+			[_light,_lightData # 3] remoteExec ["setLightIntensity",0,_light];
+			[_light,_lightData # 4] remoteExec ["setLightAttenuation",0,_light];
+			[_light,true] remoteExec ["setLightDayLight",0,_light];
 			_light attachTo [_helipad,[0,0,1]];
 			[_particle,_light];
 		};
