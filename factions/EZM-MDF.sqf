@@ -15,7 +15,7 @@ if(!isNil "MAZ_EZM_MDF") exitWith {
     ["MDF is already loaded!", "addItemFailed"] call MAZ_EZM_fnc_systemMessage;
 };
 
-MAZ_EZM_MDF_Ver = "1.0";
+MAZ_EZM_MDF_Ver = "1.1";
 MAZ_EZM_MDF = true;
 
 comment "Anti-Air";
@@ -46,15 +46,39 @@ comment "Anti-Air";
         _vehicle
     };
 
+    MAZ_EZM_MDF_fnc_createNyxAAModule = {
+        private _vehicle = ["I_LT_01_AA_F",["a3\armor_f_tank\lt_01\data\lt_01_main_olive_co.paa","a3\armor_f_tank\lt_01\data\lt_01_at_olive_co.paa","a3\armor_f\data\camonet_aaf_digi_desert_co.paa","a3\armor_f\data\cage_olive_co.paa"]] call MAZ_EZM_fnc_createVehicle;
+
+        _vehicle animateSource ["showCamonetHull",1];
+        _vehicle animateSource ["showSLATHull",1];
+        _vehicle animateSource ["showCamonetPlates1",1];
+        _vehicle animateSource ["showCamonetPlates2",1];
+
+        if(MAZ_EZM_spawnWithCrew) then {
+            private _driver = [] call MAZ_EZM_MDF_fnc_createCrewmanModule;
+            _driver moveInDriver _vehicle;
+
+            private _gunner = [] call MAZ_EZM_MDF_fnc_createCrewmanModule;
+            _gunner moveInGunner _vehicle;
+
+            private _grp = createGroup [independent,true];
+            [_driver,_gunner] joinSilent _grp;
+            _grp selectLeader _gunner;
+        };
+
+        _vehicle
+    };
+
 comment "APCs";
 
     MAZ_EZM_MDF_fnc_createGorgonModule = {
-        private _vehicle = ["I_APC_Wheeled_03_cannon_F"] call MAZ_EZM_fnc_createVehicle;
-        [
-            _vehicle,
-            ["Guerilla_02",1], 
-            ["showCamonetHull",0,"showBags",1,"showBags2",1,"showTools",1,"showSLATHull",1]
-        ] call BIS_fnc_initVehicle;
+        private _vehicle = ["I_APC_Wheeled_03_cannon_F",["a3\data_f_tacops\data\apc_wheeled_03_ext_ig_02_co.paa","a3\data_f_tacops\data\apc_wheeled_03_ext2_ig_02_co.paa","a3\data_f_tacops\data\rcws30_ig_02_co.paa","a3\data_f_tacops\data\apc_wheeled_03_ext_alpha_ig_02_co.paa","a3\armor_f\data\camonet_aaf_fia_desert_co.paa","a3\armor_f\data\cage_sand_co.paa"]] call MAZ_EZM_fnc_createVehicle;
+
+        _vehicle animateSource ["showCamonetHull",round (random 1)];
+        _vehicle animateSource ["showBags",round (random 1)];
+        _vehicle animateSource ["showBags2",round (random 1)];
+        _vehicle animateSource ["showTools",round (random 1)];
+        _vehicle animateSource ["showSLATHull",1];
 
         if(MAZ_EZM_spawnWithCrew) then {
             private _driver = [] call MAZ_EZM_MDF_fnc_createCrewmanModule;
@@ -75,12 +99,13 @@ comment "APCs";
     };
 
     MAZ_EZM_MDF_fnc_createRhinoModule = {
-        private _vehicle = ["B_AFV_Wheeled_01_cannon_F"] call MAZ_EZM_fnc_createVehicle;
-        [
-            _vehicle,
-            ["Sand",1], 
-            ["showCamonetHull",1,"showCamonetTurret",0,"showSLATHull",1]
-        ] call BIS_fnc_initVehicle;
+        private _vehicle = ["B_AFV_Wheeled_01_cannon_F",["a3\armor_f_tank\afv_wheeled_01\data\afv_wheeled_01_ext1_co.paa","a3\armor_f_tank\afv_wheeled_01\data\afv_wheeled_01_ext2_co.paa","a3\armor_f_tank\afv_wheeled_01\data\afv_wheeled_01_wheel_co.paa","a3\armor_f\data\camonet_nato_desert_co.paa","a3\armor_f_tank\afv_wheeled_01\data\afv_wheeled_01_ext3_sand_co.paa"]] call MAZ_EZM_fnc_createVehicle;
+
+        if(round (random 1) == 1) then {
+            _vehicle animateSource ["showCamonetHull",1];
+            _vehicle animateSource ["showCamonetTurret",round (random 1)];
+        };
+        _vehicle animateSource ["showSLATHull",1];
 
         if(MAZ_EZM_spawnWithCrew) then {
             private _driver = [] call MAZ_EZM_MDF_fnc_createCrewmanModule;
@@ -168,7 +193,7 @@ comment "Cars";
     };
 
     MAZ_EZM_MDF_fnc_createZamakAmmoModule = {
-        private _vehicle = ["I_Truck_02_ammo_F",["a3\soft_f_beta\truck_02\data\truck_02_kab_blue_co.paa","a3\soft_f_beta\truck_02\data\truck_02_fuel_co.paa","a3\soft_f_beta\truck_02\data\truck_02_int_co.paa"]] call MAZ_EZM_fnc_createVehicle;
+        private _vehicle = ["I_Truck_02_ammo_F",["a3\soft_f_beta\truck_02\data\truck_02_kab_blue_co.paa","a3\soft_f_beta\truck_02\data\truck_02_repair_green_co.paa","a3\soft_f_beta\truck_02\data\truck_02_int_co.paa"]] call MAZ_EZM_fnc_createVehicle;
         
         if(MAZ_EZM_spawnWithCrew) then {
             private _driver = [] call MAZ_EZM_MDF_fnc_createRiflemanModule;
@@ -233,6 +258,19 @@ comment "Cars";
         _vehicle
     };
 
+    MAZ_EZM_MDF_fnc_createQuadbikeModule = {
+        private _vehicle = ["I_G_Quadbike_01_F"] call MAZ_EZM_fnc_createVehicle;
+
+        if(MAZ_EZM_spawnWithCrew) then {
+            private _driver = [] call MAZ_EZM_MDF_fnc_createRiflemanModule;
+            _driver moveInDriver _vehicle;
+            private _passenger = [] call MAZ_EZM_MDF_fnc_createRiflemanModule;
+            _passenger moveInCargo _vehicle;
+        };
+
+        _vehicle;
+    };
+
 comment "Drones";
 
     MAZ_EZM_MDF_fnc_createGreyhawkModule = {
@@ -266,6 +304,7 @@ comment "Groups";
             'MAZ_EZM_MDF_fnc_createMedicModule'
         ];
         _grp setBehaviour "AWARE";
+        _grp;
     };
 
     MAZ_EZM_MDF_fnc_createATSquadModule = {
@@ -280,6 +319,7 @@ comment "Groups";
             'MAZ_EZM_MDF_fnc_createRiflemanModule'
         ];
         _grp setBehaviour "AWARE";
+        _grp;
     };
 
     MAZ_EZM_MDF_fnc_createAASquadModule = {
@@ -294,6 +334,7 @@ comment "Groups";
             'MAZ_EZM_MDF_fnc_createRiflemanModule'
         ];
         _grp setBehaviour "AWARE";
+        _grp;
     };
 
     MAZ_EZM_MDF_fnc_createSentrySquadModule = {
@@ -306,6 +347,7 @@ comment "Groups";
             'MAZ_EZM_MDF_fnc_createRiflemanModule'
         ];
         _grp setBehaviour "AWARE";
+        _grp;
     };
 
     MAZ_EZM_MDF_fnc_createPatrolSquadModule = {
@@ -320,6 +362,7 @@ comment "Groups";
             'MAZ_EZM_MDF_fnc_createRiflemanLATModule'
         ];
         _grp setBehaviour "AWARE";
+        _grp;
     };
 
 comment "Helicopters";
@@ -364,13 +407,27 @@ comment "Men";
 
     MAZ_EZM_MDF_fnc_addMDFIdentitiesToUnit = {
         params ["_unit"];
-        sleep 0.5;
+        sleep 0.1;
         private _frenchVoice = [
             "Male01FRE",
             "Male02FRE",
             "Male03FRE",
             "Male01ENGFRE",
             "Male02ENGFRE"
+        ];
+        private _blackHeads = [
+            "Barklem",
+            "AfricanHead_01",
+            "AfricanHead_02",
+            "AfricanHead_03",
+            "TanoanHead_A3_01",
+            "TanoanHead_A3_02",
+            "TanoanHead_A3_03",
+            "TanoanHead_A3_04",
+            "TanoanHead_A3_05",
+            "TanoanHead_A3_06",
+            "TanoanHead_A3_07",
+            "TanoanHead_A3_08"
         ];
         private _whiteHeads = [
             "WhiteHead_01",
@@ -406,14 +463,16 @@ comment "Men";
             "WhiteHead_32"
         ];
 
+        private _head = if(random 1 > 0.1) then {selectRandom _blackHeads} else {selectRandom _whiteHeads};
+
         [_unit,(selectRandom _frenchVoice)] remoteExec ['setSpeaker'];
-        [_unit,(selectRandom _whiteHeads)] remoteExec ['setFace'];
+        [_unit,_head] remoteExec ['setFace'];
     };
 
     MAZ_EZM_MDF_fnc_addMDFUniformToUnit = {
         params ["_unit"];
-        private _mdfUniforms = ["U_I_CombatUniform","U_I_CombatUniform_shortsleeve","U_BG_Guerilla1_1"];
-        private _mdfVests = ["V_PlateCarrier1_rgr_noflag_F","V_TacVest_brn"];
+        private _mdfUniforms = ["U_I_CombatUniform","U_I_CombatUniform_shortsleeve","U_BG_Guerilla1_1","U_BG_Guerrilla_6_1","U_BG_Guerilla1_2_F","U_I_C_Soldier_Para_1_F","U_I_L_Uniform_01_deserter_F"];
+        private _mdfVests = ["V_PlateCarrier1_rgr_noflag_F","V_TacVest_brn","V_TacVest_brn","V_Chestrig_khk","V_TacChestrig_cbr_F"];
         private _mdfHeadgear = ["H_MilCap_OUcamo","H_Bandanna_cbr","H_Bandanna_khk_hs","H_Bandanna_khk","H_Watchcap_cbr","H_Booniehat_khk_hs","H_Booniehat_khk","H_HelmetB_light_sand"];
         private _mdfGoggles = ["G_Bandanna_beast","G_Bandanna_blk","G_Bandanna_khk","G_Bandanna_shades","G_Bandanna_sport","G_Bandanna_tan","G_Shades_Black","G_Shades_Blue","G_Shades_Green","G_Shades_Red","G_Spectacles","G_Tactical_Clear","G_Tactical_Black"];
         
@@ -425,19 +484,22 @@ comment "Men";
 
     MAZ_EZM_MDF_fnc_addMDFUniformTextures = {
         params ["_unit"];
-        while{alive _unit} do {
-            switch (uniform _unit) do {
-                case "U_I_CombatUniform_shortsleeve": {
-                    [_unit,[0,"A3\characters_f_exp\Syndikat\Data\U_I_C_Soldier_Para_4_F_2_co.paa"]] remoteExec ['setObjectTexture'];
-                };
-                case "U_I_CombatUniform": {
-                    [_unit,[0,"A3\characters_f_exp\Syndikat\Data\U_I_C_Soldier_Para_4_F_2_co.paa"]] remoteExec ['setObjectTexture'];
-                };
-                case "U_BG_Guerilla1_1": {
-                    [_unit,[1,"A3\characters_f_exp\Syndikat\Data\U_I_C_Soldier_Para_4_F_2_co.paa"]] remoteExec ['setObjectTexture'];
-                };
+        sleep 0.1;
+
+        switch (uniform _unit) do {
+            case "U_BG_Guerrilla_6_1";
+            case "U_C_Paramedic_01_F";
+            case "U_I_CombatUniform_shortsleeve";
+            case "U_I_CombatUniform": {
+                _unit setObjectTextureGlobal [0,"A3\characters_f_exp\Syndikat\Data\U_I_C_Soldier_Para_4_F_2_co.paa"];
             };
-            sleep 5;
+            case "U_BG_Guerilla1_2_F";
+            case "U_I_E_Uniform_01_tanktop_F";
+            case "U_I_C_Soldier_Para_1_F";
+            case "U_I_L_Uniform_01_deserter_F";
+            case "U_BG_Guerilla1_1": {
+                _unit setObjectTextureGlobal [1,"A3\characters_f_exp\Syndikat\Data\U_I_C_Soldier_Para_4_F_2_co.paa"];
+            };
         };
     };
 
@@ -649,7 +711,7 @@ comment "Men";
         [_unit,["arifle_Mk20_plain_F",["30Rnd_556x45_Stanag",5],["optic_hamr","acc_flashlight"]],[],["hgun_ACPC2_F",["9Rnd_45ACP_Mag",2]],3] call MAZ_EZM_fnc_addItemAndWeapons;
 
         _unit addBackpack "B_RadioBag_01_black_F";
-        [(unitbackpack _unit),[0,"A3\characters_f_exp\Syndikat\Data\U_I_C_Soldier_Para_4_F_2_co.paa"]] remoteExec ['setObjectTexture',0,_unit];
+        (unitBackpack _unit) setObjectTextureGlobal [0,"A3\characters_f_exp\Syndikat\Data\U_I_C_Soldier_Para_4_F_2_co.paa"];
 
         _unit
     };
@@ -680,6 +742,52 @@ comment "Men";
         _unit
     };
 
+comment "Reinforcements";
+
+    MAZ_EZM_MDF_fnc_createZamakReinforcements = {
+        private _vehicle = ["I_Truck_02_transport_F",["a3\soft_f_beta\truck_02\data\truck_02_kab_blue_co.paa","a3\soft_f_beta\truck_02\data\truck_02_kuz_olive_co.paa","a3\soft_f_beta\truck_02\data\truck_02_int_co.paa"]] call MAZ_EZM_fnc_createVehicle;	
+        
+        private _driver = [] call MAZ_EZM_MDF_fnc_createRiflemanModule;
+        _driver moveInDriver _vehicle;
+
+        private _group1 = [] call MAZ_EZM_MDF_fnc_createRifleSquadModule;
+        private _group2 = [] call MAZ_EZM_MDF_fnc_createRifleSquadModule;
+        {
+            _x moveInAny _vehicle;
+        }forEach (units _group1 + units _group2);
+    };
+
+    MAZ_EZM_MDF_fnc_createZamakCoveredReinforcements = {
+        private _vehicle = ["I_Truck_02_covered_F",["a3\soft_f_beta\truck_02\data\truck_02_kab_blue_co.paa","a3\soft_f_beta\truck_02\data\truck_02_kuz_olive_co.paa","a3\soft_f_beta\truck_02\data\truck_02_int_co.paa"]] call MAZ_EZM_fnc_createVehicle;	
+        
+        private _driver = [] call MAZ_EZM_MDF_fnc_createRiflemanModule;
+        _driver moveInDriver _vehicle;
+
+        private _group1 = [] call MAZ_EZM_MDF_fnc_createRifleSquadModule;
+        private _group2 = [] call MAZ_EZM_MDF_fnc_createRifleSquadModule;
+        {
+            _x moveInAny _vehicle;
+        }forEach (units _group1 + units _group2);
+    };
+
+    MAZ_EZM_MDF_fnc_createOffroadReinforcements = {
+        private _vehicle = ["I_G_Offroad_01_F"] call MAZ_EZM_fnc_createVehicle;
+        
+        [
+            _vehicle,
+            ["Guerilla_03",1], 
+            ["HideDoor1",0,"HideDoor2",0,"HideDoor3",0,"HideBackpacks",1,"HideBumper1",1,"HideBumper2",0,"HideConstruction",0,"hidePolice",1,"HideServices",1,"BeaconsStart",0,"BeaconsServicesStart",0]
+        ] call BIS_fnc_initVehicle;
+        
+        private _driver = [] call MAZ_EZM_MDF_fnc_createRiflemanModule;
+        _driver moveInDriver _vehicle;
+
+        private _group = [] call MAZ_EZM_MDF_fnc_createPatrolSquadModule;
+        {
+            _x moveInAny _vehicle;
+        }forEach (units _group);
+    };
+
 comment "Planes";
 
     MAZ_EZM_MDF_fnc_createGryphonModule = {
@@ -691,6 +799,28 @@ comment "Planes";
             format ["a3\air_f_jets\plane_fighter_04\data\numbers\fighter_04_number_0%1_ca.paa", selectRandom [0,1,2,3,4,5,6,7,8,9]],
             format ["a3\air_f_jets\plane_fighter_04\data\numbers\fighter_04_number_0%1_ca.paa", selectRandom [0,1,2,3,4,5,6,7,8,9]]
         ]] call MAZ_EZM_fnc_createVehicle;
+        
+        if(MAZ_EZM_spawnWithCrew) then {
+            private _driver = [] call MAZ_EZM_MDF_fnc_createPilotModule;
+            _driver moveInDriver _vehicle;
+        };
+
+        _vehicle
+    };
+
+    MAZ_EZM_MDF_fnc_createBuzzardCASModule = {
+        private _vehicle = ["I_Plane_Fighter_03_CAS_F",["a3\air_f_gamma\plane_fighter_03\data\plane_fighter_03_body_1_greyhex_co.paa","a3\air_f_gamma\plane_fighter_03\data\plane_fighter_03_body_2_greyhex_co.paa"]] call MAZ_EZM_fnc_createVehicle;
+        
+        if(MAZ_EZM_spawnWithCrew) then {
+            private _driver = [] call MAZ_EZM_MDF_fnc_createPilotModule;
+            _driver moveInDriver _vehicle;
+        };
+
+        _vehicle
+    };
+    
+    MAZ_EZM_MDF_fnc_createBuzzardAAModule = {
+        private _vehicle = ["I_Plane_Fighter_03_AA_F",["a3\air_f_gamma\plane_fighter_03\data\plane_fighter_03_body_1_greyhex_co.paa","a3\air_f_gamma\plane_fighter_03\data\plane_fighter_03_body_2_greyhex_co.paa"]] call MAZ_EZM_fnc_createVehicle;
         
         if(MAZ_EZM_spawnWithCrew) then {
             private _driver = [] call MAZ_EZM_MDF_fnc_createPilotModule;
@@ -730,6 +860,16 @@ MAZ_EZM_MDF_fnc_modules = {
                 "Creates a MDF Cheetah.",
                 "MAZ_EZM_MDF_fnc_createCheetahModule",
                 "\A3\armor_f_beta\APC_Tracked_01\Data\ui\map_APC_Tracked_01_aa_ca.paa"
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+
+            [
+                MAZ_UnitsTree_INDEP,
+                MAZ_MDFTree,
+                MAZ_MDFAntiAirTree,
+                "AWC 302 Nyx (AA)",
+                "Creates a MDF Nyx AA.",
+                "MAZ_EZM_MDF_fnc_createNyxAAModule",
+                "\A3\Armor_F_Tank\LT_01\data\UI\map_LT_01_aa_CA.paa"
             ] call MAZ_EZM_fnc_zeusAddModule_INDEP;
 
         comment "APCs";
@@ -799,6 +939,16 @@ MAZ_EZM_MDF_fnc_modules = {
                 "Creates a MDF Offroad (HMG).",
                 "MAZ_EZM_MDF_fnc_createOffroadHMGModule",
                 "\A3\Soft_F_Gamma\Offroad_01\Data\UI\map_offroad_armed_CA.paa"
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+
+            [
+                MAZ_UnitsTree_INDEP,
+                MAZ_MDFTree,
+                MAZ_MDFCarsTree,
+                "Quadbike",
+                "Creates a MDF Quadbike.",
+                "MAZ_EZM_MDF_fnc_createQuadbikeModule",
+                "\A3\Soft_F\Quadbike_01\Data\UI\map_Quad_CA.paa"
             ] call MAZ_EZM_fnc_zeusAddModule_INDEP;
 
             [
@@ -1156,6 +1306,44 @@ MAZ_EZM_MDF_fnc_modules = {
                 "\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa"
             ] call MAZ_EZM_fnc_zeusAddModule_INDEP;
 
+        comment "Reinforcement";
+            MAZ_MDFReinforcementTree = [
+                MAZ_UnitsTree_INDEP,
+                MAZ_MDFTree,
+                "Reinforcement",
+                ""
+            ] call MAZ_EZM_fnc_zeusAddSubCategory;
+
+            [
+                MAZ_UnitsTree_INDEP,
+                MAZ_MDFTree,
+                MAZ_MDFReinforcementTree,
+                "Offroad",
+                "Creates a MDF Offroad filled with 1 patrol squad.",
+                "MAZ_EZM_MDF_fnc_createOffroadReinforcements",
+                "\A3\soft_f\Offroad_01\Data\UI\map_offroad_01_CA.paa"
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+
+            [
+                MAZ_UnitsTree_INDEP,
+                MAZ_MDFTree,
+                MAZ_MDFReinforcementTree,
+                "Zamak Transport",
+                "Creates a MDF Zamak Transport filled with 2 rifle squads.",
+                "MAZ_EZM_MDF_fnc_createZamakReinforcements",
+                "\A3\soft_f_beta\Truck_02\data\UI\Map_Truck_02_dump_CA.paa"
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+            
+            [
+                MAZ_UnitsTree_INDEP,
+                MAZ_MDFTree,
+                MAZ_MDFReinforcementTree,
+                "Zamak Transport (Covered)",
+                "Creates a MDF Zamak Transport (Covered) filled with 2 rifle squads.",
+                "MAZ_EZM_MDF_fnc_createZamakCoveredReinforcements",
+                "\A3\soft_f_beta\Truck_02\data\UI\Map_Truck_02_CA.paa"
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+
         comment "Planes";
 
             MAZ_MDFPlanesTree = [
@@ -1164,6 +1352,26 @@ MAZ_EZM_MDF_fnc_modules = {
                 "Planes",
                 ""
             ] call MAZ_EZM_fnc_zeusAddSubCategory;
+
+            [
+                MAZ_UnitsTree_INDEP,
+                MAZ_MDFTree,
+                MAZ_MDFPlanesTree,
+                "A-143 Buzzard (AA)",
+                "Creates a MDF AA Buzzard.",
+                "MAZ_EZM_MDF_fnc_createBuzzardAAModule",
+                "\A3\Air_F_Gamma\Plane_Fighter_03\Data\UI\Map_Plane_Fighter_03_CA.paa"
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+
+            [
+                MAZ_UnitsTree_INDEP,
+                MAZ_MDFTree,
+                MAZ_MDFPlanesTree,
+                "A-143 Buzzard (CAS)",
+                "Creates a MDF CAS Buzzard.",
+                "MAZ_EZM_MDF_fnc_createBuzzardCASModule",
+                "\A3\Air_F_Gamma\Plane_Fighter_03\Data\UI\Map_Plane_Fighter_03_CA.paa"
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP;
 
             [
                 MAZ_UnitsTree_INDEP,
@@ -1178,5 +1386,3 @@ MAZ_EZM_MDF_fnc_modules = {
 };
 
 ["MAZ_EZM_MDF_fnc_modules"] call MAZ_EZM_fnc_addNewFactionToDynamicFactions;
-
-cursorObject switchMove "Acts_JetsPilotWalking";

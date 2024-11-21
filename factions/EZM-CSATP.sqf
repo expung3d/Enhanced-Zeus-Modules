@@ -11,7 +11,7 @@ if(!isNil "MAZ_EZM_CSATP") exitWith {
     ["CSAT+ is already loaded!", "addItemFailed"] call MAZ_EZM_fnc_systemMessage;
 };
 
-MAZ_EZM_CSATP_Ver = "1.0";
+MAZ_EZM_CSATP_Ver = "1.1";
 MAZ_EZM_CSATP = true;
 
 comment "CSAT (China) Units"; 
@@ -198,7 +198,8 @@ comment "CSAT (China) Units";
                 ["showAmmobox",0,"showCanisters",1,"showCamonetTurret",1,"showCamonetHull",1,"showLog",1] 
             ] call BIS_fnc_initVehicle;  
 
-            _vehicle setObjectTextureGlobal [3, ""]; _vehicle lockturret [[0,0],true];  
+            _vehicle setObjectTextureGlobal [3, ""]; 
+            _vehicle lockturret [[0,0],true];  
             
             if(MAZ_EZM_spawnWithCrew) then {  
                 private _driver = [] call MAZ_EZM_CSATP_fnc_createCrewmanModule;  
@@ -277,9 +278,9 @@ comment "CSAT (China) Units";
 
         MAZ_EZM_CSATP_fnc_createSpeedBoatModule = {
             private _vehicle = ["B_Boat_Armed_01_minigun_F",[
-            "a3\boat_f\boat_armed_01\data\boat_armed_01_ext_opfor_co.paa",
-            "a3\boat_f\boat_armed_01\data\boat_armed_01_int_opfor_co.paa",
-            ""
+                "a3\boat_f\boat_armed_01\data\boat_armed_01_ext_opfor_co.paa",
+                "a3\boat_f\boat_armed_01\data\boat_armed_01_int_opfor_co.paa",
+                ""
             ]] call MAZ_EZM_fnc_createVehicle;
             _vehicle setObjectTextureGlobal [2, ""];
             _vehicle removeWeaponTurret ["GMG_40mm", [0]];
@@ -1260,7 +1261,7 @@ comment "CSAT (China) Units";
             _unit setVariable ["BIS_enableRandomization", false];
             removeGoggles _unit;
             _unit forceAddUniform (selectRandom _CSATPUniforms); 
-            _unit setObjectTextureGlobal [2,"\a3\air_f_exp\VTOL_02\Data\VTOL_02_signs_CA.paa"];
+            _unit setObjectTextureGlobal ["clan","\a3\air_f_exp\VTOL_02\Data\VTOL_02_signs_CA.paa"];
             _unit addVest (selectRandom _CSATPVests); 
             _unit addHeadgear (selectRandom _CSATPHeadgear); 
         }; 
@@ -2678,8 +2679,7 @@ comment "CSAT (China) Units";
         }; 
 
         MAZ_EZM_CSATP_fnc_createTempestAmmoModule = { 
-            private _vehicle = ["O_Truck_03_ammo_F"] call MAZ_EZM_fnc_createVehicle;
-            _vehicle setObjectTextureGlobal [3, "a3\structures_f\data\metal\containers\containers_colors_05_co.paa"];
+            private _vehicle = ["O_Truck_03_ammo_F",["","","","a3\structures_f\data\metal\containers\containers_colors_05_co.paa"]] call MAZ_EZM_fnc_createVehicle;
     
             if(MAZ_EZM_spawnWithCrew) then { 
                 private _driver = [] call MAZ_EZM_CSATP_fnc_createRiflemanModule; 
@@ -4066,7 +4066,7 @@ comment "CSAT (Pacific) Units";
             private _CSATPacificHeadgear = ["H_HelmetLeaderO_ghex_F","H_HelmetO_ghex_F","H_HelmetSpecO_ghex_F"]; 
             removeGoggles _unit; 
             _unit forceAddUniform (selectRandom _CSATPacificUniforms); 
-            _unit setObjectTextureGlobal [2,"\a3\air_f_exp\VTOL_02\Data\VTOL_02_signs_CA.paa"];
+            _unit setObjectTextureGlobal ["clan","\a3\air_f_exp\VTOL_02\Data\VTOL_02_signs_CA.paa"];
             _unit addVest (selectRandom _CSATPacificVests); 
             _unit addHeadgear (selectRandom _CSATPacificHeadgear); 
         }; 
@@ -4923,8 +4923,7 @@ comment "CSAT (Pacific) Units";
         }; 
 
         MAZ_EZM_CSATPacific_fnc_createTempestAmmoModule = { 
-            private _vehicle = ["O_T_Truck_03_ammo_ghex_F"] call MAZ_EZM_fnc_createVehicle;
-            _vehicle setObjectTextureGlobal [3, "a3\structures_f\data\metal\containers\containers_colors_05_co.paa"];
+            private _vehicle = ["O_T_Truck_03_ammo_ghex_F",["","","","a3\structures_f\data\metal\containers\containers_colors_05_co.paa"]] call MAZ_EZM_fnc_createVehicle;
     
             if(MAZ_EZM_spawnWithCrew) then { 
                 private _driver = [] call MAZ_EZM_CSATPacific_fnc_createRiflemanModule; 
@@ -7349,7 +7348,7 @@ MAZ_EZM_CSATP_fnc_modules = {
 
             MAZ_UnitsTree_OPFOR tvSetText [[MAZ_CSATPacificTree],"CSAT (Pacific)"];  
             MAZ_UnitsTree_OPFOR tvSetPictureRight [[MAZ_CSATPacificTree], "\a3\ui_f_orange\data\displays\rscdisplayorangechoice\faction_csat_ca.paa"]; 
-            MAZ_UnitsTree_OPFOR tvSetTooltip [[MAZ_CSATPacificTree], format ["Chinese CSAT with green hex camouflage.\n\nAn Official EZM Faction.\nVersion: %1",missionNamespace getVariable "MAZ_EZM_CSATP_Ver"]]
+            MAZ_UnitsTree_OPFOR tvSetTooltip [[MAZ_CSATPacificTree], format ["Chinese CSAT with green hex camouflage.\n\nAn Official EZM Faction.\nVersion: %1",missionNamespace getVariable "MAZ_EZM_CSATP_Ver"]];
 
         comment "Anti-Air";
 
@@ -9066,10 +9065,10 @@ MAZ_EZM_CSATP_fnc_modules = {
                     MAZ_UnitsTree_OPFOR,
                     MAZ_AFRTree,
                     MAZ_AFRMenTree,
-                    "SquadLeader",
+                    "Squad Leader",
                     "Creates a African CSAT SquadLeader.",
                     "MAZ_EZM_AFR_fnc_createSquadLeaderModule",
-                    "\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa"
+                    "\A3\ui_f\data\Map\VehicleIcons\iconManLeader_ca.paa"
                 ] call MAZ_EZM_fnc_zeusAddModule_OPFOR;
 
             comment "Tank";

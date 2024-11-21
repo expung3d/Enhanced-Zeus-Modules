@@ -1,3 +1,7 @@
+if(!isNull (findDisplay 312) && {!isNil "this"} && {!isNull this}) then { 
+ deleteVehicle this; 
+}; 
+
 if(isNil "MAZ_EZM_Version") exitWith {
     systemChat "Enhanced Zeus Modules is not running!";
     playSound "addItemFailed";
@@ -7,11 +11,7 @@ if(isNil "MAZ_EZM_fnc_addNewFactionToDynamicFactions") exitWith {
     ["Your version of EZM is incompatible with dynamic factions. Please use the latest version!", "addItemFailed"] call MAZ_EZM_fnc_systemMessage;
 };
 
-if(!isNil "MAZ_EZM_AAFP") exitWith {
-    ["AAF+ is already loaded!", "addItemFailed"] call MAZ_EZM_fnc_systemMessage;
-};
-
-MAZ_EZM_AAFP_Ver = "1.0";
+MAZ_EZM_AAFP_Ver = "1.1";
 MAZ_EZM_AAFP = true;
 
 comment "Anti-Air";
@@ -131,27 +131,32 @@ comment "APCs";
         _vehicle 
     }; 
 
-    MAZ_EZM_FIAP_fnc_createGorgonNoTurretModule = { 
+    MAZ_EZM_AAFP_fnc_createGorgonNoTurretModule = { 
         private _vehicle = ["I_APC_Wheeled_03_cannon_F"] call MAZ_EZM_fnc_createVehicle;
         _vehicle disableTIEquipment true; 
         _vehicle allowCrewInImmobile true;
         _vehicle animate ["HideTurret",2]; 
         _vehicle lockTurret [[0], true]; 
-        private _camo = selectRandom ["Guerilla_01","Guerilla_02","Guerilla_03"]; 
         [ 
             _vehicle, 
-            [_camo,1],  
+            ["",1],  
             ["showCamonetHull",1,"showBags",1,"showBags2",1,"showTools",1,"showSLATHull",0] 
         ] call BIS_fnc_initVehicle; 
+
+        _vehicle animate['HideTurret',1];
+		_vehicle lockTurret [[0],true]; 
+		_vehicle removeWeaponTurret ["autocannon_30mm_CTWS", [0]];
+		_vehicle removeWeaponTurret ["LMG_coax_ext", [0]];
+		_vehicle removeWeaponTurret ["missiles_titan", [0]];
                     
         if(MAZ_EZM_spawnWithCrew) then { 
-            private _driver = [] call MAZ_EZM_FIAP_fnc_createCrewmanModule; 
+            private _driver = [] call MAZ_EZM_AAFP_fnc_createCrewmanModule; 
             _driver moveInDriver _vehicle; 
         
-            private _commander = [] call MAZ_EZM_FIAP_fnc_createCrewmanModule; 
+            private _commander = [] call MAZ_EZM_AAFP_fnc_createCrewmanModule; 
             _commander moveInCommander _vehicle; 
         
-            private _grp = createGroup [east,true]; 
+            private _grp = createGroup [INDEP,true]; 
             [_driver,_gunner,_commander] joinSilent _grp; 
             _grp selectLeader _commander; 
             _grp setBehaviour "AWARE"; 
@@ -642,6 +647,879 @@ comment "Compositions";
 
     };
 
+    MAZ_EZM_AAFP_fnc_createCrashsiteGreyhawkModule = { 
+        
+        private _pos = [true] call MAZ_EZM_fnc_getScreenPosition; 
+
+        _pad = createVehicle ["Land_HelipadEmpty_F",[24220.5,18957,0],[],0,"CAN_COLLIDE"];
+        _pad setPosWorld [24220.5,18957,3.19];
+        _pad setVectorDirAndUp [[0,1,0],[0,0,1]];
+
+        _item130 = createVehicle ["I_UAV_02_dynamicLoadout_F",[24220.6,18956.1,-0.892],[],0,"CAN_COLLIDE"];
+        createVehicleCrew _item130;
+        private _crew = crew _item130;
+        _crew joinsilent _item129;
+        _objects append _crew;
+        _objectIDs append (_crew apply {-1});
+        _this = _item130;
+        _objects pushback _this;
+        _objectIDs pushback 130;
+        _this setPosWorld [24220.6,18956.1,3.86634];
+        _this setVectorDirAndUp [[0.0615794,-0.997956,-0.0171069],[-0.0505581,-0.0202362,0.998516]];
+        _this setPylonLoadout [1,""];
+        _this setPylonLoadout [2,""];
+        [_this, 0] remoteExec ['setFeatureType', 0, _this];
+        _this enableSimulationGlobal false;
+        if (local _this) then {parseSimpleArray "[[""hithull"",""hitengine"",""hitfuel"",""hitlaileron"",""hitraileron"",""hitlcrudder"",""hitrrudder"",""hitlcelevator"",""hitrelevator"",""hitturret"",""hitgun"",""#l svetlo""],[0.59,0.55,0.58,0.54,0.54,0.61,0.62,0.62,0.62,0,0,0]]" params ['_hitpoints', '_damage']; {if ((_damage # _forEachIndex) == 0) then {continue}; _this setHitPointDamage [_x, _damage # _forEachIndex, false]} forEach _hitpoints};
+        [_this, _pad] call BIS_fnc_attachToRelative;
+
+        _simpleObject_0 = createSimpleObject ['a3\structures_f\mil\helipads\helipadempty_f.p3d', [24193.599609,18921.650391,3.19]];
+        _simpleObject_0 setVectorDirAndUp [[0,1,0],[0,0,1]];
+        [_simpleObject_0, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_0,1] remoteExec ['setObjectScale',0,_simpleObject_0];
+        _simpleObject_2 = createSimpleObject ['a3\structures_f_enoch\military\training\craterlong_02_small_f.p3d', [24220.804688,18954.259766,3.222535]];
+        _simpleObject_2 setVectorDirAndUp [[-0.01,-0.5,0],[0,0,0.5]];
+        [_simpleObject_2, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_2,0.5] remoteExec ['setObjectScale',0,_simpleObject_2];
+        _simpleObject_3 = createSimpleObject ['a3\structures_f_enoch\military\training\craterlong_02_small_f.p3d', [24220.681641,18956.357422,3.192338]];
+        _simpleObject_3 setVectorDirAndUp [[-0.01,-0.5,0],[0,0,0.5]];
+        [_simpleObject_3, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_3,0.5] remoteExec ['setObjectScale',0,_simpleObject_3];
+        _simpleObject_4 = createSimpleObject ['a3\structures_f_enoch\military\training\craterlong_02_small_f.p3d', [24220.394531,18959.849609,3.234962]];
+        _simpleObject_4 setVectorDirAndUp [[-0.01,-0.5,0],[0,0,0.5]];
+        [_simpleObject_4, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_4,0.5] remoteExec ['setObjectScale',0,_simpleObject_4];
+        _simpleObject_5 = createSimpleObject ['a3\structures_f_enoch\military\training\craterlong_02_small_f.p3d', [24220.253906,18961.621094,3.226961]];
+        _simpleObject_5 setVectorDirAndUp [[0.07,-0.49,0],[0,0,0.5]];
+        [_simpleObject_5, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_5,0.5] remoteExec ['setObjectScale',0,_simpleObject_5];
+        _simpleObject_6 = createSimpleObject ['a3\structures_f_enoch\military\training\craterlong_02_small_f.p3d', [24215.503906,18958.570313,3.192961]];
+        _simpleObject_6 setVectorDirAndUp [[0,-0.2,0],[0.03,0,0.2]];
+        [_simpleObject_6, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_6,0.2] remoteExec ['setObjectScale',0,_simpleObject_6];
+        _simpleObject_7 = createSimpleObject ['a3\structures_f_enoch\military\training\craterlong_02_small_f.p3d', [24215.474609,18959.109375,3.178516]];
+        _simpleObject_7 setVectorDirAndUp [[0.01,-0.2,-0.02],[0.03,-0.02,0.2]];
+        [_simpleObject_7, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_7,0.2] remoteExec ['setObjectScale',0,_simpleObject_7];
+        _simpleObject_8 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24221.828125,18960.810547,3.19]];
+        _simpleObject_8 setVectorDirAndUp [[0.86,-0.52,0],[0,0,1]];
+        [_simpleObject_8, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_8,1] remoteExec ['setObjectScale',0,_simpleObject_8];
+        _simpleObject_9 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24222.294922,18957.417969,3.19]];
+        _simpleObject_9 setVectorDirAndUp [[0.8,-0.6,0],[0,0,1]];
+        [_simpleObject_9, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_9,1] remoteExec ['setObjectScale',0,_simpleObject_9];
+        _simpleObject_10 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24220.777344,18952.416016,3.19]];
+        _simpleObject_10 setVectorDirAndUp [[-0.54,-0.44,0],[0,0,0.7]];
+        [_simpleObject_10, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_10,0.7] remoteExec ['setObjectScale',0,_simpleObject_10];
+        _simpleObject_11 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24222.369141,18953.988281,3.19]];
+        _simpleObject_11 setVectorDirAndUp [[0.67,-0.74,0],[0,0,1]];
+        [_simpleObject_11, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_11,1] remoteExec ['setObjectScale',0,_simpleObject_11];
+        _simpleObject_12 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24219.267578,18954.556641,3.19]];
+        _simpleObject_12 setVectorDirAndUp [[-0.82,0.58,0],[0,0,1]];
+        [_simpleObject_12, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_12,1] remoteExec ['setObjectScale',0,_simpleObject_12];
+        _simpleObject_13 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24219.150391,18961.0488281,3.19]];
+        _simpleObject_13 setVectorDirAndUp [[-0.75,0.66,0],[0,0,1]];
+        [_simpleObject_13, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_13,1] remoteExec ['setObjectScale',0,_simpleObject_13];
+        _simpleObject_14 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24219.03125,18957.417969,3.19]];
+        _simpleObject_14 setVectorDirAndUp [[-0.57,0.4,0],[0,0,0.7]];
+        [_simpleObject_14, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_14,0.7] remoteExec ['setObjectScale',0,_simpleObject_14];
+        _simpleObject_15 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24220.0136719,18962.882813,3.19]];
+        _simpleObject_15 setVectorDirAndUp [[0.28,0.41,0],[0,0,0.5]];
+        [_simpleObject_15, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_15,0.5] remoteExec ['setObjectScale',0,_simpleObject_15];
+        _simpleObject_16 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24214.933594,18958.886719,3.19]];
+        _simpleObject_16 setVectorDirAndUp [[-0.22,0.21,0],[0,0,0.3]];
+        [_simpleObject_16, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_16,0.3] remoteExec ['setObjectScale',0,_simpleObject_16];
+        _simpleObject_17 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24215.878906,18959.248047,3.19]];
+        _simpleObject_17 setVectorDirAndUp [[0.25,-0.16,0],[0,0,0.3]];
+        [_simpleObject_17, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_17,0.3] remoteExec ['setObjectScale',0,_simpleObject_17];
+        _simpleObject_18 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24215.757813,18957.802734,3.19]];
+        _simpleObject_18 setVectorDirAndUp [[-0.02,-0.2,0],[0,0,0.2]];
+        [_simpleObject_18, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_18,0.2] remoteExec ['setObjectScale',0,_simpleObject_18];
+        _simpleObject_19 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24215.0820313,18957.964844,3.19]];
+        _simpleObject_19 setVectorDirAndUp [[-0.2,0.03,0],[0,0,0.2]];
+        [_simpleObject_19, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_19,0.2] remoteExec ['setObjectScale',0,_simpleObject_19];
+        _simpleObject_20 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24222.0976563,18954.6875,3.219372]];
+        _simpleObject_20 setVectorDirAndUp [[0,0.4,0],[0,0,0.4]];
+        [_simpleObject_20, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_20,0.4] remoteExec ['setObjectScale',0,_simpleObject_20];
+        _simpleObject_21 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24219.664063,18955.728516,3.219372]];
+        _simpleObject_21 setVectorDirAndUp [[0,0.4,0],[0,0,0.4]];
+        [_simpleObject_21, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_21,0.4] remoteExec ['setObjectScale',0,_simpleObject_21];
+        _simpleObject_22 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24219.230469,18960.0878906,3.219372]];
+        _simpleObject_22 setVectorDirAndUp [[0,0.4,0],[0,0,0.4]];
+        [_simpleObject_22, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_22,0.4] remoteExec ['setObjectScale',0,_simpleObject_22];
+        _simpleObject_23 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24221.582031,18960.275391,3.219372]];
+        _simpleObject_23 setVectorDirAndUp [[0,0.4,0],[0,0,0.4]];
+        [_simpleObject_23, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_23,0.4] remoteExec ['setObjectScale',0,_simpleObject_23];
+        _simpleObject_24 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24221.355469,18962.0332031,3.219372]];
+        _simpleObject_24 setVectorDirAndUp [[0,0.4,0],[0,0,0.4]];
+        [_simpleObject_24, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_24,0.4] remoteExec ['setObjectScale',0,_simpleObject_24];
+        _simpleObject_25 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24221.84375,18956.775391,3.219372]];
+        _simpleObject_25 setVectorDirAndUp [[0,0.4,0],[0,0,0.4]];
+        [_simpleObject_25, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_25,0.4] remoteExec ['setObjectScale',0,_simpleObject_25];
+        _simpleObject_26 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24222.210938,18955.964844,3.219372]];
+        _simpleObject_26 setVectorDirAndUp [[-0.11,-0.39,0],[0,0,0.4]];
+        [_simpleObject_26, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_26,0.4] remoteExec ['setObjectScale',0,_simpleObject_26];
+        _simpleObject_27 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24215.439453,18959.189453,3.219372]];
+        _simpleObject_27 setVectorDirAndUp [[0,0.4,0],[0,0,0.4]];
+        [_simpleObject_27, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_27,0.4] remoteExec ['setObjectScale',0,_simpleObject_27];
+
+        _source01 = "#particlesource" createVehicle getPosWorld _pad;   
+        _source01 setParticleClass "SmallDestructionSmoke";   
+        _source01 attachTo [_pad,[-0.1,0.8,0.6]]; 
+
+        _wreckSound1 = createSoundSource ["Sound_SmokeWreck1", getPosWorld _pad, [], 0];
+        _wreckSound1 attachTo [_pad,[0,0,0.3]];
+
+        _wreckSound1 = createSoundSource ["Sound_SmokeWreck1", getPosWorld _pad, [], 0];
+        _wreckSound1 attachTo [_pad,[0,0,0.3]];
+
+        [_pad] call MAZ_EZM_fnc_deleteAttachedWhenKilled; 
+        [_pad] call MAZ_EZM_fnc_deleteAttachedWhenDeleted; 
+        [_pad] call MAZ_EZM_fnc_addObjectToInterface;  
+
+        _pad setpos _pos; 
+        
+        _pad 
+    };
+
+    MAZ_EZM_AAFP_fnc_createCrashsiteMohawkModule = { 
+        
+        private _pos = [true] call MAZ_EZM_fnc_getScreenPosition; 
+
+        _pad = createVehicle ["Land_HelipadEmpty_F",[24247.6,18933.6,0],[],0,"CAN_COLLIDE"];
+        _pad setPosWorld [24247.6,18933.6,3.19];
+        _pad setVectorDirAndUp [[0,1,0],[0,0,1]];
+
+        _item168 = createVehicle ["I_Heli_Transport_02_F",[24248.3,18934.9,-0.874],[],0,"CAN_COLLIDE"];
+        _this = _item168;
+        _objects pushback _this;
+        _objectIDs pushback 168;
+        _this setPosWorld [24248.3,18934.9,5.9469];
+        _this setVectorDirAndUp [[-0.325238,-0.945632,0],[0,0,1]];
+        heli = _this;
+        [_this, 0] remoteExec ['setFeatureType', 0, _this];
+        [_this,"[[[[],[]],[[],[]],[[],[]],[[],[]]],false]"] call bis_fnc_initAmmoBox;;
+        _this animateDoor ['door_back_R', 1]; 
+        _this animateDoor ["Door_Back_L", 1];
+        _this setHitPointDamage ["hitthrotor", 1];
+        _this enableSimulationGlobal true;
+        if (local _this) then {parseSimpleArray "[[""hithull"",""hitfuel"",""hitavionics"",""hitengine1"",""hitengine2"",""hitengine"",""hithrotor"",""hitvrotor"",""hitglass1"",""hitglass1a"",""hitglass1b"",""hitglass2"",""hitglass3"",""hitglass4"",""hitglass5"",""hitglass6"",""hitglass7"",""hitglass8"",""hitglass9"",""hitglass10"",""hitglass11"",""hitglass12"",""hitglass13"",""hitglass14"",""hitglass15"",""hitglass16"",""hitglass17"",""hitmissiles"",""hitrglass"",""hitlglass"",""hitengine3"",""hitwinch"",""hittransmission"",""hitlight"",""hithydraulics"",""hitgear"",""hithstabilizerl1"",""hithstabilizerr1"",""hitvstabilizer1"",""hittail"",""hitpitottube"",""hitstaticport"",""hitstarter1"",""hitstarter2"",""hitstarter3"",""hitturret"",""hitgun"",""#light_hitpoint""],[0.59,0.6,0.61,0.64,0.65,0.64,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.63,0,0,0,0,0,0,0,0]]" params ['_hitpoints', '_damage']; {if ((_damage # _forEachIndex) == 0) then {continue}; _this setHitPointDamage [_x, _damage # _forEachIndex, false]} forEach _hitpoints};
+        [_this, _pad] call BIS_fnc_attachToRelative; 
+
+        _source05 = "#particlesource" createVehicle getPosWorld _pad;  
+        _source05 setParticleClass "SmallDestructionFire";  
+        _source05 attachTo [_pad,[4.2,4.3,0.5]];  
+        _light05 = "#lightpoint" createVehicle getPosWorld _pad;  
+        _light05 setLightBrightness 0.1;  
+        _light05 setLightAmbient [0.75, 0.25, 0.1];  
+        _light05 setLightColor [0.75, 0.25, 0.1];  
+        _light05 attachTo [_pad,[4.2,4.3,0.5]]; 
+
+        _source06 = "#particlesource" createVehicle getPosWorld _pad;  
+        _source06 setParticleClass "SmallDestructionFire";  
+        _source06 attachTo [_pad,[0.3,-5,0.7]];  
+        _light06 = "#lightpoint" createVehicle getPosWorld _pad;  
+        _light06 setLightBrightness 0.1;  
+        _light06 setLightAmbient [0.75, 0.25, 0.1];  
+        _light06 setLightColor [0.75, 0.25, 0.1];  
+        _light06 attachTo [_pad,[0.3,-5,0.7]]; 
+
+        _source07 = "#particlesource" createVehicle getPosWorld _pad;  
+        _source07 setParticleClass "SmallDestructionFire";  
+        _source07 attachTo [_pad,[-2,-1,0.4]];  
+        _light07 = "#lightpoint" createVehicle getPosWorld _pad;  
+        _light07 setLightBrightness 0.1;  
+        _light07 setLightAmbient [0.75, 0.25, 0.1];  
+        _light07 setLightColor [0.75, 0.25, 0.1];  
+        _light07 attachTo [_pad,[-2,-1,0.4]]; 
+
+        _source08 = "#particlesource" createVehicle getPosWorld _pad;  
+        _source08 setParticleClass "SmallDestructionFire";  
+        _source08 attachTo [_pad,[-2.7,2.7,0.1]];  
+        _light08 = "#lightpoint" createVehicle getPosWorld _pad;  
+        _light08 setLightBrightness 0.1;  
+        _light08 setLightAmbient [0.75, 0.25, 0.1];  
+        _light08 setLightColor [0.75, 0.25, 0.1];  
+        _light08 attachTo [_pad,[-2.7,2.7,0.1]]; ;  
+
+        if(MAZ_EZM_spawnWithCrew) then { 
+                    
+                private _pilot = [] call MAZ_EZM_AAFP_fnc_createHeliPilotModule;  
+                _pilot moveInDriver _this;  
+                _pilot setDamage 1;  
+        };  
+
+        _this  lockDriver true; 
+        _this  lockTurret [[0], true];
+
+        _simpleObject_0 = createSimpleObject ['a3\structures_f\mil\helipads\helipadempty_f.p3d', [24193.599609,18921.650391,3.19]];
+        _simpleObject_0 setVectorDirAndUp [[0,1,0],[0,0,1]];
+        [_simpleObject_0, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_0,1] remoteExec ['setObjectScale',0,_simpleObject_0];
+        _simpleObject_1 = createSimpleObject ['a3\structures_f_enoch\military\training\craterlong_02_f.p3d', [24246.714844,18930.111328,3.397452]];
+        _simpleObject_1 setVectorDirAndUp [[-0.26,-0.76,0],[0,0,0.8]];
+        [_simpleObject_1, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_1,0.8] remoteExec ['setObjectScale',0,_simpleObject_1];
+        _simpleObject_2 = createSimpleObject ['a3\structures_f_enoch\military\training\craterlong_02_small_f.p3d', [24250.412109,18936.0410156,3.139893]];
+        _simpleObject_2 setVectorDirAndUp [[-0.24,-0.76,-0.02],[-0.08,0,0.8]];
+        [_simpleObject_2, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_2,0.8] remoteExec ['setObjectScale',0,_simpleObject_2];
+        _simpleObject_3 = createSimpleObject ['a3\structures_f_enoch\military\training\craterlong_02_small_f.p3d', [24246.861328,18936.84375,3.160826]];
+        _simpleObject_3 setVectorDirAndUp [[-0.16,-0.78,-0.06],[0.08,-0.08,0.79]];
+        [_simpleObject_3, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_3,0.8] remoteExec ['setObjectScale',0,_simpleObject_3];
+        _simpleObject_4 = createSimpleObject ['a3\structures_f_enoch\military\training\craterlong_02_small_f.p3d', [24248.162109,18939.595703,3.170275]];
+        _simpleObject_4 setVectorDirAndUp [[-0.24,-0.66,-0.03],[0.09,-0.06,0.69]];
+        [_simpleObject_4, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_4,0.7] remoteExec ['setObjectScale',0,_simpleObject_4];
+        _simpleObject_5 = createSimpleObject ['a3\structures_f_enoch\military\training\craterlong_02_small_f.p3d', [24251.53125,18938.662109,3.186638]];
+        _simpleObject_5 setVectorDirAndUp [[-0.18,-0.68,-0.01],[-0.05,0,0.7]];
+        [_simpleObject_5, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_5,0.7] remoteExec ['setObjectScale',0,_simpleObject_5];
+        _simpleObject_6 = createSimpleObject ['a3\structures_f_enoch\military\training\craterlong_02_small_f.p3d', [24248.269531,18933.181641,3.233933]];
+        _simpleObject_6 setVectorDirAndUp [[-0.24,-0.76,0],[0,0,0.8]];
+        [_simpleObject_6, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_6,0.8] remoteExec ['setObjectScale',0,_simpleObject_6];
+        _simpleObject_7 = createSimpleObject ['a3\structures_f_enoch\military\training\craterlong_02_small_f.p3d', [24247.132813,18933.548828,3.233933]];
+        _simpleObject_7 setVectorDirAndUp [[-0.24,-0.76,0],[0,0,0.8]];
+        [_simpleObject_7, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_7,0.8] remoteExec ['setObjectScale',0,_simpleObject_7];
+        _simpleObject_8 = createSimpleObject ['a3\structures_f\mil\helipads\helipadempty_f.p3d', [24248.0195313,18934.478516,3.235]];
+        _simpleObject_8 setVectorDirAndUp [[0,1,0],[0,0,1]];
+        [_simpleObject_8, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_8,1] remoteExec ['setObjectScale',0,_simpleObject_8];
+        _simpleObject_9 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24244.613281,18934.240234,3.19]];
+        _simpleObject_9 setVectorDirAndUp [[-0.82,0.57,0],[0,0,1]];
+        [_simpleObject_9, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_9,1] remoteExec ['setObjectScale',0,_simpleObject_9];
+        _simpleObject_10 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24243.880859,18931.470703,3.19]];
+        _simpleObject_10 setVectorDirAndUp [[-0.35,0.94,0],[0,0,1]];
+        [_simpleObject_10, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_10,1] remoteExec ['setObjectScale',0,_simpleObject_10];
+        _simpleObject_11 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24243.300781,18927.873047,3.19]];
+        _simpleObject_11 setVectorDirAndUp [[-0.9,0.43,0],[0,0,1]];
+        [_simpleObject_11, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_11,1] remoteExec ['setObjectScale',0,_simpleObject_11];
+        _simpleObject_12 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24244.914063,18937.496094,3.19]];
+        _simpleObject_12 setVectorDirAndUp [[-0.52,0.86,0],[0,0,1]];
+        [_simpleObject_12, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_12,1] remoteExec ['setObjectScale',0,_simpleObject_12];
+        _simpleObject_13 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24246.970703,18940.679688,3.190001]];
+        _simpleObject_13 setVectorDirAndUp [[-0.05,1,0],[0,0,1]];
+        [_simpleObject_13, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_13,1] remoteExec ['setObjectScale',0,_simpleObject_13];
+        _simpleObject_14 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24245.671875,18925.431641,3.19]];
+        _simpleObject_14 setVectorDirAndUp [[-0.86,-0.51,0],[0,0,1]];
+        [_simpleObject_14, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_14,1] remoteExec ['setObjectScale',0,_simpleObject_14];
+        _simpleObject_15 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24248.648438,18926.664063,3.19]];
+        _simpleObject_15 setVectorDirAndUp [[0.28,-0.96,0],[0,0,1]];
+        [_simpleObject_15, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_15,1] remoteExec ['setObjectScale',0,_simpleObject_15];
+        _simpleObject_16 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24249.898438,18930.179688,3.19]];
+        _simpleObject_16 setVectorDirAndUp [[0.65,-0.76,0],[0,0,1]];
+        [_simpleObject_16, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_16,1] remoteExec ['setObjectScale',0,_simpleObject_16];
+        _simpleObject_17 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24251.246094,18933.248047,3.19]];
+        _simpleObject_17 setVectorDirAndUp [[0.36,-0.93,0],[0,0,1]];
+        [_simpleObject_17, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_17,1] remoteExec ['setObjectScale',0,_simpleObject_17];
+        _simpleObject_18 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24252.619141,18935.546875,3.19]];
+        _simpleObject_18 setVectorDirAndUp [[0.5,-0.87,0],[0,0,1]];
+        [_simpleObject_18, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_18,1] remoteExec ['setObjectScale',0,_simpleObject_18];
+        _simpleObject_19 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24253.388672,18938.839844,3.19]];
+        _simpleObject_19 setVectorDirAndUp [[0.87,-0.49,0],[0,0,1]];
+        [_simpleObject_19, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_19,1] remoteExec ['setObjectScale',0,_simpleObject_19];
+        _simpleObject_20 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24248.605469,18937.744141,3.19]];
+        _simpleObject_20 setVectorDirAndUp [[0.58,-0.82,0],[0,0,1]];
+        [_simpleObject_20, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_20,1] remoteExec ['setObjectScale',0,_simpleObject_20];
+        _simpleObject_21 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24249.474609,18940.267578,3.19]];
+        _simpleObject_21 setVectorDirAndUp [[0.79,-0.62,0],[0,0,1]];
+        [_simpleObject_21, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_21,1] remoteExec ['setObjectScale',0,_simpleObject_21];
+        _simpleObject_22 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24250.171875,18938.138672,3.19]];
+        _simpleObject_22 setVectorDirAndUp [[0.07,1,0],[0,0,1]];
+        [_simpleObject_22, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_22,1] remoteExec ['setObjectScale',0,_simpleObject_22];
+        _simpleObject_23 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24251.130859,18940.216797,3.19]];
+        _simpleObject_23 setVectorDirAndUp [[0.07,1,0],[0,0,1]];
+        [_simpleObject_23, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_23,1] remoteExec ['setObjectScale',0,_simpleObject_23];
+        _simpleObject_24 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24249.609375,18929.669922,3.206881]];
+        _simpleObject_24 setVectorDirAndUp [[0,0.6,0],[0,0,0.6]];
+        [_simpleObject_24, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_24,0.6] remoteExec ['setObjectScale',0,_simpleObject_24];
+        _simpleObject_25 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24249.802734,18932.490234,3.200231]];
+        _simpleObject_25 setVectorDirAndUp [[0.51,-0.32,0],[0,0,0.6]];
+        [_simpleObject_25, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_25,0.6] remoteExec ['setObjectScale',0,_simpleObject_25];
+        _simpleObject_26 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24249.914063,18931.486328,3.201402]];
+        _simpleObject_26 setVectorDirAndUp [[0,0.6,0],[0,0,0.6]];
+        [_simpleObject_26, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_26,0.6] remoteExec ['setObjectScale',0,_simpleObject_26];
+        _simpleObject_27 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24252.238281,18935.734375,3.219372]];
+        _simpleObject_27 setVectorDirAndUp [[0.54,-0.26,0],[0,0,0.6]];
+        [_simpleObject_27, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_27,0.6] remoteExec ['setObjectScale',0,_simpleObject_27];
+        _simpleObject_28 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24251.314453,18933.865234,3.219372]];
+        _simpleObject_28 setVectorDirAndUp [[0.54,-0.26,0],[0,0,0.6]];
+        [_simpleObject_28, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_28,0.6] remoteExec ['setObjectScale',0,_simpleObject_28];
+        _simpleObject_29 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24252.808594,18938.265625,3.219372]];
+        _simpleObject_29 setVectorDirAndUp [[0.54,-0.26,0],[0,0,0.6]];
+        [_simpleObject_29, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_29,0.6] remoteExec ['setObjectScale',0,_simpleObject_29];
+        _simpleObject_30 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24250.0839844,18937.916016,3.219372]];
+        _simpleObject_30 setVectorDirAndUp [[0.54,-0.26,0],[0,0,0.6]];
+        [_simpleObject_30, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_30,0.6] remoteExec ['setObjectScale',0,_simpleObject_30];
+        _simpleObject_31 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24248.820313,18940.833984,3.219372]];
+        _simpleObject_31 setVectorDirAndUp [[0.54,-0.26,0],[0,0,0.6]];
+        [_simpleObject_31, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_31,0.6] remoteExec ['setObjectScale',0,_simpleObject_31];
+        _simpleObject_32 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24246.248047,18939.216797,3.219372]];
+        _simpleObject_32 setVectorDirAndUp [[0.54,-0.26,0],[0,0,0.6]];
+        [_simpleObject_32, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_32,0.6] remoteExec ['setObjectScale',0,_simpleObject_32];
+        _simpleObject_33 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24252.369141,18939.927734,3.219372]];
+        _simpleObject_33 setVectorDirAndUp [[0.54,-0.26,0],[0,0,0.6]];
+        [_simpleObject_33, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_33,0.6] remoteExec ['setObjectScale',0,_simpleObject_33];
+        _simpleObject_34 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24248.734375,18928.0546875,3.219372]];
+        _simpleObject_34 setVectorDirAndUp [[0.54,-0.26,0],[0,0,0.6]];
+        [_simpleObject_34, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_34,0.6] remoteExec ['setObjectScale',0,_simpleObject_34];
+        _simpleObject_35 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24247.1875,18925.988281,3.21719]];
+        _simpleObject_35 setVectorDirAndUp [[0.54,-0.26,0],[0,0,0.6]];
+        [_simpleObject_35, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_35,0.6] remoteExec ['setObjectScale',0,_simpleObject_35];
+        _simpleObject_36 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24248.00390625,18926.835938,3.219372]];
+        _simpleObject_36 setVectorDirAndUp [[0.54,-0.26,0],[0,0,0.6]];
+        [_simpleObject_36, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_36,0.6] remoteExec ['setObjectScale',0,_simpleObject_36];
+        _simpleObject_37 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24245.226563,18936.435547,3.219372]];
+        _simpleObject_37 setVectorDirAndUp [[0.54,-0.26,0],[0,0,0.6]];
+        [_simpleObject_37, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_37,0.6] remoteExec ['setObjectScale',0,_simpleObject_37];
+        _simpleObject_38 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24245.0800781,18934.0449219,3.219372]];
+        _simpleObject_38 setVectorDirAndUp [[-0.49,0.35,0],[0,0,0.6]];
+        [_simpleObject_38, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_38,0.6] remoteExec ['setObjectScale',0,_simpleObject_38];
+        _simpleObject_39 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24244.544922,18931.544922,3.219372]];
+        _simpleObject_39 setVectorDirAndUp [[-0.49,0.35,0],[0,0,0.6]];
+        [_simpleObject_39, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_39,0.6] remoteExec ['setObjectScale',0,_simpleObject_39];
+        _simpleObject_40 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24244.0800781,18929.521484,3.219372]];
+        _simpleObject_40 setVectorDirAndUp [[-0.49,0.35,0],[0,0,0.6]];
+        [_simpleObject_40, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_40,0.6] remoteExec ['setObjectScale',0,_simpleObject_40];
+        _simpleObject_41 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24243.962891,18927.638672,3.205833]];
+        _simpleObject_41 setVectorDirAndUp [[-0.49,0.35,0],[0,0,0.6]];
+        [_simpleObject_41, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_41,0.6] remoteExec ['setObjectScale',0,_simpleObject_41];
+        _simpleObject_42 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24245.798828,18926.152344,3.219372]];
+        _simpleObject_42 setVectorDirAndUp [[-0.4,-0.44,0],[0,0,0.6]];
+        [_simpleObject_42, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_42,0.6] remoteExec ['setObjectScale',0,_simpleObject_42];
+        _simpleObject_43 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24244.509766,18926.595703,3.208735]];
+        _simpleObject_43 setVectorDirAndUp [[-0.49,0.35,0],[0,0,0.6]];
+        [_simpleObject_43, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_43,0.6] remoteExec ['setObjectScale',0,_simpleObject_43];
+        _simpleObject_44 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24245.412109,18937.808594,3.219372]];
+        _simpleObject_44 setVectorDirAndUp [[-0.49,0.35,0],[0,0,0.6]];
+        [_simpleObject_44, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_44,0.6] remoteExec ['setObjectScale',0,_simpleObject_44];
+        _simpleObject_45 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24249.484375,18929.542969,3.219372]];
+        _simpleObject_45 setVectorDirAndUp [[-0.73,0.53,0],[0,0,0.9]];
+        [_simpleObject_45, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_45,0.9] remoteExec ['setObjectScale',0,_simpleObject_45];
+        _simpleObject_46 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24244.947266,18932.453125,3.219372]];
+        _simpleObject_46 setVectorDirAndUp [[-0.73,0.53,0],[0,0,0.9]];
+        [_simpleObject_46, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_46,0.9] remoteExec ['setObjectScale',0,_simpleObject_46];
+        _simpleObject_47 = createSimpleObject ['a3\structures_f_oldman\decals\brokencarglass_01_4x4_f.p3d', [24250.0957031,18931.0664063,3.209008]];
+        _simpleObject_47 setVectorDirAndUp [[0.99,-0.14,0],[0,0,1]];
+        [_simpleObject_47, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_47,1] remoteExec ['setObjectScale',0,_simpleObject_47];
+        _simpleObject_48 = createSimpleObject ['a3\structures_f_oldman\decals\brokencarglass_01_4x4_f.p3d', [24244.824219,18932.117188,3.209008]];
+        _simpleObject_48 setVectorDirAndUp [[0.99,-0.14,0],[0,0,1]];
+        [_simpleObject_48, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_48,1] remoteExec ['setObjectScale',0,_simpleObject_48];
+        _simpleObject_49 = createSimpleObject ['a3\data_f\particleeffects\shard\shard2.p3d', [24243.527344,18930.535156,3.186123]];
+        _simpleObject_49 setVectorDirAndUp [[0.26,0.91,-0.33],[0.23,0.27,0.93]];
+        [_simpleObject_49, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_49,1] remoteExec ['setObjectScale',0,_simpleObject_49];
+        _simpleObject_50 = createSimpleObject ['a3\data_f\particleeffects\shard\shard2.p3d', [24244.714844,18936.306641,3.24144]];
+        _simpleObject_50 setVectorDirAndUp [[-0.62,0.77,0.13],[-0.6,-0.58,0.55]];
+        [_simpleObject_50, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_50,1] remoteExec ['setObjectScale',0,_simpleObject_50];
+        _simpleObject_51 = createSimpleObject ['a3\data_f\particleeffects\shard\shard2.p3d', [24252.761719,18939.449219,3.244401]];
+        _simpleObject_51 setVectorDirAndUp [[-0.62,0.38,-0.68],[-0.6,0.32,0.73]];
+        [_simpleObject_51, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_51,1] remoteExec ['setObjectScale',0,_simpleObject_51];
+        _simpleObject_52 = createSimpleObject ['a3\data_f\particleeffects\shard\shard2.p3d', [24251.136719,18934.753906,3.542693]];
+        _simpleObject_52 setVectorDirAndUp [[-0.62,-0.15,-0.77],[-0.6,0.72,0.35]];
+        [_simpleObject_52, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_52,1] remoteExec ['setObjectScale',0,_simpleObject_52];
+        _simpleObject_53 = createSimpleObject ['a3\data_f\particleeffects\shard\shard2.p3d', [24248.253906,18928.529297,3.791069]];
+        _simpleObject_53 setVectorDirAndUp [[-0.1,0.77,0.63],[0.3,-0.58,0.76]];
+        [_simpleObject_53, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_53,1] remoteExec ['setObjectScale',0,_simpleObject_53];
+        _simpleObject_54 = createSimpleObject ['a3\data_f\particleeffects\shard\shard2.p3d', [24247.525391,18939.90625,3.479481]];
+        _simpleObject_54 setVectorDirAndUp [[-0.13,0.77,0.62],[0.26,-0.58,0.77]];
+        [_simpleObject_54, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_54,1] remoteExec ['setObjectScale',0,_simpleObject_54];
+        _simpleObject_55 = createSimpleObject ['a3\data_f\particleeffects\shard\shard4.p3d', [24249.244141,18932.0996094,3.531269]];
+        _simpleObject_55 setVectorDirAndUp [[0,0.69,-0.13],[0.15,0.13,0.67]];
+        [_simpleObject_55, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_55,0.7] remoteExec ['setObjectScale',0,_simpleObject_55];
+        _simpleObject_56 = createSimpleObject ['a3\data_f\particleeffects\shard\shard4.p3d', [24251.203125,18935.371094,3.628353]];
+        _simpleObject_56 setVectorDirAndUp [[-0.5,0.47,-0.13],[0,0.2,0.67]];
+        [_simpleObject_50, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_56,0.7] remoteExec ['setObjectScale',0,_simpleObject_56];
+        _simpleObject_57 = createSimpleObject ['a3\data_f\particleeffects\shard\shard4.p3d', [24247.488281,18940.462891,3.461096]];
+        _simpleObject_57 setVectorDirAndUp [[-0.36,0.47,-0.38],[-0.35,0.2,0.57]];
+        [_simpleObject_57, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_57,0.7] remoteExec ['setObjectScale',0,_simpleObject_57];
+        _simpleObject_58 = createSimpleObject ['a3\data_f\particleeffects\shard\shard4.p3d', [24244.630859,18930.521484,3.563969]];
+        _simpleObject_58 setVectorDirAndUp [[0.52,0.28,-0.38],[0.25,0.32,0.57]];
+        [_simpleObject_58, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_58,0.7] remoteExec ['setObjectScale',0,_simpleObject_58];
+        _simpleObject_59 = createSimpleObject ['a3\data_f\particleeffects\shard\shard4.p3d', [24245.818359,18934.177734,3.305502]];
+        _simpleObject_59 setVectorDirAndUp [[0.06,-0.68,0.16],[-0.03,-0.17,-0.68]];
+        [_simpleObject_59, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_59,0.7] remoteExec ['setObjectScale',0,_simpleObject_59];
+        _simpleObject_60 = createSimpleObject ['a3\data_f\particleeffects\shard\shard3.p3d', [24246.828125,18938.339844,3.481801]];
+        _simpleObject_60 setVectorDirAndUp [[0,1,0],[0,0,1]];
+        [_simpleObject_60, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_60,1] remoteExec ['setObjectScale',0,_simpleObject_60];
+        _simpleObject_61 = createSimpleObject ['a3\data_f\particleeffects\shard\shard3.p3d', [24251.980469,18937.767578,3.606808]];
+        _simpleObject_61 setVectorDirAndUp [[0,1,0],[0,0,1]];
+        [_simpleObject_61, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_61,1] remoteExec ['setObjectScale',0,_simpleObject_61];
+        _simpleObject_62 = createSimpleObject ['a3\data_f\particleeffects\shard\shard3.p3d', [24248.269531,18929.28125,3.865875]];
+        _simpleObject_62 setVectorDirAndUp [[0,1,0],[0,0,1]];
+        [_simpleObject_62, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_62,1] remoteExec ['setObjectScale',0,_simpleObject_62];
+        _simpleObject_63 = createSimpleObject ['a3\data_f\particleeffects\shard\shard3.p3d', [24245.583984,18932.523438,3.550786]];
+        _simpleObject_63 setVectorDirAndUp [[0,-0.86,0.5],[0,-0.5,-0.86]];
+        [_simpleObject_63, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_63,1] remoteExec ['setObjectScale',0,_simpleObject_63];
+
+        _wreckSound1 = createSoundSource ["Sound_SmokeWreck1", getPosWorld _pad, [], 0];
+        _wreckSound1 attachTo [_pad,[0,0,2.5]];
+
+        _wreckSound1 = createSoundSource ["Sound_SmokeWreck1", getPosWorld _pad, [], 0];
+        _wreckSound1 attachTo [_pad,[0,0,2.5]];
+
+        _source01 = "#particlesource" createVehicle getPosWorld _pad;  
+        _source01 setParticleClass "SmallDestructionSmoke";  
+        _source01 attachTo [_pad,[0.7,3,2.8]]; 
+
+        _source02 = "#particlesource" createVehicle getPosWorld _pad;  
+        _source02 setParticleClass "SmallDestructionSmoke";  
+        _source02 attachTo [_pad,[1.8,3,2.8]]; 
+
+        _source03 = "#particlesource" createVehicle getPosWorld _pad;  
+        _source03 setParticleClass "SmallDestructionSmoke";  
+        _source03 attachTo [_pad,[-1.4,-1.7,2.8]]; 
+
+        _source04 = "#particlesource" createVehicle getPosWorld _pad;   
+        _source04 setParticleClass "SmallDestructionSmoke";   
+        _source04 attachTo [_pad,[0.2,-2,2.8]];
+
+        [_pad] call MAZ_EZM_fnc_deleteAttachedWhenKilled; 
+        [_pad] call MAZ_EZM_fnc_deleteAttachedWhenDeleted; 
+        [_pad] call MAZ_EZM_fnc_addObjectToInterface; 
+        [_pad] call MAZ_EZM_fnc_addObjectToInterface; 
+
+        _pad setpos _pos; 
+        
+        _pad 
+    };
+
+    MAZ_EZM_AAFP_fnc_createCrashsiteOrcaModule = { 
+        
+        private _pos = [true] call MAZ_EZM_fnc_getScreenPosition; 
+
+        _pad = createVehicle ["Land_HelipadEmpty_F",[24193.6,18921.7,0],[],0,"CAN_COLLIDE"];
+        _pad setPosWorld [24193.6,18921.7,3.19];
+        _pad setVectorDirAndUp [[0,1,0],[0,0,1]];
+
+        _simpleObject_0 = createSimpleObject ['Land_Wreck_Heli_02_Wreck_04_F', [24195.445313,18920.96875,3.35]];
+        _simpleObject_0 setVectorDirAndUp [[0,1,0.03],[0.36,-0.03,0.93]];
+        [_simpleObject_0, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_0,1] remoteExec ['setObjectScale',0,_simpleObject_0];
+        [_simpleObject_0,[0,"\a3\air_f\Heli_Light_02\Data\heli_light_02_ext_indp_co.paa"]] remoteExec ['setObjectTexture'];
+        _simpleObject_1 = createSimpleObject ['Land_Wreck_Heli_02_Wreck_01_F', [24195.132813,18922.294922,1.6]];
+        _simpleObject_1 setVectorDirAndUp [[0,1,-0.06],[0.99,0.01,0.1]];
+        [_simpleObject_1, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_1,1] remoteExec ['setObjectScale',0,_simpleObject_1];
+        [_simpleObject_1,[0,"\a3\air_f\Heli_Light_02\Data\heli_light_02_ext_indp_co.paa"]] remoteExec ['setObjectTexture'];
+        _simpleObject_2 = createSimpleObject ['Land_Wreck_Heli_02_Wreck_02_F', [24191.150391,18929.0546875,2.4]];
+        _simpleObject_2 setVectorDirAndUp [[-0.77,0.64,0],[-0.24,-0.29,0.93]];
+        [_simpleObject_2, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_2,1] remoteExec ['setObjectScale',0,_simpleObject_2];
+        [_simpleObject_2,[0,"\a3\air_f\Heli_Light_02\Data\heli_light_02_ext_indp_co.paa"]] remoteExec ['setObjectTexture'];
+        _simpleObject_3 = createSimpleObject ['a3\props_f_enoch\military\wrecks\heli_light_02_wreck_03_f.p3d', [24196.84375,18916.970703,3.507797]];
+        _simpleObject_3 setVectorDirAndUp [[0.73,0.68,0],[0.54,-0.58,0.6]];
+        [_simpleObject_3, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_3,1] remoteExec ['setObjectScale',0,_simpleObject_3];
+        _simpleObject_4 = createSimpleObject ['a3\props_f_enoch\military\wrecks\heli_light_02_wreck_03_f.p3d', [24189.621094,18924.654297,3.218599]];
+        _simpleObject_4 setVectorDirAndUp [[0.43,0.42,-0.8],[0.71,0.39,0.59]];
+        [_simpleObject_4, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_4,1] remoteExec ['setObjectScale',0,_simpleObject_4];
+        _simpleObject_5 = createSimpleObject ['a3\structures_f_enoch\military\training\craterlong_02_small_f.p3d', [24193.263672,18919.876953,3.26372]];
+        _simpleObject_5 setVectorDirAndUp [[0.03,-0.9,0],[0,0,0.9]];
+        [_simpleObject_5, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_5,0.9] remoteExec ['setObjectScale',0,_simpleObject_5];
+        _simpleObject_6 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24196.185547,18918.884766,3.220446]];
+        _simpleObject_6 setVectorDirAndUp [[0,0.8,0],[0,0,0.8]];
+        [_simpleObject_6, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_6,0.8] remoteExec ['setObjectScale',0,_simpleObject_6];
+        _simpleObject_7 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24195.808594,18917.03125,3.218668]];
+        _simpleObject_7 setVectorDirAndUp [[0,0.9,0],[0,0,0.9]];
+        [_simpleObject_7, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_7,0.9] remoteExec ['setObjectScale',0,_simpleObject_7];
+        _simpleObject_8 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24191.0625,18920.130859,3.219372]];
+        _simpleObject_8 setVectorDirAndUp [[0,1,0],[0,0,1]];
+        [_simpleObject_8, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_8,1] remoteExec ['setObjectScale',0,_simpleObject_8];
+        _simpleObject_9 = createSimpleObject ['a3\structures_f_enoch\military\training\craterlong_02_small_f.p3d', [24193.25,18922.517578,3.11553]];
+        _simpleObject_9 setVectorDirAndUp [[0.03,-0.9,0],[0,0,0.9]];
+        [_simpleObject_9, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_9,0.9] remoteExec ['setObjectScale',0,_simpleObject_9];
+        _simpleObject_10 = createSimpleObject ['a3\structures_f_enoch\military\training\craterlong_02_small_f.p3d', [24193.158203,18925.201172,3.22928]];
+        _simpleObject_10 setVectorDirAndUp [[0.03,-0.9,0],[0,0,0.9]];
+        [_simpleObject_10, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_10,0.9] remoteExec ['setObjectScale',0,_simpleObject_10];
+        _simpleObject_11 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24195.330078,18925.519531,3.213861]];
+        _simpleObject_11 setVectorDirAndUp [[0,0.6,0],[0,0,0.6]];
+        [_simpleObject_11, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_11,0.6] remoteExec ['setObjectScale',0,_simpleObject_11];
+        _simpleObject_12 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24194.720703,18927.0136719,3.217307]];
+        _simpleObject_12 setVectorDirAndUp [[0.4,-0.3,0],[0,0,0.5]];
+        [_simpleObject_12, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_12,0.5] remoteExec ['setObjectScale',0,_simpleObject_12];
+        _simpleObject_13 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24195.738281,18923.175781,3.219372]];
+        _simpleObject_13 setVectorDirAndUp [[0.77,0.23,0],[0,0,0.8]];
+        [_simpleObject_13, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_13,0.8] remoteExec ['setObjectScale',0,_simpleObject_13];
+        _simpleObject_14 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24192.179688,18928.015625,3.222818]];
+        _simpleObject_14 setVectorDirAndUp [[0.04,-0.5,0],[0,0,0.5]];
+        [_simpleObject_14, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_14,0.5] remoteExec ['setObjectScale',0,_simpleObject_14];
+        _simpleObject_15 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24191.474609,18926.570313,3.219372]];
+        _simpleObject_15 setVectorDirAndUp [[0.45,0.4,0],[0,0,0.6]];
+        [_simpleObject_15, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_15,0.6] remoteExec ['setObjectScale',0,_simpleObject_15];
+        _simpleObject_16 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24190.394531,18925.978516,3.222201]];
+        _simpleObject_16 setVectorDirAndUp [[0.32,-0.38,0],[0,0,0.5]];
+        [_simpleObject_16, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_16,0.5] remoteExec ['setObjectScale',0,_simpleObject_16];
+        _simpleObject_17 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24190.650391,18924.388672,3.218755]];
+        _simpleObject_17 setVectorDirAndUp [[0.14,0.58,0],[0,0,0.6]];
+        [_simpleObject_17, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_17,0.6] remoteExec ['setObjectScale',0,_simpleObject_17];
+        _simpleObject_18 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24190.515625,18922.0117188,3.224266]];
+        _simpleObject_18 setVectorDirAndUp [[0.8,0.05,0],[0,0,0.8]];
+        [_simpleObject_18, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_18,0.8] remoteExec ['setObjectScale',0,_simpleObject_18];
+        _simpleObject_19 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24192.0332031,18916.332031,3.220798]];
+        _simpleObject_19 setVectorDirAndUp [[-0.29,0.52,0],[0,0,0.6]];
+        [_simpleObject_19, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_19,0.6] remoteExec ['setObjectScale',0,_simpleObject_19];
+        _simpleObject_20 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_02_debris_f.p3d', [24190.771484,18917.339844,3.224244]];
+        _simpleObject_20 setVectorDirAndUp [[0.5,-0.07,0],[0,0,0.5]];
+        [_simpleObject_20, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_20,0.5] remoteExec ['setObjectScale',0,_simpleObject_20];
+        _simpleObject_21 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24195.832031,18919.230469,3.19]];
+        _simpleObject_21 setVectorDirAndUp [[0.71,-0.7,0],[0,0,1]];
+        [_simpleObject_21, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_21,1] remoteExec ['setObjectScale',0,_simpleObject_21];
+        _simpleObject_22 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24196.0898438,18923.210938,3.190001]];
+        _simpleObject_22 setVectorDirAndUp [[0.71,-0.7,0],[0,0,1]];
+        [_simpleObject_22, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_22,1] remoteExec ['setObjectScale',0,_simpleObject_22];
+        _simpleObject_23 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24195.0800781,18926.75,3.19]];
+        _simpleObject_23 setVectorDirAndUp [[0.97,-0.24,0],[0,0,1]];
+        [_simpleObject_23, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_23,1] remoteExec ['setObjectScale',0,_simpleObject_23];
+        _simpleObject_24 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24191.00390625,18926.423828,3.19]];
+        _simpleObject_24 setVectorDirAndUp [[-0.35,0.94,0],[0,0,1]];
+        [_simpleObject_24, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_24,1] remoteExec ['setObjectScale',0,_simpleObject_24];
+        _simpleObject_25 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24190.626953,18923.130859,3.190001]];
+        _simpleObject_25 setVectorDirAndUp [[-0.68,0.74,0],[0,0,1]];
+        [_simpleObject_25, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_25,1] remoteExec ['setObjectScale',0,_simpleObject_25];
+        _simpleObject_26 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24190.679688,18919.345703,3.19]];
+        _simpleObject_26 setVectorDirAndUp [[-0.71,0.71,0],[0,0,1]];
+        [_simpleObject_26, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_26,1] remoteExec ['setObjectScale',0,_simpleObject_26];
+        _simpleObject_27 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24193.314453,18916.171875,3.19]];
+        _simpleObject_27 setVectorDirAndUp [[-0.9,-0.94,0],[0,0,1.3]];
+        [_simpleObject_27, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_27,1.3] remoteExec ['setObjectScale',0,_simpleObject_27];
+        _simpleObject_28 = createSimpleObject ['a3\structures_f_enoch\military\training\shellcrater_01_decal_f.p3d', [24193.291016,18927.630859,3.19]];
+        _simpleObject_28 setVectorDirAndUp [[0.97,-0.24,0],[0,0,1]];
+        [_simpleObject_28, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_28,1] remoteExec ['setObjectScale',0,_simpleObject_28];
+        _simpleObject_29 = createSimpleObject ['a3\data_f\particleeffects\shard\shard2.p3d', [24195.998047,18925.3125,3.191222]];
+        _simpleObject_29 setVectorDirAndUp [[0.26,0.91,-0.33],[0.23,0.27,0.93]];
+        [_simpleObject_29, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_29,1] remoteExec ['setObjectScale',0,_simpleObject_29];
+        _simpleObject_30 = createSimpleObject ['a3\data_f\particleeffects\shard\shard2.p3d', [24189.771484,18925.748047,3.226318]];
+        _simpleObject_30 setVectorDirAndUp [[-0.99,0.06,0.1],[-0.05,0.55,-0.84]];
+        [_simpleObject_30, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_30,1] remoteExec ['setObjectScale',0,_simpleObject_30];
+        _simpleObject_31 = createSimpleObject ['a3\data_f\particleeffects\shard\shard2.p3d', [24193.259766,18915.462891,3.24144]];
+        _simpleObject_31 setVectorDirAndUp [[-0.99,0.08,0.08],[-0.05,0.38,-0.92]];
+        [_simpleObject_31, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_31,1] remoteExec ['setObjectScale',0,_simpleObject_31];
+        _simpleObject_32 = createSimpleObject ['a3\data_f\particleeffects\shard\shard2.p3d', [24190.185547,18920.1875,3.192557]];
+        _simpleObject_32 setVectorDirAndUp [[0.19,0.89,-0.41],[-0.19,0.44,0.88]];
+        [_simpleObject_32, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_32,1] remoteExec ['setObjectScale',0,_simpleObject_32];
+        _simpleObject_33 = createSimpleObject ['a3\data_f\particleeffects\shard\shard2.p3d', [24189.601563,18927.470703,3.205058]];
+        _simpleObject_33 setVectorDirAndUp [[-0.99,0.11,-0.02],[-0.05,-0.55,-0.84]];
+        [_simpleObject_33, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_33,1] remoteExec ['setObjectScale',0,_simpleObject_33];
+        _simpleObject_34 = createSimpleObject ['a3\structures_f_oldman\decals\brokencarglass_01_4x4_f.p3d', [24195.621094,18919.552734,3.195618]];
+        _simpleObject_34 setVectorDirAndUp [[0,1,0],[0,0,1]];
+        [_simpleObject_34, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_34,1] remoteExec ['setObjectScale',0,_simpleObject_34];
+        _simpleObject_35 = createSimpleObject ['a3\structures_f_oldman\decals\brokencarglass_01_4x4_f.p3d', [24191.488281,18920.71875,3.201681]];
+        _simpleObject_35 setVectorDirAndUp [[0,1,0],[0,0,1]];
+        [_simpleObject_35, _pad] call BIS_fnc_attachToRelative;
+        [_simpleObject_35,1] remoteExec ['setObjectScale',0,_simpleObject_35];
+
+        _source01 = "#particlesource" createVehicle getPosWorld _pad; 
+        _source01 setParticleClass "SmallDestructionSmoke"; 
+        _source01 attachTo [_pad,[0.2,0.4,2.5]];
+        _source02 = "#particlesource" createVehicle getPosWorld _pad; 
+        _source02 setParticleClass "SmallDestructionSmoke"; 
+        _source02 attachTo [_pad,[-0.8,0.4,2.5]];
+        _source03 = "#particlesource" createVehicle getPosWorld _pad; 
+        _source03 setParticleClass "SmallDestructionSmoke"; 
+        _source03 attachTo [_pad,[-0.6,2.9,1.7]];
+        _source04 = "#particlesource" createVehicle getPosWorld _pad; 
+        _source04 setParticleClass "SmallDestructionSmoke"; 
+        _source04 attachTo [_pad,[0.25,3,1.8]];
+        _source05 = "#particlesource" createVehicle getPosWorld _pad; 
+        _source05 setParticleClass "SmallDestructionFire"; 
+        _source05 attachTo [_pad,[2.5,3.5,0.05]]; 
+        _light05 = "#lightpoint" createVehicle getPosWorld _pad; 
+        _light05 setLightBrightness 0.1; 
+        _light05 setLightAmbient [0.75, 0.25, 0.1]; 
+        _light05 setLightColor [0.75, 0.25, 0.1]; 
+        _light05 attachTo [_pad,[2.5,3.5,0.05]]; 
+        _source06 = "#particlesource" createVehicle getPosWorld _pad; 
+        _source06 setParticleClass "SmallDestructionFire"; 
+        _source06 attachTo [_pad,[-0.4,-6.2,0.15]]; 
+        _light06 = "#lightpoint" createVehicle getPosWorld _pad; 
+        _light06 setLightBrightness 0.1; 
+        _light06 setLightAmbient [0.75, 0.25, 0.1]; 
+        _light06 setLightColor [0.75, 0.25, 0.1]; 
+        _light06 attachTo [_pad,[-0.4,-6.2,0.15]]; 
+        _source07 = "#particlesource" createVehicle getPosWorld _pad; 
+        _source07 setParticleClass "SmallDestructionFire"; 
+        _source07 attachTo [_pad,[-3.3,-1.6,0.1]]; 
+        _light07 = "#lightpoint" createVehicle getPosWorld _pad; 
+        _light07 setLightBrightness 0.1; 
+        _light07 setLightAmbient [0.75, 0.25, 0.1]; 
+        _light07 setLightColor [0.75, 0.25, 0.1]; 
+        _light07 attachTo [_pad,[-3.3,-1.6,0.1]]; 
+        _source08 = "#particlesource" createVehicle getPosWorld _pad; 
+        _source08 setParticleClass "SmallDestructionFire"; 
+        _source08 attachTo [_pad,[-3.95,4,0.05]]; 
+        _light08 = "#lightpoint" createVehicle getPosWorld _pad; 
+        _light08 setLightBrightness 0.1; 
+        _light08 setLightAmbient [0.75, 0.25, 0.1]; 
+        _light08 setLightColor [0.75, 0.25, 0.1]; 
+        _light08 attachTo [_pad,[-3.95,4,0.05]]; 
+        _wreckSound1 = createSoundSource ["Sound_SmokeWreck1", getPosWorld _pad, [], 0];
+        _wreckSound1 attachTo [_pad,[0,0,2]];
+        _wreckSound1 = createSoundSource ["Sound_SmokeWreck1", getPosWorld _pad, [], 0];
+        _wreckSound1 attachTo [_pad,[0,0,2]];
+
+        [_pad] call MAZ_EZM_fnc_deleteAttachedWhenKilled; 
+        [_pad] call MAZ_EZM_fnc_deleteAttachedWhenDeleted; 
+        [_pad] call MAZ_EZM_fnc_addObjectToInterface;
+
+        _pad setpos _pos; 
+        
+        _pad 
+    };
+
+    MAZ_EZM_AAFP_fnc_createDeadSoldierModule = { 
+
+        private _pos = [true] call MAZ_EZM_fnc_getScreenPosition; 
+        
+        private _KIA = createVehicle ["C_man_p_beggar_F",[24602.4,19234.3,2.38419e-007],[],0,"CAN_COLLIDE"]; 
+        private _animData = selectRandom [ 
+        ["KIA_gunner_static_low01",[24602.4,19234.4,3.19144],[24603.4,19234.9,3.20104],[24601.7,19235,3.195]], 
+        ["KIA_gunner_standup01",[24602.4,19234.4,3.19144],[24602.9,19233.5,3.2036],[24602.4,19234.3,3.19136]], 
+        ["KIA_driver_boat01",[24602.4,19234.4,3.19144],[24603,19235.2,3.19],[24602.8,19234.5,3.195]], 
+        ["KIA_passenger_boat_holdleft",[24602.5,19234.4,3.19144],[24603,19235.1,3.19896],[24602.8,19234.4,3.195]] 
+        ]; 
+        
+        _animData params ["_anim","_unitPos","_gunPos","_bloodPos"]; 
+        [_KIA,_anim] remoteExec ['switchMove',0,true]; 
+        _KIA disableAI "ALL";   
+        _KIA setCaptive true;  
+        _KIA setSpeaker "NoVoice";  
+        _KIA setHitPointDamage ["hitHead", 0.9]; 
+        _KIA setHitPointDamage ["hitHands", 0.9]; 
+        _KIA allowDamage false;
+        private _face = selectRandom ["Ioannou","AfricanHead_01","WhiteHead_11","WhiteHead_16","WhiteHead_17","GreekHead_A3_09","WhiteHead_18","Sturrock","GreekHead_A3_14"]; 
+        _KIA setface _face; 
+        _KIA setPosWorld _unitPos; 
+        _KIA setVectorDirAndUp [[0.965509,-0.26037,0],[0,0,1]]; 
+        _KIA setDir (random 359); 
+        [_KIA] call MAZ_EZM_fnc_deleteAttachedWhenKilled; 
+        [_KIA] call MAZ_EZM_fnc_deleteAttachedWhenDeleted; 
+        [_KIA] call MAZ_EZM_fnc_addObjectToInterface; 
+        [_KIA] call MAZ_EZM_fnc_ignoreWhenCleaning; 
+        [_KIA] spawn MAZ_EZM_AAFP_fnc_addAAFPGogglesToUnit; 
+        [_KIA] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnit;  
+        
+
+        _KIA spawn { 
+        while {!isNull _this} do { 
+        private _sounds = [ 
+        ["A3\Missions_F_Oldman\Data\sound\Flies\Flies_02.wss",10.5,0.5,15] 
+        ]; 
+        private _soundData = selectRandom _sounds; 
+        _soundData params ["_sound","_time","_volume","_distance"]; 
+        playSound3D [_sound,_this,false,getPosASL _this, _volume, 1, _distance]; 
+        sleep _time; 
+        }; 
+        }; 
+    
+        private _gun = createVehicle ["Weapon_arifle_Mk20_F",[24603.4,19234.9,0.0110364],[],0,"CAN_COLLIDE"]; 
+        _gun setPosWorld _gunPos; 
+        _gun setDir (random 90); 
+        [_gun,_KIA] call BIS_fnc_attachToRelative; 
+
+        private _blood = createVehicle ["BloodSplatter_01_Medium_New_F",[24601.7,19235,0],[],0,"CAN_COLLIDE"]; 
+        _blood setPosWorld _bloodPos; 
+        _blood setVectorDirAndUp [[0,1,0],[0,0,1]]; 
+        _blood setObjectTextureGlobal [0,"a3\props_f_orange\humanitarian\garbage\data\bloodsplatter_medium_fresh_ca.paa"]; 
+        _blood setDir (random 359); 
+        [_blood, _KIA] call BIS_fnc_attachToRelative;
+
+        _KIA setpos _pos; 
+    
+        _KIA 
+    };  
+
+    MAZ_EZM_AAFP_fnc_createDeadSoldierBaggableModule = { 
+
+        private _pos = [true] call MAZ_EZM_fnc_getScreenPosition; 
+        
+        private _KIA = createVehicle ["C_man_p_beggar_F",[24602.4,19234.3,2.38419e-007],[],0,"CAN_COLLIDE"]; 
+        private _animData = selectRandom [ 
+        ["KIA_gunner_static_low01",[24602.4,19234.4,3.19144],[24603.4,19234.9,3.20104],[24601.7,19235,3.195]], 
+        ["KIA_gunner_standup01",[24602.4,19234.4,3.19144],[24602.9,19233.5,3.2036],[24602.4,19234.3,3.19136]], 
+        ["KIA_driver_boat01",[24602.4,19234.4,3.19144],[24603,19235.2,3.19],[24602.8,19234.5,3.195]], 
+        ["KIA_passenger_boat_holdleft",[24602.5,19234.4,3.19144],[24603,19235.1,3.19896],[24602.8,19234.4,3.195]] 
+        ]; 
+        
+        _animData params ["_anim","_unitPos","_gunPos","_bloodPos"]; 
+        [_KIA,_anim] remoteExec ['switchMove',0,true]; 
+        _KIA disableAI "ALL";   
+        _KIA setCaptive true;  
+        _KIA setSpeaker "NoVoice";  
+        _KIA setHitPointDamage ["hitHead", 0.9]; 
+        _KIA setHitPointDamage ["hitHands", 0.9]; 
+        _KIA allowDamage false;
+        private _face = selectRandom ["Ioannou","WhiteHead_11","WhiteHead_16","WhiteHead_17","GreekHead_A3_09","WhiteHead_18","Sturrock","GreekHead_A3_14"]; 
+        _KIA setface _face; 
+        _KIA setPosWorld _unitPos; 
+        _KIA setVectorDirAndUp [[0.965509,-0.26037,0],[0,0,1]]; 
+        _KIA setDir (random 359);
+        [_KIA] call MAZ_EZM_fnc_deleteAttachedWhenKilled; 
+        [_KIA] call MAZ_EZM_fnc_deleteAttachedWhenDeleted; 
+        [_KIA] call MAZ_EZM_fnc_addObjectToInterface; 
+        [_KIA] call MAZ_EZM_fnc_ignoreWhenCleaning; 
+        [_KIA] spawn MAZ_EZM_AAFP_fnc_addAAFPGogglesToUnit; 
+        [_KIA] call MAZ_EZM_AAFP_fnc_addAAFPUniformToUnit;  
+        
+
+        _KIA spawn { 
+        while {!isNull _this} do { 
+        private _sounds = [ 
+        ["A3\Missions_F_Oldman\Data\sound\Flies\Flies_02.wss",10.5,0.5,15] 
+        ]; 
+        private _soundData = selectRandom _sounds; 
+        _soundData params ["_sound","_time","_volume","_distance"]; 
+        playSound3D [_sound,_this,false,getPosASL _this, _volume, 1, _distance]; 
+        sleep _time; 
+        }; 
+        }; 
+    
+        private _gun = createVehicle ["Weapon_arifle_Mk20_F",[24603.4,19234.9,0.0110364],[],0,"CAN_COLLIDE"]; 
+        _gun setPosWorld _gunPos; 
+        _gun setDir (random 90); 
+        [_gun,_KIA] call BIS_fnc_attachToRelative; 
+
+        private _blood = createVehicle ["BloodSplatter_01_Medium_New_F",[24601.7,19235,0],[],0,"CAN_COLLIDE"]; 
+        _blood setPosWorld _bloodPos; 
+        _blood setVectorDirAndUp [[0,1,0],[0,0,1]]; 
+        _blood setObjectTextureGlobal [0,"a3\props_f_orange\humanitarian\garbage\data\bloodsplatter_medium_fresh_ca.paa"]; 
+        _blood setDir (random 359); 
+        [_blood, _KIA] call BIS_fnc_attachToRelative;
+
+        private _holdActionIndex = [ 
+            _KIA,            
+            "Bag and Tag",           
+            "\a3\ui_f\data\igui\cfg\revive\overlayicons\d75_ca.paa",  
+            "\a3\ui_f\data\igui\cfg\revive\overlayicons\d75_ca.paa",  
+            "_this distance _target < 3", 
+            "_caller distance _target < 3",       
+            {}, 
+            {}, 
+            {  
+            _unit = (_this select 0);
+            deleteVehicle _unit;
+            _bag = createVehicle ["Land_Bodybag_01_black_F", getPosATL _unit, [], 0, "CAN_COLLIDE"];
+            [_bag] call MAZ_EZM_fnc_addObjectToInterface;
+            }, 
+            {}, 
+            [], 
+            3, 
+            0, 
+            true,             
+            false             
+        ] remoteExec ["BIS_fnc_holdActionAdd",0, _KIA];
+
+        _KIA setpos _pos; 
+    
+        _KIA 
+    };
 comment "Drones"; 
             
     MAZ_EZM_AAFP_fnc_createDarterModule = { 
@@ -1063,7 +1941,7 @@ comment "Men";
 
     MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit = { 
         params ["_unit"]; 
-        sleep 0.5; 
+        sleep 0.1; 
         private _greekVoice = [ 
             "Male01GRE", 
             "Male02GRE", 
@@ -1134,21 +2012,24 @@ comment "Men";
         private _AAFPVests = ["V_PlateCarrierIA2_dgtl","V_PlateCarrierIA1_dgtl"]; 
         private _AAFPHeadgear = ["H_HelmetIA"]; 
         _unit forceAddUniform (selectRandom _AAFPUniforms); 
-        _unit setObjectTextureGlobal [1,"\a3\ui_f_tank\data\cfgunitinsignia\aaf_1stregiment_ca.paa"];
         _unit addVest (selectRandom _AAFPVests); 
         _unit addHeadgear (selectRandom _AAFPHeadgear); 
         removeGoggles _unit; 
-        switch (uniform _unit) do { 
-            case "U_I_C_Soldier_Para_4_F": { 
-                private _textureTop = selectRandom ["a3\characters_f_enoch\uniforms\data\i_e_soldier_01_tanktop_co.paa","a3\characters_f_exp\syndikat\data\u_i_c_soldier_bandit_5_f_1_co.paa"]; 
-                private _textureBottom = selectRandom ["a3\characters_f_bootcamp\guerrilla\data\ig_guerrilla_6_1_co.paa","A3\characters_f_exp\Syndikat\Data\U_I_C_Soldier_Para_4_F_2_co.paa","a3\characters_f_beta\indep\data\ia_soldier_01_clothing_co.paa"]; 
-                [[_unit,_textureTop,_textureBottom],{ 
-                    params ["_unit","_top","_bottom"]; 
-                    _unit setObjectTexture [0, _top]; 
-                    _unit setObjectTexture [1, _bottom]; 
-                }] remoteExec ['spawn',0,_unit]; 
-            };
-        }; 
+    }; 
+
+    MAZ_EZM_AAFP_fnc_createAkhanterosModule = { 
+        private _unit = [independent,"I_Story_Colonel_F",MAZ_EZM_stanceForAI,"AWARE"] call MAZ_EZM_fnc_createMan; 
+        
+        _unit addMagazine "9Rnd_45ACP_Mag";
+        _unit addWeapon "hgun_ACPC2_F";
+
+        [_unit] spawn {
+            params ["_unit"];
+            sleep 1;
+            _unit action ['SWITCHWEAPON',_unit,_unit,-1];
+        };
+    
+        _unit 
     }; 
     
     MAZ_EZM_AAFP_fnc_createAmmoBearerModule = { 
@@ -1375,6 +2256,12 @@ comment "Men";
     MAZ_EZM_AAFP_fnc_createFighterPilotModule = { 
         private _unit = [independent,"I_Fighter_Pilot_F",MAZ_EZM_stanceForAI,"AWARE"] call MAZ_EZM_fnc_createMan; 
         [_unit] spawn MAZ_EZM_AAFP_fnc_addAAFPIdentitiesToUnit; 
+
+        [_unit] spawn {
+            params ["_unit"];
+            sleep 1;
+            _unit action ['SWITCHWEAPON',_unit,_unit,-1];
+        };
     
         _unit 
     };
@@ -1415,17 +2302,23 @@ comment "Men (Paramilitary)";
         _unit addVest (selectRandom _AAFPVests); 
         _unit addHeadgear (selectRandom _AAFPHeadgear); 
         
-        switch (uniform _unit) do { 
+        private _textureData = switch (uniform _unit) do { 
             case "U_I_C_Soldier_Para_4_F": { 
-                private _textureTop = selectRandom ["a3\characters_f_enoch\uniforms\data\i_e_soldier_01_tanktop_co.paa"]; 
-                private _textureBottom = selectRandom ["a3\characters_f_beta\indep\data\ia_soldier_01_clothing_co.paa"]; 
-                [[_unit,_textureTop,_textureBottom],{ 
-                    params ["_unit","_top","_bottom"]; 
-                    _unit setObjectTexture [0, _top]; 
-                    _unit setObjectTexture [1, _bottom]; 
-                }] remoteExec ['spawn',0,_unit]; 
+                private _textureTop = selectRandom ["a3\characters_f_enoch\uniforms\data\i_e_soldier_01_tanktop_co.paa","a3\characters_f_exp\syndikat\data\u_i_c_soldier_bandit_5_f_1_co.paa"]; 
+                private _textureBottom = "a3\characters_f_beta\indep\data\ia_soldier_01_clothing_co.paa"; 
+                [_textureTop,_textureBottom]
             };
         }; 
+
+        [_unit,_textureData] spawn {
+            params ["_unit","_textureData"];
+            sleep 0.1;
+            {
+                if(_x == "") then {continue};
+                _unit setObjectTextureGlobal [_forEachIndex,_x];
+            }forEach _textureData;
+            _unit setObjectTextureGlobal ["clan","\a3\ui_f_tank\data\cfgunitinsignia\aaf_1stregiment_ca.paa"];
+        };
     }; 
     
     MAZ_EZM_AAFP_fnc_createAmmoBearerPModule = { 
@@ -2123,7 +3016,7 @@ comment "Reinforcement";
         [ 
             _vehicle, 
             ["Black",1],  
-            ["Enable_Cargo",1,"Door_1_source",0,"Door_2_source",0,"Door_3_source",0,"Door_4_source",0,"Hide_Door_1_source",0,"Hide_Door_2_source",0,"Hide_Door_3_source",0,"Hide_Door_4_source",0,"lights_em_hide",0,"ladder_hide",0,"spare_tyre_holder_hide",1,"spare_tyre_hide",1,"reflective_tape_hide",1,"roof_rack_hide",0,"LED_lights_hide",1,"sidesteps_hide",1,"rearsteps_hide",0,"side_protective_frame_hide",0,"front_protective_frame_hide",0,"beacon_front_hide",1,"beacon_rear_hide",1] 
+            ["Enable_Cargo",1,"Door_1_source",0,"Door_2_source",0,"Door_3_source",0,"Door_4_source",0,"Hide_Door_1_source",0,"Hide_Door_2_source",0,"Hide_Door_3_source",0,"Hide_Door_4_source",0,"lights_em_hide",0,"ladder_hide",1,"spare_tyre_holder_hide",1,"spare_tyre_hide",1,"reflective_tape_hide",1,"roof_rack_hide",1,"LED_lights_hide",1,"sidesteps_hide",1,"rearsteps_hide",0,"side_protective_frame_hide",0,"front_protective_frame_hide",0,"beacon_front_hide",1,"beacon_rear_hide",1] 
         ] call BIS_fnc_initVehicle; 
     
         if(MAZ_EZM_spawnWithCrew) then { 
@@ -2174,7 +3067,7 @@ comment "Reinforcement";
         [ 
             _vehicle, 
             ["Black",1],  
-            ["Door_1_source",0,"Door_2_source",0,"Door_3_source",0,"Door_4_source",0,"Hide_Door_1_source",0,"Hide_Door_2_source",0,"Hide_Door_3_source",0,"Hide_Door_4_source",0,"lights_em_hide",0,"ladder_hide",0,"spare_tyre_holder_hide",1,"spare_tyre_hide",1,"reflective_tape_hide",1,"roof_rack_hide",0,"LED_lights_hide",1,"sidesteps_hide",1,"rearsteps_hide",1,"side_protective_frame_hide",0,"front_protective_frame_hide",0,"beacon_front_hide",1,"beacon_rear_hide",1] 
+            ["Door_1_source",0,"Door_2_source",0,"Door_3_source",0,"Door_4_source",0,"Hide_Door_1_source",0,"Hide_Door_2_source",0,"Hide_Door_3_source",0,"Hide_Door_4_source",0,"lights_em_hide",0,"ladder_hide",1,"spare_tyre_holder_hide",1,"spare_tyre_hide",1,"reflective_tape_hide",1,"roof_rack_hide",1,"LED_lights_hide",1,"sidesteps_hide",1,"rearsteps_hide",1,"side_protective_frame_hide",0,"front_protective_frame_hide",0,"beacon_front_hide",1,"beacon_rear_hide",1] 
         ] call BIS_fnc_initVehicle; 
         
         if(MAZ_EZM_spawnWithCrew) then { 
@@ -2663,7 +3556,7 @@ comment "Reinforcements (Paramilitary)";
         [ 
             _vehicle, 
             ["Black",1],  
-            ["Enable_Cargo",1,"Door_1_source",0,"Door_2_source",0,"Door_3_source",0,"Door_4_source",0,"Hide_Door_1_source",0,"Hide_Door_2_source",0,"Hide_Door_3_source",0,"Hide_Door_4_source",0,"lights_em_hide",0,"ladder_hide",0,"spare_tyre_holder_hide",1,"spare_tyre_hide",1,"reflective_tape_hide",1,"roof_rack_hide",0,"LED_lights_hide",1,"sidesteps_hide",1,"rearsteps_hide",0,"side_protective_frame_hide",0,"front_protective_frame_hide",0,"beacon_front_hide",1,"beacon_rear_hide",1] 
+            ["Enable_Cargo",1,"Door_1_source",0,"Door_2_source",0,"Door_3_source",0,"Door_4_source",0,"Hide_Door_1_source",0,"Hide_Door_2_source",0,"Hide_Door_3_source",0,"Hide_Door_4_source",0,"lights_em_hide",0,"ladder_hide",1,"spare_tyre_holder_hide",1,"spare_tyre_hide",1,"reflective_tape_hide",1,"roof_rack_hide",1,"LED_lights_hide",1,"sidesteps_hide",1,"rearsteps_hide",0,"side_protective_frame_hide",0,"front_protective_frame_hide",0,"beacon_front_hide",1,"beacon_rear_hide",1] 
         ] call BIS_fnc_initVehicle; 
     
         if(MAZ_EZM_spawnWithCrew) then { 
@@ -2714,7 +3607,7 @@ comment "Reinforcements (Paramilitary)";
         [ 
             _vehicle, 
             ["Black",1],  
-            ["Door_1_source",0,"Door_2_source",0,"Door_3_source",0,"Door_4_source",0,"Hide_Door_1_source",0,"Hide_Door_2_source",0,"Hide_Door_3_source",0,"Hide_Door_4_source",0,"lights_em_hide",0,"ladder_hide",0,"spare_tyre_holder_hide",1,"spare_tyre_hide",1,"reflective_tape_hide",1,"roof_rack_hide",0,"LED_lights_hide",1,"sidesteps_hide",1,"rearsteps_hide",1,"side_protective_frame_hide",0,"front_protective_frame_hide",0,"beacon_front_hide",1,"beacon_rear_hide",1] 
+            ["Door_1_source",0,"Door_2_source",0,"Door_3_source",0,"Door_4_source",0,"Hide_Door_1_source",0,"Hide_Door_2_source",0,"Hide_Door_3_source",0,"Hide_Door_4_source",0,"lights_em_hide",0,"ladder_hide",1,"spare_tyre_holder_hide",1,"spare_tyre_hide",1,"reflective_tape_hide",1,"roof_rack_hide",1,"LED_lights_hide",1,"sidesteps_hide",1,"rearsteps_hide",1,"side_protective_frame_hide",0,"front_protective_frame_hide",0,"beacon_front_hide",1,"beacon_rear_hide",1] 
         ] call BIS_fnc_initVehicle; 
         
         if(MAZ_EZM_spawnWithCrew) then { 
@@ -2971,6 +3864,8 @@ comment "Turrets";
 
     MAZ_EZM_AAFP_fnc_createM2HMGModule = { 
         private _vehicle = ["I_G_HMG_02_F"] call MAZ_EZM_fnc_createVehicle;
+
+        [_vehicle,nil,["Hide_Shield",1,"Hide_Rail",1]] call BIS_fnc_initVehicle;
     
         if(MAZ_EZM_spawnWithCrew) then { 
             private _gunner = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
@@ -2982,6 +3877,8 @@ comment "Turrets";
 
     MAZ_EZM_AAFP_fnc_createM2HMGRaisedModule = { 
         private _vehicle = ["I_G_HMG_02_high_F"] call MAZ_EZM_fnc_createVehicle;
+
+        [_vehicle,nil,["Hide_Shield",1,"Hide_Rail",1]] call BIS_fnc_initVehicle;
     
         if(MAZ_EZM_spawnWithCrew) then { 
             private _gunner = [] call MAZ_EZM_AAFP_fnc_createRiflemanModule; 
@@ -3032,7 +3929,7 @@ comment "Vans";
         [ 
             _vehicle, 
             ["Black",1],  
-            ["Enable_Cargo",1,"Door_1_source",0,"Door_2_source",0,"Door_3_source",0,"Door_4_source",0,"Hide_Door_1_source",0,"Hide_Door_2_source",0,"Hide_Door_3_source",0,"Hide_Door_4_source",0,"lights_em_hide",0,"ladder_hide",0,"spare_tyre_holder_hide",1,"spare_tyre_hide",1,"reflective_tape_hide",1,"roof_rack_hide",0,"LED_lights_hide",1,"sidesteps_hide",1,"rearsteps_hide",0,"side_protective_frame_hide",0,"front_protective_frame_hide",0,"beacon_front_hide",1,"beacon_rear_hide",1] 
+            ["Enable_Cargo",1,"Door_1_source",0,"Door_2_source",0,"Door_3_source",0,"Door_4_source",0,"Hide_Door_1_source",0,"Hide_Door_2_source",0,"Hide_Door_3_source",0,"Hide_Door_4_source",0,"lights_em_hide",0,"ladder_hide",1,"spare_tyre_holder_hide",1,"spare_tyre_hide",1,"reflective_tape_hide",1,"roof_rack_hide",1,"LED_lights_hide",1,"sidesteps_hide",1,"rearsteps_hide",0,"side_protective_frame_hide",0,"front_protective_frame_hide",0,"beacon_front_hide",1,"beacon_rear_hide",1] 
         ] call BIS_fnc_initVehicle; 
     
         if(MAZ_EZM_spawnWithCrew) then { 
@@ -3049,7 +3946,7 @@ comment "Vans";
         [ 
             _vehicle, 
             ["Black",1],  
-            ["Door_1_source",0,"Door_2_source",0,"Door_3_source",0,"Door_4_source",0,"Hide_Door_1_source",0,"Hide_Door_2_source",0,"Hide_Door_3_source",0,"Hide_Door_4_source",0,"lights_em_hide",0,"ladder_hide",0,"spare_tyre_holder_hide",1,"spare_tyre_hide",1,"reflective_tape_hide",1,"roof_rack_hide",0,"LED_lights_hide",1,"sidesteps_hide",1,"rearsteps_hide",1,"side_protective_frame_hide",0,"front_protective_frame_hide",0,"beacon_front_hide",1,"beacon_rear_hide",1] 
+            ["Door_1_source",0,"Door_2_source",0,"Door_3_source",0,"Door_4_source",0,"Hide_Door_1_source",0,"Hide_Door_2_source",0,"Hide_Door_3_source",0,"Hide_Door_4_source",0,"lights_em_hide",0,"ladder_hide",1,"spare_tyre_holder_hide",1,"spare_tyre_hide",1,"reflective_tape_hide",1,"roof_rack_hide",1,"LED_lights_hide",1,"sidesteps_hide",1,"rearsteps_hide",1,"side_protective_frame_hide",0,"front_protective_frame_hide",0,"beacon_front_hide",1,"beacon_rear_hide",1] 
         ] call BIS_fnc_initVehicle; 
         
         if(MAZ_EZM_spawnWithCrew) then { 
@@ -3141,6 +4038,16 @@ MAZ_EZM_AAFP_fnc_modules = {
                 "AFV-4 Gorgon (20mm)", 
                 "20mm Gorgon. Can only be used by AI vs Players", 
                 "MAZ_EZM_AAFP_fnc_createGorgon20mmModule", 
+                "\A3\armor_f_gamma\APC_Wheeled_03\Data\UI\map_APC_Wheeled_03_CA.paa" 
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+            [ 
+                MAZ_UnitsTree_INDEP, 
+                MAZ_AAFPTree, 
+                MAZ_AAFPAPCsTree, 
+                "AFV-4 Gorgon (No Turret)", 
+                "AFV-4 Gorgon (No Turret)", 
+                "MAZ_EZM_AAFP_fnc_createGorgonNoTurretModule", 
                 "\A3\armor_f_gamma\APC_Wheeled_03\Data\UI\map_APC_Wheeled_03_CA.paa" 
             ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
 
@@ -3310,6 +4217,96 @@ MAZ_EZM_AAFP_fnc_modules = {
                 "MAZ_EZM_AAFP_fnc_createStriderGMGModule", 
                 "\a3\soft_f_beta\mrap_03\data\ui\map_mrap_03_hmg_ca.paa"
             ] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+
+             [ 
+                MAZ_UnitsTree_INDEP, 
+                MAZ_AAFPTree, 
+                MAZ_AAFPCarsTree, 
+                "Van", 
+                "Van", 
+                "MAZ_EZM_AAFP_fnc_createVanModule", 
+                "\a3\Soft_F_Orange\Van_02\Data\UI\Map_Van_02_vehicle_CA.paa" 
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+            
+            [ 
+                MAZ_UnitsTree_INDEP, 
+                MAZ_AAFPTree, 
+                MAZ_AAFPCarsTree, 
+                "Van Transport", 
+                "Van Transport", 
+                "MAZ_EZM_AAFP_fnc_createVanTransportModule", 
+                "\a3\Soft_F_Orange\Van_02\Data\UI\Map_Van_02_vehicle_CA.paa" 
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+            
+            [ 
+                MAZ_UnitsTree_INDEP, 
+                MAZ_AAFPTree, 
+                MAZ_AAFPCarsTree, 
+                "Van Ambulance", 
+                "Van Ambulance", 
+                "MAZ_EZM_AAFP_fnc_createMedicalVanModule", 
+                "\a3\Soft_F_Orange\Van_02\Data\UI\Map_Van_02_medevac_CA.paa" 
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+            [ 
+                MAZ_UnitsTree_INDEP, 
+                MAZ_AAFPTree, 
+                MAZ_AAFPCarsTree, 
+                "Zamak Ammo", 
+                "Zamak Ammo", 
+                "MAZ_EZM_AAFP_fnc_createZamakAmmoModule", 
+                "\A3\soft_f_gamma\Truck_02\data\UI\Map_Truck_02_box_CA.paa" 
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+            
+            [ 
+                MAZ_UnitsTree_INDEP, 
+                MAZ_AAFPTree, 
+                MAZ_AAFPCarsTree, 
+                "Zamak Fuel", 
+                "Zamak Fuel", 
+                "MAZ_EZM_AAFP_fnc_createZamakFuelModule", 
+                "\A3\soft_f_gamma\Truck_02\data\UI\Map_Truck_02_fuel_CA.paa" 
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+            
+            [ 
+                MAZ_UnitsTree_INDEP, 
+                MAZ_AAFPTree, 
+                MAZ_AAFPCarsTree, 
+                "Zamak Medical", 
+                "Zamak Medical", 
+                "MAZ_EZM_AAFP_fnc_createZamakMedicalModule", 
+                "\A3\soft_f_gamma\Truck_02\data\UI\Map_Truck_02_medevac_CA.paa" 
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+            
+            [ 
+                MAZ_UnitsTree_INDEP, 
+                MAZ_AAFPTree, 
+                MAZ_AAFPCarsTree, 
+                "Zamak Repair", 
+                "Zamak Repair", 
+                "MAZ_EZM_AAFP_fnc_createZamakRepairModule", 
+                "\A3\Soft_F_Beta\Truck_02\Data\UI\Map_Truck_02_repair_CA.paa" 
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+            
+            [ 
+                MAZ_UnitsTree_INDEP, 
+                MAZ_AAFPTree, 
+                MAZ_AAFPCarsTree, 
+                "Zamak Transport", 
+                "Zamak Transport", 
+                "MAZ_EZM_AAFP_fnc_createZamakTransportModule", 
+                "\A3\soft_f_beta\Truck_02\data\UI\Map_Truck_02_dump_CA.paa" 
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+            
+            [ 
+                MAZ_UnitsTree_INDEP, 
+                MAZ_AAFPTree, 
+                MAZ_AAFPCarsTree, 
+                "Zamak Transport (Covered)", 
+                "Zamak Transport (Covered)", 
+                "MAZ_EZM_AAFP_fnc_createZamakCoveredTransportModule", 
+                "\A3\soft_f_beta\Truck_02\data\UI\Map_Truck_02_dump_CA.paa" 
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
             
         comment "Compositions"; 
         
@@ -3320,25 +4317,75 @@ MAZ_EZM_AAFP_fnc_modules = {
                 "" 
             ] call MAZ_EZM_fnc_zeusAddSubCategory; 
             
-            [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                MAZ_AAFPCompositionsTree, 
-                "Cache #1", 
-                "Cache", 
-                "MAZ_EZM_AAFP_fnc_createCache1Module", 
-                "" 
-            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+            [  
+                MAZ_UnitsTree_INDEP,  
+                MAZ_AAFPTree,  
+                MAZ_AAFPCompositionsTree,  
+                "Cache #1",  
+                "Creates a AAF Cache.",  
+                "MAZ_EZM_AAFP_fnc_createCache1Module",  
+                "\a3\supplies_f_exp\ammoboxes\data\ui\icon_equipment_box_ca.paa"  
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP;  
             
-            [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                MAZ_AAFPCompositionsTree, 
-                "Cache #2", 
-                "Cache", 
-                "MAZ_EZM_AAFP_fnc_createCache2Module", 
-                "" 
+            [  
+                MAZ_UnitsTree_INDEP,  
+                MAZ_AAFPTree,  
+                MAZ_AAFPCompositionsTree,  
+                "Cache #2",  
+                "Creates a AAF Cache.",  
+                "MAZ_EZM_AAFP_fnc_createCache2Module",  
+                "\a3\supplies_f_exp\ammoboxes\data\ui\icon_equipment_box_ca.paa"  
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP;  
+
+            [  
+                MAZ_UnitsTree_INDEP,  
+                MAZ_AAFPTree,  
+                MAZ_AAFPCompositionsTree,  
+                "Crashsite (Greyhawk)",  
+                "Creates a Greyhawk Crashsite.",  
+                "MAZ_EZM_AAFP_fnc_createCrashsiteGreyhawkModule",  
+                "\A3\Drones_F\Air_F_Gamma\UAV_02\Data\UI\Map_UAV_02_CA.paa"  
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP;  
+
+            [  
+                MAZ_UnitsTree_INDEP,  
+                MAZ_AAFPTree,  
+                MAZ_AAFPCompositionsTree,  
+                "Crashsite (Mohawk)",  
+                "Creates a Mohawk Crashsite.",  
+                "MAZ_EZM_AAFP_fnc_createCrashsiteMohawkModule",  
+                "\a3\air_f_beta\heli_transport_02\data\ui\map_heli_transport_02_ca.paa"  
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP;  
+
+            [  
+                MAZ_UnitsTree_INDEP,  
+                MAZ_AAFPTree,  
+                MAZ_AAFPCompositionsTree,  
+                "Crashsite (Orca)",  
+                "Creates a Orca Crashsite.",  
+                "MAZ_EZM_AAFP_fnc_createCrashsiteOrcaModule",  
+                "a3\air_f\heli_light_02\data\ui\map_heli_light_02_rockets_ca.paa"  
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP;  
+
+            [  
+                MAZ_UnitsTree_INDEP,  
+                MAZ_AAFPTree,  
+                MAZ_AAFPCompositionsTree,  
+                "KIA",  
+                "KIA",  
+                "MAZ_EZM_AAFP_fnc_createDeadSoldierModule",  
+                "a3\ui_f_curator\data\cfgmarkers\kia_ca.paa"  
             ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+            [  
+                MAZ_UnitsTree_INDEP,  
+                MAZ_AAFPTree,  
+                MAZ_AAFPCompositionsTree,  
+                "KIA (Baggable)",  
+                "KIA (Baggable)",  
+                "MAZ_EZM_AAFP_fnc_createDeadSoldierBaggableModule",  
+                "a3\ui_f_curator\data\cfgmarkers\kia_ca.paa"  
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP;  
         
         comment "Drones"; 
         
@@ -3349,26 +4396,6 @@ MAZ_EZM_AAFP_fnc_modules = {
                 "" 
             ] call MAZ_EZM_fnc_zeusAddSubCategory; 
 
-            [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                MAZ_AAFPDronesTree, 
-                "Pelican AL-6 (Leaflet)", 
-                "Pelican AL-6 (Leaflet)", 
-                "MAZ_EZM_AAFP_fnc_createPelicanLeafletModule", 
-                "a3\air_f_orange\uav_06\data\ui\map_uav_06_ca.paa" 
-            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
-
-            [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                MAZ_AAFPDronesTree, 
-                "Pelican AL-6 (Medical)", 
-                "Pelican AL-6 (Medical)", 
-                "MAZ_EZM_AAFP_fnc_createPelicanMedicalModule", 
-                "a3\air_f_orange\uav_06\data\ui\map_uav_06_ca.paa" 
-            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
-            
             [ 
                 MAZ_UnitsTree_INDEP, 
                 MAZ_AAFPTree, 
@@ -3403,6 +4430,26 @@ MAZ_EZM_AAFP_fnc_modules = {
                 MAZ_UnitsTree_INDEP, 
                 MAZ_AAFPTree, 
                 MAZ_AAFPDronesTree, 
+                "Pelican AL-6 (Leaflet)", 
+                "Pelican AL-6 (Leaflet)", 
+                "MAZ_EZM_AAFP_fnc_createPelicanLeafletModule", 
+                "a3\air_f_orange\uav_06\data\ui\map_uav_06_ca.paa" 
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+            [ 
+                MAZ_UnitsTree_INDEP, 
+                MAZ_AAFPTree, 
+                MAZ_AAFPDronesTree, 
+                "Pelican AL-6 (Medical)", 
+                "Pelican AL-6 (Medical)", 
+                "MAZ_EZM_AAFP_fnc_createPelicanMedicalModule", 
+                "a3\air_f_orange\uav_06\data\ui\map_uav_06_ca.paa" 
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+            [ 
+                MAZ_UnitsTree_INDEP, 
+                MAZ_AAFPTree, 
+                MAZ_AAFPDronesTree, 
                 "UGV Stomper", 
                 "UGV Stomper", 
                 "MAZ_EZM_AAFP_fnc_createStomperModule", 
@@ -3419,85 +4466,6 @@ MAZ_EZM_AAFP_fnc_modules = {
                 "a3\drones_f\soft_f_gamma\ugv_01\data\ui\map_ugv_01_rcws_ca.paa" 
             ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
 
-        comment "Helicopters"; 
-
-            MAZ_AAFPHelicoptersTree = [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                "Helicopters", 
-                "" 
-            ] call MAZ_EZM_fnc_zeusAddSubCategory; 
-
-            [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                MAZ_AAFPHelicoptersTree, 
-                "AH-9 Pawnee", 
-                "AH-9 Pawnee", 
-                "MAZ_EZM_AAFP_fnc_createPawneeModule", 
-                "\A3\Air_F\Heli_Light_01\Data\UI\Map_Heli_Light_01_armed_CA.paa" 
-            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
-
-            [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                MAZ_AAFPHelicoptersTree, 
-                "CH-49 Mohawk", 
-                "CH-49 Mohawk", 
-                "MAZ_EZM_AAFP_fnc_createMohawkModule", 
-                "\a3\air_f_beta\heli_transport_02\data\ui\map_heli_transport_02_ca.paa" 
-            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
-
-            [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                MAZ_AAFPHelicoptersTree, 
-                "MH-9 Hummingbird", 
-                "MH-9 Hummingbird", 
-                "MAZ_EZM_AAFP_fnc_createHummingbirdModule", 
-                "\A3\Air_F\Heli_Light_01\Data\UI\Map_Heli_Light_01_CA.paa" 
-            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
-
-            [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                MAZ_AAFPHelicoptersTree, 
-                "PO-30 Orca", 
-                "PO-30 Orca", 
-                "MAZ_EZM_AAFP_fnc_createOrcaModule", 
-                "a3\air_f\heli_light_02\data\ui\map_heli_light_02_rockets_ca.paa" 
-            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
-
-            [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                MAZ_AAFPHelicoptersTree, 
-                "PO-30 Orca (Unarmed)", 
-                "PO-30 Orca (Unarmed)", 
-                "MAZ_EZM_AAFP_fnc_createOrcaUnarmedModule", 
-                "a3\air_f\heli_light_02\data\ui\map_heli_light_02_ca.paa" 
-            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
-
-            [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                MAZ_AAFPHelicoptersTree, 
-                "WY-55 Hellcat", 
-                "WY-55 Hellcat", 
-                "MAZ_EZM_AAFP_fnc_createHellcatModule", 
-                "\a3\air_f_epb\heli_light_03\data\ui\map_heli_light_03_ca.paa" 
-            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
-
-            [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                MAZ_AAFPHelicoptersTree, 
-                "WY-55 Hellcat (Unarmed)", 
-                "WY-55 Hellcat (Unarmed)", 
-                "MAZ_EZM_AAFP_fnc_createHellcatUnarmedModule", 
-                "\a3\air_f_epb\heli_light_03\data\ui\map_heli_light_03_unarmed_ca.paa" 
-            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
-        
         comment "Groups"; 
         
             MAZ_AAFPSubGroupTree = [ 
@@ -3615,6 +4583,86 @@ MAZ_EZM_AAFP_fnc_modules = {
                 "MAZ_EZM_AAFP_fnc_createSentryPModule", 
                 "" 
             ] call MAZ_EZM_fnc_zeusAddModule_INDEP;
+
+        comment "Helicopters"; 
+
+            MAZ_AAFPHelicoptersTree = [ 
+                MAZ_UnitsTree_INDEP, 
+                MAZ_AAFPTree, 
+                "Helicopters", 
+                "" 
+            ] call MAZ_EZM_fnc_zeusAddSubCategory; 
+
+            [ 
+                MAZ_UnitsTree_INDEP, 
+                MAZ_AAFPTree, 
+                MAZ_AAFPHelicoptersTree, 
+                "AH-9 Pawnee", 
+                "AH-9 Pawnee", 
+                "MAZ_EZM_AAFP_fnc_createPawneeModule", 
+                "\A3\Air_F\Heli_Light_01\Data\UI\Map_Heli_Light_01_armed_CA.paa" 
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+            [ 
+                MAZ_UnitsTree_INDEP, 
+                MAZ_AAFPTree, 
+                MAZ_AAFPHelicoptersTree, 
+                "CH-49 Mohawk", 
+                "CH-49 Mohawk", 
+                "MAZ_EZM_AAFP_fnc_createMohawkModule", 
+                "\a3\air_f_beta\heli_transport_02\data\ui\map_heli_transport_02_ca.paa" 
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+            [ 
+                MAZ_UnitsTree_INDEP, 
+                MAZ_AAFPTree, 
+                MAZ_AAFPHelicoptersTree, 
+                "MH-9 Hummingbird", 
+                "MH-9 Hummingbird", 
+                "MAZ_EZM_AAFP_fnc_createHummingbirdModule", 
+                "\A3\Air_F\Heli_Light_01\Data\UI\Map_Heli_Light_01_CA.paa" 
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+            [ 
+                MAZ_UnitsTree_INDEP, 
+                MAZ_AAFPTree, 
+                MAZ_AAFPHelicoptersTree, 
+                "PO-30 Orca", 
+                "PO-30 Orca", 
+                "MAZ_EZM_AAFP_fnc_createOrcaModule", 
+                "a3\air_f\heli_light_02\data\ui\map_heli_light_02_rockets_ca.paa" 
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+            [ 
+                MAZ_UnitsTree_INDEP, 
+                MAZ_AAFPTree, 
+                MAZ_AAFPHelicoptersTree, 
+                "PO-30 Orca (Unarmed)", 
+                "PO-30 Orca (Unarmed)", 
+                "MAZ_EZM_AAFP_fnc_createOrcaUnarmedModule", 
+                "a3\air_f\heli_light_02\data\ui\map_heli_light_02_ca.paa" 
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+            [ 
+                MAZ_UnitsTree_INDEP, 
+                MAZ_AAFPTree, 
+                MAZ_AAFPHelicoptersTree, 
+                "WY-55 Hellcat", 
+                "WY-55 Hellcat", 
+                "MAZ_EZM_AAFP_fnc_createHellcatModule", 
+                "\a3\air_f_epb\heli_light_03\data\ui\map_heli_light_03_ca.paa" 
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+
+            [ 
+                MAZ_UnitsTree_INDEP, 
+                MAZ_AAFPTree, 
+                MAZ_AAFPHelicoptersTree, 
+                "WY-55 Hellcat (Unarmed)", 
+                "WY-55 Hellcat (Unarmed)", 
+                "MAZ_EZM_AAFP_fnc_createHellcatUnarmedModule", 
+                "\a3\air_f_epb\heli_light_03\data\ui\map_heli_light_03_unarmed_ca.paa" 
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+        
         
         comment "Men"; 
             
@@ -3624,6 +4672,16 @@ MAZ_EZM_AAFP_fnc_modules = {
                 "Men", 
                 "" 
             ] call MAZ_EZM_fnc_zeusAddSubCategory; 
+
+            [ 
+                MAZ_UnitsTree_INDEP, 
+                MAZ_AAFPTree, 
+                MAZ_AAFPMenTree, 
+                "Akhanteros", 
+                "Akhanteros", 
+                "MAZ_EZM_AAFP_fnc_createAkhanterosModule", 
+                "\A3\ui_f\data\Map\VehicleIcons\iconManOfficer_ca.paa" 
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
             
             [ 
                 MAZ_UnitsTree_INDEP, 
@@ -3774,17 +4832,7 @@ MAZ_EZM_AAFP_fnc_modules = {
                 "MAZ_EZM_AAFP_fnc_createRiflemanHATModule", 
                 "\A3\ui_f\data\Map\VehicleIcons\iconManAT_ca.paa" 
             ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
-            
-            [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                MAZ_AAFPMenTree, 
-                "Squad Leader", 
-                "Squad Leader", 
-                "MAZ_EZM_AAFP_fnc_createSquadLeadModule", 
-                "\A3\ui_f\data\Map\VehicleIcons\iconManLeader_ca.paa" 
-            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
-            
+
             [ 
                 MAZ_UnitsTree_INDEP, 
                 MAZ_AAFPTree, 
@@ -3795,6 +4843,17 @@ MAZ_EZM_AAFP_fnc_modules = {
                 "\A3\ui_f\data\Map\VehicleIcons\iconMan_ca.paa" 
             ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
             
+            
+            [ 
+                MAZ_UnitsTree_INDEP, 
+                MAZ_AAFPTree, 
+                MAZ_AAFPMenTree, 
+                "Squad Leader", 
+                "Squad Leader", 
+                "MAZ_EZM_AAFP_fnc_createSquadLeadModule", 
+                "\A3\ui_f\data\Map\VehicleIcons\iconManLeader_ca.paa" 
+            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+        
             [ 
                 MAZ_UnitsTree_INDEP, 
                 MAZ_AAFPTree, 
@@ -4030,7 +5089,7 @@ MAZ_EZM_AAFP_fnc_modules = {
                 MAZ_AAFPPlanesTree, 
                 "A-149 Gryphon", 
                 "A-149 Gryphon", 
-                "MAZ_EZM_AAFP_fnc_createGryphonCASModule", 
+                "MAZ_EZM_AAFP_fnc_createGryphonModule", 
                 "\A3\Air_F_Jets\Plane_Fighter_04\Data\UI\Fighter04_icon_ca.paa" 
             ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
 
@@ -4370,74 +5429,7 @@ MAZ_EZM_AAFP_fnc_modules = {
                 "\a3\armor_f_epb\mbt_03\data\ui\map_mbt_03_ca.paa" 
             ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
         
-        comment "Trucks"; 
         
-            MAZ_AAFPTrucksTree = [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                "Trucks", 
-                "" 
-            ] call MAZ_EZM_fnc_zeusAddSubCategory; 
-            
-            [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                MAZ_AAFPTrucksTree, 
-                "Zamak Ammo", 
-                "Zamak Ammo", 
-                "MAZ_EZM_AAFP_fnc_createZamakAmmoModule", 
-                "\A3\soft_f_gamma\Truck_02\data\UI\Map_Truck_02_box_CA.paa" 
-            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
-            
-            [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                MAZ_AAFPTrucksTree, 
-                "Zamak Fuel", 
-                "Zamak Fuel", 
-                "MAZ_EZM_AAFP_fnc_createZamakFuelModule", 
-                "\A3\soft_f_gamma\Truck_02\data\UI\Map_Truck_02_fuel_CA.paa" 
-            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
-            
-            [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                MAZ_AAFPTrucksTree, 
-                "Zamak Medical", 
-                "Zamak Medical", 
-                "MAZ_EZM_AAFP_fnc_createZamakMedicalModule", 
-                "\A3\soft_f_gamma\Truck_02\data\UI\Map_Truck_02_medevac_CA.paa" 
-            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
-            
-            [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                MAZ_AAFPTrucksTree, 
-                "Zamak Repair", 
-                "Zamak Repair", 
-                "MAZ_EZM_AAFP_fnc_createZamakRepairModule", 
-                "\A3\Soft_F_Beta\Truck_02\Data\UI\Map_Truck_02_repair_CA.paa" 
-            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
-            
-            [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                MAZ_AAFPTrucksTree, 
-                "Zamak Transport", 
-                "Zamak Transport", 
-                "MAZ_EZM_AAFP_fnc_createZamakTransportModule", 
-                "\A3\soft_f_beta\Truck_02\data\UI\Map_Truck_02_dump_CA.paa" 
-            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
-            
-            [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                MAZ_AAFPTrucksTree, 
-                "Zamak Transport (Covered)", 
-                "Zamak Transport (Covered)", 
-                "MAZ_EZM_AAFP_fnc_createZamakCoveredTransportModule", 
-                "\A3\soft_f_beta\Truck_02\data\UI\Map_Truck_02_dump_CA.paa" 
-            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
         
         comment "Turrets"; 
         
@@ -4498,44 +5490,7 @@ MAZ_EZM_AAFP_fnc_modules = {
                 "\A3\Static_F_Gamma\data\UI\map_StaticTurret_AT_CA.paa" 
             ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
             
-        comment "Vans"; 
-        
-            MAZ_AAFPVansTree = [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                "Vans", 
-                "" 
-            ] call MAZ_EZM_fnc_zeusAddSubCategory; 
-            
-            [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                MAZ_AAFPVansTree, 
-                "Van", 
-                "Van", 
-                "MAZ_EZM_AAFP_fnc_createVanModule", 
-                "\a3\Soft_F_Orange\Van_02\Data\UI\Map_Van_02_vehicle_CA.paa" 
-            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
-            
-            [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                MAZ_AAFPVansTree, 
-                "Transport Van", 
-                "Transport Van", 
-                "MAZ_EZM_AAFP_fnc_createVanTransportModule", 
-                "\a3\Soft_F_Orange\Van_02\Data\UI\Map_Van_02_vehicle_CA.paa" 
-            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
-            
-            [ 
-                MAZ_UnitsTree_INDEP, 
-                MAZ_AAFPTree, 
-                MAZ_AAFPVansTree, 
-                "Medical Van", 
-                "Medical Van", 
-                "MAZ_EZM_AAFP_fnc_createMedicalVanModule", 
-                "\a3\Soft_F_Orange\Van_02\Data\UI\Map_Van_02_medevac_CA.paa" 
-            ] call MAZ_EZM_fnc_zeusAddModule_INDEP; 
+    
     };
 };
 
