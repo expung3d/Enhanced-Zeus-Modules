@@ -4091,16 +4091,13 @@ MAZ_EZM_fnc_createUnitForZeus = {
 
 	waitUntil{(getAssignedCuratorUnit _zeusLogic) != _oldPlayer};
 	waitUntil{isNull (getAssignedCuratorUnit _zeusLogic)};
-	["Curator unassigned."] call MAZ_EZM_fnc_systemMessage;
 
-	["Attempting assign..."] call MAZ_EZM_fnc_systemMessage;
 	while{isNull (getAssignedCuratorUnit _zeusLogic)} do {
 		[player,(allCurators select _zeusIndex)] remoteExec ['assignCurator',2];
 		sleep 0.1;
 	};
 
 	waitUntil{getAssignedCuratorLogic player == _zeusLogic};
-	["Curator assigned."] call MAZ_EZM_fnc_systemMessage;
 	private _zeusLoadout = profileNamespace getVariable "MAZ_EZM_ZeusLoadout";
 	if(isNil "_zeusLoadout") then {
 		_zeusObject setUnitLoadout [[],[],["hgun_Pistol_heavy_01_green_F","","","",["11Rnd_45ACP_Mag",11],[],""],["U_Marshal",[["11Rnd_45ACP_Mag",2,11]]],["V_PlateCarrier_Kerry",[["11Rnd_45ACP_Mag",1,11]]],[],"H_Beret_02","G_Spectacles",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch",""]];
@@ -4125,6 +4122,7 @@ MAZ_EZM_fnc_createUnitForZeus = {
 			_x removeCuratorEditableObjects [[_oldPlayer],true];
 		} foreach allCurators;
 	}] remoteExec ["Spawn",2];
+	["Zeus Unit created, you can adjust its loadout by setting a Zeus Loadout."] call MAZ_EZM_fnc_systemMessage;
 	if(isNil "MAZ_EZM_mainLoop_Active") then {
 		[] spawn MAZ_EZM_fnc_initMainLoop;
 	};
