@@ -3,7 +3,7 @@ if(!isNull (findDisplay 312) && {!isNil "this"} && {!isNull this}) then {
 };
 
 [] spawn {
-MAZ_EZM_Version = "V2.0.22";
+MAZ_EZM_Version = "V2.1.0";
 MAZ_EZM_autoAdd = profileNamespace getVariable ["MAZ_EZM_autoAddVar",true];
 MAZ_EZM_spawnWithCrew = true;
 MAZ_EZM_nvgsOnlyAtNight = true;
@@ -11,7 +11,6 @@ MAZ_EZM_enableCleaner = profileNamespace getVariable ["MAZ_EZM_autoCleanerVar",t
 MAZ_EZM_stanceForAI = "UP";
 uiNamespace setVariable ["MAZ_EZM_activeWarnings",[]];
 uiNamespace setVariable ["MAZ_EZM_missingRespawnWarn",nil];
-MAZ_EZM_autoAdd = false;
 MAZ_EZM_factionAddons = [];
 MAZ_EZM_moduleAddons = [];
 
@@ -5321,69 +5320,6 @@ MAZ_EZM_fnc_initFunction = {
 			},_entity] call MAZ_EZM_fnc_createDialog;   
 		};
 
-		MAZ_EZM_fnc_toggleCarelessModule = {
-			params ["_entity"];
-			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
-			if((behaviour _entity) == "CARELESS") then {
-				[group _entity,"AWARE"] remoteExec ['setBehaviour'];
-				[format ["%1's group is now aware.",name _entity],"addItemOk"] call MAZ_EZM_fnc_systemMessage;
-			} else {
-				[group _entity,"CARELESS"] remoteExec ['setBehaviour'];
-				[format ["%1's group is now careless.",name _entity],"addItemOk"] call MAZ_EZM_fnc_systemMessage;
-			};
-		};
-
-		MAZ_EZM_fnc_easyModeModule = {
-			params ["_entity"];
-			if(isNil "MAZ_EZM_EZMode") then {
-				MAZ_EZM_EZMode = false;
-			};
-			if(MAZ_EZM_EZMode) then {
-				MAZ_EZM_EZMode = false;
-				["EZ Mode turned off.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
-			} else {
-				MAZ_EZM_EZMode = true;
-				["EZ Mode turned on.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
-				[] spawn {
-					while {MAZ_EZM_EZMode} do {
-						[[],{
-							{
-								_x setSkill 0;
-								_x setSkill ['aimingAccuracy', 0];
-								_x setSkill ['aimingShake', 0];
-								_x setSkill ['aimingSpeed', 0];
-								_x setSkill ['endurance', 0];
-								_x setSkill ['spotDistance', 0];
-								_x setSkill ['spotTime', 0];
-								_x setSkill ['courage', 0];
-								_x setSkill ['reloadSpeed', 0];
-								_x setSkill ['commanding', 0];
-								_x setSkill ['general', 0];
-								_x setUnitPos 'UP';
-
-								private _unit = _x;
-								private _group = group _unit;
-								_vehicle = vehicle _unit;
-								_group enableIRLasers true;
-								_unit enableIRLasers true;
-								_group enableGunLights "ForceOn";
-								_unit enableGunLights "ForceOn";
-								_vehicle setPilotLight true;
-								_vehicle setCollisionLight true;
-								
-								_unit action ["IRLaserOn", _unit];
-								_unit action ["GunLightOn", _unit];
-								_unit action ["CollisionLightOn", _vehicle];
-								_unit action ["lightOn", _vehicle];
-								_unit action ["SearchlightOn", _vehicle];
-							} forEach (allUnits - allPlayers);
-						}] remoteExec ['spawn'];
-						sleep 3;
-					};
-				};
-			};
-		};
-
 		MAZ_EZM_fnc_getNearestBuilding = {
 			params [
 				["_position",[0,0,0],[[],objNull]],
@@ -6177,7 +6113,7 @@ MAZ_EZM_fnc_initFunction = {
 			detach _smoke;
 			detach _light;
 			if(_mode select 0 == 'arsenal') then {
-				["AmmoboxInit",[_veh,true]] spawn BIS_fnc_arsenal;
+				[_veh] call JAM_EZM_fnc_createAIOArsenalModule;
 			};
 			if(_vehType == 'B_Heli_Transport_03_F') then {
 				sleep 20;
@@ -6805,118 +6741,75 @@ MAZ_EZM_fnc_initFunction = {
 			},[[true] call MAZ_EZM_fnc_getScreenPosition,_side,_dir]] call MAZ_EZM_fnc_createDialog;
 		};
 
-	comment "Arsenal";
-
-		MAZ_EZM_fnc_createArsenalModule = {
-			params ["_entity"];
-			private _arsenalObject = nil;
-			if(!isNull _entity) then {
-				_arsenalObject = _entity;
-			} else {
-				private _pos = [true] call MAZ_EZM_fnc_getScreenPosition;
-				_arsenalObject = createVehicle ["B_supplyCrate_F",_pos,[],0,"CAN_COLLIDE"];
-			};
-			[_arsenalObject] call MAZ_EZM_fnc_addObjectToInterface;
-			
-			clearItemCargoGlobal _arsenalObject;
-			clearWeaponCargoGlobal _arsenalObject;
-			clearMagazineCargoGlobal _arsenalObject;
-			clearBackpackCargoGlobal _arsenalObject;
-
-			private _secondObject = "Land_HelipadEmpty_F" createVehicle position _arsenalObject;
-			_secondObject setPos (getPos _arsenalObject);
-			[_secondObject,_arsenalObject] call BIS_fnc_attachToRelative;
-			_arsenalObject setVariable ['attachedObjArsenal',_secondObject,true];
-
-			private _thirdObject = "Land_HelipadEmpty_F" createVehicle position _arsenalObject;
-			_thirdObject setPos (getPos _arsenalObject);
-			[_thirdObject,_arsenalObject] call BIS_fnc_attachToRelative;
-			_arsenalObject setVariable ['attachedObjArsenal2',_thirdObject,true];
+		MAZ_EZM_fnc_mortarAreaModule = {
+			private _pos = [true] call MAZ_EZM_fnc_getScreenPosition;
 			[
-				_arsenalObject,
+				"Mortar Area",
 				[
-					"<t color='#FFFFFF' size='0.9'><img image='a3\ui_f\data\logos\a_64_ca.paa'></img><t color='#1a7e00' size='1'> Open Full Arsenal</t>",
-					{
-						params ["_target", "_caller", "_actionId", "_arguments"];
-						["Preload"] call BIS_fnc_arsenal;
-						["Open", true] call BIS_fnc_arsenal;
-						showChat true;
-						playSound 'addItemOk';
-					},
-					nil,
-					6,
-					true,
-					true,
-					"",
-					"_target distance _this < 6"
-				]
-			] remoteExec ['addAction',0,_arsenalObject];
-			[
-				_arsenalObject,
-				[
-					"<t color='#FFFFFF' size='1'><img image='a3\ui_f\data\igui\cfg\actions\obsolete\ui_action_gear_ca.paa'></img><t color='#1a7e00' size='1'> Save Respawn Loadout</t>",
-					{
-						params ["_target", "_caller", "_actionId", "_arguments"];
-						if(!isNil "MAZ_customArsenalRespawnEH") then {
-							player removeEventHandler ["Respawn",MAZ_customArsenalRespawnEH];
-						};
-						MAZ_customArsenalRespawnEH = player addEventHandler ["Respawn",{
-							[] spawn {
-								private _unitLoadout = +(player getVariable 'MAZ_customLoadoutFromModule');
-								if(!isNil "_unitLoadout") then {
-									if(count (_unitLoadout select 1) != 0) then {
-										_unitLoadout set [1,[]];
-										titleText [ "<t color='#004c99' size='1.5'>Arsenal</t><t color='#FFFFFF' size='1.5'>: You lost your launcher during the respawn. You can get a new one at an arsenal.</t>","PLAIN DOWN",2,true,true];
-									};
-									player setUnitLoadout _unitLoadout;
-									systemChat "[ Enhanced Zeus Modules ] : Respawn loadout applied.";
-									playSound 'addItemOk';
-								};
-							};
-						}];
-						[player,"PutDown"] remoteExec ["playAction",0];
-						player setVariable ['MAZ_customLoadoutFromModule',getUnitLoadout player];
-						playSound 'addItemOk';
-						systemChat "[ Enhanced Zeus Modules ] : Respawn loadout saved.";
-					},
-					nil,
-					6,
-					true,
-					true,
-					"",
-					"_target distance _this < 6"
-				]
-			] remoteExec ['addAction',0,_secondObject];
-			[
-				_arsenalObject,
-				[
-					"<t color='#FFFFFF' size='1'><img image='a3\ui_f\data\igui\cfg\actions\obsolete\ui_action_gear_ca.paa'></img><t color='#1a7e00' size='1'> Get Saved Loadout</t>",
-					{
-						params ["_target", "_caller", "_actionId", "_arguments"];
-						[player,"PutDown"] remoteExec ["playAction",0];
-						private _loadout = player getVariable ['MAZ_customLoadoutFromModule',getUnitLoadout player];
-						player setUnitLoadout _loadout;
-						playSound 'addItemOk';
-						systemChat "[ Enhanced Zeus Modules ] : Saved loadout re-equipped.";
-					},
-					nil,
-					6,
-					true,
-					true,
-					"",
-					"_target distance _this < 6 && (count (player getVariable ['MAZ_customLoadoutFromModule',[]]) != 0)"
-				]
-			] remoteExec ['addAction',0,_thirdObject];
-			_arsenalObject addEventHandler ["Deleted", {
-				params ["_entity"];
-				private _secondObject = _entity getVariable 'attachedObjArsenal';
-				private _thirdObject = _entity getVariable 'attachedObjArsenal2';
-				deleteVehicle _secondObject;
-				deleteVehicle _thirdObject;
-			}];
-
-			["Full Arsenal Created.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+					[
+						"COMBO",
+						"Round Type:",
+						[
+							["Sh_82mm_AMOS","Smoke_82mm_AMOS_White","Sh_155mm_AMOS","Smoke_120mm_AMOS_White"],
+							["82mm HE","82mm Smoke","155mm HE","155mm Smoke"],
+							0
+						]
+					],
+					[
+						"SLIDER:RADIUS",
+						"Round Radius:",
+						[
+							50,
+							300,
+							100,
+							_pos,
+							[1,0,0,1],
+							false
+						]
+					],
+					[
+						"SLIDER",
+						"Number of Rounds:",
+						[
+							1,
+							15,
+							10
+						]
+					],
+					[
+						"SLIDER",
+						"Minimum Delay:",
+						[
+							2,
+							4,
+							3
+						]
+					],
+					[
+						"SLIDER",
+						"Maximum Delay",
+						[
+							5,
+							8,
+							6
+						]
+					]
+				],
+				{
+					params ["_values","_pos","_display"];
+					_values params ["_roundType","_radius","_rounds","_min","_max"];
+					[_pos,_roundType,_radius,_rounds,[_min,_max]] spawn BIS_fnc_fireSupportVirtual;
+					_display closeDisplay 1;
+				},
+				{
+					params ["_values","_args","_display"];
+					_display closeDisplay 1;
+				},
+				_pos
+			] call MAZ_EZM_fnc_createDialog;
 		};
+
+	comment "Arsenal";
 
 		JAM_EZM_fnc_createAIOArsenalModule = {
 			params [['_entity', objnull]];
@@ -7555,10 +7448,6 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_resetSavedLoadouts = {
 			[[], {
-				if(!isNil "MAZ_customArsenalRespawnEH") then {
-					player removeEventHandler ["Respawn",MAZ_customArsenalRespawnEH];
-				};
-				player setVariable ["MAZ_customLoadoutFromModule",nil];
 				if (!isNil "M9SD_EH_arsenalRespawnLoadout") then {
 					player removeEventHandler["Respawn", M9SD_EH_arsenalRespawnLoadout];
 				};
@@ -8296,30 +8185,27 @@ MAZ_EZM_fnc_initFunction = {
 			};
 		};
 
-		MAZ_EZM_fnc_createRandomHelicrashModule = {
-			MAZ_EZM_autoHelicrash = true;
-			publicVariable 'MAZ_EZM_autoHelicrash';
-			[] call MAZ_EZM_fnc_newHelicrashMission;
+		MAZ_EZM_fnc_toggleRandomHelicrashModule = {
+			if(missionNamespace getVariable ["MAZ_EZM_autoHelicrash",false]) then {
+				missionNamespace setVariable ["MAZ_EZM_autoHelicrash",false,true];
+				["Automated Helicopter Crashes disabled.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+			} else {
+				missionNamespace setVariable ["MAZ_EZM_autoHelicrash",true,true];
+				["Automated Helicopter Crashes enabled.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+				[] call MAZ_EZM_fnc_newHelicrashMission;
+			};
 		};
 
-		MAZ_EZM_fnc_turnOffRandomHelicrashModule = {
-			MAZ_EZM_autoHelicrash = false;
-			publicVariable 'MAZ_EZM_autoHelicrash';
-			["Automated Helicopter Crashes disabled.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
-		};
-
-		MAZ_EZM_fnc_createRandomConvoyModule = {
+		MAZ_EZM_fnc_toggleRandomConvoyModule = {
 			if(worldName != "Altis") exitWith {["Currently only configured for Altis! You can create your own by contacting Expung3d!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
-			MAZ_EZM_autoConvoy = true;
-			publicVariable 'MAZ_EZM_autoConvoy';
-			[] call MAZ_EZM_fnc_newConvoyMission;
-		};
-
-		MAZ_EZM_fnc_turnOffRandomConvoyModule = {
-			if(worldName != "Altis") exitWith {["Currently only configured for Altis.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
-			MAZ_EZM_autoConvoy = false;
-			publicVariable 'MAZ_EZM_autoConvoy';
-			["Automated Convoy Missions disabled.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+			if(missionNamespace getVariable ["MAZ_EZM_autoConvoy",false]) then {
+				missionNamespace setVariable ["MAZ_EZM_autoConvoy",false,true];
+				["Automated Convoy Missions disabled.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+			} else {
+				missionNamespace setVariable ["MAZ_EZM_autoConvoy",true,true];
+				["Automated Convoy Missions enabled.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+				[] call MAZ_EZM_fnc_newConvoyMission;
+			};
 		};
 
 		MAZ_EZM_fnc_createGarrisonTownDialog = {
@@ -9414,42 +9300,64 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_createCarrierModule = {
 			params ["_entity"];
-			if(_entity isEqualTo objNull) exitWith {["No boat selected!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
-			if !(_entity isKindOf "Ship") exitWith {["Object is not a boat!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
-			[_entity] spawn {
-				params ["_object"];
-				private _posATL = getPosATL _object;
-				private _dir = ((getDir _object)+180);
+			private _data = if(_entity isEqualTo objNull) then {
+				[objNull,[true] call MAZ_EZM_fnc_getScreenPosition];
+			} else {
+				if !(_entity isKindOf "Ship") exitWith {["Object is not a boat!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+				[_entity,nil];
+			};
+			_data spawn {
+				params ["_object","_pos"];
+				private _dir = if(!isNull _object) then {
+					_pos = getPosATL _object;
+					((getDir _object)+180);
+				} else {
+					_pos = ASLtoATL _pos;
+					180;
+				};
 				private _carrier = createVehicle ["Land_Carrier_01_base_F",[0,0,0],[],0,"CAN_COLLIDE"];
-				_carrier setPosATL _posATL;
+				_carrier setPosATL _pos;
 				_carrier setVectorDirAndUp [[sin _dir, cos _dir, 0], [0,0,1]];
-				sleep 2;
+				sleep 0.5;
 				[_carrier] remoteExecCall ["BIS_fnc_Carrier01Init", 0, _carrier];
 				{deleteVehicle _x} forEach (nearestObjects [[0,0,0], ["Land_Carrier_01_hull_GEO_Base_F","DynamicAirport_01_F"], 300, true]);
-				{_object deleteVehicleCrew _x} forEach crew _object;
-				sleep 2;
-				deleteVehicle _object;
+				if(!isNull _object) then {
+					{_object deleteVehicleCrew _x} forEach crew _object;
+					sleep 0.5;
+					deleteVehicle _object;
+				};
 			};
 			["USS Freedom Carrier deployed!","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
 
 		MAZ_EZM_fnc_createDestroyerModule = {
 			params ["_entity"];
-			if(_entity isEqualTo objNull) exitWith {["No boat selected!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
-			if !(_entity isKindOf "Ship") exitWith {["Object is not a boat!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
-			[_entity] spawn {
-				params ["_object"];
-				private _posATL = getPosATL _object;
-				private _dir = ((getDir _object)+180);
+			private _data = if(_entity isEqualTo objNull) then {
+				[objNull,[true] call MAZ_EZM_fnc_getScreenPosition];
+			} else {
+				if !(_entity isKindOf "Ship") exitWith {["Object is not a boat!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+				[_entity,nil];
+			};
+			_data spawn {
+				params ["_object","_pos"];
+				private _dir = if(!isNull _object) then {
+					_pos = getPosATL _object;
+					((getDir _object)+180);
+				} else {
+					_pos = ASLtoATL _pos;
+					180;
+				};
 				private _destroyer = createVehicle ["Land_Destroyer_01_base_F",[-300,-300,0],[],0,"CAN_COLLIDE"];
-				_destroyer setPosATL _posATL;
+				_destroyer setPosATL _pos;
 				_destroyer setVectorDirAndUp [[sin _dir, cos _dir, 0], [0,0,1]];
-				sleep 2;
+				sleep 0.5;
 				[_destroyer] remoteExecCall ["BIS_fnc_Destroyer01Init", 0, _destroyer];
 				{deleteVehicle _x} forEach (nearestObjects [[-300,-300,0], ["Land_Destroyer_01_Boat_Rack_01_Base_F","Land_Destroyer_01_hull_base_F","ShipFlag_US_F"], 300, true]);
-				{_object deleteVehicleCrew _x} forEach crew _object;
-				sleep 2;
-				deleteVehicle _object;
+				if(!isNull _object) then {
+					{_object deleteVehicleCrew _x} forEach crew _object;
+					sleep 0.1;
+					deleteVehicle _object;
+				};
 			};
 			["USS Liberty Destroyer deployed!","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
@@ -9918,17 +9826,36 @@ MAZ_EZM_fnc_initFunction = {
 
 	comment "Environment";
 
-		MAZ_EZM_fnc_changeDateModule = {
-			date params ["_year", "_month", "_day", "_hours", "_minutes"];
-			["Change Date",[
+		MAZ_EZM_fnc_changeTimeModule = {
+			private _date = date;
+			_date params ["_year", "_month", "_day", "_hours", "_minutes"];
+			(_date call BIS_fnc_sunriseSunsetTime) params ["_sunrise","_sunset"];
+			private _sunriseData = [floor _sunrise, round ((_sunrise % 1) * 60)];
+			{
+				if(_x < 10) then {
+					_sunriseData set [_forEachIndex,"0" + (str _x)];
+				} else {
+					_sunriseData set [_forEachIndex,str _x];
+				};
+			}forEach _sunriseData;
+
+			private _sunsetData = [floor _sunset, round ((_sunset % 1) * 60)];
+			{
+				if(_x < 10) then {
+					_sunsetData set [_forEachIndex,"0" + (str _x)];
+				} else {
+					_sunsetData set [_forEachIndex,str _x];
+				};
+			}forEach _sunsetData;
+			[format ["Change Time - Sunrise %1:%2 - Sunset %3:%4",_sunriseData # 0,_sunriseData # 1,_sunsetData # 0, _sunsetData # 1],[
 				[
 					"SLIDER",
-					"Hour",
+					"Hour:",
 					[0,24,_hours]
 				],
 				[
 					"SLIDER",
-					"Minute",
+					"Minute:",
 					[0,60,_minutes]
 				]
 			],{
@@ -9939,6 +9866,36 @@ MAZ_EZM_fnc_initFunction = {
 					setDate [_year,_month,_day,_hr,_min];
 				}] remoteExec ['spawn',2];
 
+				_display closeDisplay 1;
+			},{
+				params ["_values","_args","_display"];
+				_display closeDisplay 2;
+			},[]] call MAZ_EZM_fnc_createDialog;
+		};
+
+		MAZ_EZM_fnc_changeDateModule = {
+			date params ["_year", "_month", "_day", "_hours", "_minutes"];
+			["Change Date",[
+				[
+					"SLIDER",
+					"Month:",
+					[0,12,_month]
+				],
+				[
+					"SLIDER",
+					"Day:",
+					[0,30,_day]
+				],
+				[
+					"SLIDER",
+					"Year (Does not work on Official):",
+					[2000,3000,_year]
+				]
+			],{
+				params ["_values","_pos","_display"];
+				_values params ["_month","_day","_year"];
+				date params ["","","","_hour","_minute"];
+				[[_year,_month,_day,_hour,_minute]] remoteExec ["setDate",2];
 				_display closeDisplay 1;
 			},{
 				params ["_values","_args","_display"];
@@ -10110,9 +10067,12 @@ MAZ_EZM_fnc_initFunction = {
 
 				private _iedObject = createVehicle [_iedType,_pos,[],0,"CAN_COLLIDE"];
 				[_iedObject] call MAZ_EZM_fnc_addObjectToInterface;
+				[_iedObject] call MAZ_EZM_fnc_deleteAttachedWhenDeleted;
 				["IED created.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
-				[_iedObject,_radius,_sides] spawn {
-					params ["_obj","_radius","_sides"];
+				private _ied = createMine ["IEDLandSmall_F", position _iedObject,[],0];
+				_ied attachTo [_iedObject,[0,0,-5]];
+				[_iedObject,_ied,_radius,_sides] spawn {
+					params ["_obj","_ied","_radius","_sides"];
 					waitUntil {
 						(
 							(count (nearestObjects [_obj,["CAManBase"],_radius])) > 0
@@ -10124,9 +10084,12 @@ MAZ_EZM_fnc_initFunction = {
 							((nearestObjects [_obj,["CAManBase"],_radius]) findIf {side (group _x) in _sides}) != -1
 						)
 					};
-					private _ied = createMine ["IEDLandBig_F", position _obj,[],0];
-					deleteVehicle _obj;
+					private _pos = getPos _ied;
+					_pos set [2,0];
+					_ied setPosATL _pos;
 					_ied setDamage 1;
+					sleep 0.3;
+					deleteVehicle _obj;
 				};
 
 				_display closeDisplay 1;
@@ -10138,63 +10101,295 @@ MAZ_EZM_fnc_initFunction = {
 
 	comment "Gameplay";
 
+		MAZ_EZM_fnc_startCountdown = {
+			params ["_time"];
+			_time = time + _time;
+			MAZ_EZM_countDownStop = true;
+			sleep 0.1;
+			
+			with uiNamespace do {
+				private _display = findDisplay 46;
+				private _background = _display ctrlCreate ["RscPicture",-1];
+				_background ctrlSetText "#(argb,8,8,3)color(0,0,0,0.8)";
+				_background ctrlSetPosition [0 * safezoneW + safezoneX,0.973 * safezoneH + safezoneY,0.0515625 * safezoneW,0.033 * safezoneH];
+				_background ctrlCommit 0;
+
+				private _timerIcon = _display ctrlCreate ["RscPictureKeepAspect",-1];
+				_timerIcon ctrlSetText "a3\modules_f_curator\data\portraitskiptime_ca.paa";
+				_timerIcon ctrlSetPosition [0.002 * safezoneW + safezoneX,0.9755 * safezoneH + safezoneY,0.0154688 * safezoneW,0.022 * safezoneH];
+				_timerIcon ctrlCommit 0;
+
+				private _timerText = _display ctrlCreate ["RscStructuredText",-1];
+				_timerText ctrlSetStructuredText parseText "";
+				_timerText ctrlSetPosition [0.0204687 * safezoneW + safezoneX,0.9755 * safezoneH + safezoneY,0.0309375 * safezoneW,0.022 * safezoneH];
+				_timerText ctrlCommit 0;
+
+				MAZ_EZM_TimerControls = [_background,_timerIcon,_timerText];
+			};
+
+			[_time] spawn {
+				params ["_time"];
+				sleep 0.1;
+				MAZ_EZM_countDownStop = false;
+				while {time < _time && !MAZ_EZM_countDownStop} do {
+					private _difference = _time - time;
+					private _minutes = floor (_difference / 60);
+					private _seconds = floor (_difference % 60);
+					with uiNamespace do {
+						if(_minutes == 0) then {
+							(MAZ_EZM_TimerControls # 2) ctrlSetTextColor [0.85,0.4,0,1];
+						};
+						private _secondsStr = if(_seconds < 10) then {"0" + (str _seconds)} else {str _seconds};
+						private _minutesStr = if(_minutes < 10) then {"0" + (str _minutes)} else {str _minutes};
+						(MAZ_EZM_TimerControls # 2) ctrlSetStructuredText parseText (format ["%1:%2",_minutesStr,_secondsStr]);
+					};
+					sleep 0.1;
+				};
+				with uiNamespace do {
+					{
+						ctrlDelete _x;
+					}forEach MAZ_EZM_TimerControls;
+				};
+			};
+		};
+
 		MAZ_EZM_fnc_createCountdownModule = {
 			["Create Countdown",[
 				[
 					"SLIDER",
-					"Hours:",
-					[0,3,0]
+					"Minutes:",
+					[0,30,5]
 				],
 				[
 					"SLIDER",
-					"Minutes:",
-					[0,60,15]
+					"Seconds:",
+					[0,60,0]
 				],
 				[
 					"SIDES",
-					"Sides Who See The Message",
+					"Sides Who See The Timer:",
 					[west,east,independent,civilian]
 				]
 			],{
 				params ["_values","_args","_display"];
-				_values params ["_hours","_minutes","_side"];
+				_values params ["_minutes","_seconds","_side"];
 				private _sides = _side call MAZ_EZM_fnc_getSidesFromString;
 				_sides = _sides + [sideLogic];
-				_hours = round _hours; _minutes = round _minutes;
-				private _timer = (_hours * 3600) + (_minutes * 60);
-				[[[_hours,_minutes],_timer],{
-					params ["_timeData","_timer"];
-					_timeData params ["_hours","_minutes"];
-					if(!(player getVariable ["MAZ_EZM_timerActive",false])) then {
-						private _timerInt = 0;
-						player setVariable ["MAZ_EZM_timerActive",true,true];
-						while {_timer > 0} do {
-							if(_timerInt >= 60) then {
-								_minutes = _minutes - 1;
-								_timerInt = 0;
-							};
-							if(_minutes == 0 && _hours != 0) then {_hours = _hours - 1; _minutes = 59;};
-							if(_hours > 0) then {
-								[format ["<t color='#FFFFFF' size='1.25'>%1 hrs, %2 min left.</t>",_hours,_minutes],-1,-0.3,1,0,0] spawn BIS_fnc_dynamicText;
-							} else {
-								if(_minutes > 1) then {
-									[format ["<t color='#FFFFFF' size='1.25'>%1 minutes left.</t>",_minutes],-1,-0.3,1,0,0] spawn BIS_fnc_dynamicText;
-								} else {
-									[format ["<t color='#FFFFFF' size='1.25'>%1 seconds left!</t>",_timer],-1,-0.3,1,0,0] spawn BIS_fnc_dynamicText;
-								};
-							};
-							_timerInt = _timerInt + 1;
-							_timer = _timer - 1;
-							sleep 1;
-						};
-						player setVariable ["MAZ_EZM_timerActive",false,true];
-					};
-				}]remoteExec ['spawn',_sides];
+				_seconds = round _seconds; _minutes = round _minutes;
+				private _timer = (_minutes * 60) + _seconds;
+
+				if(isNil "MAZ_EZM_countdownAr") then {
+					MAZ_EZM_countdownAr = ['t',MAZ_EZM_fnc_startCountdown];
+					publicVariable "MAZ_EZM_countdownAr";
+				};
+
+				[[_timer], {
+					params ["_time"];
+					[_time] call (MAZ_EZM_countdownAr # 1);
+				}] remoteExec ["spawn",_sides];
+				
 				_display closeDisplay 1;
 			},{
 				params ["_values","_args","_display"];
 				_display closeDisplay 2;
 			},[]] call MAZ_EZM_fnc_createDialog;
+		};
+
+	comment "Markers";
+
+		MAZ_EZM_fnc_createAreaMarker = {
+			if(!visibleMap) exitWith {["Cannot place a marker without the map open!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			private _position = [] call MAZ_EZM_fnc_getScreenPosition;
+			if(isNil "MAZ_EZM_areaMarkers") then {
+				MAZ_EZM_areaMarkers = [];
+				publicVariable 'MAZ_EZM_areaMarkers';
+			};
+			private _marker = createMarker [format ["ZAM_EZM_marker_%1",count MAZ_EZM_areaMarkers],_position];
+			_marker setMarkerSize [50,50];
+			_marker setMarkerShape "ELLIPSE";
+			MAZ_EZM_areaMarkers pushBack _marker;
+			publicVariable 'MAZ_EZM_areaMarkers';
+			[_marker] call MAZ_EZM_fnc_createEditAreaMarkerDialog;
+		};
+
+		MAZ_EZM_fnc_editAreaMarker = {
+			params ["_marker","_values"];
+			_values params ["_markerText","_markerPos","_markerSize","_markerBrush","_markerColor","_markerShape","_markerAlpha"];
+			_marker setMarkerText _markerText;
+			_marker setMarkerPos _markerPos;
+			_marker setMarkerSize _markerSize;
+			_marker setMarkerBrush _markerBrush;
+			_marker setMarkerColor _markerColor;
+			_marker setMarkerAlpha _markerAlpha;
+			_marker setMarkerShape (["ELLIPSE","RECTANGLE"] select _markerShape);
+		};
+
+		MAZ_EZM_fnc_createEditAreaMarkerDialog = {
+			params ["_marker"];
+			(getMarkerSize _marker) params ["_sizeX","_sizeY"];
+			(getMarkerPos _marker) params ["_posX","_posY"];
+			private _markerShapeSelect = [false,true] select (markerShape _marker == "RECTANGLE");
+			private _dataList = [];
+			{
+				private _color = getArray (configFile >> "CfgMarkerColors" >> _x >> "color");
+				if([0,0,0,1] isEqualTo _color) then {_color = [1,1,1,1]};
+				if((_color select 0) isEqualType "") then {
+					{
+						_color set [_forEachIndex,call (compile _x)];
+					}forEach _color;
+				};
+				_dataList pushback [getText (configFile >> "CfgMarkerColors" >> _x >> "name"), "", "",_color];
+			}forEach ["Default","ColorBlack","ColorGrey","ColorRed","ColorBrown","ColorOrange","ColorYellow","ColorKhaki","ColorGreen","ColorBlue","ColorPink","ColorWhite","ColorWest","ColorEAST","ColorGUER","ColorCIV","ColorUNKNOWN"];
+
+			private _brushList = [];
+			{
+				_brushList pushBack [getText (configFile >> "CfgMarkerBrushes" >> _x >> "name"), "", getText (configFile >> "CfgMarkerBrushes" >> _x >> "texture")];
+			}forEach ["Solid","SolidFull","SolidBorder","Border","Horizontal","Vertical","Grid","FDiagonal","BDiagonal","Diaggrid","Cross"];
+
+			["Edit Area Marker",[
+				[
+					"EDIT",
+					"Marker Text:",
+					[markerText _marker]
+				],
+				[
+					"VECTOR",
+					"Position:",
+					[[_posX,_posY],["X","Y"],2]
+				],
+				[
+					"VECTOR",
+					"Size:",
+					[[_sizeX,_sizeY],["X","Y"],2]
+				],
+				[
+					"COMBO",
+					"Marker Brush:",
+					[
+						["Solid","SolidFull","SolidBorder","Border","Horizontal","Vertical","Grid","FDiagonal","BDiagonal","Diaggrid","Cross"],
+						_brushList,
+						(["Solid","SolidFull","SolidBorder","Border","Horizontal","Vertical","Grid","FDiagonal","BDiagonal","Diaggrid","Cross"] find (markerBrush _marker))
+					]
+				],
+				[
+					"COMBO",
+					"Marker Color:",
+					[
+						["Default","ColorBlack","ColorGrey","ColorRed","ColorBrown","ColorOrange","ColorYellow","ColorKhaki","ColorGreen","ColorBlue","ColorPink","ColorWhite","ColorWest","ColorEAST","ColorGUER","ColorCIV","ColorUNKNOWN"],
+						_dataList,
+						(["Default","ColorBlack","ColorGrey","ColorRed","ColorBrown","ColorOrange","ColorYellow","ColorKhaki","ColorGreen","ColorBlue","ColorPink","ColorWhite","ColorWest","ColorEAST","ColorGUER","ColorCIV","ColorUNKNOWN"] find (markerColor _marker))
+					]
+				],
+				[
+					"TOOLBOX",
+					"Marker Shape:",
+					[_markerShapeSelect,[["ELLIPSE","Circle marker type."],["RECTANGLE","Rectangle marker type."]]]
+				],
+				[
+					"SLIDER",
+					"Marker Alpha:",
+					[
+						0,
+						1,
+						1,
+						objNull,
+						[1,1,1,1],
+						true
+					]
+				]
+			],{
+				params ["_values","_args","_display"];
+				[_args,_values] call MAZ_EZM_fnc_editAreaMarker;
+				_display closeDisplay 1;
+			},{
+				params ["_values","_args","_display"];
+				_display closeDisplay 2;
+			},_marker] call MAZ_EZM_fnc_createDialog;
+		};
+
+		MAZ_EZM_fnc_createAOMarkerDialog = {
+			private _pos = [true] call MAZ_EZM_fnc_getScreenPosition;
+			["Create AO Markers",[
+				[
+					"VECTOR",
+					"Size:",
+					[[500,500],["X","Y"],2]
+				],
+				[
+					"COMBO",
+					"Border Color:",
+					[
+						["Default","ColorBlack","ColorGrey","ColorRed","ColorBrown","ColorOrange","ColorYellow","ColorKhaki","ColorGreen","ColorBlue","ColorPink","ColorWhite","ColorWest","ColorEAST","ColorGUER","ColorCIV","ColorUNKNOWN"],
+						["Default","ColorBlack","ColorGrey","ColorRed","ColorBrown","ColorOrange","ColorYellow","ColorKhaki","ColorGreen","ColorBlue","ColorPink","ColorWhite","ColorWest","ColorEAST","ColorGUER","ColorCIV","ColorUNKNOWN"],
+						13
+					]
+				]
+			],{
+				params ["_values","_args","_display"];
+				_values params ["_size","_color"];
+				[_args,_size,_color] call MAZ_EZM_fnc_createAOMarkers;
+				_display closeDisplay 1;
+			},{
+				params ["_values","_args","_display"];
+				_display closeDisplay 2;
+			},_pos] call MAZ_EZM_fnc_createDialog;
+		};
+
+		MAZ_EZM_fnc_createAOMarkers = {
+			params ["_pos","_size","_color"];
+			private _middleLeft = [((_pos # 0) - (_size # 0)) / 2,worldSize/2];
+			private _edgeRight = (_pos # 0) + (_size # 0);
+			private _middleRight = [((worldSize - _edgeRight) / 2) + _edgeRight,worldSize/2];
+
+			private _edgeTop = (_pos # 1) + (_size # 1);
+			private _edgeBottom = (_pos # 1) - (_size # 1);
+			private _middleTop = [_pos # 0, ((worldSize - _edgeTop) / 2) + _edgeTop];
+			private _middleBottom = [_pos # 0, _edgeBottom / 2];
+
+			createMarker ["MAZ_AO_LeftMarker",[0,0,0]];
+			"MAZ_AO_LeftMarker" setMarkerPos _middleLeft;
+			"MAZ_AO_LeftMarker" setMarkerShape "RECTANGLE";
+			"MAZ_AO_LeftMarker" setMarkerBrush "SolidFull";
+			"MAZ_AO_LeftMarker" setMarkerColor "ColorBlack";
+			"MAZ_AO_LeftMarker" setMarkerAlpha 0.5;
+			"MAZ_AO_LeftMarker" setMarkerSize _middleLeft;
+
+			createMarker ["MAZ_AO_RightMarker",[0,0,0]];
+			"MAZ_AO_RightMarker" setMarkerPos _middleRight;
+			"MAZ_AO_RightMarker" setMarkerShape "RECTANGLE";
+			"MAZ_AO_RightMarker" setMarkerBrush "SolidFull";
+			"MAZ_AO_RightMarker" setMarkerColor "ColorBlack";
+			"MAZ_AO_RightMarker" setMarkerAlpha 0.5;
+			"MAZ_AO_RightMarker" setMarkerSize [(_middleRight # 0) - _edgeRight, worldSize/2];
+
+			createMarker ["MAZ_AO_BottomMarker",[0,0,0]];
+			"MAZ_AO_BottomMarker" setMarkerPos _middleBottom;
+			"MAZ_AO_BottomMarker" setMarkerShape "RECTANGLE";
+			"MAZ_AO_BottomMarker" setMarkerBrush "SolidFull";
+			"MAZ_AO_BottomMarker" setMarkerColor "ColorBlack";
+			"MAZ_AO_BottomMarker" setMarkerAlpha 0.5;
+			"MAZ_AO_BottomMarker" setMarkerSize [_size # 0, _middleBottom # 1];
+
+			createMarker ["MAZ_AO_TopMarker",[0,0,0]];
+			"MAZ_AO_TopMarker" setMarkerPos _middleTop;
+			"MAZ_AO_TopMarker" setMarkerShape "RECTANGLE";
+			"MAZ_AO_TopMarker" setMarkerBrush "SolidFull";
+			"MAZ_AO_TopMarker" setMarkerColor "ColorBlack";
+			"MAZ_AO_TopMarker" setMarkerAlpha 0.5;
+			"MAZ_AO_TopMarker" setMarkerSize [_size # 0, (_middleTop # 1) - _edgeTop];
+
+			createMarker ["MAZ_AO_Border",[0,0,0]];
+			"MAZ_AO_Border" setMarkerPos _pos;
+			"MAZ_AO_Border" setMarkerShape "RECTANGLE";
+			"MAZ_AO_Border" setMarkerBrush "Border";
+			"MAZ_AO_Border" setMarkerColor _color;
+			"MAZ_AO_Border" setMarkerSize _size;
+		};
+
+		MAZ_EZM_fnc_deleteAOMarkers = {
+			{
+				deleteMarker _x;
+			}forEach ["MAZ_AO_LeftMarker","MAZ_AO_RightMarker","MAZ_AO_TopMarker","MAZ_AO_BottomMarker","MAZ_AO_Border"];
 		};
 
 	comment "Send Messages";
@@ -10234,150 +10429,85 @@ MAZ_EZM_fnc_initFunction = {
 			_return
 		};
 
-		M9sd_fnc_module3DSpeak = {
-			params [['_object', objNull]];
-			if (isNull findDisplay 312) exitWith {};
-			private _zeusLogic = getAssignedCuratorLogic player;
-			if (isNull _zeusLogic) exitWith {};
-			if (isNull _object) exitWith {
-				[_zeusLogic, 'NO OBJECT SELECTED'] call BIS_fnc_showCuratorFeedbackMessage;
-			};
-			_objType = typeOf _object;
-			_objName = if (isPlayer _object) then {name _object} else {getText (configFile >> 'cfgVehicles' >> _objType >> 'displayName');};
-			if (_objName == '') then {
-				_objName = _objType;
-			};
-			M9sd_3DSpeakObjName = _objName;
-			M9sd_3DSpeakObj = _object;					
-			playSound ['AddItemOK', true];
-			[] spawn {
-				with uinamespace do {
-					disableSerialization;
-					private _display = findDisplay 312 createDisplay 'RscDisplayEmpty';
-					showChat true;
-
-					private _bkrnd = _display ctrlCreate ['RscText', -1];
-					_bkrnd ctrlSetPosition [0.422656 * safezoneW + safezoneX,0.269 * safezoneH + safezoneY,0.144375 * safezoneW,0.132 * safezoneH];
-					_bkrnd ctrlSetBackgroundColor [0,0,0,0.75];
-					_bkrnd ctrlCommit 0;
-
-					private _name = _display ctrlCreate ['RscText', -1];
-					_name ctrlSetPosition [0.427812 * safezoneW + safezoneX,0.28 * safezoneH + safezoneY,0.134062 * safezoneW,0.022 * safezoneH];
-					_name ctrlSetText (missionNamespace getVariable 'M9sd_3DSpeakObjName');
-					_name ctrlCommit 0;
-					
-					private _text = _display ctrlCreate ['RscText', -1];
-					_text ctrlSetPosition [0.427812 * safezoneW + safezoneX,0.302 * safezoneH + safezoneY,0.134062 * safezoneW,0.022 * safezoneH];
-					_text ctrlSetText 'Message:';
-					_text ctrlCommit 0;
-					
-					private _input = _display ctrlCreate ['RscEdit', -1];
-					_input ctrlSetPosition [0.427812 * safezoneW + safezoneX,0.335 * safezoneH + safezoneY,0.134062 * safezoneW,0.022 * safezoneH];
-					_input ctrlSetText '';
-					_input ctrlSetBackgroundColor [1,1,0,0.1];
-					_input ctrlCommit 0;
-					_display setVariable ['input', _input];
-					
-					private _button = _display ctrlCreate ['RscButtonMenu', -1];
-					_button ctrlSetPosition [0.427812 * safezoneW + safezoneX,0.369 * safezoneH + safezoneY,0.134062 * safezoneW,0.022 * safezoneH];
-					_button ctrlSetText 'SPEAK';
-					_button ctrlSetBackgroundColor [0.2,0.2,0.75,0.75];
-					_button ctrlAddEventHandler ['buttonclick', {
-						params ['_control'];
-						private _display = ctrlParent _control;
-						private _inputText = ctrlText (_display getVariable 'input');
-						_display closeDisplay 0;
-						M9sd_3DSpeakMessage = format ["“%1”", _inputText];
-						M9sd_3DSpeakMessage = [M9sd_3DSpeakMessage] call MAZ_EZM_fnc_checkForBlacklistedWords;
-						true remoteExec ['showChat'];
-						(format ['%3 (%1)  %2', M9sd_3DSpeakObjName, M9sd_3DSpeakMessage, str (side (group M9sd_3DSpeakObj))]) remoteExec ['systemChat'];
-						[[M9sd_3DSpeakObj, M9sd_3DSpeakMessage],{
-							params [["_speakerObj", objnull], ["_dialogue", "lorem ipsum..."]];
-							M9sd_3DSpeakObj = _speakerObj;
-							M9sd_3DSpeakMessage = _dialogue;
-							if (!isNil 'M9sd_EH_draw3D_makesomethingspeak') then {
-								removeMissionEventHandler ['Draw3D', M9sd_EH_draw3D_makesomethingspeak];
-							};
-							M9sd_EH_draw3D_makesomethingspeak = addMissionEventHandler ['Draw3D', {
-								private _pos = M9sd_3DSpeakObj modelToWorldVisual (M9sd_3DSpeakObj selectionPosition "Head");
-								_pos set [2, (_pos select 2) + 0.35];
-								private _intersects = lineIntersectsSurfaces [eyePos player, AGLtoASL _pos, player];
-								if(count _intersects > 0) exitWith {};
-								if(player distance _pos > 45) exitWith {};
-								drawIcon3D 
-								[
-									"",
-									[1,1,0,1],
-									_pos,
-									0, 
-									-2, 
-									0,
-									M9sd_3DSpeakMessage,
-									2,
-									0.035,
-									"RobotoCondensedBold",
-									"center",
-									false
-								];
-							}];
-							uiSleep 5;
-							if (!isNil 'M9sd_EH_draw3D_makesomethingspeak') then {
-								removeMissionEventHandler ['Draw3D', M9sd_EH_draw3D_makesomethingspeak];
-							};
-						}] remoteExec ['spawn'];
-					}];
-					_button ctrlCommit 0;
-				};
-			};
-		};
-
-		MAZ_EZM_fnc_sendMessageModule = {
-			["Send Server Message",[
-				[
-					"EDIT",
-					"Sender Name",
-					[missionNamespace getVariable ["EZM_senderName","High Command"]]
-				],
-				[
-					"EDIT:MULTI",
-					"Message",
-					["Message..."]
-				],
-				[
-					"SIDES",
-					"Sides Who See The Message",
-					[west,east,independent,civilian]
-				]
-			],{
-				params ["_values","_args","_display"];
-				_values params ["_sender","_message","_side"];
-				private _sides = _side call MAZ_EZM_fnc_getSidesFromString;
-				_sides = _sides + [sideLogic];
-				private _targets = [];
-				{
-					if(side (group _x) in _sides) then {
-						_targets pushBack _x;
-					};
-				}forEach allPlayers;
-				if(count _message > 300) exitWith {
-					["Message too long! Cannot send, max characters is 300.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;
-				};
-				_message = [_message] call MAZ_EZM_fnc_checkForBlacklistedWords;
+		MAZ_EZM_fnc_3DSpeakModule = {
+			params ["_entity"];
+			if (isNull _object) exitWith {["Place this module onto a unit!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			[
+				"3D Speak Message",
 				[
 					[
-						format ["<t color='#2596be' size='2'>%1:</t><br/><t color='#FFF' size='1.75'>%2</t>",_sender,_message],
-						"PLAIN DOWN",
-						2,
-						true,
-						true
+						"EDIT:MULTI",
+						"Message:",
+						[
+							"3D spoken message",
+							3
+						]
+					],
+					[
+						"SLIDER",
+						"Message Duration:",
+						[
+							5,
+							10,
+							8
+						]
 					]
-				] remoteExec ['titleText',_targets];
-				missionNamespace setVariable ["EZM_senderName",_sender];
-				_display closeDisplay 1;
-			},{
-				params ["_values","_args","_display"];
-				_display closeDisplay 2;
-			},[]] call MAZ_EZM_fnc_createDialog;
+				],
+				{
+					params ["_values","_unit","_display"];
+					_values params ["_message","_duration"];
+					_message = [_message] call MAZ_EZM_fnc_checkForBlacklistedWords;
+					true remoteExec ['showChat'];
+
+					private _objName = if (isPlayer _unit) then {name _unit} else {getText (configFile >> 'cfgVehicles' >> typeOf _unit >> 'displayName');};
+					if (_objName == '') then {
+						_objName = typeOf _unit;
+					};
+
+					(format ['%3 (%1): %2', _objName, _message, str (side (group _unit))]) remoteExec ['systemChat'];
+
+					[[_unit, _message,_duration],{
+						params [["_unit", objnull], ["_message", "lorem ipsum..."], ["_duration", 8]];
+						if (!isNil "MAZ_EZM_MEH_Draw3D_3DSpeak") then {
+							removeMissionEventHandler ['Draw3D', MAZ_EZM_MEH_Draw3D_3DSpeak];
+						};
+						MAZ_EZM_MEH_Draw3D_3DSpeak = addMissionEventHandler ['Draw3D', {
+							_thisArgs params ["_unit","_message"];
+							private _pos = _unit modelToWorldVisual (_unit selectionPosition "Head");
+							_pos set [2, (_pos select 2) + 0.35];
+							private _intersects = lineIntersectsSurfaces [eyePos player, AGLtoASL _pos, player];
+							if(count _intersects > 0) exitWith {};
+							if(player distance _pos > 45) exitWith {};
+							drawIcon3D 
+							[
+								"",
+								[1,1,1,1],
+								_pos,
+								0, 
+								-2, 
+								0,
+								_message,
+								2,
+								0.035,
+								"RobotoCondensedBold",
+								"center",
+								false
+							];
+						},[_unit,_message]];
+						uiSleep _duration;
+						if (!isNil 'MAZ_EZM_MEH_Draw3D_3DSpeak') then {
+							removeMissionEventHandler ['Draw3D', MAZ_EZM_MEH_Draw3D_3DSpeak];
+						};
+					}] remoteExec ['spawn'];
+					
+					_display closeDisplay 1;
+				},
+				{
+					params ["_values","_args","_display"];
+					_display closeDisplay 2;
+				},
+				_entity
+			] call MAZ_EZM_fnc_createDialog;
 		};
 
 		MAZ_EZM_fnc_sendSubtitleModule = {
@@ -10422,6 +10552,23 @@ MAZ_EZM_fnc_initFunction = {
 				params ["_values","_args","_display"];
 				_display closeDisplay 2;
 			},[]] call MAZ_EZM_fnc_createDialog;
+		};
+
+		EZM_fnc_getNumberOfSpeakers = {
+			params ['_topic','_container','_sentence'];
+			private ['_speakers','_cfgSentences','_actor','_numberOfSpeakers'];
+			_speakers = [];
+			_cfgSentences = (configfile >> "CfgSentences" >> _topic >> _container >> "Sentences") call BIS_fnc_getCfgSubClasses;
+			{
+				_sentence = _x;
+				_actor = getText (configFile >> "CfgSentences" >> _topic >> _container >> "Sentences" >> _sentence >> "Actor");
+				if (not (_actor in _speakers)) then 
+				{
+					_speakers pushBackUnique _actor;
+				};
+			} forEach _cfgSentences;
+			_numberOfSpeakers = count _speakers;
+			_numberOfSpeakers
 		};
 
 		MAZ_EZM_fnc_moduleDialogMessage = {
@@ -10561,358 +10708,84 @@ MAZ_EZM_fnc_initFunction = {
 		MAZ_EZM_fnc_editObjectAttributesModule = {
 			params ["_entity"];
 			if(isNull _entity) exitWith {["Place the module onto an object!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
-			if(isNil "MAZ_EZM_editObjAtribsMenu") then {
-				MAZ_EZM_editObjAtribsMenu = {
-					params ["_editObj"];
-					editObj = _editObj;
-					with uiNamespace do {
-						createDialog "RscDisplayEmpty";
-						showchat true;
-						objEditDisplay = findDisplay -1;
-						private _editObj = missionNamespace getVariable 'editObj';
-						private _objTextures = getObjectTextures _editObj;
-						private _objLocked = locked _editObj;
-						private _objGod = _editObj getVariable ['objEditGM',false];
-						private _objHide = _editObj getVariable ['objEditHide',false];
-						private _objSim = _editObj getVariable ['objEditSim',true];
+			private _textures = getObjectTextures _entity;
 
-						if(getText (configfile >> "CfgVehicles" >> (typeOf (missionNamespace getVariable 'editObj')) >> "displayname") == "Ground") exitWith {
-							["Invalid object selected, try again.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;
-							with uiNamespace do {objEditDisplay closeDisplay 0;};
-						};
-						comment "Labels";
-
-							editObjectAtribsLabel = objEditDisplay ctrlCreate ["RscStructuredText", 1100];
-							editObjectAtribsLabel ctrlSetStructuredText parseText format ["Edit Object Attributes<t align='right'>(%1)</t>",getText (configfile >> "CfgVehicles" >> (typeOf (missionNamespace getVariable 'editObj')) >> "displayname")];
-							editObjectAtribsLabel ctrlSetPosition [0.31953 * safezoneW + safezoneX, 0.319 * safezoneH + safezoneY, 0.360937 * safezoneW, 0.022 * safezoneH];
-							editObjectAtribsLabel ctrlSetTextColor [1,1,1,1];
-							editObjectAtribsLabel ctrlSetBackgroundColor [0.1,0.5,0,1];
-							editObjectAtribsLabel ctrlCommit 0;
-
-							editObjAtribsBG = objEditDisplay ctrlCreate ["RscPicture", 1200];
-							editObjAtribsBG ctrlSetText "#(argb,8,8,3)color(0,0,0,0.6)";
-							editObjAtribsBG ctrlSetPosition [0.319529 * safezoneW + safezoneX, 0.346 * safezoneH + safezoneY, 0.360937 * safezoneW, 0.33 * safezoneH];
-							editObjAtribsBG ctrlCommit 0;
-
-							editObjAtribsFrame = objEditDisplay ctrlCreate ["RscFrame", 1800];
-							editObjAtribsFrame ctrlSetPosition [0.319531 * safezoneW + safezoneX, 0.346 * safezoneH + safezoneY, 0.360937 * safezoneW, 0.33 * safezoneH];
-							editObjAtribsFrame ctrlCommit 0;
-
-							editObjAtribsText1Label = objEditDisplay ctrlCreate ["RscStructuredText", 1101];
-							editObjAtribsText1Label ctrlSetStructuredText parseText "Texture #0";
-							editObjAtribsText1Label ctrlSetPosition [0.324687 * safezoneW + safezoneX, 0.357 * safezoneH + safezoneY, 0.103125 * safezoneW, 0.022 * safezoneH];
-							editObjAtribsText1Label ctrlSetTextColor [1,1,1,1];
-							editObjAtribsText1Label ctrlSetBackgroundColor [0,0,0,0];
-							editObjAtribsText1Label ctrlCommit 0;
-
-							editObjAtribsText2Label = objEditDisplay ctrlCreate ["RscStructuredText", 1102];
-							editObjAtribsText2Label ctrlSetStructuredText parseText "Texture #1";
-							editObjAtribsText2Label ctrlSetPosition [0.324687 * safezoneW + safezoneX, 0.401 * safezoneH + safezoneY, 0.103125 * safezoneW, 0.022 * safezoneH];
-							editObjAtribsText2Label ctrlSetTextColor [1,1,1,1];
-							editObjAtribsText2Label ctrlSetBackgroundColor [0,0,0,0];
-							editObjAtribsText2Label ctrlCommit 0;
-
-							editObjAtribsText3Label = objEditDisplay ctrlCreate ["RscStructuredText", 1103];
-							editObjAtribsText3Label ctrlSetStructuredText parseText "Texture #2";
-							editObjAtribsText3Label ctrlSetPosition [0.324687 * safezoneW + safezoneX, 0.445 * safezoneH + safezoneY, 0.103125 * safezoneW, 0.022 * safezoneH];
-							editObjAtribsText3Label ctrlSetTextColor [1,1,1,1];
-							editObjAtribsText3Label ctrlSetBackgroundColor [0,0,0,0];
-							editObjAtribsText3Label ctrlCommit 0;
-
-							editObjAtribsText4Label = objEditDisplay ctrlCreate ["RscStructuredText", 1104];
-							editObjAtribsText4Label ctrlSetStructuredText parseText "Texture #3";
-							editObjAtribsText4Label ctrlSetPosition [0.324687 * safezoneW + safezoneX, 0.489 * safezoneH + safezoneY, 0.103125 * safezoneW, 0.022 * safezoneH];
-							editObjAtribsText4Label ctrlSetTextColor [1,1,1,1];
-							editObjAtribsText4Label ctrlSetBackgroundColor [0,0,0,0];
-							editObjAtribsText4Label ctrlCommit 0;
-
-							editObjAtribsText5Label = objEditDisplay ctrlCreate ["RscStructuredText", 1105];
-							editObjAtribsText5Label ctrlSetStructuredText parseText "Texture #4";
-							editObjAtribsText5Label ctrlSetPosition [0.324687 * safezoneW + safezoneX, 0.533 * safezoneH + safezoneY, 0.103125 * safezoneW, 0.022 * safezoneH];
-							editObjAtribsText5Label ctrlSetTextColor [1,1,1,1];
-							editObjAtribsText5Label ctrlSetBackgroundColor [0,0,0,0];
-							editObjAtribsText5Label ctrlCommit 0;
-
-							editObjAtribsTextFrame = objEditDisplay ctrlCreate ["RscFrame", 1801];
-							editObjAtribsTextFrame ctrlSetPosition [0.324687 * safezoneW + safezoneX, 0.357 * safezoneH + safezoneY, 0.139219 * safezoneW, 0.231 * safezoneH];
-							editObjAtribsTextFrame ctrlCommit 0;
-
-							editObjAtribsInitFrame = objEditDisplay ctrlCreate ["RscFrame", 1802];
-							editObjAtribsInitFrame ctrlSetPosition [0.469062 * safezoneW + safezoneX, 0.357 * safezoneH + safezoneY, 0.20625 * safezoneW, 0.231 * safezoneH];
-							editObjAtribsInitFrame ctrlCommit 0;
-
-							editObjAtribsInitLabel = objEditDisplay ctrlCreate ["RscStructuredText", 1106];
-							editObjAtribsInitLabel ctrlSetStructuredText parseText "Object Init:";
-							editObjAtribsInitLabel ctrlSetPosition [0.474219 * safezoneW + safezoneX, 0.357 * safezoneH + safezoneY, 0.103125 * safezoneW, 0.022 * safezoneH];
-							editObjAtribsInitLabel ctrlSetTextColor [1,1,1,1];
-							editObjAtribsInitLabel ctrlSetBackgroundColor [0,0,0,0];
-							editObjAtribsInitLabel ctrlCommit 0;
-
-							editObjAtribsModiBtnFrame = objEditDisplay ctrlCreate ["RscFrame", 1803];
-							editObjAtribsModiBtnFrame ctrlSetPosition [0.324687 * safezoneW + safezoneX, 0.599 * safezoneH + safezoneY, 0.190781 * safezoneW, 0.066 * safezoneH];
-							editObjAtribsModiBtnFrame ctrlCommit 0;
-
-							editObjAtribsLockFrame = objEditDisplay ctrlCreate ["RscFrame", 1804];
-							editObjAtribsLockFrame ctrlSetPosition [0.520625 * safezoneW + safezoneX,0.599 * safezoneH + safezoneY,0.0979687 * safezoneW,0.066 * safezoneH];
-							editObjAtribsLockFrame ctrlCommit 0;
-
-							editObjAtribsLockLabel = objEditDisplay ctrlCreate ["RscStructuredText", 1107];
-							editObjAtribsLockLabel ctrlSetStructuredText parseText "Lock:";
-							editObjAtribsLockLabel ctrlSetPosition [0.520625 * safezoneW + safezoneX,0.599 * safezoneH + safezoneY,0.0876563 * safezoneW,0.033 * safezoneH];
-							editObjAtribsLockLabel ctrlSetTextColor [1,1,1,1];
-							editObjAtribsLockLabel ctrlSetBackgroundColor [0,0,0,0];
-							editObjAtribsLockLabel ctrlCommit 0;
-
-							editObjAtribsApplyFrame = objEditDisplay ctrlCreate ["RscFrame", 1805];
-							editObjAtribsApplyFrame ctrlSetPosition [0.62375 * safezoneW + safezoneX,0.599 * safezoneH + safezoneY,0.0515625 * safezoneW,0.066 * safezoneH];
-							editObjAtribsApplyFrame ctrlCommit 0;
-
-						comment "Edit Texture Edit";
-
-							editObjAtribsText1Edit = objEditDisplay ctrlCreate ["RscEdit", 1400];
-							editObjAtribsText1Edit ctrlSetPosition [0.329844 * safezoneW + safezoneX, 0.379 * safezoneH + safezoneY, 0.128906 * safezoneW, 0.022 * safezoneH];
-							editObjAtribsText1Edit ctrlSetBackgroundColor [0,0,0,0.5];
-							if(count _objTextures >= 1) then {
-								editObjAtribsText1Edit ctrlSetText (_objTextures select 0);
-							};
-							editObjAtribsText1Edit ctrlSetTooltip "Changes the texture of designated index.";
-							editObjAtribsText1Edit ctrlCommit 0;
-
-							editObjAtribsText2Edit = objEditDisplay ctrlCreate ["RscEdit", 1401];
-							editObjAtribsText2Edit ctrlSetPosition [0.329844 * safezoneW + safezoneX, 0.423 * safezoneH + safezoneY, 0.128906 * safezoneW, 0.022 * safezoneH];
-							editObjAtribsText2Edit ctrlSetBackgroundColor [0,0,0,0.5];
-							if(count _objTextures >= 2) then {
-								editObjAtribsText2Edit ctrlSetText (_objTextures select 1);
-							};
-							editObjAtribsText2Edit ctrlSetTooltip "Changes the texture of designated index.";
-							editObjAtribsText2Edit ctrlCommit 0;
-
-							editObjAtribsText3Edit = objEditDisplay ctrlCreate ["RscEdit", 1402];
-							editObjAtribsText3Edit ctrlSetPosition [0.329844 * safezoneW + safezoneX, 0.467 * safezoneH + safezoneY, 0.128906 * safezoneW, 0.022 * safezoneH];
-							editObjAtribsText3Edit ctrlSetBackgroundColor [0,0,0,0.5];
-							if(count _objTextures >= 3) then {
-								editObjAtribsText3Edit ctrlSetText (_objTextures select 2);
-							};
-							editObjAtribsText3Edit ctrlSetTooltip "Changes the texture of designated index.";
-							editObjAtribsText3Edit ctrlCommit 0;
-
-							editObjAtribsText4Edit = objEditDisplay ctrlCreate ["RscEdit", 1403];
-							editObjAtribsText4Edit ctrlSetPosition [0.329844 * safezoneW + safezoneX, 0.511 * safezoneH + safezoneY, 0.128906 * safezoneW, 0.022 * safezoneH];
-							editObjAtribsText4Edit ctrlSetBackgroundColor [0,0,0,0.5];
-							if(count _objTextures >= 4) then {
-								editObjAtribsText4Edit ctrlSetText (_objTextures select 3);
-							};
-							editObjAtribsText4Edit ctrlSetTooltip "Changes the texture of designated index.";
-							editObjAtribsText4Edit ctrlCommit 0;
-
-							editObjAtribsText5Edit = objEditDisplay ctrlCreate ["RscEdit", 1404];
-							editObjAtribsText5Edit ctrlSetPosition [0.329844 * safezoneW + safezoneX, 0.555 * safezoneH + safezoneY, 0.128906 * safezoneW, 0.022 * safezoneH];
-							editObjAtribsText5Edit ctrlSetBackgroundColor [0,0,0,0.5];
-							if(count _objTextures >= 5) then {
-								editObjAtribsText5Edit ctrlSetText (_objTextures select 4);
-							};
-							editObjAtribsText5Edit ctrlSetTooltip "Changes the texture of designated index.";
-							editObjAtribsText5Edit ctrlCommit 0;
-
-							if(count _objTextures >= 6) then {
-								["There are more textures on this object than shown.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;
-							};
-
-						comment "Init Field";
-
-							editObjAtribsInitEdit = objEditDisplay ctrlCreate ["RscEditMulti", 1405];
-							editObjAtribsInitEdit ctrlSetPosition [0.474219 * safezoneW + safezoneX, 0.379 * safezoneH + safezoneY, 0.195937 * safezoneW, 0.198 * safezoneH];
-							editObjAtribsInitEdit ctrlSetBackgroundColor [0,0,0,0.5];
-							editObjAtribsInitEdit ctrlSetTooltip "Edit the init of this object. '_this' refers to the local object.\n**Running code can get you kicked from the server if you are inexperienced, use at your own risk.**";
-							editObjAtribsInitEdit ctrlCommit 0;
-
-						comment "Modifiers Buttons";
-
-							editObjAtribsGMBtn = objEditDisplay ctrlCreate ["RscButtonMenu", 2400];
-							editObjAtribsGMBtn ctrlSetStructuredText parseText "<t align='center'>God Mode</t>";
-							editObjAtribsGMBtn ctrlSetPosition [0.329844 * safezoneW + safezoneX, 0.61 * safezoneH + safezoneY, 0.0464063 * safezoneW, 0.044 * safezoneH];
-							if(_objGod) then {
-								editObjAtribsGMBtn ctrlSetTextColor [0.1,0.5,0,1];
-							} else {
-								editObjAtribsGMBtn ctrlSetTextColor [1,1,1,1];
-							};
-							editObjAtribsGMBtn ctrlSetBackgroundColor [0,0,0,0.6];
-							editObjAtribsGMBtn ctrlAddEventHandler ["ButtonClick",{
-								private _objGod = editObj getVariable ['objEditGM',false];
-								if(_objGod) then {
-									with uiNamespace do {
-										editObjAtribsGMBtn ctrlSetTextColor [1,1,1,1];
-										editObjAtribsGMBtn ctrlCommit 0;
-									};
-									editObj setVariable ['objEditGM',false];
-								} else {
-									with uiNamespace do {
-										editObjAtribsGMBtn ctrlSetTextColor [0.1,0.5,0,1];
-										editObjAtribsGMBtn ctrlCommit 0;
-									};
-									editObj setVariable ['objEditGM',true];
-								};
-							}];
-							editObjAtribsGMBtn ctrlSetTooltip "Sets the object to god mode (Cannot be destroyed).";
-							editObjAtribsGMBtn ctrlCommit 0;
-
-							editObjAtribsHideBtn = objEditDisplay ctrlCreate ["RscButtonMenu", 2401];
-							editObjAtribsHideBtn ctrlSetStructuredText parseText "<t align='center'>Hide Object</t>";
-							editObjAtribsHideBtn ctrlSetPosition [0.396875 * safezoneW + safezoneX, 0.61 * safezoneH + safezoneY, 0.0464063 * safezoneW, 0.044 * safezoneH];
-							if(_objHide) then {
-								editObjAtribsHideBtn ctrlSetTextColor [0.1,0.5,0,1];
-							} else {
-								editObjAtribsHideBtn ctrlSetTextColor [1,1,1,1];
-							};
-							editObjAtribsHideBtn ctrlSetBackgroundColor [0,0,0,0.6];
-							editObjAtribsHideBtn ctrlAddEventHandler ["ButtonClick",{
-								private _objHide = editObj getVariable ['objEditHide',false];
-								if(_objHide) then {
-									with uiNamespace do {
-										editObjAtribsHideBtn ctrlSetTextColor [1,1,1,1];
-										editObjAtribsHideBtn ctrlCommit 0;
-									};
-									editObj setVariable ['objEditHide',false];
-								} else {
-									with uiNamespace do {
-										editObjAtribsHideBtn ctrlSetTextColor [0.1,0.5,0,1];
-										editObjAtribsHideBtn ctrlCommit 0;
-									};
-									editObj setVariable ['objEditHide',true];
-								};
-							}];
-							editObjAtribsHideBtn ctrlSetTooltip "Sets the object to hidden (Invisible).";
-							editObjAtribsHideBtn ctrlCommit 0;
-
-							editObjAtribsSimBtn = objEditDisplay ctrlCreate ["RscButtonMenu", 2402];
-							editObjAtribsSimBtn ctrlSetStructuredText parseText "<t align='center'>Enable Sim</t>";
-							editObjAtribsSimBtn ctrlSetPosition [0.463906 * safezoneW + safezoneX, 0.61 * safezoneH + safezoneY, 0.0464063 * safezoneW, 0.044 * safezoneH];
-							if(_objSim) then {
-								editObjAtribsSimBtn ctrlSetTextColor [0.1,0.5,0,1];
-							} else {
-								editObjAtribsSimBtn ctrlSetTextColor [1,1,1,1];
-							};
-							editObjAtribsSimBtn ctrlSetBackgroundColor [0,0,0,0.6];
-							editObjAtribsSimBtn ctrlAddEventHandler ["ButtonClick",{
-								private _objSim = editObj getVariable ['objEditSim',true];
-								if(_objSim) then {
-									with uiNamespace do {
-										editObjAtribsSimBtn ctrlSetTextColor [1,1,1,1];
-										editObjAtribsSimBtn ctrlCommit 0;
-									};
-									editObj setVariable ['objEditSim',false];
-								} else {
-									with uiNamespace do {
-										editObjAtribsSimBtn ctrlSetTextColor [0.1,0.5,0,1];
-										editObjAtribsSimBtn ctrlCommit 0;
-									};
-									editObj setVariable ['objEditSim',true];
-								};
-							}];
-							editObjAtribsSimBtn ctrlSetTooltip "Sets the object simulation (Does it have physics and interaction).";
-							editObjAtribsSimBtn ctrlCommit 0;
-
-							editObjAtribsLockCombo = objEditDisplay ctrlCreate ["RscCombo", 2100];
-							editObjAtribsLockCombo ctrlSetPosition [0.525781 * safezoneW + safezoneX,0.621 * safezoneH + safezoneY,0.0825 * safezoneW,0.022 * safezoneH];
-							editObjAtribsLockCombo ctrlSetTooltip "Makes the object locked or unlocked.";
-							editObjAtribsLockCombo ctrlCommit 0;
-
-							editObjAtribsLockCombo lbAdd "Unlocked";
-							editObjAtribsLockCombo lbAdd "Default";
-							editObjAtribsLockCombo lbAdd "Locked";
-							editObjAtribsLockCombo lbAdd "Locked to Players";
-
-							if(_editObj isKindOf "Building") then {
-								private _buildingLock = _editObj getVariable "bis_disabled_Door_1";
-								if(_buildingLock == 1) then {
-									editObjAtribsLockCombo lbSetCurSel 2;
-								} else {
-									editObjAtribsLockCombo lbSetCurSel 0;
-								};
-							} else {
-								editObjAtribsLockCombo lbSetCurSel _objLocked;
-							};
-
-						comment "Apply";
-
-							editObjAtribsApplyBtn = objEditDisplay ctrlCreate ["RscButtonMenu", 2403];
-							editObjAtribsApplyBtn ctrlSetStructuredText parseText "<t size='0.2'>&#160;</t><br/><t align='center' size='1.25'>Apply</t>";
-							editObjAtribsApplyBtn ctrlSetPosition [0.628906 * safezoneW + safezoneX,0.61 * safezoneH + safezoneY,0.04125 * safezoneW,0.044 * safezoneH];
-							editObjAtribsApplyBtn ctrlSetTextColor [1,1,1,1];
-							editObjAtribsApplyBtn ctrlSetBackgroundColor [0.1,0.5,0,1];
-							editObjAtribsApplyBtn ctrlAddEventHandler ["ButtonClick",{
-								[editObj] spawn MAZ_EZM_editObjAtribsApply;
-							}];
-							editObjAtribsApplyBtn ctrlSetTooltip "Applies the settings set and runs the code provided.";
-							editObjAtribsApplyBtn ctrlCommit 0;
-					};
-					["Object Attributes Menu opened.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
-				};
+			private _objName = if (isPlayer _entity) then {name _entity} else {getText (configFile >> 'cfgVehicles' >> typeOf _entity >> 'displayName');};
+			if (_objName == '') then {
+				_objName = typeOf _entity;
 			};
-			if(isNil "MAZ_EZM_editObjAtribsApply") then {
-				MAZ_EZM_editObjAtribsApply = {
-					params ["_obj"];
-					private _texture1 = ctrlText (uiNamespace getVariable 'editObjAtribsText1Edit');
-					private _texture2 = ctrlText (uiNamespace getVariable 'editObjAtribsText2Edit');
-					private _texture3 = ctrlText (uiNamespace getVariable 'editObjAtribsText3Edit');
-					private _texture4 = ctrlText (uiNamespace getVariable 'editObjAtribsText4Edit');
-					private _texture5 = ctrlText (uiNamespace getVariable 'editObjAtribsText5Edit');
-					private _textures = [_texture1,_texture2,_texture3,_texture4,_texture5];
-					private _objGod = _obj getVariable ['objEditGM',false];
-					private _objHide = _obj getVariable ['objEditHide',false];
-					private _objSim = _obj getVariable ['objEditSim',true];
-					private _lockSetting = lbCurSel (uiNamespace getVariable 'editObjAtribsLockCombo');
 
-					for "_i" from 0 to 4 do {
-						[_obj,[_i,_textures select _i]] remoteExec ['setObjectTexture',0,_obj];
-					};
-					if(_objGod) then {
-						_obj allowDamage false;
-					} else {
-						_obj allowDamage true;
-					};
-					if(_objHide) then {
-						[_obj,true] remoteExec ['hideObject',0,_obj];
-					} else {
-						[_obj,false] remoteExec ['hideObject',0,_obj];
-					};
-					if(_objSim) then {
-						[_obj,true] remoteExec ['enableSimulation',0,_obj];
-					} else {
-						[_obj,false] remoteExec ['enableSimulation',0,_obj];
-					};
-					[_obj,_lockSetting] remoteExec ['lock',0,_obj];
-					if(_obj isKindOf "Building") then {
-						if(_lockSetting in [2,3]) then {
-							private _numberOfDoors = GetNumber(ConfigFile >> "CfgVehicles" >> (typeOf _obj) >> "numberOfDoors");
-							if(_numberOfDoors <= 0) exitWith {};
-							
-							for "_i" from 1 to _numberOfDoors do
-							{
-								_obj setVariable [format["bis_disabled_Door_%1",_i], 1, true];
-							};
-						};
-						if(_lockSetting in [0,1]) then {
-							private _numberOfDoors = GetNumber(ConfigFile >> "CfgVehicles" >> (typeOf _obj) >> "numberOfDoors");
-							if(_numberOfDoors <= 0) exitWith {};
-							
-							for "_i" from 1 to _numberOfDoors do
-							{
-								_obj setVariable [format["bis_disabled_Door_%1",_i], 0, true];
-							};
-						};
-					};
+			private _uiData = [
+				[
+					"EDIT:MULTI",
+					"Object Init:",
+					[
+						"",
+						3
+					]
+				],
+				[
+					"TOOLBOX:YESNO",
+					"God Mode:",
+					[
+						!isDamageAllowed _entity
+					]
+				],
+				[
+					"TOOLBOX:YESNO",
+					"Hide Object:",
+					[
+						isObjectHidden _entity
+					]
+				],
+				[
+					"TOOLBOX:YESNO",
+					"Enable Simulation:",
+					[
+						simulationEnabled _entity
+					]
+				],
+				[
+					"COMBO",
+					"Lock State:",
+					[
+						["0","1","2","3"],
+						["Unlocked","Default","Locked","Locked for Players"],
+						locked _entity
+					]
+				]
+			];
 
-					private _initField = ctrlText (uiNamespace getVariable 'editObjAtribsInitEdit');
-					if(_initField != "") then {
-						private _codeCompiled = compile _initField;
-						_obj call _codeCompiled;
-					};
-					["Object attributes applied.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
-					with uiNamespace do {objEditDisplay closeDisplay 0;};
-				};
-			};
-			[_entity] call MAZ_EZM_editObjAtribsMenu;
+			{
+				_uiData pushBack [
+					"EDIT",
+					format ["Texture [%1]:",_forEachIndex],
+					[_x]
+				]
+			}forEach _textures;
+			
+			[
+				format ["Object Attributes Editor (%1)",_objName],
+				_uiData,
+				{
+					params ["_values","_entity","_display"];
+					_values params ["_init","_godMode","_hidden","_sim","_lockState","_tex1","_tex2","_tex3","_tex4"];
+					_entity call (compile _init);
+					_entity allowDamage !_godMode;
+					_entity hideObjectGlobal _hidden;
+					[_entity,_sim] remoteExec ["enableSimulationGlobal",2];
+					_entity lock (parseNumber _lockState);
+					{
+						_entity setObjectTextureGlobal [_forEachIndex,_x];
+					}forEach [_tex1,_tex2,_tex3,_tex4];
+					_display closeDisplay 1;
+				},
+				{
+					params ["_values","_args","_display"];
+					_display closeDisplay 2;
+				},
+				_entity
+			] call MAZ_EZM_fnc_createDialog;
 		};
 
 		MAZ_EZM_fnc_toggleSimulationModule = {
@@ -10943,28 +10816,21 @@ MAZ_EZM_fnc_initFunction = {
 			playSound "addItemOk";
 		};
 
-		MAZ_EZM_fnc_hideObjectModule = {
+		MAZ_EZM_fnc_toggleHideObjectModule = {
 			params ["_entity"];
 			if(_entity isEqualTo objNull) exitWith {["No object selected.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 
-			[_entity,true] remoteExec ["hideObjectGlobal",2];
-			if(isNil "MAZ_EZM_hiddenObjects") then {
-				MAZ_EZM_hiddenObjects = [_entity];
+			private _hidden = isObjectHidden _entity;
+			[_entity,!_hidden] remoteExec ["hideObjectGlobal",2];
+			[["Object is hidden.","Object is shown."] select _hidden,"addItemOk"] call MAZ_EZM_fnc_systemMessage;
+			
+			private _objects = missionNamespace getVariable ["MAZ_EZM_hiddenObjects",[]];
+			if(_hidden) then {
+				_objects deleteAt (_objects find _entity);
 			} else {
-				MAZ_EZM_hiddenObjects pushBack _entity;
+				_objects pushBack _entity;
 			};
-
-			["Object is hidden.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
-		};
-
-		MAZ_EZM_fnc_unHideObjectModule = {
-			params ["_entity"];
-			if(_entity isEqualTo objNull) exitWith {["No object selected.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
-
-			[_entity,false] remoteExec ["hideObjectGlobal",2];
-			MAZ_EZM_hiddenObjects = (MAZ_EZM_hiddenObjects - [_entity]);
-
-			["Object is no longer hidden.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+			missionNamespace setVariable ["MAZ_EZM_hiddenObjects",_objects,true];
 		};
 
 		MAZ_EZM_fnc_unHideObjectAllModule = {
@@ -11014,7 +10880,7 @@ MAZ_EZM_fnc_initFunction = {
 		};
 
 		MAZ_EZM_fnc_healAndReviveModule = {
-			params ["_entity"];
+			params ["_entity",["_doMessage",true]];
 			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 
 			if(isPlayer _entity) then {
@@ -11026,13 +10892,16 @@ MAZ_EZM_fnc_initFunction = {
 				_entity setDamage 0; 
 			};
 
-			["The unit has been healed, and revived if possible.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+			if(_doMessage) then {
+				["The unit has been healed, and revived if possible.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+			};
 		};
 
 		MAZ_EZM_fnc_healAndReviveAllModule = {
 			{
-				[_x] call MAZ_EZM_fnc_healAndReviveModule;
+				[_x,false] call MAZ_EZM_fnc_healAndReviveModule;
 			}forEach allPlayers;
+			["The players have been healed, and revived if possible.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
 
 		MAZ_EZM_fnc_changeSideModule = {
@@ -11084,56 +10953,18 @@ MAZ_EZM_fnc_initFunction = {
 		};
 
 		MAZ_EZM_fnc_muteServerModule = {
-			if(isNil "EZM_canMute") then {
-				EZM_canMute = true;
-			};
-			if(!EZM_canMute) exitWith {["You can't mute again this quickly!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
-
-			private _curatorUnits = [];
-			{
-				_curatorUnits pushBack (getAssignedCuratorUnit _x);
-			}forEach allCurators;
-
-			[[],{
-				0 enableChannel [true,false];
-				1 enableChannel [true,false]; 
-				2 enableChannel [true,false];
-				3 enableChannel [true,false];
-			}] remoteExec ['spawn',(allPlayers - _curatorUnits)];
-
-			["All players have been muted. You won't be able to mute them again for another 5 minutes.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
-
-			[] spawn {
-				EZM_canMute = false;
-				sleep (60*5);
-				EZM_canMute = true;
-			};
-
-			_curatorUnits spawn {
-				sleep 60;
-				[[],{
-					0 enableChannel [true,true];
-					1 enableChannel [true,true]; 
-					2 enableChannel [true,true];
-					3 enableChannel [true,true];
-				}] remoteExec ['spawn',(allPlayers - _this)];
-			};
-		};
-
-		MAZ_EZM_fnc_unmuteServerModule = {
-			private _curatorUnits = [];
-			{
-				_curatorUnits pushBack (getAssignedCuratorUnit _x);
-			}forEach allCurators;
-
-			[[],{
-				0 enableChannel [true,true];
-				1 enableChannel [true,true]; 
-				2 enableChannel [true,true];
-				3 enableChannel [true,true];
-			}] remoteExec ['spawn',(allPlayers - _curatorUnits)];
-
-			["All players have been unmuted.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+			private _muted = missionNamespace getVariable ["MAZ_EZM_ServerMuted",false];
+			private _zeuses = allCurators apply {getAssignedCuratorUnit _x};
+			[[_muted],{
+				params ["_muted"];
+				0 enableChannel [true,_muted];
+				1 enableChannel [true,_muted]; 
+				2 enableChannel [true,_muted];
+				3 enableChannel [true,_muted];
+			}] remoteExec ['spawn',(allPlayers - _zeuses)];
+			_muted = !_muted;
+			missionNamespace setVariable ["MAZ_EZM_ServerMuted",_muted,true];
+			[["The server has been unmuted.","The server has been muted."] select _muted,"addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
 		
 		MAZ_EZM_fnc_resetLoadout = {
@@ -11296,39 +11127,15 @@ MAZ_EZM_fnc_initFunction = {
 			},[]] call MAZ_EZM_fnc_createDialog;
 		};
 
-		MAZ_EZM_fnc_setViewDistance = {
-			["Set View Distance",[
-				[
-					"SLIDER",
-					"View Distance",
-					[1600,8000,3000]
-				],
-				[
-					"TOOLBOX",
-					"Global or Local",
-					[true,[["Local","Changes view distance for you only."],["Global","Changes view distance for everyone."]]]
-				]
-			],{
-				params ["_values","_args","_display"];
-				private _viewDistance = round (_values # 0);
-				private _isGlobal = _values # 1;
-				if(_viewDistance > 8000) then {_viewDistance = 8000};
-				if(_isGlobal) then {
-					MAZ_EZM_viewDistance = _viewDistance;
-					_viewDistance remoteExec ['setViewDistance',0,'MAZ_newViewDistance'];
-				} else {
-					setViewDistance _viewDistance;
-				};
-				_display closeDisplay 1;
-			},{
-				params ["_values","_args","_display"];
-				_display closeDisplay 2;
-			},[]] call MAZ_EZM_fnc_createDialog;
-		};
-
 		MAZ_EZM_fnc_noTeamKillersModule = {
 			[[],{
-				player addRating 10000000000;
+				private _score = rating player; 
+				if(_score < 0) then {
+					player addRating (_score + 2000);
+				};
+				if(_score < 2000) then {
+					player addRating (2000 - _score);
+				};
 			}] remoteExec ['spawn',allPlayers];
 		};
 
@@ -11514,9 +11321,6 @@ MAZ_EZM_fnc_initFunction = {
 
 	comment "Sounds";
 
-		"
-		TODO : Remove Jukebox text
-		";
 		M9sd_fnc_moduleOpenJUKEBOX = {
 			params [["_object", objNull]];
 			if (isNil 'M9_open_jukebox') then {
@@ -11805,6 +11609,7 @@ MAZ_EZM_fnc_initFunction = {
 					BIS_utility_jukeboxMusicStopEH = addMusicEventHandler ["MusicStop",  
 					{ 
 						_disp = uinamespace getVariable "BIS_utility_jukeboxDisplay"; 
+						if(_disp getVariable ["_progressLMB", false]) exitWith {};
 						_list = _disp getVariable "_list"; 
 						_next = (tvCurSel _list select 0) + 1; 
 						if (_next >= _list tvCount []) exitWith {}; 
@@ -12679,269 +12484,295 @@ MAZ_EZM_fnc_initFunction = {
 			},_pos] call MAZ_EZM_fnc_createDialog;
 		};
 
-		MAZ_EZM_fnc_fireEffectModule = {
-			params ["_entity"];
+		MAZ_EZM_fnc_createParticleEffectModule = {
 			private _pos = [true] call MAZ_EZM_fnc_getScreenPosition;
+			[
+				"Particle Effect Creator",
+				[
+					[
+						"COMBO",
+						"Particle Type:",
+						[
+							["FIRE_SMALL","FIRE_MEDIUM","FIRE_BIG","SMOKE_SMALL","SMOKE_MEDIUM","SMOKE_BIG"],
+							["Fire (Small)","Fire (Medium)","Fire (Big)","Smoke (Small)","Smoke (Medium)","Smoke (Big)"],
+							0
+						]
+					]
+				],
+				{
+					params ["_values","_pos","_display"];
+					_values params ["_type"];
+					private _particleData = [_type,_pos] call MAZ_EZM_fnc_createParticleEffect;
+					_particleData params ["_particle",["_light", objNull]];
+					private _helipad = attachedTo _particle;
+					if(_type == "FIRE_SMALL") then {
+						private _smokeData = ["SMOKE_SMALL",_pos] call MAZ_EZM_fnc_createParticleEffect;
+						_smokeData params ["_smoke"];
 
-			private _smokeNfire = createVehicle ["test_EmptyObjectForFireBig",_pos,[],0,"CAN_COLLIDE"];
-			private _light = createVehicle ["#lightpoint",_pos,[],0,"CAN_COLLIDE"];
-			[_light,1.5] remoteExec ["setLightBrightness",0,_light];
-			[_light,[0.75, 0.25, 0.1]] remoteExec ["setLightAmbient",0,_light];
-			[_light,[0.75, 0.25, 0.1]] remoteExec ["setLightColor",0,_light];
-			_light attachTo [_smokeNfire,[0,0,0]];
+						private _helipadSmoke = attachedTo _smoke;
+						detach _smoke;
+						deleteVehicle _helipadSmoke;
+						_smoke attachTo [_helipad,[0,0,0]];
+					};
+					if(_type == "FIRE_MEDIUM") then {
+						private _smokeData = ["SMOKE_MEDIUM",_pos] call MAZ_EZM_fnc_createParticleEffect;
+						_smokeData params ["_smoke"];
 
-			[_smokeNfire] call MAZ_EZM_fnc_addObjectToInterface;
+						private _helipadSmoke = attachedTo _smoke;
+						detach _smoke;
+						deleteVehicle _helipadSmoke;
+						_smoke attachTo [_helipad,[0,0,0]];
+					};
+					if(_type == "FIRE_BIG") then {
+						private _smokeData = ["SMOKE_BIG",_pos] call MAZ_EZM_fnc_createParticleEffect;
+						_smokeData params ["_smoke"];
 
-			if !(_entity isEqualTo objNull) then {_smokeNfire attachTo [_entity,[0,0,0]]};
-			[_smokeNfire,_light] spawn {
-				params ["_entity","_light"];
-				waitUntil{sleep 1; isNull _entity};
-				deleteVehicle _light;
-			};
-
-			["Fire created.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+						private _helipadSmoke = attachedTo _smoke;
+						detach _smoke;
+						deleteVehicle _helipadSmoke;
+						_smoke attachTo [_helipad,[0,0,0]];
+					};
+					_display closeDisplay 1;
+				},
+				{
+					params ["_values","_args","_display"];
+					_display closeDisplay 2;
+				},
+				_pos
+			] call MAZ_EZM_fnc_createDialog;
 		};
 
-		MAZ_EZM_fnc_smokeEffectModule = {
-			params ["_entity"];
-			private _pos = [true] call MAZ_EZM_fnc_getScreenPosition;
-			private _smokeNfire = createVehicle ["test_EmptyObjectForSmoke",_pos,[],0,"CAN_COLLIDE"];
-
-			[_smokeNfire] call MAZ_EZM_fnc_addObjectToInterface;
-
-			if !(_entity isEqualTo objNull) then {_smokeNfire attachTo [_entity,[0,0,0]]};
-
-			["Smoke pillar created.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+		MAZ_EZM_fnc_createParticleEffect = {
+			params ["_type","_pos"];
+			private _particle = "#particlesource" createVehicle [0,0,0];
+			private _lightData = switch (_type) do {
+				case "SMOKE_SMALL": {
+					_particle setParticleClass "SmallDestructionSmoke";
+					[];
+				};
+				case "SMOKE_MEDIUM": {
+					_particle setParticleClass "MediumSmoke";
+					[];
+				};
+				case "SMOKE_BIG": {
+					_particle setParticleClass "BigDestructionSmoke";
+					[];
+				};
+				case "FIRE_SMALL": {
+					_pos = _pos vectorAdd [0,0,0.05];
+					_particle setParticleClass "SmallDestructionFire";
+					[
+						1,
+						[1,0.85,0.6],
+						[1,0.3,0],
+						50,
+						[0,0,0,2]
+					];
+				};
+				case "FIRE_MEDIUM": {
+					_particle setParticleClass "MediumDestructionFire";
+					[
+						1,
+						[1,0.85,0.6],
+						[1,0.3,0],
+						400,
+						[0,0,0,2]
+					];
+				};
+				case "FIRE_BIG": {
+					_particle setParticleClass "BigDestructionFire";
+					[
+						1,
+						[1,0.85,0.6],
+						[1,0.45,0.3],
+						1600,
+						[0,0,0,1.6]
+					];
+				};
+				default {[false]};
+			};
+			private _helipad = "Land_HelipadEmpty_F" createVehicle [0,0,0];
+			_helipad setPos _pos;
+			[_helipad] call MAZ_EZM_fnc_addObjectToInterface;
+			[_helipad] call MAZ_EZM_fnc_deleteAttachedWhenDeleted;
+			_particle attachTo [_helipad,[0,0,0]];
+			if(count _lightData == 0) exitWith {[_particle,objNull]};
+			if(count _lightData == 1) exitWith {objNull};
+			private _light = createVehicle ["#lightpoint",[0,0,0], [], 0, "CAN_COLLIDE"];
+			_light setLightBrightness (_lightData # 0);
+			_light setLightColor (_lightData # 1);
+			_light setLightAmbient (_lightData # 2);
+			_light setLightIntensity (_lightData # 3);
+			_light setLightAttenuation (_lightData # 4);
+			_light setLightDayLight true;
+			_light attachTo [_helipad,[0,0,1]];
+			[_particle,_light];
 		};
 
 		MAZ_EZM_fnc_earthquakeEffectModule = {
-			[4] remoteExec ['BIS_fnc_earthquake'];
-			["Yo momma farded.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
-		};
-
-		MAZ_EZM_empCarEffect = {
-			params ["_car"];
-			for [{_i=0},{_i<7},{_i=_i+1}] do {
-				_car setPilotLight true;
-				sleep 0.5;
-				_car setPilotLight false;
-				sleep 0.5;
-			};
-		};
-
-		MAZ_EZM_empLightEffect = {
-			params ["_lamps"];
-			{_x setDamage 0.95} forEach _lamps;
-			sleep 0.1;
-			{_x setDamage 0} forEach _lamps;
-			sleep 0.1;
-			{_x setDamage 0.95} forEach _lamps;
-			sleep 0.1;
-			{_x setDamage 0} forEach _lamps;
-			sleep 0.1;
-			{_x setDamage 0.95} forEach _lamps;
-		};
-
-		MAZ_EZM_empExplosionEffect = {
-			params ["_pos"];
-			private _explosionVeh = createVehicle ["B_MRAP_01_F",_pos,[],0,""];
-			_explosionVeh setDamage 1;
-			sleep 0.1;
-			deleteVehicle _explosionVeh;
-		};
-
-		MAZ_EZM_fnc_EMPEffectModule = {
-			private _pos = [true] call MAZ_EZM_fnc_getScreenPosition;
-			["Deploy EMP",[
+			[
+				"Earthquake Module",
 				[
-					"SLIDER:RADIUS",
-					"Radius",
-					[10,250,100,_pos,[1,1,1,1]]
-				]
-			],{
-				params ["_values","_args","_display"];
-				_values params ["_radius","_mode"];
-				private _types = [
-					"Lamps_Base_F",
-					"Land_LampAirport_F",
-					"Land_LampSolar_F",
-					"Land_LampStreet_F",
-					"Land_LampStreet_small_F",
-					"PowerLines_base_F",
-					"Land_LampDecor_F",
-					"Land_LampHalogen_F",
-					"Land_LampHarbour_F",
-					"Land_LampShabby_F",
-					"Land_PowerPoleWooden_L_F",
-					"Land_NavigLight",
-					"Land_runway_edgelight",
-					"Land_runway_edgelight_blue_F",
-					"Land_Flush_Light_green_F",
-					"Land_Flush_Light_red_F",
-					"Land_Flush_Light_yellow_F",
-					"Land_Runway_PAPI",
-					"Land_Runway_PAPI_2",
-					"Land_Runway_PAPI_3",
-					"Land_Runway_PAPI_4",
-					"Land_fs_roof_F",
-					"Land_fs_sign_F"
-				];
-				private _nearestLamps = nearestObjects [_args,_types, _radius];
-				private _damage = [0.0,0.97] select _mode;
-				private _empCars = _args nearObjects ["LandVehicle",_radius]; 
+					[
+						"SLIDER",
+						"Earthquake Strength:",
+						[
+							1,
+							4,
+							2
+						]
+					]
+				],
 				{
-					playSound3D ["a3\sounds_f_orange\MissionSFX\Car_Alarm_6s.wss",_x,false,_x,1,1,250];
-					[_x] spawn MAZ_EZM_empCarEffect;
-					_x setHitPointDamage ["HitEngine", 1,false];
-				} forEach _empCars;
-				[_nearestLamps] spawn MAZ_EZM_empLightEffect;
-				playSound3D ["A3\Missions_F_EPA\data\sounds\lights_off.ogg",_args,false,_args,3,1,_radius + 500];
-				[_args] spawn MAZ_EZM_empExplosionEffect;
-				
-				_display closeDisplay 1;
-			},{
-				params ["_values","_args","_display"];
-				_display closeDisplay 2;
-			},_pos] call MAZ_EZM_fnc_createDialog;
+					params ["_values","_pos","_display"];
+					_values params ["_strength"];
+					[_strength] remoteExec ['BIS_fnc_earthquake'];
+					_display closeDisplay 1;
+				},
+				{
+					params ["_values","_args","_display"];
+					_display closeDisplay 2;
+				}
+			] call MAZ_EZM_fnc_createDialog;
 		};
 
 	comment "Terrain Modifiers";
 
-		MAZ_EZM_fnc_openDoorsModule = {
-			MAZ_EZM_fnc_doorConfig = {
-				params ["_building"];
-				private _doors = [_building] call MAZ_EZM_fnc_getDoors;
-				if(_doors isEqualTo []) exitWith {};
+		MAZ_EZM_fnc_doorConfig = {
+			params ["_building"];
+			private _doors = [_building] call MAZ_EZM_fnc_getDoors;
+			if(_doors isEqualTo []) exitWith {};
 
-				private _display = findDisplay 312;
-				private _existingControls = [];
+			private _display = findDisplay 312;
+			private _existingControls = [];
 
-				private _icon = [
-					"\a3\modules_f\data\editterrainobject\icon3d_doorclosed32_ca.paa",
-					"\a3\modules_f\data\editterrainobject\icon3d_doorlocked32_ca.paa",
-					"\a3\modules_f\data\editterrainobject\icon3d_dooropened32_ca.paa"
-				];
-				{
-					if((ctrlText _x) in _icon) then {
-						ctrlDelete _x;
-					};
-				}forEach allControls _display;
+			private _icon = [
+				"\a3\modules_f\data\editterrainobject\icon3d_doorclosed32_ca.paa",
+				"\a3\modules_f\data\editterrainobject\icon3d_doorlocked32_ca.paa",
+				"\a3\modules_f\data\editterrainobject\icon3d_dooropened32_ca.paa"
+			];
+			{
+				if((ctrlText _x) in _icon) then {
+					ctrlDelete _x;
+				};
+			}forEach allControls _display;
 
-				private _controls = [];
-				{
-					private _control = _display ctrlCreate ["RscActivePicture",-1];
+			private _controls = [];
+			{
+				private _control = _display ctrlCreate ["RscActivePicture",-1];
 
-					_control setVariable ["params",[_building,_forEachIndex + 1]];
-					_control ctrlAddEventHandler ["ButtonClick",{
-						params ["_control"];
-						(_control getVariable "params") params ["_building","_door"];
-						[_building,_door] call MAZ_EZM_fnc_doorSetState;
-					}];
-					_control ctrlCommit 0;
+				_control setVariable ["params",[_building,_forEachIndex + 1]];
+				_control ctrlAddEventHandler ["ButtonClick",{
+					params ["_control"];
+					(_control getVariable "params") params ["_building","_door"];
+					[_building,_door] call MAZ_EZM_fnc_doorSetState;
+				}];
+				_control ctrlCommit 0;
 
-					_controls pushBack _control;
-				}forEach _doors;
+				_controls pushBack _control;
+			}forEach _doors;
 
-				["MAZ_updateDoorsEachFrame","onEachFrame",{
-					params ["_building","_doors","_controls"];
-					if(isNull (findDisplay 312)) exitWith {
-						["MAZ_updateDoorsEachFrame","onEachFrame"] call BIS_fnc_removeStackedEventHandler;
-					};
-
-					if(curatorCamera distance _building > 200) then {
-						["MAZ_updateDoorsEachFrame","onEachFrame"] call BIS_fnc_removeStackedEventHandler;
-						{ctrlDelete _x} forEach _controls;
-					};
-					
-					{
-						private _control = _controls select _forEachIndex;
-
-						private _position = _building modelToWorldVisual _x;
-						private _distance = curatorCamera distance _position;
-						private _screenPos = worldToScreen _position;
-						
-						if(_screenPos isEqualTo [] || {_distance > 100}) then {
-							_control ctrlShow false;
-						} else {
-							_control ctrlShow true;
-
-							private _state = [_building,_forEachIndex + 1] call MAZ_EZM_fnc_doorGetState;
-							private _icon = [
-								"\a3\modules_f\data\editterrainobject\icon3d_doorclosed32_ca.paa",
-								"\a3\modules_f\data\editterrainobject\icon3d_doorlocked32_ca.paa",
-								"\a3\modules_f\data\editterrainobject\icon3d_dooropened32_ca.paa"
-							] select _state;
-							private _color = [
-								[1,1,1,1],
-								[0,0.5,0.5,1],
-								[0,0.5,0.5,1]
-							] select _state;
-
-							_control ctrlSetText _icon;
-							_control ctrlSetActiveColor _color;
-
-							_color set [3,0.8];
-							_control ctrlSetTextColor _color;
-
-							_screenPos params ["_posX","_posY"];
-
-							private _size = linearConversion [0,100,_distance,1.75,1,true];
-							private _posW = ["W",_size] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
-							private _posH = ["H",_size] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
-
-							_control ctrlSetPosition [_posX - _posW / 2, _posY - _posH / 2,_posW,_posH];
-							_control ctrlCommit 0;
-						};
-					} forEach _doors;
-				},[_building,_doors,_controls]] call BIS_fnc_addStackedEventHandler;
-			};
-
-			MAZ_EZM_fnc_getDoors = {
-				params ["_building"];
-				private _cfg = (configOf _building >> "UserActions");
-				if !(isClass _cfg) exitWith {[]};
-
-				private _positions = [];
-				private _position = "";
-
-				for "_doorID" from 1 to 24 do {
-					_position = getText(_cfg >> format["OpenDoor_%1",_doorID] >> "position");
-					if (_position == "") exitWith {};
-					_positions pushBack (_building selectionPosition _position);
+			["MAZ_updateDoorsEachFrame","onEachFrame",{
+				params ["_building","_doors","_controls"];
+				if(isNull (findDisplay 312)) exitWith {
+					["MAZ_updateDoorsEachFrame","onEachFrame"] call BIS_fnc_removeStackedEventHandler;
 				};
 
-				if (count _positions == 0) exitWith {[]};
+				if(curatorCamera distance _building > 200) then {
+					["MAZ_updateDoorsEachFrame","onEachFrame"] call BIS_fnc_removeStackedEventHandler;
+					{ctrlDelete _x} forEach _controls;
+				};
+				
+				{
+					private _control = _controls select _forEachIndex;
 
-				_positions
+					private _position = _building modelToWorldVisual _x;
+					private _distance = curatorCamera distance _position;
+					private _screenPos = worldToScreen _position;
+					
+					if(_screenPos isEqualTo [] || {_distance > 100}) then {
+						_control ctrlShow false;
+					} else {
+						_control ctrlShow true;
+
+						private _state = [_building,_forEachIndex + 1] call MAZ_EZM_fnc_doorGetState;
+						private _icon = [
+							"\a3\modules_f\data\editterrainobject\icon3d_doorclosed32_ca.paa",
+							"\a3\modules_f\data\editterrainobject\icon3d_doorlocked32_ca.paa",
+							"\a3\modules_f\data\editterrainobject\icon3d_dooropened32_ca.paa"
+						] select _state;
+						private _color = [
+							[1,1,1,1],
+							[1,1,1,1],
+							[1,1,1,1]
+						] select _state;
+
+						_control ctrlSetText _icon;
+						_control ctrlSetActiveColor _color;
+
+						_color set [3,0.8];
+						_control ctrlSetTextColor _color;
+
+						_screenPos params ["_posX","_posY"];
+
+						private _size = linearConversion [0,100,_distance,1.75,1,true];
+						private _posW = ["W",_size] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
+						private _posH = ["H",_size] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
+
+						_control ctrlSetPosition [_posX - _posW / 2, _posY - _posH / 2,_posW,_posH];
+						_control ctrlCommit 0;
+					};
+				} forEach _doors;
+			},[_building,_doors,_controls]] call BIS_fnc_addStackedEventHandler;
+		};
+
+		MAZ_EZM_fnc_getDoors = {
+			params ["_building"];
+			private _cfg = (configOf _building >> "UserActions");
+			if !(isClass _cfg) exitWith {[]};
+
+			private _positions = [];
+			private _position = "";
+
+			for "_doorID" from 1 to 24 do {
+				_position = getText(_cfg >> format["OpenDoor_%1",_doorID] >> "position");
+				if (_position == "") exitWith {};
+				_positions pushBack (_building selectionPosition _position);
 			};
 
-			MAZ_EZM_fnc_doorSetState = {
-				params ["_building","_door"];
-				private _state = [_building,_door] call MAZ_EZM_fnc_doorGetState;
+			if (count _positions == 0) exitWith {[]};
 
-				_building setVariable [format ["bis_disabled_door_%1",_door],[1, 0, 0] select _state, true];
-				_building animateSource [format ["door_%1_sound_source", _door], [0, 1, 0] select _state, false];
-				_building animateSource [format ["door_%1_noSound_source", _door], [0, 1, 0] select _state, false];
-			};
+			_positions
+		};
 
-			MAZ_EZM_fnc_doorGetState = {
-				params ["_building","_door"];
-				private _var = _building getVariable [(format ["bis_disabled_door_%1",_door]),0];
+		MAZ_EZM_fnc_doorSetState = {
+			params ["_building","_door"];
+			private _state = [_building,_door] call MAZ_EZM_fnc_doorGetState;
 
-				comment "If locked, exit function";
-				if(_var == 1) exitWith {1};
-				comment "Get animationSourcePhase from door, if closed return 0, if open return 2.";
-				[0,2] select (_building animationSourcePhase (format ["door_%1_sound_source", _door]) > 0.5)
-			};
+			_building setVariable [format ["bis_disabled_door_%1",_door],[1, 0, 0] select _state, true];
+			_building animateSource [format ["door_%1_sound_source", _door], [0, 1, 0] select _state, false];
+			_building animateSource [format ["door_%1_noSound_source", _door], [0, 1, 0] select _state, false];
+		};
 
-			MAZ_EZM_fnc_initDoorModule = {
-				params ["_pos"];
-				private _building = nearestObject [_pos, "Building"];
+		MAZ_EZM_fnc_doorGetState = {
+			params ["_building","_door"];
+			private _var = _building getVariable [(format ["bis_disabled_door_%1",_door]),0];
 
-				if(isNull _building) exitWith {["No near buildings!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
-				[_building] call MAZ_EZM_fnc_doorConfig;
-			};
+			comment "If locked, exit function";
+			if(_var == 1) exitWith {1};
+			comment "Get animationSourcePhase from door, if closed return 0, if open return 2.";
+			[0,2] select (_building animationSourcePhase (format ["door_%1_sound_source", _door]) > 0.5)
+		};
 
+		MAZ_EZM_fnc_initDoorModule = {
+			params ["_pos"];
+			private _building = nearestObject [_pos, "Building"];
+
+			if(isNull _building) exitWith {["No near buildings!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			[_building] call MAZ_EZM_fnc_doorConfig;
+		};
+
+		MAZ_EZM_fnc_openDoorsModule = {
 			[[true] call MAZ_EZM_fnc_getScreenPosition] call MAZ_EZM_fnc_initDoorModule;
 		};
 
@@ -12960,17 +12791,17 @@ MAZ_EZM_fnc_initFunction = {
 				private ["_modelString","_newObj","_vectorDirUp","_position","_hideTerrain","_type","_blackListFences"];
 				_blackListFences = [
 					"land_pipewall_conretel_8m_f","land_mil_wiredfence_gate_f","land_mil_concretewall_f","land_cncbarrier_f","land_cncbarrier_stripes_f",
-					"land_concrete_smallwall_8m_f","land_concrete_smallwall_4m_f","land_wallcity_01_pillar_whiteblue_f","land_wallcity_01_pillar_yellow_f",
+					"land_concrete_smallwall_8m_f","land_concrete_smallwall_4m_f",
 					"land_brickwall_04_l_pole_f","land_brickwall_03_l_pole_f",
-					"land_polewall_01_pole_f","land_wallcity_01_pillar_blue_f","land_brickwall_04_l_5m_d_f","land_slums01_pole","land_city_pillar_f",
-					"land_canal_wall_stairs_f","land_wallcity_01_pillar_grey_f","land_mil_wallbig_4m_damaged_left_f","land_backalley_01_l_1m_f",
-					"land_brickwall_04_l_5m_old_d_f","land_brickwall_02_l_5m_d_f","land_brickwall_03_l_5m_v2_d_f","land_wallcity_01_pillar_pink_f",
+					"land_polewall_01_pole_f","land_brickwall_04_l_5m_d_f","land_slums01_pole",
+					"land_canal_wall_stairs_f","land_mil_wallbig_4m_damaged_left_f","land_backalley_01_l_1m_f",
+					"land_brickwall_04_l_5m_old_d_f","land_brickwall_02_l_5m_d_f","land_brickwall_03_l_5m_v2_d_f",
 					"land_mil_wallbig_gate_f","land_canal_wall_d_center_f","land_backalley_01_l_gap_f","land_bamboofence_01_s_d_f",
 					"land_brickwall_04_l_pole_old_f","land_backalley_01_l_gate_f","land_concretewall_01_m_d_f","land_concretewall_01_l_d_f",
 					"land_hbarrier_01_wall_4_green_f","land_concretewall_02_m_d_f","land_brickwall_02_l_corner_v2_f","land_brickwall_03_l_5m_v1_d_f",
-					"land_gravefence_02_f","land_mil_wallbig_debris_f","land_stone_pillar_f","land_stone_gate_f","land_stone_8md_f",
+					"land_gravefence_02_f","land_mil_wallbig_debris_f","land_stone_gate_f","land_stone_8md_f",
 					"land_canal_wallsmall_10m_f","land_canal_wall_10m_f","land_new_wiredfence_10m_dam_f","land_new_wiredfence_pole_f","land_slums02_pole",
-					"land_canal_wall_d_left_f","land_city_8md_f","land_city2_8md_f","land_city2_pillard_f","land_wall_tin_pole","land_mil_wiredfenced_f","land_ancient_wall_8m_f",
+					"land_canal_wall_d_left_f","land_city_8md_f","land_city2_8md_f","land_wall_tin_pole","land_mil_wiredfenced_f","land_ancient_wall_8m_f",
 					"land_ancient_wall_4m_f","land_wall_indcnc_pole_f","land_canal_wall_d_right_f","land_wall_indcnc_end_2_f","land_indfnc_pole_f",
 					"land_indfnc_3_d_f","land_bamboofence_01_s_pole_f","land_backalley_02_l_1m_f","land_woodenwall_02_s_pole_f",
 					"land_concretewall_02_m_pole_f","land_hbarrier_01_wall_6_green_f","land_wiredfence_01_pole_45_f","land_brickwall_01_l_end_f",
@@ -13016,6 +12847,7 @@ MAZ_EZM_fnc_initFunction = {
 				];
 				private  _count = 0;
 				{
+					if(!alive _x) then {continue};
 					_modelString = (str _x) splitString " .";
 					_type = format ['land_%1',_modelString select (count _modelString) - 2];
 					
@@ -13383,15 +13215,10 @@ MAZ_EZM_fnc_initFunction = {
 		};
 
 		MAZ_EZM_fnc_toggleAutoAddToInterface = {
-			if(MAZ_EZM_autoAdd) then {
-				MAZ_EZM_autoAdd = false;
-				profileNamespace setVariable ['MAZ_EZM_autoAddVar',false];
-				["Automatic adding to interface disabled!","addItemOk"] call MAZ_EZM_fnc_systemMessage;
-			} else {
-				MAZ_EZM_autoAdd = true;
-				profileNamespace setVariable ['MAZ_EZM_autoAddVar',true];
-				["Automatic adding to interface enabled!","addItemOk"] call MAZ_EZM_fnc_systemMessage;
-			};
+			MAZ_EZM_autoAdd = !MAZ_EZM_autoAdd;
+			profileNamespace setVariable ["MAZ_EZM_autoAddVar",MAZ_EZM_autoAdd];
+			saveProfileNamespace;
+			[["Auto Add to Interface disabled","Auto Add to Interface enabled"] select MAZ_EZM_autoAdd,"addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
 
 		MAZ_EZM_BIS_fnc_remoteControlUnit = {
@@ -13627,6 +13454,12 @@ MAZ_EZM_fnc_initFunction = {
 	comment "Zeus";
 
 		MAZ_EZM_fnc_toggleGameModerator = {
+			private _mod = missionNamespace getVariable ["bis_curator_1",objNull];
+			private _curator = getAssignedCuratorLogic player;
+			if(isNull _curator) exitWith {};
+			if(_curator == _mod) exitWith {
+				["You cannot disable the Game Mod slot as the Game Mod you dingus!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;
+			};
 			["Disable Game Moderator?",[
 				[
 					"TOOLBOX",
@@ -13650,17 +13483,7 @@ MAZ_EZM_fnc_initFunction = {
 		MAZ_EZM_fnc_addToInterface = {
 			[] spawn {
 				if(!MAZ_EZM_autoAdd) exitWith {};
-				["Filtering map objects..."] call MAZ_EZM_fnc_systemMessage;
-				private _goodObjects = [];
-				{
-					if(!(typeOf _x in MAZ_EZM_zeusObjectBlacklist)) then {
-						_goodObjects pushBack _x;
-					};
-					sleep 0.001;
-				}forEach allMissionObjects "All";
-				["Map objects filtered."] call MAZ_EZM_fnc_systemMessage;
-				[_goodObjects] call MAZ_EZM_fnc_addObjectToInterface;
-				["Map objects added.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+				call MAZ_EZM_fnc_addObjectsToInterfaceModule;
 			};
 		};
 
@@ -13954,118 +13777,6 @@ MAZ_EZM_fnc_initFunction = {
 				} forEach _pylons;
 
 			},[_veh,_pylonsNew,_controls]] call BIS_fnc_addStackedEventHandler;
-		};
-
-	comment "Area Markers";
-
-		MAZ_EZM_fnc_createAreaMarker = {
-			if(!visibleMap) exitWith {["Cannot place a marker without the map open!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
-			private _position = [] call MAZ_EZM_fnc_getScreenPosition;
-			if(isNil "MAZ_EZM_areaMarkers") then {
-				MAZ_EZM_areaMarkers = [];
-				publicVariable 'MAZ_EZM_areaMarkers';
-			};
-			private _marker = createMarker [format ["ZAM_EZM_marker_%1",count MAZ_EZM_areaMarkers],_position];
-			_marker setMarkerSize [50,50];
-			_marker setMarkerShape "ELLIPSE";
-			MAZ_EZM_areaMarkers pushBack _marker;
-			publicVariable 'MAZ_EZM_areaMarkers';
-			[_marker] call MAZ_EZM_fnc_createEditAreaMarkerDialog;
-		};
-
-		MAZ_EZM_fnc_editAreaMarker = {
-			params ["_marker","_values"];
-			_values params ["_markerText","_markerPos","_markerSize","_markerBrush","_markerColor","_markerShape","_markerAlpha"];
-			_marker setMarkerText _markerText;
-			_marker setMarkerPos _markerPos;
-			_marker setMarkerSize _markerSize;
-			_marker setMarkerBrush _markerBrush;
-			_marker setMarkerColor _markerColor;
-			_marker setMarkerAlpha _markerAlpha;
-			_marker setMarkerShape (["ELLIPSE","RECTANGLE"] select _markerShape);
-		};
-
-		MAZ_EZM_fnc_createEditAreaMarkerDialog = {
-			params ["_marker"];
-			(getMarkerSize _marker) params ["_sizeX","_sizeY"];
-			(getMarkerPos _marker) params ["_posX","_posY"];
-			private _markerShapeSelect = [false,true] select (markerShape _marker == "RECTANGLE");
-			private _dataList = [];
-			{
-				private _color = getArray (configFile >> "CfgMarkerColors" >> _x >> "color");
-				if([0,0,0,1] isEqualTo _color) then {_color = [1,1,1,1]};
-				if((_color select 0) isEqualType "") then {
-					{
-						_color set [_forEachIndex,call (compile _x)];
-					}forEach _color;
-				};
-				_dataList pushback [getText (configFile >> "CfgMarkerColors" >> _x >> "name"), "", "",_color];
-			}forEach ["Default","ColorBlack","ColorGrey","ColorRed","ColorBrown","ColorOrange","ColorYellow","ColorKhaki","ColorGreen","ColorBlue","ColorPink","ColorWhite","ColorWest","ColorEAST","ColorGUER","ColorCIV","ColorUNKNOWN"];
-
-			private _brushList = [];
-			{
-				_brushList pushBack [getText (configFile >> "CfgMarkerBrushes" >> _x >> "name"), "", getText (configFile >> "CfgMarkerBrushes" >> _x >> "texture")];
-			}forEach ["Solid","SolidFull","SolidBorder","Border","Horizontal","Vertical","Grid","FDiagonal","BDiagonal","Diaggrid","Cross"];
-
-			["Edit Area Marker",[
-				[
-					"EDIT",
-					"Marker Text:",
-					[markerText _marker]
-				],
-				[
-					"VECTOR",
-					"Position:",
-					[[_posX,_posY],["X","Y"],2]
-				],
-				[
-					"VECTOR",
-					"Size:",
-					[[_sizeX,_sizeY],["X","Y"],2]
-				],
-				[
-					"COMBO",
-					"Marker Brush:",
-					[
-						["Solid","SolidFull","SolidBorder","Border","Horizontal","Vertical","Grid","FDiagonal","BDiagonal","Diaggrid","Cross"],
-						_brushList,
-						(["Solid","SolidFull","SolidBorder","Border","Horizontal","Vertical","Grid","FDiagonal","BDiagonal","Diaggrid","Cross"] find (markerBrush _marker))
-					]
-				],
-				[
-					"COMBO",
-					"Marker Color:",
-					[
-						["Default","ColorBlack","ColorGrey","ColorRed","ColorBrown","ColorOrange","ColorYellow","ColorKhaki","ColorGreen","ColorBlue","ColorPink","ColorWhite","ColorWest","ColorEAST","ColorGUER","ColorCIV","ColorUNKNOWN"],
-						_dataList,
-						(["Default","ColorBlack","ColorGrey","ColorRed","ColorBrown","ColorOrange","ColorYellow","ColorKhaki","ColorGreen","ColorBlue","ColorPink","ColorWhite","ColorWest","ColorEAST","ColorGUER","ColorCIV","ColorUNKNOWN"] find (markerColor _marker))
-					]
-				],
-				[
-					"TOOLBOX",
-					"Marker Shape:",
-					[_markerShapeSelect,[["ELLIPSE","Circle marker type."],["RECTANGLE","Rectangle marker type."]]]
-				],
-				[
-					"SLIDER",
-					"Marker Alpha:",
-					[
-						0,
-						1,
-						1,
-						objNull,
-						[1,1,1,1],
-						true
-					]
-				]
-			],{
-				params ["_values","_args","_display"];
-				[_args,_values] call MAZ_EZM_fnc_editAreaMarker;
-				_display closeDisplay 1;
-			},{
-				params ["_values","_args","_display"];
-				_display closeDisplay 2;
-			},_marker] call MAZ_EZM_fnc_createDialog;
 		};
 
 	comment "Collapse Expand Trees";
@@ -15911,7 +15622,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_EZMLabelTree,
 					format ["ZAM Edition - %1",missionNamespace getVariable ['MAZ_EZM_Version','']],
-					"Originally created by: M9-SD & GamesByChris\nAdapted by: Expung3d to enhance Public Zeus.",
+					"Framework originally created by: M9-SD & GamesByChris.\nExpanded and made public by: Expung3d to enhance Public Zeus.\n\nNeed help? Found a bug? Join our Discord:\nhttps://discord.gg/W4ew5HP",
 					"MAZ_EZM_fnc_hiddenEasterEggModule"
 				] call MAZ_EZM_fnc_zeusAddModule;
 				
@@ -15923,15 +15634,6 @@ MAZ_EZM_fnc_editZeusInterface = {
 					"AI Modifiers",
 					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\intel_ca.paa'
 				] call MAZ_EZM_fnc_zeusAddCategory;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_EditAITree,
-					"Easy Mode",
-					"Decreases difficulty and makes AI stand.",
-					"MAZ_EZM_fnc_easyModeModule",
-					'\A3\ui_f\data\IGUI\Cfg\mptable\infantry_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
 
 				[
 					MAZ_zeusModulesTree,
@@ -16044,15 +15746,6 @@ MAZ_EZM_fnc_editZeusInterface = {
 				[
 					MAZ_zeusModulesTree,
 					MAZ_EditAITree,
-					"Toggle Unit Carelessness",
-					"Makes the unit careless or uncareless, ignores contact and doesn't engage.",
-					"MAZ_EZM_fnc_toggleCarelessModule",
-					"a3\ui_f_curator\data\rsccommon\rscattributebehaviour\safe_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_EditAITree,
 					"Toggle Unit Surrender",
 					"Makes AI surrender or un-surrender.",
 					"MAZ_EZM_fnc_toggleSurrenderModule",
@@ -16093,6 +15786,15 @@ MAZ_EZM_fnc_editZeusInterface = {
 					'\A3\ui_f\data\gui\rsc\rscdisplayarsenal\radio_ca.paa'
 				] call MAZ_EZM_fnc_zeusAddModule;
 
+				[
+					MAZ_zeusModulesTree,
+					MAZ_AISupportTree,
+					"Mortar Area",
+					"Sends virtual fire support to the area with a radius of error and a delay between rounds.",
+					"MAZ_EZM_fnc_mortarAreaModule",
+					"a3\static_f\mortar_01\data\ui\map_mortar_01_ca.paa"
+				] call MAZ_EZM_fnc_zeusAddModule;
+
 			comment "Arsenal (s)";
 
 				MAZ_ArsenalTree = [
@@ -16102,21 +15804,12 @@ MAZ_EZM_fnc_editZeusInterface = {
 				] call MAZ_EZM_fnc_zeusAddCategory;
 				
 				MAZ_zeusModulesTree tvSetTooltip [[MAZ_ArsenalTree], ""];
-				
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ArsenalTree,
-					"Full Arsenal *",
-					"----------------------------------------------------------------------------------------------------------------------------------------------------------------------\nFull Arsenal (by Expung3d)\n----------------------------------------------------------------------------------------------------------------------------------------------------------------------\n\nDescription:\n There are two ways to use this module:\n(1) Place onto another object to make it a full arsenal.\n(2) Place on ground to spawn supply box full arsenal.\n\nIncludes the following options:\n- Open Full Arsenal\n- Save Respawn Loadout\n\n* Warning: Incompatible with AIO arsenal by M9-SD.",
-					"MAZ_EZM_fnc_createArsenalModule",
-					'\A3\ui_f\data\Logos\a_64_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
 
 				[
 					MAZ_zeusModulesTree,
 					MAZ_ArsenalTree,
-					"AIO Arsenal *",
-					"----------------------------------------------------------------------------------------------------------------------------------------------------------------------\nAll-In-One Arsenal (by M9-SD)\n----------------------------------------------------------------------------------------------------------------------------------------------------------------------\n\nDescription:\n There are two ways to use this module:\n(1) Place onto another object to make it an AIO arsenal.\n(2) Place on ground to spawn supply box AIO arsenal.\n\nIncludes the following options:\n- Full Arsenal\n- Quick Rearm\n- Copy Loadout\n- Empty Loadout\n- Save Respawn Loadout\n- Load Respawn Loadout\n- Delete Respawn Loadout\n- Edit Group Loadouts\n\n* Warning: Incompatible with full arsenal by Expung3d.",
+					"AIO Arsenal",
+					"----------------------------------------------------------------------------------------------------------------------------------------------------------------------\nAll-In-One Arsenal (by M9-SD)\n----------------------------------------------------------------------------------------------------------------------------------------------------------------------\n\nDescription:\n There are two ways to use this module:\n(1) Place onto another object to make it an AIO arsenal.\n(2) Place on ground to spawn supply box AIO arsenal.\n\nIncludes the following options:\n- Full Arsenal\n- Quick Rearm\n- Copy Loadout\n- Empty Loadout\n- Save Respawn Loadout\n- Load Respawn Loadout\n- Delete Respawn Loadout\n- Edit Group Loadouts",
 					"JAM_EZM_fnc_createAIOArsenalModule",
 					'\A3\ui_f\data\Logos\a_64_ca.paa'
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -16143,37 +15836,19 @@ MAZ_EZM_fnc_editZeusInterface = {
 				[
 					MAZ_zeusModulesTree,
 					MAZ_AutoMissionTree,
-					"Auto Heli Crash (On)",
-					"Enables randomized helicopter crash missions.\nWill spawn and last for 15 minutes before despawning.\nAfter a mission despawns or is completed another will spawn in 10 minutes.",
-					"MAZ_EZM_fnc_createRandomHelicrashModule",
+					"Toggle Automatic Heli Crash Missions",
+					"Toggles randomized helicopter crash missions.\nWill spawn and last for 15 minutes before despawning.\nAfter a mission despawns or is completed another will spawn in 10 minutes.",
+					"MAZ_EZM_fnc_toggleRandomHelicrashModule",
 					"a3\modules_f_curator\data\portraitobjectiveneutralize_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
 				[
 					MAZ_zeusModulesTree,
 					MAZ_AutoMissionTree,
-					"Auto Heli Crash (Off)",
-					"Disables randomized helicopter crash missions.",
-					"MAZ_EZM_fnc_turnOffRandomHelicrashModule",
-					"a3\ui_f\data\map\markers\military\objective_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_AutoMissionTree,
-					"Auto Convoy Mission (On)",
-					"Enables randomized convoy missions.\nPlayers must capture the truck moving within the convoy.\nWill spawn and last until killed or reaching its destination.\nAfter a mission despawns or is completed another will spawn in 10 minutes.",
-					"MAZ_EZM_fnc_createRandomConvoyModule",
+					"Toggle Automatic Convoy Missions",
+					"Toggles randomized convoy missions.\nPlayers must capture the truck moving within the convoy.\nWill spawn and last until killed or reaching its destination.\nAfter a mission despawns or is completed another will spawn in 10 minutes.",
+					"MAZ_EZM_fnc_toggleRandomConvoyModule",
 					"a3\modules_f_curator\data\portraitobjectivemove_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_AutoMissionTree,
-					"Auto Convoy Mission (Off)",
-					"Disables randomized convoy missions.",
-					"MAZ_EZM_fnc_turnOffRandomConvoyModule",
-					"a3\ui_f\data\map\markers\military\objective_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
 				[
@@ -16402,6 +16077,15 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_EnvironmentTree,
 					"Change Time",
 					"Change the current time.",
+					"MAZ_EZM_fnc_changeTimeModule",
+					"a3\modules_f_curator\data\portraitskiptime_ca.paa"
+				] call MAZ_EZM_fnc_zeusAddModule;
+
+				[
+					MAZ_zeusModulesTree,
+					MAZ_EnvironmentTree,
+					"Change Date",
+					"Change the current date.",
 					"MAZ_EZM_fnc_changeDateModule",
 					"a3\modules_f_curator\data\portraitskiptime_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -16487,6 +16171,24 @@ MAZ_EZM_fnc_editZeusInterface = {
 					"a3\ui_f\data\map\markerbrushes\fdiagonal_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
+				[
+					MAZ_zeusModulesTree,
+					MAZ_MarkersTree,
+					"Create AO Markers",
+					"Creates markers that darkens out everywhere except for the AO.",
+					"MAZ_EZM_fnc_createAOMarkerDialog",
+					"a3\ui_f\data\gui\rsc\rscdisplayarsenal\map_ca.paa"
+				] call MAZ_EZM_fnc_zeusAddModule;
+
+				[
+					MAZ_zeusModulesTree,
+					MAZ_MarkersTree,
+					"Delete AO Markers",
+					"Deletes the spawned AO Markers.",
+					"MAZ_EZM_fnc_deleteAOMarkers",
+					"a3\ui_f\data\gui\rsc\rscdisplayarcademap\icon_exit_cross_ca.paa"
+				] call MAZ_EZM_fnc_zeusAddModule;
+
 			comment "Messages";
 
 				MAZ_MessagesTree = [
@@ -16500,17 +16202,8 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_MessagesTree,
 					'3D Speak',
 					'Make an speak via 3D text above head.',
-					'M9sd_fnc_module3DSpeak',
+					'MAZ_EZM_fnc_3DSpeakModule',
 					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\talk3_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_MessagesTree,
-					"Send Server Message",
-					"Sends a server message to specific side.",
-					"MAZ_EZM_fnc_sendMessageModule",
-					"a3\3den\data\cfg3den\comment\texture_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
 				[
@@ -16585,7 +16278,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 				[
 					MAZ_zeusModulesTree,
 					MAZ_ObjectModTree,
-					"Toggle Invincibility",
+					"Toggle God Mode",
 					"Makes the object god moded or un-god moded.",
 					"MAZ_EZM_fnc_toggleInvincibleModule",
 					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\kill_ca.paa'
@@ -16594,19 +16287,10 @@ MAZ_EZM_fnc_editZeusInterface = {
 				[
 					MAZ_zeusModulesTree,
 					MAZ_ObjectModTree,
-					"Hide Object",
-					"Hides the object.",
-					"MAZ_EZM_fnc_hideObjectModule",
+					"Toggle Object Hidden",
+					"Toggles whether the object is hidden.",
+					"MAZ_EZM_fnc_toggleHideObjectModule",
 					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\scout_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ObjectModTree,
-					"Un-Hide Object",
-					"Un-Hides the object.",
-					"MAZ_EZM_fnc_unHideObjectModule",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\whiteboard_ca.paa'
 				] call MAZ_EZM_fnc_zeusAddModule;
 
 				[
@@ -16682,19 +16366,10 @@ MAZ_EZM_fnc_editZeusInterface = {
 				[
 					MAZ_zeusModulesTree,
 					MAZ_PlayerModTree,
-					"Mute (Disable All)",
-					"Disables every player's voice chat.",
+					"Toggle Mute Server",
+					"Toggles every player's voice chat (Global, Side, Group, Command).",
 					"MAZ_EZM_fnc_muteServerModule",
 					'\A3\ui_f\data\IGUI\RscIngameUI\RscDisplayChannel\MuteVON_crossed_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_PlayerModTree,
-					"Un-Mute (Enable All)",
-					"Enables every player's voice chat.",
-					"MAZ_EZM_fnc_unmuteServerModule",
-					'\A3\ui_f\data\IGUI\RscIngameUI\RscDisplayChannel\MuteVON_ca.paa'
 				] call MAZ_EZM_fnc_zeusAddModule;
 
 				[
@@ -16764,15 +16439,6 @@ MAZ_EZM_fnc_editZeusInterface = {
 				[
 					MAZ_zeusModulesTree,
 					MAZ_ServerSettingsTree,
-					"Set View Distance",
-					"Sets the view distance for all players.",
-					"MAZ_EZM_fnc_setViewDistance",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\scout_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-				
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ServerSettingsTree,
 					"Remove Team-Killers",
 					"Removes the Team-Killer status from all players.",
 					"MAZ_EZM_fnc_noTeamKillersModule",
@@ -16816,19 +16482,10 @@ MAZ_EZM_fnc_editZeusInterface = {
 				[
 					MAZ_zeusModulesTree,
 					MAZ_SpecialFXTree,
-					"Fire",
-					"Creates a fire on the module position.",
-					"MAZ_EZM_fnc_fireEffectModule",
+					"Particle Effect",
+					"Creates a particle effect.",
+					"MAZ_EZM_fnc_createParticleEffectModule",
 					"a3\ui_f\data\igui\cfg\actions\obsolete\ui_action_fire_in_flame_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_SpecialFXTree,
-					"Smoke Pillar",
-					"Creates a smoke pillar on the module position.",
-					"MAZ_EZM_fnc_smokeEffectModule",
-					"a3\modules_f_curator\data\portraitsmoke_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
 				[
@@ -16843,7 +16500,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 				[
 					MAZ_zeusModulesTree,
 					MAZ_SpecialFXTree,
-					"Toggle Lamps (Radius)",
+					"Toggle Lamps",
 					"Disables or enables lamps in a radius.",
 					"MAZ_EZM_fnc_toggleLampsModule",
 					"a3\3den\data\displays\display3den\toolbar\flashlight_off_ca.paa"
@@ -16856,15 +16513,6 @@ MAZ_EZM_fnc_editZeusInterface = {
 					"Creates tracer effects in at the position.",
 					"MAZ_EZM_fnc_tracerModuleDialog",
 					"a3\modules_f_curator\data\portraittracers_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_SpecialFXTree,
-					"EMP",
-					"Deploys an EMP on the position.",
-					"MAZ_EZM_fnc_EMPEffectModule",
-					"a3\3den\data\displays\display3den\toolbar\flashlight_off_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
 			comment "Terrain Object Modifiers";
@@ -16974,7 +16622,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					"Toggle Auto-Add to Interface",
 					"Adds all objects to your zeus interface when you open it.",
 					"MAZ_EZM_fnc_toggleAutoAddToInterface",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\download_ca.paa'
+					'\A3\3den\data\cfgwaypoints\cycle_ca.paa'
 				] call MAZ_EZM_fnc_zeusAddModule;
 
 				[
@@ -16983,7 +16631,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					"Toggle Auto-Cleaner System",
 					"Automatically deletes destroyed objects when they're out of player view.",
 					"MAZ_EZM_fnc_toggleCleaner",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\download_ca.paa'
+					"a3\3den\data\displays\display3den\panelleft\entitylist_delete_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
 			comment "Vehicle Modifiers";
@@ -17128,6 +16776,8 @@ MAZ_EZM_editZeusLogic = {
 				sleep 0.1;
 			};
 			["Curator assigned! Press Y to open/close Zeus."] call MAZ_EZM_fnc_systemMessage;
+			private _zeusLoadout = profileNamespace getVariable "MAZ_EZM_ZeusLoadout";
+			player setUnitLoadout _zeusLoadout;
 		};
 	}];
 	[] call MAZ_EZM_fnc_addToInterface;
@@ -17402,7 +17052,6 @@ MAZ_EZM_addZeusKeybinds_312 = {
 		params ["_displayOrControl", "_key", "_shift", "_ctrl", "_alt"];
 		if(_key == 21 && _ctrl) then {
 			(findDisplay 312) closeDisplay 0;
-			["Zeus interface closed."] call MAZ_EZM_fnc_systemMessage;
 		};
 	}];
 	MAZ_EZM_changeCuratorSideEH = (findDisplay 312) displayAddEventHandler ["KeyDown", {
@@ -17912,9 +17561,36 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 };
 
 private _changelog = [
+	"Added Mortar Area module to AI Supports",
+	"Added Particle Effect module to Special Effects",
+	"Added AO Markers module that highlights an area of the map",
+	"Added Change Date module to change month and day. Years cannot be changed for some reason",
+	"Changed Create Ship modules no longer require a boat. A boat is only required to set the direction of the spawned boat",
+	"Changed the Arsenal Airdrop to spawn an AIO Arsenal",
+	"Changed Toggle Invincibility to Toggle God Mode",
+	"Changed Create IED module to show up on the mine detector",
+	"Changed 3D Speak Module to use consistent UI design",
+	"Changed Remove Teamkillers module to set players to 2000 rating, not a million",
+	"Changed Mute Server modules to one module that toggles back and forth",
+	"Changed Hide Object and Un-Hide Object to one module Toggle Hidden Object",
+	"Changed Edit Object Attributes module to have consistent UI design",
+	"Changed Countdown module to appear more aesthetically pleasing",
+	"Changed Change Date module to Change Time and added sunrise and sunset times",
 	"Fixed 3D Speak module appearing through terrain and across the map",
 	"Fixed crew didn't get deleted from attached objects",
-	"Fixed issue where Game Mod wasn't disabled automatically"
+	"Fixed issue where Game Mod wasn't disabled automatically",
+	"Fixed Game Mod could enable and disable the Game Mod slot",
+	"Fixed God Mode Fences would apply to knocked over walls",
+	"Fixed issue where Jukebox would skip the selected song when adjusting the seek",
+	"Fixed Auto Add to Interface was always set to false",
+	"Fixed Disarm module did not work on remote clients",
+	"Fixed issue where the Heal / Revive All module would spam the Zeus' chat with systemChats",
+	"Removed Toggle Unit Carelessness module",
+	"Removed Full Arsenal in favor of AIO Arsenal",
+	"Removed the Send Server Message module in favor of the Send Subtitle Message",
+	"Removed Set View Distance module in favor of using Enhancement Pack Core",
+	"Removed Fire and Smoke Pillar modules in favor of new Particle Effect module",
+	"Removed EMP module in favor of Toggle Lamps module"
 ];
 
 private _changelogString = "";
@@ -17969,7 +17645,6 @@ private _changelogString = "";
 comment "
 	TODO Expung3d:
  - EZM Eventhandlers
- - Mortar area
  - Add Dead Soldier compositions to all factions 
  - NATO+ 
  - Better Looters 
@@ -17980,6 +17655,10 @@ comment "
  - Composition wrecks do not attach objects correctly 
  - Other seasonal modules 
  - Add more building interiors (Malden)
+ - Advanced Difficulty Settings
+
+ - Airstrike Helicopter
+ - Cinematics
 ";
 
 };
