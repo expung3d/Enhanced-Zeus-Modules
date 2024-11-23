@@ -17543,7 +17543,9 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 private _changelog = [
 	"Fixed issue where SIDES dialog control return was filtered incorrectly",
 	"Fixed Subtitle Message not appearing for factions other than BLUFOR",
-	"Fixed Taru Evac Helicopter was not transport variant"
+	"Fixed Taru Evac Helicopter was not transport variant",
+	"Fixed removal of factions in EMPTY tab was not using localized names",
+	"Fixed Spawn vehicle with crew button was not at the correct height"
 ];
 
 private _changelogString = "";
