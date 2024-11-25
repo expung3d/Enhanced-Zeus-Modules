@@ -11145,6 +11145,7 @@ MAZ_EZM_fnc_initFunction = {
     }] remoteExec ['spawn', _entity,false];
   };
 
+
   HYPER_EZM_fnc_immortalFlameCurse = {
     params ["_entity"]; 
     if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};    
@@ -11157,18 +11158,47 @@ MAZ_EZM_fnc_initFunction = {
     
     [format["%1 has been cursed with the immortal flame.", (name _entity)]] remoteExec ["hintSilent", 0, false];
 
-    [_entity] spawn {
-      params ["_entity"];
-      private _projectile = "Land_Battery_F" createVehicle (getPosATL _entity);
-      private _smokeNfire = createVehicle ["test_EmptyObjectForFireBig",getPos _projectile,[],0,"CAN_COLLIDE"]; 
-      private _light = createVehicle ["#lightpoint",getPos _projectile,[],0,"CAN_COLLIDE"]; 
-      [_light,1.5] remoteExec ["setLightBrightness",0,_light]; 
-      [_light,[0.75, 0.25, 0.1]] remoteExec ["setLightAmbient",0,_light]; 
-      [_light,[0.75, 0.25, 0.1]] remoteExec ["setLightColor",0,_light]; 
-      _light attachTo [_smokeNfire,[0,0,0]];
-      _smokeNfire attachTo [_projectile,[0,0,0]];
-      [[(getPosATL _entity) select 0, (getPosATL _entity) select 1, (getPosATL _entity select 2) + 200], _projectile, _entity, 4, true, [0,0,0], 5, "", true] spawn BIS_fnc_EXP_camp_guidedProjectile;
-    }
+    private _varName = "HYPERSYS";
+    private _myJIPCode = "HYPERSYSJIP";
+
+    private _oxz4A = (str {
+      [player] spawn {
+        params ["_entity"];
+        private _projectile = "Land_Battery_F" createVehicleLocal (getPosATL _entity);
+        private _smokeNfire = createVehicleLocal ["test_EmptyObjectForFireBig",getPos _projectile,[],0,"CAN_COLLIDE"]; 
+        private _light = createVehicleLocal ["#lightpoint",getPos _projectile,[],0,"CAN_COLLIDE"]; 
+        _light setLightBrightness 1.5;
+        _light setLightAmbient [0.75, 0.25, 0.1];
+        _light setLightColor [0.75, 0.25, 0.1];
+        _light attachTo [_smokeNfire,[0,0,0]];
+        _smokeNfire attachTo [_projectile,[0,0,0]];
+        [
+          [(getPosATL _entity) select 0, (getPosATL _entity) select 1, (getPosATL _entity select 2) + 200], 
+          _projectile, 
+          _entity, 
+          4, 
+          true, 
+          [0,0,0], 
+          5, 
+          "", 
+          true
+        ] call BIS_fnc_EXP_camp_guidedProjectile;    
+      };
+
+    }) splitString "";
+
+    _oxz4A deleteAt (count _oxz4A - 1);
+    _oxz4A deleteAt 0;
+    _oxz4A = _oxz4A joinString "";
+    _oxz4A = _oxz4A + "removeMissionEventhandler ['EachFrame',_thisEventHandler];";
+    _oxz4A = _oxz4A splitString "";
+    missionNamespace setVariable [_varName,_oxz4A,true];
+    [[_varName], {
+      params ["_ding"];
+      private _data = missionNamespace getVariable [_ding,[]];
+      _data = _data joinString "";
+      addMissionEventhandler ["EachFrame", _data];
+    }] remoteExec ['spawn',_entity,false];
     
   };
 
