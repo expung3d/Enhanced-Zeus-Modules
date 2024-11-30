@@ -4101,6 +4101,7 @@ MAZ_EZM_fnc_createUnitForZeus = {
 	private _pos = getPos player;
 	private _zeusLogic = getAssignedCuratorLogic player;
 	if(isNull _zeusLogic) exitWith {};
+	private _zeusIndex = allCurators find _zeusLogic;
 	private _isGameMod = false;
 	private _grp = createGroup [_sideToJoin,true];
 	private _zeusObject = _grp createUnit ["B_officer_F",[0,0,0],[],0,"CAN_COLLIDE"];
@@ -4117,8 +4118,13 @@ MAZ_EZM_fnc_createUnitForZeus = {
 	waitUntil{(getAssignedCuratorUnit _zeusLogic) != _oldPlayer};
 	waitUntil{isNull (getAssignedCuratorUnit _zeusLogic)};
 
-	while{isNull (getAssignedCuratorUnit _zeusLogic)} do {
-		[player,_zeusLogic] remoteExec ['assignCurator',2];
+	private _wl = missionNamespace getVariable ["MAZ_EZM_CuratorWhitelist",[]];
+	_wl pushBackUnique _zeusLogic;
+	missionNamespace setVariable ["MAZ_EZM_CuratorWhitelist",_wl,true];
+	waitUntil {_zeusLogic in (missionNamespace getVariable ["MAZ_EZM_CuratorWhitelist",[]])};
+
+	while{isNull (getAssignedCuratorUnit (allCurators select _zeusIndex))} do {
+		[player,allCurators select _zeusIndex] remoteExec ['assignCurator',2];
 		sleep 0.1;
 	};
 
@@ -15597,7 +15603,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 				[] spawn {
 					while {!isNull (findDisplay 312)} do {
 						call MAZ_EZM_fnc_detectRespawnsUnavailable;
-						call MAZ_EZM_fnc_detectLowServerPerformance;
+						"call MAZ_EZM_fnc_detectLowServerPerformance";
 						sleep 5;
 					};
 				};
