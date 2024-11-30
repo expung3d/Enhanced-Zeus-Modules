@@ -3,7 +3,7 @@ if(!isNull (findDisplay 312) && {!isNil "this"} && {!isNull this}) then {
 };
 
 [] spawn {
-MAZ_EZM_Version = "V2.1.1";
+MAZ_EZM_Version = "V2.1.2";
 MAZ_EZM_autoAdd = profileNamespace getVariable ["MAZ_EZM_autoAddVar",true];
 MAZ_EZM_spawnWithCrew = true;
 MAZ_EZM_nvgsOnlyAtNight = true;
@@ -4006,7 +4006,37 @@ comment "Dynamic Faction Addons";
 		params [["_factionFunction","",[""]]];
 		if(_factionFunction == "") exitWith {};
 		MAZ_EZM_factionAddons pushBack _factionFunction;
-		[] spawn MAZ_EZM_fnc_refreshInterface;
+		[] spawn MAZ_EZM_fnc_setInterfaceToRefresh;
+	};
+
+	MAZ_EZM_fnc_setInterfaceToRefresh = {
+		private _refresh = missionNamespace getVariable "MAZ_EZM_refreshTime";
+		if(isNil "_refresh") then {
+			private _refreshOnClose = ["onZeusInterfaceClosed", {
+				private _refresh = missionNamespace getVariable "MAZ_EZM_refreshTime";
+				if(!isNil "_refresh") then {
+					missionNamespace setVariable ["MAZ_EZM_refresh", true];
+					missionNamespace setVariable ["MAZ_EZM_refreshTime",time];
+				};
+			}] call MAZ_EZM_fnc_addEZMEventHandler;
+			
+			missionNamespace setVariable ["MAZ_EZM_refreshTime",time + 10];
+			_refreshOnClose spawn {
+				while {time < (missionNamespace getVariable "MAZ_EZM_refreshTime")} do {
+					titleText [format ["NEW MODULES ADDED TO EZM\nYOUR ZEUS INTERFACE WILL BE AUTOMATICALLY REFRESHED IN %1 SECONDS", ceil ((missionNamespace getVariable "MAZ_EZM_refreshTime") - time)],"PLAIN DOWN",0.01];
+					sleep 0.1;
+				};
+				if(!(missionNamespace getVariable ["MAZ_EZM_refresh",false])) then {
+					call MAZ_EZM_fnc_refreshInterface;
+				};
+				missionNamespace setVariable ["MAZ_EZM_refreshTime",nil];
+				missionNamespace setVariable ["MAZ_EZM_refresh", false];
+				titleText ["","PLAIN DOWN",0.01];
+				["onZeusInterfaceClosed", _this] call MAZ_EZM_fnc_removeEZMEventHandler;
+			};
+		} else {
+			missionNamespace setVariable ["MAZ_EZM_refreshTime", time + 10];
+		};
 	};
 
 	MAZ_EZM_fnc_refreshInterface = {
@@ -4058,7 +4088,7 @@ comment "Dynamic Module Addons";
 		params [["_moduleFunction","",[""]]];
 		if(_moduleFunction == "") exitWith {};
 		MAZ_EZM_moduleAddons pushBack _moduleFunction;
-		[] spawn MAZ_EZM_fnc_refreshInterface;
+		[] spawn MAZ_EZM_fnc_setInterfaceToRefresh;
 	};
 
 comment "Modules";
@@ -4072,31 +4102,28 @@ MAZ_EZM_fnc_createUnitForZeus = {
 	private _zeusLogic = getAssignedCuratorLogic player;
 	if(isNull _zeusLogic) exitWith {};
 	private _isGameMod = false;
-	private _zeusIndex = allCurators find _zeusLogic;
 	private _grp = createGroup [_sideToJoin,true];
 	private _zeusObject = _grp createUnit ["B_officer_F",[0,0,0],[],0,"CAN_COLLIDE"];
 	_grp selectLeader _zeusObject;
 	_zeusObject setPosWorld _pos;
-	_zeusObject setVectorDirAndUp [[0,1,0],[0,0,1]];
-	private _oldPlayer = vehicle player;
+	private _oldPlayer = player;
 	private _namePlayer = name player;
 	selectPlayer _zeusObject;
 	waitUntil{player == _zeusObject};
-	[_zeusObject,false] remoteExec ['allowDamage',0,_zeusObject];
-	_grp = createGroup [_sideToJoin,true];
-	[player] joinSilent _grp;
+	[_zeusObject,false] remoteExec ['allowDamage'];
 
-	[allCurators select _zeusIndex] remoteExec ['unassignCurator',2];
+	[_zeusLogic] remoteExec ['unassignCurator',2];
 
 	waitUntil{(getAssignedCuratorUnit _zeusLogic) != _oldPlayer};
 	waitUntil{isNull (getAssignedCuratorUnit _zeusLogic)};
 
 	while{isNull (getAssignedCuratorUnit _zeusLogic)} do {
-		[player,(allCurators select _zeusIndex)] remoteExec ['assignCurator',2];
+		[player,_zeusLogic] remoteExec ['assignCurator',2];
 		sleep 0.1;
 	};
 
 	waitUntil{getAssignedCuratorLogic player == _zeusLogic};
+
 	private _zeusLoadout = profileNamespace getVariable "MAZ_EZM_ZeusLoadout";
 	if(isNil "_zeusLoadout") then {
 		_zeusObject setUnitLoadout [[],[],["hgun_Pistol_heavy_01_green_F","","","",["11Rnd_45ACP_Mag",11],[],""],["U_Marshal",[["11Rnd_45ACP_Mag",2,11]]],["V_PlateCarrier_Kerry",[["11Rnd_45ACP_Mag",1,11]]],[],"H_Beret_02","G_Spectacles",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch",""]];
@@ -4105,22 +4132,20 @@ MAZ_EZM_fnc_createUnitForZeus = {
 		_zeusObject setUnitLoadout _zeusLoadout;
 	};
 	sleep 0.1;
-	while {(isNull (findDisplay 312))} do 
-	{
+
+	while {(isNull (findDisplay 312))} do {
 		openCuratorInterface;
 	};
+
 	waitUntil{!(isNull (findDisplay 312))};
 	playSound "beep_target";
 	sleep 0.1;
-	[_oldPlayer,true] remoteExec ['hideObject',0,_oldPlayer];
-	[_zeusObject,_namePlayer] remoteExec ['setName',0,_zeusObject];
-	[[_zeusObject,_oldPlayer],{
-		params ["_zeusObject","_oldPlayer"];
-		{
-			_x addCuratorEditableObjects [[_zeusObject],true];
-			_x removeCuratorEditableObjects [[_oldPlayer],true];
-		} foreach allCurators;
-	}] remoteExec ["Spawn",2];
+
+	[_oldPlayer,true] remoteExec ["hideObjectGlobal"];
+	[_zeusObject,_namePlayer] remoteExec ["setName"];
+	[_zeusObject] call MAZ_EZM_fnc_addObjectToInterface;
+	deleteVehicle _oldPlayer;
+	
 	["Zeus Unit created, you can adjust its loadout by setting a Zeus Loadout."] call MAZ_EZM_fnc_systemMessage;
 	if(isNil "MAZ_EZM_mainLoop_Active") then {
 		[] spawn MAZ_EZM_fnc_initMainLoop;
@@ -4876,18 +4901,23 @@ MAZ_EZM_fnc_initFunction = {
 			}forEach (attachedObjects _object);
 		};
 
+		MAZ_EZM_fnc_ignoreWhenCleaning = {
+			params ["_object"];
+        	_object setVariable ["MAZ_EZM_fnc_doNotRemove",true,true];
+		};
+
 		MAZ_EZM_fnc_cleanerWaitTilNoPlayers = {
 			params ["_object"];
 			if(!MAZ_EZM_enableCleaner) exitWith {};
 			waitUntil {!alive _object};
 			waitUntil {
-				({_x} count (allPlayers apply { (getPos _x) distance _object < 3000 })) <= 0 ||
+				(count (allPlayers select { (getPos _x) distance _object < 3000 })) == 0 ||
 				isNull _object
 			};
 			if(!isNull _object) then {
 				sleep 300;
 				comment "After 5 minutes check if players are still near, if they are, call function again, else delete.";
-				if(({_x} count (allPlayers apply { (getPos _x) distance _object < 3000 })) > 0) exitWith {[_object] spawn MAZ_EZM_fnc_cleanerWaitTilNoPlayers;};
+				if(count (allPlayers select { (getPos _x) distance _object < 3000 }) != 0) exitWith {[_object] spawn MAZ_EZM_fnc_cleanerWaitTilNoPlayers;};
 				deleteVehicle _object;
 			};
 		};
@@ -5001,11 +5031,6 @@ MAZ_EZM_fnc_initFunction = {
 			dayTime > _sunset || dayTime < _sunrise
 		};
 
-		MAZ_EZM_fnc_ignoreWhenCleaning = {
-			params ["_object"];
-        	_object setVariable ["MAZ_EZM_fnc_doNotRemove",true,true];
-		};
-
 		MAZ_EZM_fnc_getAverageFPS = {
 			if(missionNamespace getVariable ["MAZ_EZM_isPingingAVGFPS",false]) exitWith {};
 			missionNamespace setVariable ["MAZ_EZM_isPingingAVGFPS",true];
@@ -5091,6 +5116,11 @@ MAZ_EZM_fnc_initFunction = {
 				default {false};
 			};
 		};
+
+		MAZ_EZM_EH_VehCreated_Dismount = ["onVehicleCreated", {
+			params ["_vehicle"];
+			_vehicle allowCrewInImmobile true;
+		}] call MAZ_EZM_fnc_addEZMEventHandler;
 
 	comment "Add All Faction Respawns";
 
@@ -6112,7 +6142,7 @@ MAZ_EZM_fnc_initFunction = {
 			detach _smoke;
 			detach _light;
 			if(_mode select 0 == 'arsenal') then {
-				[_veh] call JAM_EZM_fnc_createAIOArsenalModule;
+				[_veh,nil,true,false,false] call JAM_EZM_fnc_createAIOArsenalModule;
 			};
 			if(_vehType == 'B_Heli_Transport_03_F') then {
 				sleep 20;
@@ -6807,226 +6837,200 @@ MAZ_EZM_fnc_initFunction = {
 	comment "Arsenal";
 
 		JAM_EZM_fnc_createAIOArsenalModule = {
-			params [['_entity', objnull]];
-			M9SD_AIO_shouldCreateBox = false;
-			if (isNull _entity) then {
-				M9SD_AIO_shouldCreateBox = true;
+			params [["_entity", objnull],["_pos",nil],["_doLight",true],["_doMarker",true],["_doAnimations",true]];
+			if(isNil "_pos") then {
+				_pos = [true] call MAZ_EZM_fnc_getScreenPosition;
 			};
-			_pos = screenToWorld getMousePosition;
-			M9SD_AIO_SupplyBox = objnull;
-			if (M9SD_AIO_shouldCreateBox) then 
-			{
-				M9SD_AIO_SupplyBox = createVehicle ["B_supplyCrate_F", _pos, [], 0, "CAN_COLLIDE"];
-				M9SD_AIO_SupplyBox setVehicleVarName "M9SD_AIO_SupplyBox";
-				M9SD_AIO_SupplyBox allowdamage false;;
-				M9SD_AIO_HelipadLight = createVehicle["PortableHelipadLight_01_green_F", _pos, [], 0, "CAN_COLLIDE"];
-				M9SD_AIO_HelipadLight = [M9SD_AIO_HelipadLight] call BIS_fnc_replaceWithSimpleObject;
-				M9SD_AIO_HelipadLight setVehicleVarName "M9SD_AIO_HelipadLight";
-				M9SD_AIO_HelipadLight attachTo[M9SD_AIO_SupplyBox, [0, 0, 0.5]];;
+			private _arsenalBox = if (isNull _entity) then {
+				private _arsenalBox = createVehicle ["B_supplyCrate_F", _pos, [], 0, "CAN_COLLIDE"];
+				_arsenalBox allowdamage false;
 				
-				M9SD_AIO_glowLight1 = createVehicle ['#lightpoint', _pos,[],0,'CAN_COLLIDE'];
-				M9SD_AIO_glowLight1 attachto [M9SD_AIO_SupplyBox,[0,0,0.5]];
-				
-				_fnc =  { 
-					if (!hasInterface) exitWith {}; 
-					params ['_light','_vic']; 
-					if (!isNull _light) then 
-					{ 
-						_light setLightBrightness 0.14; 
-						_color = [0.1,1,0.1];
-						_light setLightAmbient _color; 
-						_light setLightColor _color; 
-					}; 
-				};
-				M9SD_AIO_REfnc_initArsenalLight = ['b2', _fnc]; 
-				publicVariable 'M9SD_AIO_REfnc_initArsenalLight'; 
-				
-				[ 
-					[ 
-						M9SD_AIO_glowLight1,  
-						Tesla_testVehicle 
-					], 
-					{ 
-						_this spawn (M9SD_AIO_REfnc_initArsenalLight select 1); 
-					} 
-				] remoteExec ['spawn', 0, M9SD_AIO_glowLight1];
-				
-				
-				[[M9SD_AIO_SupplyBox, M9SD_AIO_HelipadLight, M9SD_AIO_glowLight1], {
-					params['_M9SD_AIO_SupplyBox', '_M9SD_AIO_HelipadLight', '_M9SD_AIO_glowLight1'];
-					waitUntil {
-						sleep 1;
-						(!alive _M9SD_AIO_SupplyBox)
+				if(_doLight) then {
+					private _arsenalHeliLight = createVehicle["PortableHelipadLight_01_green_F", _pos, [], 0, "CAN_COLLIDE"];
+					_arsenalHeliLight = [_arsenalHeliLight] call BIS_fnc_replaceWithSimpleObject;
+					_arsenalHeliLight attachTo [_arsenalBox, [0, 0, 0.5]];
+					
+					private _arsenalLightTemp = createVehicle ["#lightpoint", _pos,[],0,"CAN_COLLIDE"];
+					_arsenalLightTemp attachto [_arsenalBox,[0,0,0.5]];
+					
+					private _fnc =  {
+						if (!hasInterface) exitWith {}; 
+						params ["_light"]; 
+						if (!isNull _light) then { 
+							_light setLightBrightness 0.14; 
+							_color = [0.1,1,0.1];
+							_light setLightAmbient _color; 
+							_light setLightColor _color; 
+						}; 
 					};
-					deleteVehicle _M9SD_AIO_SupplyBox;
-					deleteVehicle _M9SD_AIO_HelipadLight;
-					deleteVehicle _M9SD_AIO_glowLight1;
-				}] remoteExec['spawn', 2];
-				clearWeaponCargoGlobal M9SD_AIO_SupplyBox;
-				clearBackpackCargoGlobal M9SD_AIO_SupplyBox;
-				clearMagazineCargoGlobal M9SD_AIO_SupplyBox;
-				clearItemCargoGlobal M9SD_AIO_SupplyBox;
+					M9SD_AIO_REfnc_initArsenalLight = ["b2", _fnc]; 
+					publicVariable "M9SD_AIO_REfnc_initArsenalLight"; 
+					
+					[[_arsenalLightTemp], { 
+						_this spawn (M9SD_AIO_REfnc_initArsenalLight select 1); 
+					}] remoteExec ["spawn", 0, _arsenalLightTemp];
+				};
+				[_arsenalBox] call MAZ_EZM_fnc_deleteAttachedWhenKilled;
+				[_arsenalBox] call MAZ_EZM_fnc_deleteAttachedWhenDeleted;
+				_arsenalBox
 			} else {
-				M9SD_AIO_SupplyBox = _entity;
+				_entity;
 			};
-			if (isNull M9SD_AIO_SupplyBox) exitWith {};
+			if (isNull _arsenalBox) exitWith {};
 
-			["AmmoboxInit", [M9SD_AIO_SupplyBox, true]] call BIS_fnc_arsenal;
-			publicVariable 'M9SD_AIO_SupplyBox';
+			["AmmoboxInit", [_arsenalBox, true]] call BIS_fnc_arsenal;
+
 			M9SD_fnc_addSmallArsenalActions = {
-				params[['_supplyCrate', objNull]];
-				if (isNull _supplyCrate) exitWith {};
-				if (_supplyCrate getVariable['M9SD_hasArsenalActions', false]) exitWith {};
-				_supplyCrate setVariable['M9SD_hasArsenalActions', true, true];
-				if (isNil 'M9SD_AIOArsenal_JIPCount') then {
+				params[["_arsenalBox", objNull],["_doAnimations",true]];
+				if (isNull _arsenalBox) exitWith {};
+				if (_arsenalBox getVariable["M9SD_hasArsenalActions", false]) exitWith {};
+				_arsenalBox setVariable["M9SD_hasArsenalActions", true, true];
+				if (isNil "M9SD_AIOArsenal_JIPCount") then {
 					M9SD_AIOArsenal_JIPCount = 0;
 				};
 				M9SD_AIOArsenal_JIPCount = M9SD_AIOArsenal_JIPCount + 1;
-				publicVariable 'M9SD_AIOArsenal_JIPCount';
-				private _uniqueJIP = format['M9SD_JIP_AIOArsenalActions_%1', M9SD_AIOArsenal_JIPCount];
-				[
-					[_supplyCrate, _uniqueJIP], {
-						if (!hasInterface) exitWith {};
-						params[['_supplyCrate', objNull], ['_uniqueJIP', '']];
-						if (isNull _supplyCrate) exitWith {
-							remoteExec['', _uniqueJIP]
-						};
-						_supplyCrate addAction[
-							"<t color='#FFFFFF' size='1.2'><img image='a3\ui_f\data\logos\a_64_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Full Arsenal</t>", {
-								playSound['beep_target', true];
-								playSound['beep_target', false];
-								['Preload'] call BIS_fnc_arsenal;
-								['Open', true] spawn BIS_fnc_arsenal;
-								0 = [] spawn {
-									for '_i'
-									from 1 to 12 do {
-										(format['arsenalNotification%1', _i]) cutFadeOut 0;
-									};
-									'arsenalNotification1'
-									cutText["<br/><t color='#00ff00' size='2.1' shadow='2' font='puristaMedium'>AIO Arsenal</t>", "PLAIN DOWN", -1, true, true];
-									uiSleep 1;
-									if !(isNull findDisplay - 1) then {
-										'arsenalNotification2'
-										cutFadeOut 0;
-										'arsenalNotification2'
-										cutText["<br/><br/><br/><t color='#00a6ff' size='1.2' shadow='2' font='puristaSemiBold'>by <t color='#00c9ff'>M9-SD</t>", "PLAIN DOWN", -1, true, true];
-									};
-									uiSleep 7;
-									'arsenalNotification1'
-									cutFadeOut 2.1;
-									'arsenalNotification2'
-									cutFadeOut 2.1;
+				publicVariable "M9SD_AIOArsenal_JIPCount";
+				private _uniqueJIP = format["M9SD_JIP_AIOArsenalActions_%1", M9SD_AIOArsenal_JIPCount];
+				[[_arsenalBox, _uniqueJIP,_doAnimations], {
+					if (!hasInterface) exitWith {};
+					params[["_supplyCrate", objNull], ["_uniqueJIP", ""], ["_doAnimations",true]];
+					if (isNull _supplyCrate) exitWith {
+						remoteExec["", _uniqueJIP]
+					};
+					_supplyCrate addAction[
+						"<t color='#FFFFFF' size='1.2'><img image='a3\ui_f\data\logos\a_64_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Full Arsenal</t>", 
+						{
+							playSound["beep_target", true];
+							playSound["beep_target", false];
+							["Preload"] call BIS_fnc_arsenal;
+							["Open", true] spawn BIS_fnc_arsenal;
+							0 = [] spawn {
+								for "_i" from 1 to 12 do {
+									(format["arsenalNotification%1", _i]) cutFadeOut 0;
 								};
-								private _arsenalAnims = [{
-									player playActionNow "Salute";
-								}, {
-									[player, 'acts_civilidle_1'] remoteExec['switchMove'];
-								}, {
-									[player, 'acts_civilListening_2'] remoteExec['switchMove'];
-								}, {
-									[player, 'acts_commenting_on_fight_loop'] remoteExec['switchMove'];
-								}, {
-									[player, 'acts_gallery_visitor_01'] remoteExec['switchMove'];
-								}, {
-									[player, 'acts_gallery_visitor_02'] remoteExec['switchMove'];
-								}, {
-									[player, 'acts_hilltop_calibration_loop'] remoteExec['switchMove'];
-								}, {
-									[player, 'acts_kore_talkingoverradio_loop'] remoteExec['switchMove'];
-								}, {
-									[player, 'acts_staticPose_photo'] remoteExec['switchMove'];
-								}, {
-									player playActionNow 'gear';
-								}, {
-									[player, 'Acts_Taking_Cover_From_Jets'] remoteExec['switchMove'];
-								}, {
-									[player, 'Acts_standingSpeakingUnarmed'] remoteExec['switchMove'];
-								}, {
-									player playMoveNow 'acts_Mentor_Freeing_Player';
-								}, {
-									[player, 'acts_kore_talkingOverRadio_In'] remoteExec['switchMove'];
-								}, {
-									[player, 'acts_kore_idleNoWeapon_In'] remoteExec['switchMove'];
-								}, {
-									[player, 'Acts_JetsOfficerSpilling'] remoteExec['switchMove'];
-								}, {
-									player playMoveNow 'Acts_Hilltop_Calibration_Pointing_Left';
-								}, {
-									player playMoveNow 'Acts_Hilltop_Calibration_Pointing_Right';
-								}, {
-									[player, 'Acts_Grieving'] remoteExec['switchMove'];
-								}];
-								private _arsenalAnimsAdd =
-								switch (currentWeapon player) do {
-									case '':{
-											[]
-										};
-									case (primaryWeapon player):{
-											[{
-												[player, 'acts_briefing_SA_loop'] remoteExec['switchMove'];
+								"arsenalNotification1" cutText ["<br/><t color='#00ff00' size='2.1' shadow='2' font='puristaMedium'>AIO Arsenal</t>", "PLAIN DOWN", -1, true, true];
+								uiSleep 1;
+								if !(isNull findDisplay - 1) then {
+									"arsenalNotification2" cutFadeOut 0;
+									"arsenalNotification2" cutText["<br/><br/><br/><t color='#00a6ff' size='1.2' shadow='2' font='puristaSemiBold'>by <t color='#00c9ff'>M9-SD</t>", "PLAIN DOWN", -1, true, true];
+								};
+								uiSleep 7;
+								"arsenalNotification1" cutFadeOut 2.1;
+								"arsenalNotification2" cutFadeOut 2.1;
+							};
+							if(_this select 3) then {
+								private _arsenalAnims = [
+									{
+										player playActionNow "Salute";
+									}, {
+										[player, "acts_civilidle_1"] remoteExec["switchMove"];
+									}, {
+										[player, "acts_civilListening_2"] remoteExec["switchMove"];
+									}, {
+										[player, "acts_commenting_on_fight_loop"] remoteExec["switchMove"];
+									}, {
+										[player, "acts_gallery_visitor_01"] remoteExec["switchMove"];
+									}, {
+										[player, "acts_gallery_visitor_02"] remoteExec["switchMove"];
+									}, {
+										[player, "acts_hilltop_calibration_loop"] remoteExec["switchMove"];
+									}, {
+										[player, "acts_kore_talkingoverradio_loop"] remoteExec["switchMove"];
+									}, {
+										[player, "acts_staticPose_photo"] remoteExec["switchMove"];
+									}, {
+										player playActionNow "gear";
+									}, {
+										[player, "Acts_Taking_Cover_From_Jets"] remoteExec["switchMove"];
+									}, {
+										[player, "Acts_standingSpeakingUnarmed"] remoteExec["switchMove"];
+									}, {
+										player playMoveNow "acts_Mentor_Freeing_Player";
+									}, {
+										[player, "acts_kore_talkingOverRadio_In"] remoteExec["switchMove"];
+									}, {
+										[player, "acts_kore_idleNoWeapon_In"] remoteExec["switchMove"];
+									}, {
+										[player, "Acts_JetsOfficerSpilling"] remoteExec["switchMove"];
+									}, {
+										player playMoveNow "Acts_Hilltop_Calibration_Pointing_Left";
+									}, {
+										player playMoveNow "Acts_Hilltop_Calibration_Pointing_Right";
+									}, {
+										[player, "Acts_Grieving"] remoteExec["switchMove"];
+									}
+								];
+								private _arsenalAnimsAdd = switch (currentWeapon player) do {
+									case (primaryWeapon player): {
+										[
+											{
+												[player, "acts_briefing_SA_loop"] remoteExec["switchMove"];
 											}, {
-												[player, 'acts_getAttention_loop'] remoteExec['switchMove'];
+												[player, "acts_getAttention_loop"] remoteExec["switchMove"];
 											}, {
-												[player, 'acts_millerIdle'] remoteExec['switchMove'];
+												[player, "acts_millerIdle"] remoteExec["switchMove"];
 											}, {
-												player playMoveNow 'Acts_SupportTeam_Right_ToKneelLoop';
+												player playMoveNow "Acts_SupportTeam_Right_ToKneelLoop";
 											}, {
-												player playMoveNow 'Acts_SupportTeam_Left_ToKneelLoop';
+												player playMoveNow "Acts_SupportTeam_Left_ToKneelLoop";
 											}, {
-												player playMoveNow 'Acts_SupportTeam_Front_ToKneelLoop';
+												player playMoveNow "Acts_SupportTeam_Front_ToKneelLoop";
 											}, {
-												player playMoveNow 'Acts_SupportTeam_Back_ToKneelLoop';
+												player playMoveNow "Acts_SupportTeam_Back_ToKneelLoop";
 											}, {
-												[player, 'Acts_starGazer'] remoteExec['switchMove'];
+												[player, "Acts_starGazer"] remoteExec["switchMove"];
 											}, {
-												player playMoveNow 'acts_RU_briefing_Turn';
+												player playMoveNow "acts_RU_briefing_Turn";
 											}, {
-												player playMoveNow 'acts_RU_briefing_point';
+												player playMoveNow "acts_RU_briefing_point";
 											}, {
-												player playMoveNow 'acts_RU_briefing_point_tl';
+												player playMoveNow "acts_RU_briefing_point_tl";
 											}, {
-												player playMoveNow 'acts_RU_briefing_move';
+												player playMoveNow "acts_RU_briefing_move";
 											}, {
-												[player, 'acts_rifle_operations_zeroing'] remoteExec['switchMove'];
+												[player, "acts_rifle_operations_zeroing"] remoteExec["switchMove"];
 											}, {
-												player playMoveNow 'acts_rifle_operations_right';
+												player playMoveNow "acts_rifle_operations_right";
 											}, {
-												player playMoveNow 'acts_rifle_operations_left';
+												player playMoveNow "acts_rifle_operations_left";
 											}, {
-												player playMoveNow 'acts_rifle_operations_front';
+												player playMoveNow "acts_rifle_operations_front";
 											}, {
-												player playMoveNow 'acts_rifle_operations_checking_chamber';
+												player playMoveNow "acts_rifle_operations_checking_chamber";
 											}, {
-												player playMoveNow 'acts_rifle_operations_barrel';
+												player playMoveNow "acts_rifle_operations_barrel";
 											}, {
-												player playMoveNow 'acts_rifle_operations_back';
+												player playMoveNow "acts_rifle_operations_back";
 											}, {
-												player playMoveNow 'acts_pointing_up';
+												player playMoveNow "acts_pointing_up";
 											}, {
-												player playMoveNow 'acts_pointing_down';
+												player playMoveNow "acts_pointing_down";
 											}, {
-												player playMoveNow 'acts_peering_up';
+												player playMoveNow "acts_peering_up";
 											}, {
-												player playMoveNow 'acts_peering_down';
+												player playMoveNow "acts_peering_down";
 											}, {
-												player playMoveNow 'acts_peering_front';
+												player playMoveNow "acts_peering_front";
 											}, {
-												[player, 'Acts_Helping_Wake_Up_1'] remoteExec['switchMove'];
-											}]
-										};
-									case (handgunWeapon player):{
-											[{
-												[player, 'acts_examining_device_player'] remoteExec['switchMove'];
+												[player, "Acts_Helping_Wake_Up_1"] remoteExec["switchMove"];
+											}
+										]
+									};
+									case (handgunWeapon player): {
+										[
+											{
+												[player, "acts_examining_device_player"] remoteExec["switchMove"];
 											}, {
-												[player, 'acts_executioner_standingloop'] remoteExec['switchMove'];
+												[player, "acts_executioner_standingloop"] remoteExec["switchMove"];
 											}, {
-												player playMoveNow 'Acts_ViperMeeting_A_End';
+												player playMoveNow "Acts_ViperMeeting_A_End";
 											}, {
-												player playMoveNow 'Acts_UGV_Jamming_Loop';
+												player playMoveNow "Acts_UGV_Jamming_Loop";
 											}, {
-												player playMoveNow 'Acts_starterPistol_Fire';
-											}]
-										};
+												player playMoveNow "Acts_starterPistol_Fire";
+											}
+										]
+									};
 									default {
 										[]
 									};
@@ -7035,9 +7039,9 @@ MAZ_EZM_fnc_initFunction = {
 								private _playAnim = selectRandom _arsenalAnims;
 								call _playAnim;
 								if !(isNil "M9SD_EH_ResetPlayerAnimsOnArsenalClosed") then {
-									(findDisplay 46) displayRemoveEventHandler['keyDown', M9SD_EH_ResetPlayerAnimsOnArsenalClosed];
+									(findDisplay 46) displayRemoveEventHandler["keyDown", M9SD_EH_ResetPlayerAnimsOnArsenalClosed];
 								};
-								M9SD_EH_ResetPlayerAnimsOnArsenalClosed = (findDisplay 46) displayAddEventHandler['keyDown', {
+								M9SD_EH_ResetPlayerAnimsOnArsenalClosed = (findDisplay 46) displayAddEventHandler["keyDown", {
 									params["_displayOrControl", "_key", "_shift", "_ctrl", "_alt"];
 									private _w = 17;
 									private _a = 30;
@@ -7046,356 +7050,301 @@ MAZ_EZM_fnc_initFunction = {
 									private _keys = [_w, _a, _s, _d];
 									if (_key in _keys) then {
 										if !(isNil "M9SD_EH_ResetPlayerAnimsOnArsenalClosed") then {
-											(findDisplay 46) displayRemoveEventHandler['keyDown', M9SD_EH_ResetPlayerAnimsOnArsenalClosed];
+											(findDisplay 46) displayRemoveEventHandler["keyDown", M9SD_EH_ResetPlayerAnimsOnArsenalClosed];
 										};
 										player enableSimulation true;
-										player playActionNow '';
-										player playMoveNow '';
-										player switchMove '';
+										player playActionNow "";
+										player playMoveNow "";
+										player switchMove "";
 										if (isMultiplayer) then {
-											[player, ''] remoteExec['switchMove']
+											[player, ""] remoteExec["switchMove"]
 										};
-										'arsenalNotification1'
+										"arsenalNotification1"
 										cutFadeOut 0;
-										'arsenalNotification2'
+										"arsenalNotification2"
 										cutFadeOut 0;
 									};
 								}];
-								playSound['hintExpand', true];
-								playSound['hintExpand', false];
-							}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
-						];
-						_supplyCrate addAction[
-							"<t color='#FFFFFF' size='1.2'><img image='\A3\ui_f\data\map\diary\icons\taskCustom_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Copy Loadout</t>", 
-							{
-								playSound ['beep_target', true]; 
-								playSound ['beep_target', false]; 
-								player playmovenow 'AinvPknlMstpSnonWnonDnon_1'; 
-								private _nearMen = nearestObjects [player, ['Man'], 21]; 
-								if ((count _nearMen) <= 1) exitWith  
-								{ 
-									playSound ['AddItemFailed', true]; 
-									playSound ['AddItemFailed', false]; 
-									0 = [] spawn  
-									{ 
-									for '_i' from 1 to 12 do  
-									{ 
-									(format ['arsenalNotification%1', _i]) cutFadeOut 0; 
-									}; 
-									'arsenalNotification8' cutFadeOut 0;  
-									'arsenalNotification8' cutText ["<t color='#ffd700' font='puristaMedium' shadow='2' size='1.4'>ERROR:<br/>No unit is close enough.</t>", "PLAIN DOWN", -1, true, true]; 
-									uiSleep 3.5; 
-									'arsenalNotification8' cutFadeOut 0.35; 
-									}; 
-								}; 
-								private _nearestMan = _nearMen # 1; 
-								private _loadout = getUnitLoadout _nearestMan; 
-								player setUnitLoadout _loadout; 
-								private _unitName = name _nearestMan; 
-								private _notifText = format ["<t color='#ffd700' font='puristaMedium' shadow='2' size='1.4'>Nearest unit’s loadout copied:<br/><br/><t color='#FFFFFF' font='puristaSemiBold'>“%1”</t>", _unitName]; 
-								0 = _notifText spawn  
-								{ 
-									for '_i' from 1 to 12 do  
-									{ 
-									(format ['arsenalNotification%1', _i]) cutFadeOut 0; 
-									}; 
-									'arsenalNotification8' cutFadeOut 0;  
-									'arsenalNotification8' cutText [_this, "PLAIN DOWN", -1, true, true]; 
-									uiSleep 3.5; 
-									'arsenalNotification8' cutFadeOut 0.35; 
-								}; 
-								playSound ['hintExpand', true]; 
-								playSound ['hintExpand', false]; 
-							}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
-						];
-						_supplyCrate addAction[
-							"<t color='#FFFFFF' size='1.2'><img image='a3\ui_f\data\igui\cfg\actions\obsolete\ui_action_gear_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Empty Loadout</t>", {
-								playSound['beep_target', true];
-								playSound['beep_target', false];
-								player playmovenow 'AinvPknlMstpSnonWnonDnon_1';
-								removeAllWeapons player;
-								removeAllItems player;
-								removeAllAssignedItems player;
-								removeUniform player;
-								removeVest player;
-								removeBackpack player;
-								removeHeadgear player;
-								removeGoggles player;
-								0 = [] spawn {
-									for '_i'
-									from 1 to 12 do {
-										(format['arsenalNotification%1', _i]) cutFadeOut 0;
-									};
-									'arsenalNotification4'
-									cutFadeOut 0;
-									'arsenalNotification4'
-									cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Loadout removed.</t>", "PLAIN DOWN", -1, true, true];
-									uiSleep 3.5;
-									'arsenalNotification4'
-									cutFadeOut 0.35;
-								};
-								playSound['hintExpand', true];
-								playSound['hintExpand', false];
-							}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
-						];
-						_supplyCrate addAction[
-							"<t color='#FFFFFF' size='1.2'><img image='a3\3den\data\displays\Display3DEN\ToolBar\save_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Save Respawn Loadout</t>", {
-								playSound['beep_target', true];
-								playSound['beep_target', false];
-								player playActionNow 'putdown';
-								[player, [missionnamespace, "M9SD_arsenalRespawnLoadout"]] call BIS_fnc_saveInventory;
-								if (!isNil "M9SD_EH_arsenalRespawnLoadout") then {
-									player removeEventHandler["Respawn", M9SD_EH_arsenalRespawnLoadout];
-								};
-								M9SD_EH_arsenalRespawnLoadout = player addEventHandler[
-									"Respawn", {
-										0 = [] spawn {
-											waitUntil {
-												(alive player)
-											};
-											sleep 0.07;
-											[player, [missionnamespace, "M9SD_arsenalRespawnLoadout"]] call BIS_fnc_loadInventory;
-										};
-									}
-								];
-								0 = [] spawn {
-									for '_i'
-									from 1 to 12 do {
-										(format['arsenalNotification%1', _i]) cutFadeOut 0;
-									};
-									'arsenalNotification6'
-									cutFadeOut 0;
-									'arsenalNotification6'
-									cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Respawn loadout set.</t>", "PLAIN DOWN", -1, true, true];
-									uiSleep 3.5;
-									'arsenalNotification6'
-									cutFadeOut 0.35;
-								};
-								playSound['hintExpand', true];
-								playSound['hintExpand', false];
-							}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
-						];
-						_supplyCrate addAction[
-							"<t color='#FFFFFF' size='1.2'><img image='a3\3den\data\displays\Display3DEN\ToolBar\open_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Load Respawn Loadout</t>", {
-								playSound['beep_target', true];
-								playSound['beep_target', false];
-								player playActionNow 'putdown';
-								if (isNil 'M9SD_EH_arsenalRespawnLoadout') then {
-									playSound['AddItemFailed', true];
-									playSound['AddItemFailed', false];
-									0 = [] spawn {
-										for '_i'
-										from 1 to 12 do {
-											(format['arsenalNotification%1', _i]) cutFadeOut 0;
-										};
-										'arsenalNotification12'
-										cutFadeOut 0;
-										'arsenalNotification12'
-										cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>ERROR:<br/>No respawn loadout saved.</t>", "PLAIN DOWN", -1, true, true];
-										uiSleep 3.5;
-										'arsenalNotification12'
-										cutFadeOut 0.35;
-									};
-								} else {
-									[player, [missionnamespace, "M9SD_arsenalRespawnLoadout"]] call BIS_fnc_loadInventory;
-									0 = [] spawn {
-										for '_i'
-										from 1 to 12 do {
-											(format['arsenalNotification%1', _i]) cutFadeOut 0;
-										};
-										'arsenalNotification12'
-										cutFadeOut 0;
-										'arsenalNotification12'
-										cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Respawn loadout applied.</t>", "PLAIN DOWN", -1, true, true];
-										uiSleep 3.5;
-										'arsenalNotification12'
-										cutFadeOut 0.35;
-									};
-									playSound['hintExpand', true];
-									playSound['hintExpand', false];
-								};
-							}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
-						];
-						_supplyCrate addAction[
-							"<t color='#FFFFFF' size='1.2'><img image='\a3\3den\data\Cfg3DEN\History\deleteItems_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Delete Respawn Loadout</t>", {
-								playSound['beep_target', true];
-								playSound['beep_target', false];
-								player playActionNow 'putdown';
-								if (!isNil "M9SD_EH_arsenalRespawnLoadout") then {
-									player removeEventHandler["Respawn", M9SD_EH_arsenalRespawnLoadout];
-								};
-								0 = [] spawn {
-									for '_i'
-									from 1 to 12 do {
-										(format['arsenalNotification%1', _i]) cutFadeOut 0;
-									};
-									'arsenalNotification5'
-									cutFadeOut 0;
-									'arsenalNotification5'
-									cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Respawn loadout disabled.</t>", "PLAIN DOWN", -1, true, true];
-									uiSleep 3.5;
-									'arsenalNotification5'
-									cutFadeOut 0.35;
-								};
-								playSound['hintExpand', true];
-								playSound['hintExpand', false];
-							}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
-						];
-						_supplyCrate addAction[
-							"<t color='#FFFFFF' size='1.2'><img image='\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\heal_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Heal</t>", {
-								playSound['beep_target', true];
-								playSound['beep_target', false];
-								player playActionNow 'Medic';
-								[player] call BIS_fnc_reviveEhRespawn;
-								player setDamage 0;
-								player setUnconscious false;
-								player setCaptive false;
-								0 = [] spawn {
-									for '_i'
-									from 1 to 12 do {
-										(format['arsenalNotification%1', _i]) cutFadeOut 0;
-									};
-									'arsenalNotification3'
-									cutFadeOut 0;
-									'arsenalNotification3'
-									cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Healing...</t>", "PLAIN DOWN", -1, true, true];
-									uiSleep 6.33;
-									playSound['hintCollapse', true];
-									playSound['hintCollapse', false];
-									'arsenalNotification3'
-									cutFadeOut 0;
-									'arsenalNotification3'
-									cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Healed.</t>", "PLAIN DOWN", -1, true, true];
-									uiSleep 3.33;
-									'arsenalNotification3'
-									cutFadeOut 0.35;
-								};
-								playSound['hintExpand', true];
-								playSound['hintExpand', false];
-							}, nil, 7777, true, true, "", "((_this == vehicle _this) && (damage _this > 0))", 7
-						];
-					}
-				] remoteExec['call', 0, _uniqueJIP];
-			};
-			[M9SD_AIO_SupplyBox] call M9SD_fnc_addSmallArsenalActions;
-			M9SD_fnc_smallArsenalMarkers = {
-				params[['_supplyCrate', objNull]];
-				if (isNull _supplyCrate) exitWith {};
-				if (_supplyCrate getVariable['M9SD_hasMarkers', false]) exitWith {};
-				_supplyCrate setVariable['M9SD_hasMarkers', true, true];
-				if (isNil 'M9SD_smallArsenals') then {
-					M9SD_smallArsenals = [];
-				};
-				M9SD_smallArsenals pushBackUnique _supplyCrate;
-				publicVariable 'M9SD_smallArsenals';
-				[M9SD_smallArsenals, {
-					if (!hasInterface) exitWith {};
-					waitUntil {
-						!isNil {
-							player
-						} && {!isNull player
-						}
-					};
-					waitUntil {
-						!isNull(findDisplay 46)
-					};
-					if (isNil 'M9SD_smallArsenals') then {
-						M9SD_smallArsenals = _this;
-					};
-					M9SD_smallArsenalIcons_texture = '\a3\3den\data\displays\display3den\entitymenu\arsenal_ca.paa';
-					M9SD_smallArsenalIcons_width = 0.7;
-					M9SD_smallArsenalIcons_height = 0.7;
-					M9SD_smallArsenalIcons_angle = 0;
-					M9SD_smallArsenalIcons_text = 'Virtual Arsenal';
-					M9SD_smallArsenalIcons_shadow = 2;
-					M9SD_smallArsenalIcons_textSize = 0.04;
-					M9SD_smallArsenalIcons_font = 'PuristaSemiBold';
-					M9SD_smallArsenalIcons_textAlign = 'center';
-					M9SD_smallArsenalIcons_drawSideArrows = false;
-					M9SD_smallArsenalIcons_offsetX = 0;
-					M9SD_smallArsenalIcons_offsetY = -0.07;
-					M9SD_smallArsenalIcons_offset = 2.1;
-					if (not(isNil 'M9SD_EH_drawSmallArsenal3D')) then {
-						removeMissionEventHandler['Draw3D', M9SD_EH_drawSmallArsenal3D];
-					};
-					M9SD_EH_drawSmallArsenal3D = addMissionEventHandler['Draw3D', {
-						if (count M9SD_smallArsenals == 0) exitWith {}; {
-							if (!isNull _x) then {
-								if (_x in [cursorTarget, cursorObject]) then {
-									if ((_x distance(vehicle player)) <= 28) then {
-										private _position = getPos _x;
-										_position set[2, (_position# 2) + M9SD_smallArsenalIcons_offset];
-										drawIcon3D
-											[
-												M9SD_smallArsenalIcons_texture, [1, 1, 1, 1],
-												_position,
-												M9SD_smallArsenalIcons_width,
-												M9SD_smallArsenalIcons_height,
-												M9SD_smallArsenalIcons_angle,
-												'',
-												M9SD_smallArsenalIcons_shadow,
-												M9SD_smallArsenalIcons_textSize,
-												M9SD_smallArsenalIcons_font,
-												M9SD_smallArsenalIcons_textAlign,
-												M9SD_smallArsenalIcons_drawSideArrows,
-												M9SD_smallArsenalIcons_offsetX,
-												M9SD_smallArsenalIcons_offsetY
-											];
-										drawIcon3D
-											[
-												'', [0, 1, 0, 1],
-												_position,
-												M9SD_smallArsenalIcons_width,
-												M9SD_smallArsenalIcons_height,
-												M9SD_smallArsenalIcons_angle,
-												M9SD_smallArsenalIcons_text,
-												M9SD_smallArsenalIcons_shadow,
-												M9SD_smallArsenalIcons_textSize,
-												M9SD_smallArsenalIcons_font,
-												M9SD_smallArsenalIcons_textAlign,
-												M9SD_smallArsenalIcons_drawSideArrows,
-												M9SD_smallArsenalIcons_offsetX,
-												M9SD_smallArsenalIcons_offsetY
-											];
-									};
-								};
 							};
-						}
-						forEach M9SD_smallArsenals;
-					}];
-					waitUntil {
-						!isNull(findDisplay 12 displayCtrl 51)
-					};
-					
-					
-					
-					
-					
-					if (!isNil "M9SD_EH_drawSmallArsenal2D") then {
-						(findDisplay 12 displayCtrl 51) ctrlRemoveEventHandler["Draw", M9SD_EH_drawSmallArsenal2D];
-					};
-					
-					
-					M9SD_AIO_color1 = [0, 1, 0, 1];
-					M9SD_AIO_color2 = [1, 1, 1, 1];
-					M9SD_AIO_iconPath = 'a3\ui_f\data\logos\a_64_ca.paa';
-					
-					M9SD_EH_drawSmallArsenal2D = (findDisplay 12 displayCtrl 51) ctrlAddEventHandler["Draw", 
-					{
-						_map = _this select 0;
-						if (count M9SD_smallArsenals == 0) exitWith {}; 
+							playSound["hintExpand", true];
+							playSound["hintExpand", false];
+						}, _doAnimations, 7777, true, true, "", "(_this == vehicle _this)", 7
+					];
+					_supplyCrate addAction[
+						"<t color='#FFFFFF' size='1.2'><img image='\A3\ui_f\data\map\diary\icons\taskCustom_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Copy Loadout</t>", 
 						{
-							if (!isNull _x) then 
+							playSound ["beep_target", true]; 
+							playSound ["beep_target", false]; 
+							player playmovenow "AinvPknlMstpSnonWnonDnon_1"; 
+							private _nearMen = nearestObjects [player, ["Man"], 21]; 
+							if ((count _nearMen) <= 1) exitWith { 
+								playSound ["AddItemFailed", true]; 
+								playSound ["AddItemFailed", false]; 
+								0 = [] spawn { 
+									for "_i" from 1 to 12 do { 
+										(format ["arsenalNotification%1", _i]) cutFadeOut 0; 
+									}; 
+									"arsenalNotification8" cutFadeOut 0;  
+									"arsenalNotification8" cutText ["<t color='#ffd700' font='puristaMedium' shadow='2' size='1.4'>ERROR:<br/>No unit is close enough.</t>", "PLAIN DOWN", -1, true, true]; 
+									uiSleep 3.5; 
+									"arsenalNotification8" cutFadeOut 0.35; 
+								}; 
+							}; 
+							private _nearestMan = _nearMen # 1; 
+							private _loadout = getUnitLoadout _nearestMan; 
+							player setUnitLoadout _loadout; 
+							private _unitName = name _nearestMan; 
+							private _notifText = format ["<t color='#ffd700' font='puristaMedium' shadow='2' size='1.4'>Nearest unit’s loadout copied:<br/><br/><t color='#FFFFFF' font='puristaSemiBold'>“%1”</t>", _unitName]; 
+							0 = _notifText spawn { 
+								for "_i" from 1 to 12 do { 
+									(format ["arsenalNotification%1", _i]) cutFadeOut 0; 
+								}; 
+								"arsenalNotification8" cutFadeOut 0;  
+								"arsenalNotification8" cutText [_this, "PLAIN DOWN", -1, true, true]; 
+								uiSleep 3.5; 
+								"arsenalNotification8" cutFadeOut 0.35; 
+							}; 
+							playSound ["hintExpand", true]; 
+							playSound ["hintExpand", false]; 
+						}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
+					];
+					_supplyCrate addAction[
+						"<t color='#FFFFFF' size='1.2'><img image='a3\ui_f\data\igui\cfg\actions\obsolete\ui_action_gear_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Empty Loadout</t>", 
+						{
+							playSound["beep_target", true];
+							playSound["beep_target", false];
+							player playmovenow "AinvPknlMstpSnonWnonDnon_1";
+							removeAllWeapons player;
+							removeAllItems player;
+							removeAllAssignedItems player;
+							removeUniform player;
+							removeVest player;
+							removeBackpack player;
+							removeHeadgear player;
+							removeGoggles player;
+							0 = [] spawn {
+								for "_i" from 1 to 12 do {
+									(format["arsenalNotification%1", _i]) cutFadeOut 0;
+								};
+								"arsenalNotification4" cutFadeOut 0;
+								"arsenalNotification4" cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Loadout removed.</t>", "PLAIN DOWN", -1, true, true];
+								uiSleep 3.5;
+								"arsenalNotification4" cutFadeOut 0.35;
+							};
+							playSound["hintExpand", true];
+							playSound["hintExpand", false];
+						}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
+					];
+					_supplyCrate addAction[
+						"<t color='#FFFFFF' size='1.2'><img image='a3\3den\data\displays\Display3DEN\ToolBar\save_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Save Respawn Loadout</t>", 
+						{
+							playSound["beep_target", true];
+							playSound["beep_target", false];
+							player playActionNow "putdown";
+							[player, [missionnamespace, "M9SD_arsenalRespawnLoadout"]] call BIS_fnc_saveInventory;
+							if (!isNil "M9SD_EH_arsenalRespawnLoadout") then {
+								player removeEventHandler["Respawn", M9SD_EH_arsenalRespawnLoadout];
+							};
+							M9SD_EH_arsenalRespawnLoadout = player addEventHandler ["Respawn", {
+								0 = [] spawn {
+									waitUntil {alive player};
+									sleep 0.07;
+									[player, [missionnamespace, "M9SD_arsenalRespawnLoadout"]] call BIS_fnc_loadInventory;
+								};
+							}];
+							0 = [] spawn {
+								for "_i" from 1 to 12 do {
+									(format["arsenalNotification%1", _i]) cutFadeOut 0;
+								};
+								"arsenalNotification6" cutFadeOut 0;
+								"arsenalNotification6" cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Respawn loadout set.</t>", "PLAIN DOWN", -1, true, true];
+								uiSleep 3.5;
+								"arsenalNotification6" cutFadeOut 0.35;
+							};
+							playSound["hintExpand", true];
+							playSound["hintExpand", false];
+						}, nil, 7777, true, true, "", "(_this == vehicle _this)", 7
+					];
+					_supplyCrate addAction[
+						"<t color='#FFFFFF' size='1.2'><img image='a3\3den\data\displays\Display3DEN\ToolBar\open_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Load Respawn Loadout</t>", 
+						{
+							playSound["beep_target", true];
+							playSound["beep_target", false];
+							player playActionNow "putdown";
+							[player, [missionnamespace, "M9SD_arsenalRespawnLoadout"]] call BIS_fnc_loadInventory;
+							0 = [] spawn {
+								for "_i" from 1 to 12 do {
+									(format["arsenalNotification%1", _i]) cutFadeOut 0;
+								};
+								"arsenalNotification12" cutFadeOut 0;
+								"arsenalNotification12" cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Respawn loadout applied.</t>", "PLAIN DOWN", -1, true, true];
+								uiSleep 3.5;
+								"arsenalNotification12" cutFadeOut 0.35;
+							};
+							playSound["hintExpand", true];
+							playSound["hintExpand", false];
+						}, nil, 7777, true, true, "", "(_this == vehicle _this) && !isNil 'M9SD_EH_arsenalRespawnLoadout'", 7
+					];
+					_supplyCrate addAction[
+						"<t color='#FFFFFF' size='1.2'><img image='\a3\3den\data\Cfg3DEN\History\deleteItems_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Delete Respawn Loadout</t>", 
+						{
+							playSound["beep_target", true];
+							playSound["beep_target", false];
+							player playActionNow "putdown";
+							if (!isNil "M9SD_EH_arsenalRespawnLoadout") then {
+								player removeEventHandler["Respawn", M9SD_EH_arsenalRespawnLoadout];
+								M9SD_EH_arsenalRespawnLoadout = nil;
+							};
+							0 = [] spawn {
+								for "_i" from 1 to 12 do {
+									(format["arsenalNotification%1", _i]) cutFadeOut 0;
+								};
+								"arsenalNotification5" cutFadeOut 0;
+								"arsenalNotification5" cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Respawn loadout disabled.</t>", "PLAIN DOWN", -1, true, true];
+								uiSleep 3.5;
+								"arsenalNotification5" cutFadeOut 0.35;
+							};
+							playSound["hintExpand", true];
+							playSound["hintExpand", false];
+						}, nil, 7777, true, true, "", "(_this == vehicle _this) && !isNil 'M9SD_EH_arsenalRespawnLoadout'", 7
+					];
+					_supplyCrate addAction[
+						"<t color='#FFFFFF' size='1.2'><img image='\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\heal_ca.paa'></img><t color='#00ff00' size='1.2' font='puristaBold'> Heal</t>", 
+						{
+							playSound["beep_target", true];
+							playSound["beep_target", false];
+							player playActionNow "Medic";
+							[player] call BIS_fnc_reviveEhRespawn;
+							player setDamage 0;
+							player setUnconscious false;
+							player setCaptive false;
+							0 = [] spawn {
+								for "_i" from 1 to 12 do {
+									(format["arsenalNotification%1", _i]) cutFadeOut 0;
+								};
+								"arsenalNotification3" cutFadeOut 0;
+								"arsenalNotification3" cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Healing...</t>", "PLAIN DOWN", -1, true, true];
+								uiSleep 6.33;
+								playSound["hintCollapse", true];
+								playSound["hintCollapse", false];
+								"arsenalNotification3" cutFadeOut 0;
+								"arsenalNotification3" cutText["<t color='#00ff00' font='puristaMedium' shadow='2' size='1.2'>Healed.</t>", "PLAIN DOWN", -1, true, true];
+								uiSleep 3.33;
+								"arsenalNotification3" cutFadeOut 0.35;
+							};
+							playSound["hintExpand", true];
+							playSound["hintExpand", false];
+						}, nil, 7777, true, true, "", "((_this == vehicle _this) && (damage _this > 0))", 7
+					];
+				}] remoteExec["call", 0, _uniqueJIP];
+			};
+			[_arsenalBox,_doAnimations] call M9SD_fnc_addSmallArsenalActions;
+			
+			if(_doMarker) then {
+				M9SD_fnc_smallArsenalMarkers = {
+					params[["_supplyCrate", objNull]];
+					if (isNull _supplyCrate) exitWith {};
+					if (_supplyCrate getVariable ["M9SD_hasMarkers", false]) exitWith {};
+					_supplyCrate setVariable ["M9SD_hasMarkers", true, true];
+
+					private _list = missionNamespace getVariable ["M9SD_smallArsenals",[]];
+					_list pushBackUnique _supplyCrate;
+					missionNamespace setVariable ["M9SD_smallArsenals",_list,true];
+
+					[[], {
+						if (!hasInterface) exitWith {};
+						waitUntil {!isNil {player} && {!isNull player}};
+						waitUntil {!isNull(findDisplay 46)};
+						M9SD_smallArsenalIcons_texture = "\a3\3den\data\displays\display3den\entitymenu\arsenal_ca.paa";
+						M9SD_smallArsenalIcons_width = 0.7;
+						M9SD_smallArsenalIcons_height = 0.7;
+						M9SD_smallArsenalIcons_angle = 0;
+						M9SD_smallArsenalIcons_text = "Virtual Arsenal";
+						M9SD_smallArsenalIcons_shadow = 2;
+						M9SD_smallArsenalIcons_textSize = 0.04;
+						M9SD_smallArsenalIcons_font = "PuristaSemiBold";
+						M9SD_smallArsenalIcons_textAlign = "center";
+						M9SD_smallArsenalIcons_drawSideArrows = false;
+						M9SD_smallArsenalIcons_offsetX = 0;
+						M9SD_smallArsenalIcons_offsetY = -0.07;
+						M9SD_smallArsenalIcons_offset = 2.1;
+						if (!isNil "M9SD_EH_drawSmallArsenal3D") then {
+							removeMissionEventHandler["Draw3D", M9SD_EH_drawSmallArsenal3D];
+						};
+						M9SD_EH_drawSmallArsenal3D = addMissionEventHandler ["Draw3D", {
+							private _arsenals = missionNamespace getVariable ["M9SD_smallArsenals",[]];
+							if(count _arsenals == 0) exitWith {};
 							{
-								_pos = _x modelToWorldVisual [0, 0, 0];
-								_iconText =
-								if (((_map ctrlMapWorldToScreen (_x modelToWorldVisual[0, 0, 0])) distance2D getMousePosition) > 0.02) then {
+								if(isNull _x) then {continue};
+								if !(_x in [cursorTarget, cursorObject]) then {continue};
+								if((_x distance (vehicle player)) > 28) then {continue};
+
+								private _position = getPos _x;
+								_position set [2, (_position # 2) + M9SD_smallArsenalIcons_offset];
+								drawIcon3D[
+									M9SD_smallArsenalIcons_texture, [1, 1, 1, 1],
+									_position,
+									M9SD_smallArsenalIcons_width,
+									M9SD_smallArsenalIcons_height,
+									M9SD_smallArsenalIcons_angle,
+									"",
+									M9SD_smallArsenalIcons_shadow,
+									M9SD_smallArsenalIcons_textSize,
+									M9SD_smallArsenalIcons_font,
+									M9SD_smallArsenalIcons_textAlign,
+									M9SD_smallArsenalIcons_drawSideArrows,
+									M9SD_smallArsenalIcons_offsetX,
+									M9SD_smallArsenalIcons_offsetY
+								];
+								drawIcon3D [
+									"", [0, 1, 0, 1],
+									_position,
+									M9SD_smallArsenalIcons_width,
+									M9SD_smallArsenalIcons_height,
+									M9SD_smallArsenalIcons_angle,
+									M9SD_smallArsenalIcons_text,
+									M9SD_smallArsenalIcons_shadow,
+									M9SD_smallArsenalIcons_textSize,
+									M9SD_smallArsenalIcons_font,
+									M9SD_smallArsenalIcons_textAlign,
+									M9SD_smallArsenalIcons_drawSideArrows,
+									M9SD_smallArsenalIcons_offsetX,
+									M9SD_smallArsenalIcons_offsetY
+								];
+							}forEach _arsenals;
+							if(objNull in _arsenals) then {
+								[[], {
+									private _arsenals = missionNamespace getVariable ["M9SD_smallArsenals",[]];
+									_arsenals = _arsenals - [objNull];
+									missionNamespace setVariable ["M9SD_smallArsenals",_arsenals,true];
+								}] remoteExec ["spawn",2];
+							};
+						}];
+
+						waitUntil {!isNull(findDisplay 12 displayCtrl 51)};
+						
+						if (!isNil "M9SD_EH_drawSmallArsenal2D") then {
+							(findDisplay 12 displayCtrl 51) ctrlRemoveEventHandler["Draw", M9SD_EH_drawSmallArsenal2D];
+						};
+						
+						M9SD_AIO_color1 = [0, 1, 0, 1];
+						M9SD_AIO_color2 = [1, 1, 1, 1];
+						M9SD_AIO_iconPath = "a3\ui_f\data\logos\a_64_ca.paa";
+						
+						M9SD_EH_drawSmallArsenal2D = (findDisplay 12 displayCtrl 51) ctrlAddEventHandler["Draw", 
+						{
+							params ["_map"];
+							private _arsenals = missionNamespace getVariable ["M9SD_smallArsenals",[]];
+							if (count _arsenals == 0) exitWith {}; 
+							{
+								if(isNull _x) then {continue};
+								private _pos = _x modelToWorldVisual [0, 0, 0];
+								private _iconText = if (((_map ctrlMapWorldToScreen (_x modelToWorldVisual[0, 0, 0])) distance2D getMousePosition) > 0.02) then {
 									""
 								} else {
-									'Virtual Arsenal'
+									"Virtual Arsenal"
 								};
-								_map drawIcon
-								[
+								_map drawIcon [
 									M9SD_AIO_iconPath,
 									M9SD_AIO_color1,
 									_pos,
@@ -7408,37 +7357,70 @@ MAZ_EZM_fnc_initFunction = {
 									"PuristaBold",
 									"left"
 								];
-								_map drawIcon
-								[
+								_map drawIcon [
 									M9SD_AIO_iconPath,
 									M9SD_AIO_color2,
 									_pos,
 									20,
 									20,
 									0,
-									'',
+									"",
 									1,
 									0.05,
 									"PuristaSemiBold",
 									"left"
 								];
-							};
-						} forEach M9SD_smallArsenals;
-					}];
-				}] remoteExec['spawn', 0, 'M9SD_JIP_smallArsenalIcons'];
+							} forEach _arsenals;
+						}];
+					}] remoteExec["spawn", 0, "M9SD_JIP_smallArsenalIcons"];
+				};
+				[_arsenalBox] call M9SD_fnc_smallArsenalMarkers;
 			};
-			[M9SD_AIO_SupplyBox] call M9SD_fnc_smallArsenalMarkers;
-			[M9SD_AIO_SupplyBox, false] remoteExec['allowDamage']; 
+			[_arsenalBox, false] remoteExec["allowDamage"]; 
 			{
-				[_x, false] remoteExec['allowDamage'];
-			}forEach attachedObjects M9SD_AIO_SupplyBox;
-			{
-				[_x, [
-					[M9SD_AIO_SupplyBox], true
-				]] remoteExec['addCuratorEditableObjects', owner _x];
-				[_x, [attachedObjects M9SD_AIO_SupplyBox, true]] remoteExec['addCuratorEditableObjects', owner _x];
-			}forEach allCurators;
-			["AIO Arsenal Created.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+				[_x, false] remoteExec["allowDamage"];
+			}forEach attachedObjects _arsenalBox;
+			[_arsenalBox] call MAZ_EZM_fnc_addObjectToInterface;
+			[attachedObjects _arsenalBox] call MAZ_EZM_fnc_addObjectToInterface;
+		};
+
+		MAZ_EZM_fnc_createAIOArsenalDialog = {
+			params ["_entity"];
+			[
+				"AIO Arsenal Spawner",
+				[
+					[
+						"TOOLBOX:YESNO",
+						"Light?",
+						[missionNamespace getVariable ["MAZ_EZM_AIO_Light",true]]
+					],
+					[
+						"TOOLBOX:YESNO",
+						"Map Marker?",
+						[missionNamespace getVariable ["MAZ_EZM_AIO_Markers",true]]
+					],
+					[
+						"TOOLBOX:YESNO",
+						"Do Animations?",
+						[missionNamespace getVariable ["MAZ_EZM_AIO_Anims",true]]
+					]
+				],
+				{
+					params ["_values","_args","_display"];
+					_values params ["_light","_markers","_anims"];
+					MAZ_EZM_AIO_Light = _light;
+					MAZ_EZM_AIO_Markers = _markers;
+					MAZ_EZM_AIO_Anims = _anims;
+					(_args + _values) call JAM_EZM_fnc_createAIOArsenalModule;
+					["AIO Arsenal Created.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+					_display closeDisplay 1;
+				},
+				{
+					params ["_values","_args","_display"];
+					_display closeDisplay 2;
+				},
+				[_entity,[true] call MAZ_EZM_fnc_getScreenPosition]
+			] call MAZ_EZM_fnc_createDialog;
 		};
 
 		MAZ_EZM_fnc_resetSavedLoadouts = {
@@ -13611,6 +13593,109 @@ MAZ_EZM_fnc_initFunction = {
 			}];
 		};
 
+		MAZ_EZM_fnc_createDeadSoldierModule = {
+			params [["_gunType","Weapon_arifle_CTAR_blk_F"]];
+            private _pos = [true] call MAZ_EZM_fnc_getScreenPosition;
+            
+            private _soldier = createVehicle ["O_Soldier_F",[24602.4,19234.3,2.38419e-007],[],0,"CAN_COLLIDE"];
+            _soldier setUnitLoadout [[],[],[],["U_O_CombatUniform_ocamo",[["FirstAidKit",1],["Chemlight_red",1,1]]],["V_HarnessO_brn",[]],[],"H_HelmetO_ocamo","",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch",""]];
+
+            private _animData = selectRandom [
+                ["KIA_gunner_static_low01",[24602.4,19234.4,3.19144],[24603.4,19234.9,3.20104],[24601.7,19235,3.195]],
+                ["KIA_gunner_standup01",[24602.4,19234.4,3.19144],[24602.9,19233.5,3.2036],[24602.4,19234.3,3.19136]],
+                ["KIA_driver_boat01",[24602.4,19234.4,3.19144],[24603,19235.2,3.19],[24602.8,19234.5,3.195]],
+                ["KIA_passenger_boat_holdleft",[24602.5,19234.4,3.19144],[24603,19235.1,3.19896],[24602.8,19234.4,3.195]]
+            ];
+            
+            _animData params ["_anim","_unitPos","_gunPos","_bloodPos"];
+            [_soldier,_anim] remoteExec ['switchMove',0,_soldier];
+            _soldier disableAI "ALL";  
+            _soldier setCaptive true; 
+            _soldier setSpeaker "NoVoice"; 
+            _soldier allowDamage false;
+            _soldier setPosWorld _unitPos;
+            _soldier setVectorDirAndUp [[0.965509,-0.26037,0],[0,0,1]];
+            _soldier setDir (random 359);
+            [_soldier] call MAZ_EZM_fnc_deleteAttachedWhenKilled;
+            [_soldier] call MAZ_EZM_fnc_deleteAttachedWhenDeleted;
+            [_soldier] call MAZ_EZM_fnc_addObjectToInterface;
+            [_soldier] call MAZ_EZM_fnc_ignoreWhenCleaning;
+
+            _soldier spawn {
+                while {!isNull _this} do {
+                    private _sounds = [
+                        ["A3\Missions_F_Oldman\Data\sound\Flies\Flies_02.wss",10.5,0.5,15]
+                    ];
+                    private _soundData = selectRandom _sounds;
+                    _soundData params ["_sound","_time","_volume","_distance"];
+                    playSound3D [_sound,_this,false,getPosASL _this, _volume, 1, _distance];
+                    sleep _time;
+                };
+            };
+
+            private _gun = createVehicle [_gunType,[24603.4,19234.9,0.0110364],[],0,"CAN_COLLIDE"];
+            _gun setPosWorld _gunPos;
+            _gun setDir (random 90);
+            [_gun,_soldier] call BIS_fnc_attachToRelative;
+
+            private _blood = createVehicle ["BloodSplatter_01_Medium_New_F",[24601.7,19235,0],[],0,"CAN_COLLIDE"];
+            _blood setPosWorld _bloodPos;
+            _blood setVectorDirAndUp [[0,1,0],[0,0,1]];
+            _blood setObjectTextureGlobal [0,"a3\props_f_orange\humanitarian\garbage\data\bloodsplatter_medium_fresh_ca.paa"];
+            _blood setDir (random 359);
+            [_blood, _soldier] call BIS_fnc_attachToRelative;
+
+            _soldier setpos _pos;
+
+            _soldier
+        }; 
+
+		MAZ_EZM_fnc_addVehicleCrewActions = {
+			[_this, {
+				params ["_mainVehicle","_turretVehicle",["_separateGunner",true],["_separateCommander",false]];
+
+				_turretVehicle lock 2;
+				_mainVehicle setVariable ["MAZ_EZM_turretVehicle",_turretVehicle,true];
+				_turretVehicle setVariable ["MAZ_EZM_mainVehicle",_mainVehicle,true];
+
+				[[_mainVehicle,_turretVehicle,_separateGunner,_separateCommander], {
+					params ["_mainVehicle","_turretVehicle",["_separateGunner",true],["_separateCommander",false]];
+					_turretVehicle addAction [
+						"Get in Driver",
+						{
+							params ["_target", "_caller", "_actionId", "_arguments"];
+							_arguments params ["_mainVehicle","_turretVehicle"];
+							moveOut player;
+							player moveInDriver _mainVehicle;
+						},
+						[_mainVehicle,_turretVehicle],
+						1.5,
+						true,
+						true,
+						"",
+						"(vehicle _this == _this && _this distance _target < 4) || (vehicle _this == _target) && isNull (driver (_target getVariable 'MAZ_EZM_mainVehicle'))"
+					];
+					if(_separateGunner) then {
+						_mainVehicle addAction [
+							"Get in Gunner",
+							{
+								params ["_target", "_caller", "_actionId", "_arguments"];
+								_arguments params ["_mainVehicle","_turretVehicle"];
+								moveOut player;
+								player moveInGunner _turretVehicle;
+							},
+							[_mainVehicle,_turretVehicle],
+							1.5,
+							true,
+							true,
+							"",
+							"(vehicle _this == _this && _this distance _target < 4) || (vehicle _this == _target) && isNull (gunner (_target getVariable 'MAZ_EZM_turretVehicle'))"
+						];
+					};
+				}] remoteExec ["spawn",0,_mainVehicle];
+			}] remoteExec ["spawn",2];
+		};
+
 	comment "Pylon Editor";
 
 		"TODO : Rewrite and use a GUI instead. 3D icons is just too aids to handle with the internal bays.";
@@ -15208,14 +15293,21 @@ MAZ_EZM_fnc_editZeusInterface = {
 					private _ctrlGroup = ctrlParentControlsGroup _zeusSearchButton;
 					(ctrlPosition _zeusSearchButton) params ["_searchButtonPosX","_searchButtonPosY","_searchButtonPosW","_searchButtonPosH"];
 					_zeusSearchButton ctrlSetPositionX (_searchButtonPosX - (["W",2.2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
+					_zeusSearchButton ctrlSetPositionY (_searchButtonPosY - (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 					_zeusSearchButton ctrlCommit 0;
+
+					private _bgCtrl = _display ctrlCreate ["RscPicture",-1,_ctrlGroup];
+					_bgCtrl ctrlSetText "#(argb,8,8,3)color(1,1,1,1)";
+					_bgCtrl ctrlSetTextColor [0.13,0.13,0.15,1];
+					_bgCtrl ctrlSetPosition [(_searchButtonPosX - (["W",1.2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)),_searchButtonPosY - (["H",0.095] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(_searchButtonPosW * 2) + (["W",1.2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),_searchButtonPosH];
+					_bgCtrl ctrlCommit 0;
 
 					private _zeusCollapse = _display ctrlCreate ["RscActivePicture",-1,_ctrlGroup];
 					_zeusCollapse ctrlSetText "a3\3den\data\displays\display3den\tree_collapse_ca.paa";
 					_zeusCollapse ctrlSetTextColor [1,1,1,0.8];
 					_zeusCollapse ctrlSetActiveColor [1,1,1,1];
-					_zeusCollapse ctrlSetBackgroundColor [0,0,0,0.5];
-					_zeusCollapse ctrlSetPosition [(_searchButtonPosX - (["W",1.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)),_searchButtonPosY,_searchButtonPosW,_searchButtonPosH];
+					_zeusCollapse ctrlSetTooltip "Collapse all the trees";
+					_zeusCollapse ctrlSetPosition [(_searchButtonPosX - (["W",1.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)),_searchButtonPosY - (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),_searchButtonPosW,_searchButtonPosH];
 					_zeusCollapse ctrlAddEventHandler ["ButtonClick",{
 						[] call MAZ_EZM_fnc_collapseAllTrees;
 					}];
@@ -15225,8 +15317,8 @@ MAZ_EZM_fnc_editZeusInterface = {
 					_zeusExpand ctrlSetText "a3\3den\data\displays\display3den\tree_expand_ca.paa";
 					_zeusExpand ctrlSetTextColor [1,1,1,0.8];
 					_zeusExpand ctrlSetActiveColor [1,1,1,1];
-					_zeusExpand ctrlSetBackgroundColor [0,0,0,0.5];
-					_zeusExpand ctrlSetPosition [_searchButtonPosX,_searchButtonPosY + (["Y",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),_searchButtonPosW,_searchButtonPosH - (["Y",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+					_zeusExpand ctrlSetTooltip "Expand all the trees";
+					_zeusExpand ctrlSetPosition [_searchButtonPosX,_searchButtonPosY + (["Y",0.075] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),_searchButtonPosW,_searchButtonPosH - (["Y",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 					_zeusExpand ctrlAddEventHandler ["ButtonClick",{
 						[] call MAZ_EZM_fnc_expandAllTrees;
 					}];
@@ -15313,7 +15405,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 				};
 				call MAZ_EZM_fnc_addSpawnWithoutCrewButton;
 
-				comment "TOOD : Move groups tree back once";
+				comment "TODO : Move groups tree back once";
 				MAZ_EZM_fnc_moveTree = {
 					params ["_ctrl","_fromPath","_toPath"];
 					private _data = [_ctrl,_fromPath] call MAZ_EZM_fnc_getSubChildrenOfTree;
@@ -15564,15 +15656,16 @@ MAZ_EZM_fnc_editZeusInterface = {
 				MAZ_UnitsTree_CIVILIAN	 = (_display displayCtrl 273);
 				MAZ_UnitsTree_EMPTY      = (_display displayCtrl 274);
 				MAZ_zeusModulesTree 	 = (_display displayCtrl 280);
+				MAZ_GroupsTree_EMPTY	 = (_display displayCtrl 279);
 				
 				for '_n' from 0 to 32 do 
 				{
-					MAZ_UnitsTree_BLUFOR tvCollapse [_n];
-					MAZ_UnitsTree_OPFOR tvCollapse [_n];
-					MAZ_UnitsTree_INDEP tvCollapse [_n];
-					MAZ_UnitsTree_CIVILIAN tvCollapse [_n];
-					MAZ_UnitsTree_EMPTY tvCollapse [_n];
-					MAZ_zeusModulesTree tvCollapse [_n];
+					uiNamespace getVariable "MAZ_UnitsTree_BLUFOR" tvCollapse [_n];
+					uiNamespace getVariable "MAZ_UnitsTree_OPFOR" tvCollapse [_n];
+					uiNamespace getVariable "MAZ_UnitsTree_INDEP" tvCollapse [_n];
+					uiNamespace getVariable "MAZ_UnitsTree_CIVILIAN" tvCollapse [_n];
+					uiNamespace getVariable "MAZ_UnitsTree_EMPTY" tvCollapse [_n];
+					uiNamespace getVariable "MAZ_zeusModulesTree" tvCollapse [_n];
 					comment "
 						MAZ_GroupsTree_BLUFOR tvCollapse [_n];
 						MAZ_GroupsTree_OPFOR tvCollapse [_n];
@@ -15783,7 +15876,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_ArsenalTree,
 					"AIO Arsenal",
 					"----------------------------------------------------------------------------------------------------------------------------------------------------------------------\nAll-In-One Arsenal (by M9-SD)\n----------------------------------------------------------------------------------------------------------------------------------------------------------------------\n\nDescription:\n There are two ways to use this module:\n(1) Place onto another object to make it an AIO arsenal.\n(2) Place on ground to spawn supply box AIO arsenal.\n\nIncludes the following options:\n- Full Arsenal\n- Quick Rearm\n- Copy Loadout\n- Empty Loadout\n- Save Respawn Loadout\n- Load Respawn Loadout\n- Delete Respawn Loadout\n- Edit Group Loadouts",
-					"JAM_EZM_fnc_createAIOArsenalModule",
+					"MAZ_EZM_fnc_createAIOArsenalDialog",
 					'\A3\ui_f\data\Logos\a_64_ca.paa'
 				] call MAZ_EZM_fnc_zeusAddModule;
 				
@@ -15791,7 +15884,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_ArsenalTree,
 					"Reset All Saved Loadouts",
-					"----------------------------------------------------------------------------------------------------------------------------------------------------------------------\nDelete All Saved Loadouts\n----------------------------------------------------------------------------------------------------------------------------------------------------------------------\n\nDescription:\n This module will remove the saved loadouts from all players, works for both the AIO and Full Arsenal.",
+					"----------------------------------------------------------------------------------------------------------------------------------------------------------------------\nDelete All Saved Loadouts\n----------------------------------------------------------------------------------------------------------------------------------------------------------------------\n\nDescription:\n This module will remove the saved loadouts from all players.",
 					"MAZ_EZM_fnc_resetSavedLoadouts",
 					'\A3\ui_f\data\Logos\a_64_ca.paa'
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -16703,16 +16796,10 @@ MAZ_EZM_fnc_editZeusInterface = {
 						case CIVILIAN: {2};
 					};
 					[((findDisplay 312) displayCtrl 152)] call (missionNamespace getVariable "MAZ_EZM_fnc_emulateModeClick");
-					private _mainIndex = 0;
 					private _respawnLocalText = localize "$STR_A3_RSCRESPAWNCONTROLS_RESPAWN";
-					while {MAZ_zeusModulesTree tvText [_mainIndex] != _respawnLocalText && _mainIndex < (MAZ_zeusModulesTree tvCount [])} do {
-						_mainIndex = _mainIndex + 1;
-					};
-					if(MAZ_zeusModulesTree tvText [_mainIndex] == _respawnLocalText) then {
-						MAZ_zeusModulesTree tvExpand [_mainIndex];
-						MAZ_zeusModulesTree tvSetCurSel [-1];
-						MAZ_zeusModulesTree tvSetCurSel [_mainIndex];
-					};
+					private _index = [uiNamespace getVariable "MAZ_zeusModulesTree",_respawnLocalText,[]] call (uiNamespace getVariable "MAZ_EZM_fnc_findTree");
+					(uiNamespace getVariable "MAZ_zeusModulesTree") tvExpand [_index];
+					(uiNamespace getVariable "MAZ_zeusModulesTree") tvSetCurSel [_index];
 				};
 		};
 		call MAZ_EZM_fnc_addNewFactionsToZeusInterface;
@@ -17494,7 +17581,7 @@ MAZ_EZM_fnc_initMainLoop = {
 		playSound "beep_target";
 		[missionNamespace, "EZM_onZeusInterfaceOpened", [findDisplay 312]] call BIS_fnc_callScriptedEventHandler;
 		waitUntil {uiSleep 0.1; (isNull (findDisplay 312))};
-		[missionNamespace, "EZM_onZeusInterfaceClosed", [findDisplay 312]] call BIS_fnc_callScriptedEventHandler;
+		[missionNamespace, "EZM_onZeusInterfaceClosed", [displayNull]] call BIS_fnc_callScriptedEventHandler;
 	};
 };
 
@@ -17541,11 +17628,13 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 };
 
 private _changelog = [
-	"Fixed issue where SIDES dialog control return was filtered incorrectly",
-	"Fixed Subtitle Message not appearing for factions other than BLUFOR",
-	"Fixed Taru Evac Helicopter was not transport variant",
-	"Fixed removal of factions in EMPTY tab was not using localized names",
-	"Fixed Spawn vehicle with crew button was not at the correct height"
+	"Changed loading of new Modules and Factions to auto refresh after 10 seconds instead of instantly",
+	"Changed AIO Arsenal functions to be modular",
+	"Changed Airdrop module arsenal to not show markers",
+	"Fixed background colors for Expand and Collapse buttons",
+	"Fixed various undefined variable script errors",
+	"Fixed system that opens the respawn modules when no respawn is available was using slow method",
+	"Fixed Cleaner system would not delete bodies"
 ];
 
 private _changelogString = "";
