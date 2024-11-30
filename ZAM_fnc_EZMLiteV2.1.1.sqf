@@ -4116,6 +4116,7 @@ MAZ_EZM_fnc_createUnitForZeus = {
 	[_zeusLogic] remoteExec ['unassignCurator',2];
 
 	waitUntil{(getAssignedCuratorUnit _zeusLogic) != _oldPlayer};
+	deleteVehicle _oldPlayer;
 	waitUntil{isNull (getAssignedCuratorUnit _zeusLogic)};
 
 	private _wl = missionNamespace getVariable ["MAZ_EZM_CuratorWhitelist",[]];
@@ -4137,7 +4138,7 @@ MAZ_EZM_fnc_createUnitForZeus = {
 	} else {
 		_zeusObject setUnitLoadout _zeusLoadout;
 	};
-	sleep 0.1;
+	sleep 0.2;
 
 	while {(isNull (findDisplay 312))} do {
 		openCuratorInterface;
@@ -4145,12 +4146,11 @@ MAZ_EZM_fnc_createUnitForZeus = {
 
 	waitUntil{!(isNull (findDisplay 312))};
 	playSound "beep_target";
-	sleep 0.1;
+	sleep 0.2;
 
 	[_oldPlayer,true] remoteExec ["hideObjectGlobal"];
 	[_zeusObject,_namePlayer] remoteExec ["setName"];
 	[_zeusObject] call MAZ_EZM_fnc_addObjectToInterface;
-	deleteVehicle _oldPlayer;
 	
 	["Zeus Unit created, you can adjust its loadout by setting a Zeus Loadout."] call MAZ_EZM_fnc_systemMessage;
 	if(isNil "MAZ_EZM_mainLoop_Active") then {
