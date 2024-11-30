@@ -13650,52 +13650,6 @@ MAZ_EZM_fnc_initFunction = {
             _soldier
         }; 
 
-		MAZ_EZM_fnc_addVehicleCrewActions = {
-			[_this, {
-				params ["_mainVehicle","_turretVehicle",["_separateGunner",true],["_separateCommander",false]];
-
-				_turretVehicle lock 2;
-				_mainVehicle setVariable ["MAZ_EZM_turretVehicle",_turretVehicle,true];
-				_turretVehicle setVariable ["MAZ_EZM_mainVehicle",_mainVehicle,true];
-
-				[[_mainVehicle,_turretVehicle,_separateGunner,_separateCommander], {
-					params ["_mainVehicle","_turretVehicle",["_separateGunner",true],["_separateCommander",false]];
-					_turretVehicle addAction [
-						"Get in Driver",
-						{
-							params ["_target", "_caller", "_actionId", "_arguments"];
-							_arguments params ["_mainVehicle","_turretVehicle"];
-							moveOut player;
-							player moveInDriver _mainVehicle;
-						},
-						[_mainVehicle,_turretVehicle],
-						1.5,
-						true,
-						true,
-						"",
-						"(vehicle _this == _this && _this distance _target < 4) || (vehicle _this == _target) && isNull (driver (_target getVariable 'MAZ_EZM_mainVehicle'))"
-					];
-					if(_separateGunner) then {
-						_mainVehicle addAction [
-							"Get in Gunner",
-							{
-								params ["_target", "_caller", "_actionId", "_arguments"];
-								_arguments params ["_mainVehicle","_turretVehicle"];
-								moveOut player;
-								player moveInGunner _turretVehicle;
-							},
-							[_mainVehicle,_turretVehicle],
-							1.5,
-							true,
-							true,
-							"",
-							"(vehicle _this == _this && _this distance _target < 4) || (vehicle _this == _target) && isNull (gunner (_target getVariable 'MAZ_EZM_turretVehicle'))"
-						];
-					};
-				}] remoteExec ["spawn",0,_mainVehicle];
-			}] remoteExec ["spawn",2];
-		};
-
 	comment "Pylon Editor";
 
 		"TODO : Rewrite and use a GUI instead. 3D icons is just too aids to handle with the internal bays.";
