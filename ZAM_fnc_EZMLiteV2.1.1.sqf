@@ -6049,7 +6049,7 @@ MAZ_EZM_fnc_initFunction = {
 	};
 
 	HYPER_EZM_fnc_handleIntroCinematic = {
-		params ["_cinematicType","_backgroundSong","_intertitles", "_zeusCanSeeCutscene", "_target"];
+		params ["_cinematicType","_backgroundSong","_intertitles", "_zeusCanSeeCutscene", "_postProcess", "_target"];
 
 		["Intro cinematic initiated for all players.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 
@@ -6106,6 +6106,8 @@ MAZ_EZM_fnc_initFunction = {
 		cutText ["", "PLAIN", 2];
 		comment "cutRsc
 		 [""SplashNoise"", ""PLAIN""];";
+
+		comment "show intertitles";
 		[_intertitles] spawn {
 			params ["_intertitles"];
 			private _line1 = [_intertitles # 0] call HYPER_fnc_splitMaxLine;
@@ -6115,6 +6117,42 @@ MAZ_EZM_fnc_initFunction = {
 			sleep 5;
 			_line2 spawn BIS_fnc_infoText;
 		};
+
+		comment "Post processing";
+		switch (_postProcess) do {
+			case "none": {
+				"colorCorrections" ppEffectAdjust[1,1,0,[0,0,0,0],[1,1,1,1],[0,0,0,0]];
+				"colorCorrections" ppEffectCommit 0;
+				"colorCorrections" ppEffectEnable true;
+			};
+			case "highcontrast": {
+				"colorCorrections" ppEffectAdjust [1, 0.9, -0.002, [0.0, 0.0, 0.0, 0.0], [1.0, 0.6, 0.4, 0.6],  [0.199, 0.587, 0.114, 0.0]];
+				"colorCorrections" ppEffectCommit 0;
+				"colorCorrections" ppEffectEnable true;
+			};
+			case "blue": {
+				"colorCorrections" ppEffectAdjust [1, 1, 0, [0.0, 0.0, 0.0, 0.0], [0.6, 0.6, 1.8, 0.7],  [0.199, 0.587, 0.114, 0.0]];
+				"colorCorrections" ppEffectCommit 0;
+				"colorCorrections" ppEffectEnable true;
+			};
+			case "dull": {
+				"colorCorrections" ppEffectAdjust [1, 0.8, -0.002, [0.0, 0.0, 0.0, 0.0], [0.6, 0.7, 0.8, 0.65],  [0.199, 0.587, 0.114, 0.0]];
+				"colorCorrections" ppEffectCommit 0;
+				"colorCorrections" ppEffectEnable true;
+			};
+			case "yellowgamma": {
+				"colorCorrections" ppEffectAdjust [1, 1, 0, [0.0, 0.0, 0.0, 0.0], [0.6, 1.4, 0.6, 0.7],  [0.199, 0.587, 0.114, 0.0]];
+				"colorCorrections" ppEffectCommit 0;
+				"colorCorrections" ppEffectEnable true;
+			};
+			case "greengamma": {
+				"colorCorrections" ppEffectAdjust [1, 1, 0, [0.0, 0.0, 0.0, 0.0], [1.8, 1.8, 0.3, 0.7],  [0.199, 0.587, 0.114, 0.0]];
+				"colorCorrections" ppEffectCommit 0;
+				"colorCorrections" ppEffectEnable true;
+
+			};
+		};
+
 		if (_cinematicType == "Flyby") then {
 			comment "in flyby mode, we select the module location as our target, and the camera paths are automatically designated at 0 and 90 degrees";
 			private _camTarget = "Land_HelipadEmpty_F" createVehicleLocal _target;
@@ -6140,9 +6178,16 @@ MAZ_EZM_fnc_initFunction = {
 
 		};
 
+
+
+		comment "clean up scripts";
 		if(_zeusCanSeeCutscene) then {
 			[1] call MAZ_EZM_fnc_setInterfaceToRefresh;	
 		};
+
+		"colorCorrections" ppEffectAdjust[1,1,0,[0,0,0,0],[1,1,1,1],[0,0,0,0]];
+		"colorCorrections" ppEffectCommit 0;
+		"colorCorrections" ppEffectEnable true;
 
 		["Intro cinematic completed."] call MAZ_EZM_fnc_systemMessage;
 
@@ -6188,11 +6233,17 @@ MAZ_EZM_fnc_initFunction = {
 					]
 				],
 				[
-					"TOOLBOX",
-					"Zeus Sees Cutscene",
+					"TOOLBOX:YESNO",
+					["Zeus Can See Cutscene?","Enabling this may break the camera for Zeus players."],
+					[false]
+				],
+								[
+					"COMBO",
+					"Post-Process Filter",
 					[
-						false,
-						["No", "Yes"]
+						["none", "highcontrast", "blue", "dull", "yellowgamma", "greengamma"],
+						["None", "High Contrast", "Blue", "Dull", "Yellow Gamma", "Green Gamma"],
+						0
 					]
 				]
 			];
@@ -6202,8 +6253,9 @@ MAZ_EZM_fnc_initFunction = {
 				private _backgroundSong = _values select 1;
 				private _intertitles = [_values select 2, _values select 3];
 				private _zeusCanSeeCutscene = _values select 4;
+				private _postProcess = _values select 5;
 				private _target = [true] call MAZ_EZM_fnc_getScreenPosition;
-				[_cinematicType, _backgroundSong, _intertitles, _zeusCanSeeCutscene, _target] spawn HYPER_EZM_fnc_handleIntroCinematic;
+				[_cinematicType, _backgroundSong, _intertitles, _zeusCanSeeCutscene, _postProcess, _target] spawn HYPER_EZM_fnc_handleIntroCinematic;
 				_display closeDisplay 1;
 			};
 			private _onCancel = {
