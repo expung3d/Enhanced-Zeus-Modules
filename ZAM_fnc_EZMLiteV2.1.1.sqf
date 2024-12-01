@@ -6015,6 +6015,40 @@ MAZ_EZM_fnc_initFunction = {
 
 	comment "Cinematics";
 	comment "the plan here is as follows: when intro cinematic module is placed, a window pops up with one of two options: 'orbit' or 'dynamic'. in either case, the black bars appear for users, screen fades to black, and then the cinematic begins. The screen starts at black with a title and the name of the zeus'. If orbit is selected, the cinematic will be like a UAV flying above where the module was placed. Music choice can be selected, and up to 2 additional texts can be written to appear in the cinematic. once the cinematic ends, black screen appears again, and black bars fade.";
+	comment "maybe we should check if players are in a vehicle during cutscene, if so disable vehicle simulation";
+
+	MAZ_EZM_fnc_handleIntroCinematic = {
+		private _briefingName = missionnamespace getvariable ["bis_fnc_moduleMissionName_name",""];
+		if (_briefingName == "") then {
+			_briefingName = briefingName;
+		};
+
+		_author = "";
+		if (count allcurators > 0) then {
+			_authors = [];
+			{
+				_curatorPlayer = getassignedcuratorunit _x;
+				if (isplayer _curatorPlayer) then {_authors set [count _authors,name _curatorPlayer];};
+			} foreach allcurators;
+			{
+				_prefix = "";
+				if (_foreachindex > 0) then {
+					_prefix = if (_foreachindex == count _authors - 1) then {" &amp; "} else {", "};
+				};
+				_author = _author + _prefix + _x;
+			} foreach _authors;
+		} else {
+			_author = gettext (missionconfigfile >> "onLoadName");
+		};
+		if (_author != "") then {_author = format [localize "STR_FORMAT_AUTHOR_SCRIPTED",_author];};
+
+		params ["_cinematicType","_backgroundSong","_intertitles"];
+		[0, 2, true, true] call BIS_fnc_cinemaBorder;
+		cutText ["", "BLACK", 2];
+		[format["<t color='#ffffff' font='PuristaBold' size='2'>%1</t><t color='#B57F50' font='TahomaB' size='0.6'><br />%2</t>",_briefingName, _author],0,0.3,4,1,0,789] spawn BIS_fnc_dynamicText;
+
+
+	};
 
 	MAZ_EZM_fnc_introCinematicModule = {
 		params ["_entity"];
@@ -6060,9 +6094,8 @@ MAZ_EZM_fnc_initFunction = {
 				params ["_values", "_args", "_display"];
 				private _cinematicType = _values select 0;
 				private _backgroundSong = _values select 1;
-				private _intertitle1 = _values select 2;
-				private _intertitle2 = _values select 3;
-				[ _cinematicType, _backgroundSong, _intertitle1, _intertitle2 ] call MAZ_EZM_fnc_handleIntroCinematic;
+				private _intertitles = [_values select 2, _values select 3];
+				[_cinematicType, _backgroundSong, _intertitles] call MAZ_EZM_fnc_handleIntroCinematic;
 				_display closeDisplay 1;
 			};
 			private _onCancel = {
@@ -6081,7 +6114,7 @@ MAZ_EZM_fnc_initFunction = {
 		};
 	};
 
-	comment "TODO: remove cinematic bars module";
+	comment "TODO: remove cinematic bars module that also un-blacks out screen";
 
 	comment "AI Supports";
 
