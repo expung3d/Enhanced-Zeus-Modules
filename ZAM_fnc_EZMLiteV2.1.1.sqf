@@ -6017,7 +6017,68 @@ MAZ_EZM_fnc_initFunction = {
 	comment "the plan here is as follows: when intro cinematic module is placed, a window pops up with one of two options: 'orbit' or 'dynamic'. in either case, the black bars appear for users, screen fades to black, and then the cinematic begins. The screen starts at black with a title and the name of the zeus'. If orbit is selected, the cinematic will be like a UAV flying above where the module was placed. Music choice can be selected, and up to 2 additional texts can be written to appear in the cinematic. once the cinematic ends, black screen appears again, and black bars fade.";
 
 	MAZ_EZM_fnc_introCinematicModule = {
-
+		params ["_entity"];
+		[] spawn {
+			private _dialogTitle = "Intro Cinematic";
+			private _content = [
+				[
+					"COMBO",
+					"Cinematic Type",
+					[
+						["Orbit", "Dynamic"],
+						["Orbit", "Dynamic"],
+						0
+					]
+				],
+				[
+					"COMBO",
+					"Background Song",
+					[
+						["epic", "action", "stealth"],
+						["Epic", "Action", "Stealth"],
+						0
+					]
+				],
+				[
+					"EDIT",
+					"Intertitle 1",
+					[
+						"",
+						1
+					]
+				],
+				[
+					"EDIT",
+					"Intertitle 2",
+					[
+						"",
+						1
+					]
+				]
+			];
+			private _onConfirm = {
+				params ["_values", "_args", "_display"];
+				private _cinematicType = _values select 0;
+				private _backgroundSong = _values select 1;
+				private _intertitle1 = _values select 2;
+				private _intertitle2 = _values select 3;
+				[ _cinematicType, _backgroundSong, _intertitle1, _intertitle2 ] call MAZ_EZM_fnc_handleIntroCinematic;
+				_display closeDisplay 1;
+			};
+			private _onCancel = {
+				params ["_values", "_args", "_display"];
+				systemChat "Intro Cinematic dialog canceled.";
+				_display closeDisplay 2;
+			};
+			[
+				_dialogTitle,
+				_content,
+				_onConfirm,
+				_onCancel,
+				[]
+			] call MAZ_EZM_fnc_createDialog;
+			
+		};
 	};
 
 	comment "TODO: remove cinematic bars module";
