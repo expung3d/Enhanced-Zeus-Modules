@@ -6183,7 +6183,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		comment "clean up scripts";
 		if(_zeusCanSeeCutscene) then {
-			[1] call MAZ_EZM_fnc_setInterfaceToRefresh;	
+			[] call MAZ_EZM_fnc_refreshInterface;
 		};
 
 		"colorCorrections" ppEffectAdjust[1,1,0,[0,0,0,0],[1,1,1,1],[0,0,0,0]];
