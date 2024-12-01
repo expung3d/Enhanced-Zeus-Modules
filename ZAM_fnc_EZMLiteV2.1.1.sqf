@@ -6179,8 +6179,6 @@ MAZ_EZM_fnc_initFunction = {
 
 		};
 
-
-
 		comment "clean up scripts";
 		if(_zeusCanSeeCutscene) then {
 			[] call MAZ_EZM_fnc_refreshInterface;
@@ -6250,11 +6248,8 @@ MAZ_EZM_fnc_initFunction = {
 			];
 			private _onConfirm = {
 				params ["_values", "_args", "_display"];
-				private _cinematicType = _values select 0;
-				private _backgroundSong = _values select 1;
-				private _intertitles = [_values select 2, _values select 3];
-				private _zeusCanSeeCutscene = _values select 4;
-				private _postProcess = _values select 5;
+				_values params ["_cinematicType","_backgroundSong","_text1","_text2","_zeusCanSeeCutscene","_postProcess"];
+				private _intertitles = [_text1,_text2];
 				private _target = [true] call MAZ_EZM_fnc_getScreenPosition;
 				[_cinematicType, _backgroundSong, _intertitles, _zeusCanSeeCutscene, _postProcess, _target] spawn HYPER_EZM_fnc_handleIntroCinematic;
 				_display closeDisplay 1;
