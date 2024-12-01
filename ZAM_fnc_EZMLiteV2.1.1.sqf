@@ -1061,7 +1061,7 @@ comment "Attributes Dialog Creation";
 		private _sliderEdit = _display ctrlCreate ["RscEdit",IDC_ATTRIBS_SLIDER_EDIT,_rowControlsGroup];
 		_sliderEdit ctrlSetPosition [["W",23.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,pixelH,["W",2.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,((["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH)];
 		if(_isPercent) then {
-			_sliderEdit ctrlSetText ((str (_default * 100)) + "%");
+			_sliderEdit ctrlSetText ((str (round (_default * 100))) + "%");
 		} else {
 			_sliderEdit ctrlSetText (str _default);
 		};
@@ -1593,13 +1593,13 @@ comment "Attributes Dialog Creation";
 	MAZ_EZM_applyAttributeChangesToMan = {
 		params ["_unit","_attributes"];
 		_attributes params ["_name","_rank","_stance","_health","_skill","_respawn"];
-		[_unit,_name] remoteExec ['setName',0,_unit];
-		_unit setRank _rank;
-		_unit setUnitPos _stance;
+		[_unit,_name] remoteExec ['setName'];
+		[_unit,_rank] remoteExec ["setRank"];
+		[_unit,_stance] remoteExec ["setUnitPos"];
 		MAZ_EZM_stanceForAI = _stance;
 		_unit setDamage (1 - _health);
 		if(!(_unit getVariable ["MAZ_EZM_doesHaveCustomSkills",false])) then {
-			_unit setSkill _skill;
+			[_unit, _skill] remoteExec ["setSkill"];
 		};
 
 		[_unit,_respawn] call MAZ_EZM_applyCreateRespawnToUnitAttribs;
@@ -2424,10 +2424,10 @@ comment "Attributes Dialog Creation";
 		params ["_vehicle","_attributes"];
 		_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],"_respawn"];
 		_vehicle setDamage (1-_health);
-		_vehicle setFuel _fuel;
-		_vehicle lock _lockState;
-		_vehicle engineOn _engineState;
-		_vehicle setPilotLight _lightState;
+		[_vehicle,_fuel] remoteExec ["setFuel"];
+		[_vehicle,_lockState] remoteExec ["lock"];
+		[_vehicle,_engineState] remoteExec ["engineOn"];
+		[_vehicle,_lightState] remoteExec ["setPilotLight"];
 
 		[_vehicle,_respawn] call MAZ_EZM_applyCreateRespawnToUnitAttribs;
 	};
@@ -2560,11 +2560,11 @@ comment "Attributes Dialog Creation";
 		params ["_vehicle","_attributes"];
 		_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],["_colLightState",isCollisionLightOn _vehicle],"_respawn"];
 		_vehicle setDamage (1-_health);
-		_vehicle setFuel _fuel;
-		[_vehicle,_lockState] remoteExec ['lock',0,_vehicle];
-		_vehicle engineOn _engineState;
-		_vehicle setPilotLight _lightState;
-		_vehicle setCollisionLight _colLightState;
+		[_vehicle,_fuel] remoteExec ["setFuel"];
+		[_vehicle,_lockState] remoteExec ["lock"];
+		[_vehicle,_engineState] remoteExec ["engineOn"];
+		[_vehicle,_lightState] remoteExec ["setPilotLight"];
+		[_vehicle,_colLightState] remoteExec ["setCollisionLight"];
 
 		[_vehicle,_respawn] call MAZ_EZM_applyCreateRespawnToUnitAttribs;
 	};
@@ -4111,9 +4111,9 @@ MAZ_EZM_fnc_createUnitForZeus = {
 	private _namePlayer = name player;
 	selectPlayer _zeusObject;
 	waitUntil{player == _zeusObject};
-	[_zeusObject,false] remoteExec ['allowDamage'];
+	[_zeusObject,false] remoteExec ["allowDamage"];
 
-	[_zeusLogic] remoteExec ['unassignCurator',2];
+	[_zeusLogic] remoteExec ["unassignCurator",2];
 
 	waitUntil{(getAssignedCuratorUnit _zeusLogic) != _oldPlayer};
 	deleteVehicle _oldPlayer;
@@ -4125,7 +4125,7 @@ MAZ_EZM_fnc_createUnitForZeus = {
 	waitUntil {_zeusLogic in (missionNamespace getVariable ["MAZ_EZM_CuratorWhitelist",[]])};
 
 	while{isNull (getAssignedCuratorUnit (allCurators select _zeusIndex))} do {
-		[player,allCurators select _zeusIndex] remoteExec ['assignCurator',2];
+		[player,allCurators select _zeusIndex] remoteExec ["assignCurator",2];
 		sleep 0.1;
 	};
 
@@ -4148,8 +4148,6 @@ MAZ_EZM_fnc_createUnitForZeus = {
 	playSound "beep_target";
 	sleep 0.2;
 
-	[_oldPlayer,true] remoteExec ["hideObjectGlobal"];
-	[_zeusObject,_namePlayer] remoteExec ["setName"];
 	[_zeusObject] call MAZ_EZM_fnc_addObjectToInterface;
 	
 	["Zeus Unit created, you can adjust its loadout by setting a Zeus Loadout."] call MAZ_EZM_fnc_systemMessage;
@@ -4915,17 +4913,23 @@ MAZ_EZM_fnc_initFunction = {
 		MAZ_EZM_fnc_cleanerWaitTilNoPlayers = {
 			params ["_object"];
 			if(!MAZ_EZM_enableCleaner) exitWith {};
-			waitUntil {!alive _object};
-			waitUntil {
-				(count (allPlayers select { (getPos _x) distance _object < 3000 })) == 0 ||
-				isNull _object
-			};
-			if(!isNull _object) then {
-				sleep 300;
-				comment "After 5 minutes check if players are still near, if they are, call function again, else delete.";
-				if(count (allPlayers select { (getPos _x) distance _object < 3000 }) != 0) exitWith {[_object] spawn MAZ_EZM_fnc_cleanerWaitTilNoPlayers;};
-				deleteVehicle _object;
-			};
+			[[_object], {
+				private _fnc_cleaner = {
+					params ["_object"];
+					waitUntil {uiSleep 0.1; !alive _object};
+					waitUntil {
+						(count (allPlayers select { (getPos _x) distance _object < 1600 })) == 0 ||
+						isNull _object
+					};
+					if(!isNull _object) then {
+						sleep 300;
+						"After 5 minutes check if players are still near, if they are, call function again, else delete.";
+						if(count (allPlayers select { (getPos _x) distance _object < 1600 }) != 0) exitWith {[_object] spawn _fnc_cleaner;};
+						deleteVehicle _object;
+					};
+				};
+				_this spawn _fnc_cleaner;
+			}] remoteExec ["spawn",2];
 		};
 
 		MAZ_EZM_fnc_ezmShamelessPlug = {
@@ -4941,20 +4945,29 @@ MAZ_EZM_fnc_initFunction = {
 					safeZoneX + safeZoneW / 1.5,
 					safeZoneY + safeZoneH / 1.3
 				] spawn BIS_fnc_typeText;
-				if (!isNil 'M9_EZM_EH_plugOverlayFix') then {
-					removeMissionEventHandler ['EachFrame', M9_EZM_EH_plugOverlayFix];
+				if (!isNil "M9_EZM_EH_plugOverlayFix") then {
+					removeMissionEventHandler ["EachFrame", M9_EZM_EH_plugOverlayFix];
 				};
 				M9_EZM_EH_plugOverlayFix = addMissionEventHandler ["EachFrame", {
 					(uinamespace getvariable ["RscTilesGroup", displayNull]) closeDisplay 0;
 				}]; 
 				sleep 90;
-				if (!isNil 'M9_EZM_EH_plugOverlayFix') then {
-					removeMissionEventHandler ['EachFrame', M9_EZM_EH_plugOverlayFix];
+				if (!isNil "M9_EZM_EH_plugOverlayFix") then {
+					removeMissionEventHandler ["EachFrame", M9_EZM_EH_plugOverlayFix];
 				};
-			}] remoteExec ['spawn', 0, 'EZM_PLUG_JIP'];
+			}] remoteExec ["spawn", 0, "EZM_PLUG_JIP"];
 			private _wl = missionNamespace getVariable ["MAZ_EZM_CuratorWhitelist",[]];
 			_wl = _wl + allCurators;
 			missionNamespace setVariable ["MAZ_EZM_CuratorWhitelist",_wl,true];
+
+			[[], {
+				MAZ_EZM_broadcastServerFPS = true;
+				MAZ_EZM_serverFPS = 100;
+				while {MAZ_EZM_broadcastServerFPS} do {
+					MAZ_EZM_serverFPS = floor diag_fps;
+					sleep 1;
+				};
+			}] remoteExec ["spawn",2];
 		};
 
 		MAZ_EZM_fnc_fixDynamicGroups = {
@@ -5035,27 +5048,6 @@ MAZ_EZM_fnc_initFunction = {
 		MAZ_EZM_fnc_isNightTime = {
 			([date] call BIS_fnc_sunriseSunsetTime) params ["_sunrise","_sunset"];
 			dayTime > _sunset || dayTime < _sunrise
-		};
-
-		MAZ_EZM_fnc_getServerFPS = {
-			if(missionNamespace getVariable ["MAZ_EZM_isPingingServerFPS",false]) exitWith {};
-			missionNamespace setVariable ["MAZ_EZM_isPingingServerFPS",true];
-
-			MAZ_EZM_serverFPS = 0;
-			MAZ_EZM_serverResponded = false;
-			[[], {
-				[diag_fps,{
-					_this call {
-						uiNamespace setVariable ["MAZ_EZM_serverFPS",floor _this];
-						uiNamespace setVariable ["MAZ_EZM_serverResponded", true];
-					};
-				}] remoteExec ['call',remoteExecutedOwner];
-			}] remoteExec ['spawn',2];
-
-			[] spawn {
-				waitUntil {uiSleep 0.1; MAZ_EZM_serverResponded};
-				missionNamespace setVariable ["MAZ_EZM_isPingingServerFPS",false];
-			};
 		};
 
 	comment "EZM Eventhandlers";
@@ -5275,18 +5267,18 @@ MAZ_EZM_fnc_initFunction = {
 				if(_anim == "") then {   
 					[_args,"AmovPercMstpSnonWnonDnon"] remoteExec ["switchMove"];   
 					_args setBehaviour "AWARE";   
-					[_args,"Move"]remoteExec ["enableAI",0];   
-					[_args,"Anim"]remoteExec ["enableAI",0];   
+					[_args,"Move"] remoteExec ["enableAI"];
+					[_args,"Anim"] remoteExec ["enableAI"];
 					["Animation reset."] call MAZ_EZM_fnc_systemMessage;   
 				} else {   
 					(group _args) setBehaviour "CARELESS";   
-					[_args,"Move"]remoteExec ["disableAI",0];   
-					[_args,"Anim"]remoteExec ["disableAI",0];   
-					[_args,_anim] remoteExec ['switchMove',0];   
+					[_args,"Move"] remoteExec ["disableAI"];
+					[_args,"Anim"] remoteExec ["disableAI"];
+					[_args,_anim] remoteExec ["switchMove"];   
 					_args setVariable ["MAZ_EZM_animDone",   
 						_args addEventhandler ["AnimDone",{   
 							params ["_unit","_anim"];   
-							[_args,_anim] remoteExec ['switchMove'];   
+							[_args,_anim] remoteExec ["switchMove"];   
 						}],true
 					];   
 					if(_isCombat) then {   
@@ -5296,8 +5288,8 @@ MAZ_EZM_fnc_initFunction = {
 								_unit removeEventHandler [_thisEvent, _thisEventHandler]; 'ඞ'; 
 								[_unit,"AmovPercMstpSnonWnonDnon"] remoteExec ["switchMove"];   
 								_unit setBehaviour "COMBAT";   
-								[_unit,"Move"]remoteExec ["enableAI",0];   
-								[_unit,"Anim"]remoteExec ["enableAI",0];   
+								[_unit,"Move"] remoteExec ["enableAI"];
+								[_unit,"Anim"] remoteExec ["enableAI"];
 							}],true
 						];   
 					};   
@@ -5320,21 +5312,6 @@ MAZ_EZM_fnc_initFunction = {
 				params ["_values","_args","_display"];   
 				_display closeDisplay 2;   
 			},_entity] call MAZ_EZM_fnc_createDialog;   
-		};
-
-		MAZ_EZM_fnc_getNearestBuilding = {
-			params [
-				["_position",[0,0,0],[[],objNull]],
-				["_radius",50,[0]],
-				["_2d",false,[false]]
-			];
-			if(_position isEqualTo [0,0,0]) exitWith {["Provide a position argument to getNearestBuilding!","addItemFailed"] call MAZ_EZM_fnc_systemMessage};
-			if(_position isEqualType objNull) then {_position = getPos _position;};
-			private _nearestBuildings = (nearestObjects [_position, ["building"], _radius, _2d]) select {
-
-				count ([_x] call BIS_fnc_buildingPositions) > 0
-			};
-			(_nearestBuildings select 0)
 		};
 
 		MAZ_EZM_fnc_garrisonInstantModule = {
@@ -5386,10 +5363,10 @@ MAZ_EZM_fnc_initFunction = {
 							private _unit = _units select _forEachIndex;
 							_unit setPos _x;
 							_newUnits = _newUnits - [_unit];
-							[_unit,0] remoteExec ['forceSpeed',owner _unit];
+							[_unit,0] remoteExec ['forceSpeed'];
 							_unit addEventHandler ["Suppressed", {
 								params ["_unit", "_distance", "_shooter", "_instigator", "_ammoObject", "_ammoClassName", "_ammoConfig"];
-								[_unit,-1] remoteExec ['forceSpeed',owner _unit];
+								[_unit,-1] remoteExec ['forceSpeed'];
 							}];
 						};
 					}forEach _positions;
@@ -5467,10 +5444,10 @@ MAZ_EZM_fnc_initFunction = {
 					waitUntil {moveToCompleted _unit};
 					_unit setPos _pos;
 					_unit setBehaviour "SAFE";
-					[_unit,0] remoteExec ['forceSpeed',owner _unit];
+					[_unit,0] remoteExec ['forceSpeed'];
 					_unit addEventHandler ["Suppressed", {
 						params ["_unit", "_distance", "_shooter", "_instigator", "_ammoObject", "_ammoClassName", "_ammoConfig"];
-						[_unit,-1] remoteExec ['forceSpeed',owner _unit];
+						[_unit,-1] remoteExec ['forceSpeed'];
 					}];
 				};
 
@@ -5635,9 +5612,9 @@ MAZ_EZM_fnc_initFunction = {
 			params ["_entity"];
 			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 
-			[_entity,true] remoteExec ["setCaptive",0];
-			[_entity,"Move"]remoteExec ["disableAI",0];
-			[_entity,"Acts_AidlPsitMstpSsurWnonDnon_loop"] remoteExec["switchMove",0];
+			[_entity,true] remoteExec ["setCaptive"];
+			[_entity,"Move"] remoteExec ["disableAI"];
+			[_entity,"Acts_AidlPsitMstpSsurWnonDnon_loop"] remoteExec ["switchMove"];
 			private _holdActionIndex = [
 				_entity,											
 				"Free Hostage",										
@@ -5648,11 +5625,14 @@ MAZ_EZM_fnc_initFunction = {
 				{},
 				{},
 				{ 
-					_unit = (_this select 0);
-					[_unit,false] remoteExec ["setCaptive",0];
-					[_unit,"Move"]remoteExec ["enableAI",0];
-					[_unit,"AmovPercMstpSnonWnonDnon"] remoteExec["playMove",0];
-					[_unit] remoteExec ["removeAllActions",0];
+					params ["_unit","_caller"];
+					[_unit,false] remoteExec ["setCaptive"];
+					[_unit,"Move"] remoteExec ["enableAI"];
+					[_unit,"AmovPercMstpSnonWnonDnon"] remoteExec ["playMove"];
+					[_unit] remoteExec ["removeAllActions"];
+					["TaskSucceeded",["",format ["Hostage (%1) was freed by %2",name _unit,name _caller]]] remoteExec ['BIS_fnc_showNotification'];
+
+					remoteExec ["",_unit]; "Remove from JIP queue";
 				},
 				{},
 				[],
@@ -5665,14 +5645,15 @@ MAZ_EZM_fnc_initFunction = {
 			if(_entity getVariable ["MAZ_EZM_hostageEH",-1] == -1) then {
 				_entity setVariable ['MAZ_EZM_hostageEH',_entity addEventHandler ["Killed",{
 					params ["_unit", "_killer", "_instigator", "_useEffects"];
-					[_unit] remoteExec ["removeAllActions",0];
-					["TaskFailed",["",format ["Hostage (%1) was killed by %2",name _unit,name _killer]]] remoteExec ['BIS_fnc_showNotification',0];
+					[_unit] remoteExec ["removeAllActions"];
+					remoteExec ["",_unit];
+					["TaskFailed",["",format ["Hostage (%1) was killed by %2",name _unit,name _killer]]] remoteExec ['BIS_fnc_showNotification'];
 					[_unit,[
 						"Take Dogtag",
 						{
 							params ["_target", "_caller", "_actionId", "_arguments"];
-							["TaskSucceeded",["",format ["Hostage (%1) dogtag was taken by %2",name _target,name _caller]]] remoteExec ['BIS_fnc_showNotification',0];
-							[_target] remoteExec ["removeAllActions",0];
+							["TaskSucceeded",["",format ["Hostage (%1) dogtag was taken by %2",name _target,name _caller]]] remoteExec ['BIS_fnc_showNotification'];
+							[_target] remoteExec ["removeAllActions"];
 						},
 						nil,
 						1.5,
@@ -5680,7 +5661,7 @@ MAZ_EZM_fnc_initFunction = {
 						true,
 						"",
 						"_target distance _this < 5"
-					]] remoteExec ['addAction',0];
+					]] remoteExec ["addAction"];
 				}]];
 			};
 
@@ -5695,9 +5676,10 @@ MAZ_EZM_fnc_initFunction = {
 				params ["_nearestMan"];
 				_nearestMan addEventHandler ["Killed",{
 					params ["_unit", "_killer", "_instigator", "_useEffects"];
-					["TaskSucceeded",["",format ["%1 was killed by %2",name _unit,name _killer]]] remoteExec ['BIS_fnc_showNotification',0];
+					["TaskSucceeded",["",format ["%1 was killed by %2",name _unit,name _killer]]] remoteExec ['BIS_fnc_showNotification'];
+					remoteExec ["",_unit];
 				}];
-			}] remoteExec ['spawn',0,_entity];
+			}] remoteExec ["spawn",0,_entity];
 			["HVT created, all players will be notified of their death.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
 
@@ -5746,32 +5728,17 @@ MAZ_EZM_fnc_initFunction = {
 					}] remoteExec ["spawn"];
 					[format ["Difficulty set to %1.",_overrideValue]] call MAZ_EZM_fnc_systemMessage;
 				};
-				switch (_value) do {
-					case "easy": {
-						[[], {
-							{
-								_x setSkill 0;
-							} forEach allUnits;
-						}] remoteExec ["spawn"];
-						["Difficulty set to EASY."] call MAZ_EZM_fnc_systemMessage;
-					};
-					case "medium": {
-						[[], {
-							{
-								_x setSkill 0.5;
-							} forEach allUnits;
-						}] remoteExec ["spawn"];
-						["Difficulty set to MEDIUM."] call MAZ_EZM_fnc_systemMessage;
-					};
-					case "hard": {
-						[[], {
-							{
-								_x setSkill 1;
-							} forEach allUnits;
-						}] remoteExec ["spawn"];
-						["Difficulty set to HARD."] call MAZ_EZM_fnc_systemMessage;
-					};
+				private _skill = switch (_value) do {
+					case "easy": {0};
+					case "medium": {0.5};
+					case "hard": {1};
 				};
+				[_skill, {
+					{
+						_x setSkill _this;
+					} forEach allUnits;
+				}] remoteExec ["spawn"];
+				[format ["Difficulty set to %1.",toUpper _value]] call MAZ_EZM_fnc_systemMessage;
 				playSound 'addItemOk';
 				_display closeDisplay 1;
 			},{
@@ -5811,7 +5778,7 @@ MAZ_EZM_fnc_initFunction = {
 					params ["_mode"];
 					{
 						_x setUnitPos _mode;
-					}forEach allunits;
+					}forEach allUnits;
 				}] remoteExec ['spawn'];
 				[format ["All units stance mode set to %1.",_value],"addItemOk"] call MAZ_EZM_fnc_systemMessage;
 				_display closeDisplay 1;
@@ -5828,78 +5795,107 @@ MAZ_EZM_fnc_initFunction = {
 			private _isSurrendered = _entity getVariable ['EZM_isSurrendered',false];
 			if(_isSurrendered) then {
 				[_entity,"AmovPercMstpSnonWnonDnon"] remoteExec ["switchMove"];
-				[_entity,false] remoteExec ["setCaptive",0];
-				_entity setVariable ['EZM_isSurrendered',false,true];
+				[_entity,false] remoteExec ["setCaptive"];
+				_entity setVariable ["EZM_isSurrendered",false,true];
 				
 				["Unit is no longer surrendered.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 			} else {
-				[_entity,["Surrender",_entity]] remoteExec ["action"];
-				[_entity,true] remoteExec ["setCaptive",0];
-				_entity setVariable ['EZM_isSurrendered',true,true];
+				_entity action ["Surrender",_entity];
+				[_entity,true] remoteExec ["setCaptive"];
+				_entity setVariable ["EZM_isSurrendered",true,true];
 				[_entity] spawn {
-					_dude = (_this select 0);
-					_weapon = currentWeapon _dude; 
+					params ["_entity"];
+					private _weapon = currentWeapon _entity; 
 					if(_weapon isEqualTo "") exitWith{};
-					[_dude, _weapon] remoteExec ['removeWeapon'];
+					[_entity, _weapon] remoteExec ["removeWeapon"];
 					sleep 0.1;
-					_weaponHolder = "WeaponHolderSimulated" createVehicle [0,0,0];
+					private _weaponHolder = "WeaponHolderSimulated" createVehicle [0,0,0];
 					_weaponHolder addWeaponCargoGlobal [_weapon,1];
-					_weaponHolder setPos (_dude modelToWorld [0,.2,1.2]);
-					_weaponHolder disableCollisionWith _dude;
-					_dir = random(360);
-					_speed = 1.5;
+					_weaponHolder setPos (_entity modelToWorld [0,.2,1.2]);
+					_weaponHolder disableCollisionWith _entity;
+					private _dir = random(360);
+					private _speed = 1.5;
 					_weaponHolder setVelocity [_speed * sin(_dir), _speed * cos(_dir),4]; 
 				};
 
 				["Unit is now surrendered.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 			};
 		};
-		comment "TODO: Rewrite";
+
 		MAZ_EZM_fnc_suppressiveFireModule = {
 			params ["_entity"];
-			if(!(_entity isKindOf "CAManBase") && !(_entity isKindOf "StaticMGWeapon")) exitWith {["Object is not a man!.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
-			if(_entity isKindOf "StaticMGWeapon") then {
-				if(gunner _entity == objNull) exitWith {["No gunner!.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
-				_entity = gunner _entity;
-			};
-			if(_entity getVariable ["MAZ_EZM_isSuppressing",false]) exitWith {["Unit is already suppressing!.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
-			["Suppressive Fire",[
+		
+			if (!(_entity isKindOf "CAManBase") && !(_entity isKindOf "AllVehicles")) exitWith {["This must be done to a vehicle or a unit!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(_entity isKindOf "AllVehicles" && isNull (gunner _entity)) exitWith {["This vehicle has no gunner!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if (_entity getVariable ["MAZ_EZM_isSuppressing", false]) exitwith {["Unit is already suppressing!", "addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+
+			["Suppressive fire", [
 				[
 					"SLIDER",
 					"Duration of Suppress",
-					[5,20,10]
+					[5, 60, 10]
 				]
-			],{
-				params ["_values","_entity","_display"];
+			], {
+				params ["_values", "_entity", "_display"];
 				_values params ["_duration"];
 				_display closeDisplay 1;
-
-				["Position to Suppress",{
-					params ["_objects","_position","_args","_shift","_ctrl","_alt"];
-					_args params ["_entity","_duration"];
-
-					private _target = (createGroup [east,true]) createUnit ["O_Soldier_unarmed_F",_position,[],0,"CAN_COLLIDE"];
-					_target disableAI "MOVE";
-					_target hideObject true;
-					[_target, true] remoteExec ['hideObjectGlobal', 0];
-					_target setUnitPOs "UP";
+				
+				["Position to Suppress", {
+					params ["_objects", "_position", "_args", "_shift", "_ctrl", "_alt"];
+					_args params ["_entity", "_duration"];
+					
+					private _target = (creategroup [east, true]) createUnit ["O_Soldier_unarmed_F", _position, [], 0, "CAN_COLLIDE"];
+					_target disableAI "Move";
+					_target allowDamage false;
+					[_target,true] remoteExec ["hideObjectGlobal",2];
+					_target setUnitPos "UP";
 					_target addRating -100000000000;
-
-					[_entity,_duration,_target] spawn {
-						params ["_entity","_duration","_target"];
-						_entity setVariable ["MAZ_EZM_isSuppressing",true,true];
+					
+					[_entity, _duration, _target] spawn {
+						params ["_entity", "_duration", "_target"];
+						_entity setVariable ["MAZ_EZM_isSuppressing", true, true];
 						_entity doSuppressiveFire _target;
 						_entity suppressFor _duration;
-						sleep _duration;
+						private _behaviorPrior = behaviour _entity;
+						_entity setBehaviour "COMBAT";
+						_entity doWatch _target;
+
+						sleep 3;
+
+						private _timeToStop = time + _duration + 1;
+
+						
+						private _currentWeapon = currentWeapon _entity;
+						private _weaponModes = getArray (configFile >> "Cfgweapons" >> _currentWeapon >> "modes");
+						private _weaponMode = if("FullAuto" in _weaponModes) then {"FullAuto"} else {"Single"};
+						private _burstLength = 20;
+						private _reloadTime = getNumber (configFile >> "CfgWeapons" >> _currentWeapon >> _weaponMode >> "realodTime");
+						while {time < _timeToStop} do {
+							if !(_entity isKindOf "CAManBase") then {
+								_entity action ["useWeapon",_entity,gunner _entity,0];
+								sleep (0.5 + random 1.5);
+								continue;
+							};
+
+							private _roundsNumber = round (3 + random 2);
+							for "_i" from 0 to _roundsNumber do {
+								_entity forceWeaponFire [_currentWeapon, _weaponMode];
+								sleep _reloadTime;
+							};
+							_entity setVehicleAmmo 1;
+							sleep (0.5 + random 1.5);
+						};
+						
 						_entity doWatch objNull;
-						deleteVehicle _target;
-						_entity setVariable ["MAZ_EZM_isSuppressing",false,true];
+						deletevehicle _target;
+						_entity setBehaviour _behaviorPrior;
+						_entity setVariable ["MAZ_EZM_isSuppressing", false, true];
 					};
-				},_entity,[_entity,_duration],"a3\ui_f\data\igui\cfg\cursors\attack_ca.paa",45] call MAZ_EZM_fnc_selectSecondaryPosition;
-			},{
-				params ["_values","_args","_display"];
+				}, _entity, [_entity, _duration], "a3\ui_f\data\igui\cfg\cursors\attack_ca.paa", 45] call MAZ_EZM_fnc_selectSecondaryposition;
+			}, {
+				params ["_values", "_args", "_display"];
 				_display closeDisplay 2;
-			},_entity] call MAZ_EZM_fnc_createDialog;
+			}, _entity] call MAZ_EZM_fnc_createdialog;
 		};
 
 		MAZ_EZM_fnc_removeNVGsAddFlashlightsModule = {
@@ -6059,7 +6055,7 @@ MAZ_EZM_fnc_initFunction = {
 						case "RadioAmbient6": {playSound _radioChatter; sleep 6; playSound "RadioAmbient2";};
 						case "RadioAmbient8": {playSound _radioChatter;};
 					};
-				}] remoteExec ['spawn',0];
+				}] remoteExec ["spawn",_sideOf];
 			};
 
 			private _wayPointMove = _grp addWaypoint [[(_pos select 0),(_pos select 1),300],0];
@@ -6093,7 +6089,7 @@ MAZ_EZM_fnc_initFunction = {
 						case "RadioAmbient6": {playSound _radioChatter; sleep 6; playSound "RadioAmbient2";};
 						case "RadioAmbient8": {playSound _radioChatter;};
 					};
-				}] remoteExec ['spawn',0];
+				}] remoteExec ['spawn',_sideof];
 			};
 
 			private _dropPos = position _spawnedVeh getPos [10,getDir _spawnedVeh+180];
@@ -6540,7 +6536,7 @@ MAZ_EZM_fnc_initFunction = {
 
 			waitUntil{!isNull driver _spawnedVeh};
 			_grp setBehaviour "CARELESS";
-			[_spawnedVeh,2] remoteExec ['lock'];
+			_spawnedVeh lock 2;
 
 			private _heliParams = switch (_heliType) do {
 				case "B_Heli_Transport_01_F": {
@@ -6795,8 +6791,13 @@ MAZ_EZM_fnc_initFunction = {
 				{
 					params ["_values","_pos","_display"];
 					_values params ["_roundType","_radius","_rounds","_min","_max"];
-					[_pos,_roundType,_radius,_rounds,[_min,_max]] spawn BIS_fnc_fireSupportVirtual;
 					_display closeDisplay 1;
+					[_pos,_roundType,_radius,_rounds,_min,_max] spawn {
+						params ["_pos","_roundType","_radius","_rounds","_min","_max"];
+						[_pos,_roundType,_radius * 1.1,1,[_min,_max],{false},(_radius * 0.75)] spawn BIS_fnc_fireSupportVirtual;
+						sleep (5 + random 5);
+						[_pos,_roundType,_radius,_rounds,[_min,_max]] spawn BIS_fnc_fireSupportVirtual;
+					};
 				},
 				{
 					params ["_values","_args","_display"];
@@ -6892,115 +6893,64 @@ MAZ_EZM_fnc_initFunction = {
 							};
 							if(_this select 3) then {
 								private _arsenalAnims = [
-									{
-										player playActionNow "Salute";
-									}, {
-										[player, "acts_civilidle_1"] remoteExec["switchMove"];
-									}, {
-										[player, "acts_civilListening_2"] remoteExec["switchMove"];
-									}, {
-										[player, "acts_commenting_on_fight_loop"] remoteExec["switchMove"];
-									}, {
-										[player, "acts_gallery_visitor_01"] remoteExec["switchMove"];
-									}, {
-										[player, "acts_gallery_visitor_02"] remoteExec["switchMove"];
-									}, {
-										[player, "acts_hilltop_calibration_loop"] remoteExec["switchMove"];
-									}, {
-										[player, "acts_kore_talkingoverradio_loop"] remoteExec["switchMove"];
-									}, {
-										[player, "acts_staticPose_photo"] remoteExec["switchMove"];
-									}, {
-										player playActionNow "gear";
-									}, {
-										[player, "Acts_Taking_Cover_From_Jets"] remoteExec["switchMove"];
-									}, {
-										[player, "Acts_standingSpeakingUnarmed"] remoteExec["switchMove"];
-									}, {
-										player playMoveNow "acts_Mentor_Freeing_Player";
-									}, {
-										[player, "acts_kore_talkingOverRadio_In"] remoteExec["switchMove"];
-									}, {
-										[player, "acts_kore_idleNoWeapon_In"] remoteExec["switchMove"];
-									}, {
-										[player, "Acts_JetsOfficerSpilling"] remoteExec["switchMove"];
-									}, {
-										player playMoveNow "Acts_Hilltop_Calibration_Pointing_Left";
-									}, {
-										player playMoveNow "Acts_Hilltop_Calibration_Pointing_Right";
-									}, {
-										[player, "Acts_Grieving"] remoteExec["switchMove"];
-									}
+									"Salute",
+									"gear",
+									"acts_Mentor_Freeing_Player",
+									"Acts_Hilltop_Calibration_Pointing_Left",
+									"Acts_Hilltop_Calibration_Pointing_Right",
+									[player,"acts_civilidle_1"],
+									[player,"acts_civilListening_2"],
+									[player,"acts_commenting_on_fight_loop"],
+									[player,"acts_gallery_visitor_01"],
+									[player,"acts_gallery_visitor_02"],
+									[player,"acts_hilltop_calibration_loop"],
+									[player,"acts_kore_talkingoverradio_loop"],
+									[player,"acts_staticPose_photo"],
+									[player,"Acts_Taking_Cover_From_Jets"],
+									[player,"Acts_standingSpeakingUnarmed"],
+									[player,"acts_kore_talkingOverRadio_In"],
+									[player,"acts_kore_idleNoWeapon_In"],
+									[player,"Acts_JetsOfficerSpilling"],
+									[player,"Acts_Grieving"]
+
 								];
 								private _arsenalAnimsAdd = switch (currentWeapon player) do {
 									case (primaryWeapon player): {
 										[
-											{
-												[player, "acts_briefing_SA_loop"] remoteExec["switchMove"];
-											}, {
-												[player, "acts_getAttention_loop"] remoteExec["switchMove"];
-											}, {
-												[player, "acts_millerIdle"] remoteExec["switchMove"];
-											}, {
-												player playMoveNow "Acts_SupportTeam_Right_ToKneelLoop";
-											}, {
-												player playMoveNow "Acts_SupportTeam_Left_ToKneelLoop";
-											}, {
-												player playMoveNow "Acts_SupportTeam_Front_ToKneelLoop";
-											}, {
-												player playMoveNow "Acts_SupportTeam_Back_ToKneelLoop";
-											}, {
-												[player, "Acts_starGazer"] remoteExec["switchMove"];
-											}, {
-												player playMoveNow "acts_RU_briefing_Turn";
-											}, {
-												player playMoveNow "acts_RU_briefing_point";
-											}, {
-												player playMoveNow "acts_RU_briefing_point_tl";
-											}, {
-												player playMoveNow "acts_RU_briefing_move";
-											}, {
-												[player, "acts_rifle_operations_zeroing"] remoteExec["switchMove"];
-											}, {
-												player playMoveNow "acts_rifle_operations_right";
-											}, {
-												player playMoveNow "acts_rifle_operations_left";
-											}, {
-												player playMoveNow "acts_rifle_operations_front";
-											}, {
-												player playMoveNow "acts_rifle_operations_checking_chamber";
-											}, {
-												player playMoveNow "acts_rifle_operations_barrel";
-											}, {
-												player playMoveNow "acts_rifle_operations_back";
-											}, {
-												player playMoveNow "acts_pointing_up";
-											}, {
-												player playMoveNow "acts_pointing_down";
-											}, {
-												player playMoveNow "acts_peering_up";
-											}, {
-												player playMoveNow "acts_peering_down";
-											}, {
-												player playMoveNow "acts_peering_front";
-											}, {
-												[player, "Acts_Helping_Wake_Up_1"] remoteExec["switchMove"];
-											}
-										]
+											"Acts_SupportTeam_Right_ToKneelLoop",
+											"Acts_SupportTeam_Left_ToKneelLoop",
+											"Acts_SupportTeam_Front_ToKneelLoop",
+											"Acts_SupportTeam_Back_ToKneelLoop",
+											"acts_RU_briefing_Turn",
+											"acts_RU_briefing_point",
+											"acts_RU_briefing_point_tl",
+											"acts_RU_briefing_move",
+											"acts_rifle_operations_right",
+											"acts_rifle_operations_left",
+											"acts_rifle_operations_front",
+											"acts_rifle_operations_checking_chamber",
+											"acts_rifle_operations_barrel",
+											"acts_rifle_operations_back",
+											"acts_pointing_up",
+											"acts_pointing_down",
+											"acts_peering_up",
+											"acts_peering_down",
+											"acts_peering_front",
+											[player,"acts_briefing_SA_loop"],
+											[player, "acts_getAttention_loop"],
+											[player, "acts_millerIdle"],
+											[player, "Acts_starGazer"],
+											[player, "acts_rifle_operations_zeroing"],
+											[player, "Acts_Helping_Wake_Up_1"]
+										];
 									};
 									case (handgunWeapon player): {
 										[
-											{
-												[player, "acts_examining_device_player"] remoteExec["switchMove"];
-											}, {
-												[player, "acts_executioner_standingloop"] remoteExec["switchMove"];
-											}, {
-												player playMoveNow "Acts_ViperMeeting_A_End";
-											}, {
-												player playMoveNow "Acts_UGV_Jamming_Loop";
-											}, {
-												player playMoveNow "Acts_starterPistol_Fire";
-											}
+											[player, "acts_examining_device_player"],
+											[player, "acts_executioner_standingloop"],
+											"Acts_ViperMeeting_A_End",
+											"Acts_UGV_Jamming_Loop",
+											"Acts_starterPistol_Fire"
 										]
 									};
 									default {
@@ -7009,7 +6959,11 @@ MAZ_EZM_fnc_initFunction = {
 								};
 								_arsenalAnims = _arsenalAnims + _arsenalAnimsAdd;
 								private _playAnim = selectRandom _arsenalAnims;
-								call _playAnim;
+								if(typeName _playAnim == "STRING") then {
+									player playMoveNow _playAnim;
+								} else {
+									_playAnim remoteExec ["switchMove"];
+								};
 								if !(isNil "M9SD_EH_ResetPlayerAnimsOnArsenalClosed") then {
 									(findDisplay 46) displayRemoveEventHandler["keyDown", M9SD_EH_ResetPlayerAnimsOnArsenalClosed];
 								};
@@ -7029,7 +6983,7 @@ MAZ_EZM_fnc_initFunction = {
 										player playMoveNow "";
 										player switchMove "";
 										if (isMultiplayer) then {
-											[player, ""] remoteExec["switchMove"]
+											[player, ""] remoteExec ["switchMove"]
 										};
 										"arsenalNotification1"
 										cutFadeOut 0;
@@ -7344,13 +7298,13 @@ MAZ_EZM_fnc_initFunction = {
 								];
 							} forEach _arsenals;
 						}];
-					}] remoteExec["spawn", 0, "M9SD_JIP_smallArsenalIcons"];
+					}] remoteExec ["spawn", 0, "M9SD_JIP_smallArsenalIcons"];
 				};
 				[_arsenalBox] call M9SD_fnc_smallArsenalMarkers;
 			};
-			[_arsenalBox, false] remoteExec["allowDamage"]; 
+			[_arsenalBox, false] remoteExec ["allowDamage"]; 
 			{
-				[_x, false] remoteExec["allowDamage"];
+				[_x, false] remoteExec ["allowDamage"];
 			}forEach attachedObjects _arsenalBox;
 			[_arsenalBox] call MAZ_EZM_fnc_addObjectToInterface;
 			[attachedObjects _arsenalBox] call MAZ_EZM_fnc_addObjectToInterface;
@@ -7552,7 +7506,7 @@ MAZ_EZM_fnc_initFunction = {
 			private _positionOfCrash = getPos _craterCrash;
 			private _smokeObject = [_positionOfCrash] call MAZ_EZM_fnc_createSmokeForCrash;
 			private _crashObjects = [_craterCrash,_crashGhosthawk,_smokeObject];
-			["TaskAssignedIcon",["A3\UI_F\Data\Map\Markers\Military\warning_CA.paa","Helicopter Crash"]] remoteExec ['BIS_fnc_showNotification',0];
+			["TaskAssignedIcon",["A3\UI_F\Data\Map\Markers\Military\warning_CA.paa","Helicopter Crash"]] remoteExec ['BIS_fnc_showNotification'];
 			private _heliCrashMarker = createMarker ["heliCrashMarker_0",_positionOfCrash];
 			_heliCrashMarker setMarkerText "Helicopter Crash";
 			_heliCrashMarker setMarkerType "mil_objective";
@@ -7578,7 +7532,7 @@ MAZ_EZM_fnc_initFunction = {
 					sleep 1;
 				};
 				if(({alive _x} count _soldiersArray) == 0) then {
-					["TaskSucceeded",["","Helicopter Crash Secured"]] remoteExec ['BIS_fnc_showNotification',0];
+					["TaskSucceeded",["","Helicopter Crash Secured"]] remoteExec ['BIS_fnc_showNotification'];
 					private _randomAmount = selectRandom [1,2];
 					private _rewardBoxes = [];
 					for "_i" from 0 to (_randomAmount-1) do {
@@ -7594,7 +7548,7 @@ MAZ_EZM_fnc_initFunction = {
 					} forEach _crashObjects + _soldiersArray + _rewardBoxes;
 				};
 				if(_timer <= 0 && (({alive _x} count _soldiersArray) != 0)) then {
-					["TaskFailed",["","Helicopter Crash Not Secured"]] remoteExec ['BIS_fnc_showNotification',0];
+					["TaskFailed",["","Helicopter Crash Not Secured"]] remoteExec ['BIS_fnc_showNotification'];
 					deleteMarker _heliCrashMarker;
 					{
 						deleteVehicle _x;
@@ -7994,7 +7948,6 @@ MAZ_EZM_fnc_initFunction = {
 			_convoyGroup setFormation "COLUMN";
 			_convoyGroup setSpeedMode "LIMITED";
 
-			enableEnvironment [false,true];
 			[[false,true]] remoteExec ['enableEnvironment',2];
 
 			{
@@ -8011,7 +7964,7 @@ MAZ_EZM_fnc_initFunction = {
 			private _cargoVehicles = [];
 			{
 				_x allowCrewInImmobile true;
-				[_x,2] remoteExec ['lock',0,_x];
+				[_x,2] remoteExec ["lock"];
 				_x limitSpeed 57;
 				(driver _x) limitSpeed 57;
 				_x forceSpeed 15.84;
@@ -8052,7 +8005,7 @@ MAZ_EZM_fnc_initFunction = {
 				_markers pushBack _checkpointMarker;
 			}forEach _markerLocations;
 
-			["TaskAssignedIcon",["A3\UI_F\Data\Map\Markers\Military\warning_CA.paa","A Convoy is Moving"]] remoteExec ['BIS_fnc_showNotification',0];
+			["TaskAssignedIcon",["A3\UI_F\Data\Map\Markers\Military\warning_CA.paa","A Convoy is Moving"]] remoteExec ['BIS_fnc_showNotification'];
 
 			[_vehicles] spawn {
 				params ["_vehicles"];
@@ -8077,7 +8030,7 @@ MAZ_EZM_fnc_initFunction = {
 							} count _vehicles) != 0
 						)
 					};
-					["TaskAssignedIcon",["A3\UI_F\Data\Map\Markers\Military\warning_CA.paa",format ["The Convoy Has Reached Checkpoint %1",_i + 1]]] remoteExec ['BIS_fnc_showNotification',0];
+					["TaskAssignedIcon",["A3\UI_F\Data\Map\Markers\Military\warning_CA.paa",format ["The Convoy Has Reached Checkpoint %1",_i + 1]]] remoteExec ['BIS_fnc_showNotification'];
 				};
 			};
 
@@ -8087,7 +8040,7 @@ MAZ_EZM_fnc_initFunction = {
 				waitUntil {currentWaypoint _convoyGroup >= _numWaypoints || (({alive _x} count _soldiersArray) == 0) || (({alive _x} count _trucks) == 0)};
 				if(({alive _x} count _soldiersArray) == 0) exitWith {
 					comment "Success";
-					["TaskSucceeded",["","Convoy Stopped!"]] remoteExec ['BIS_fnc_showNotification',0];
+					["TaskSucceeded",["","Convoy Stopped!"]] remoteExec ['BIS_fnc_showNotification'];
 					{
 						deleteMarker _x;
 					}forEach _markers;
@@ -8103,7 +8056,7 @@ MAZ_EZM_fnc_initFunction = {
 				};
 				if(currentWaypoint _convoyGroup >= _numWaypoints) exitWith {
 					comment "Failure";
-					["TaskFailed",["","Convoy Reached Their End"]] remoteExec ['BIS_fnc_showNotification',0];
+					["TaskFailed",["","Convoy Reached Their End"]] remoteExec ['BIS_fnc_showNotification'];
 					{
 						deleteMarker _x;
 					}forEach _markers;
@@ -8117,7 +8070,7 @@ MAZ_EZM_fnc_initFunction = {
 				};
 				if(({alive _x} count _trucks) == 0) exitWith {
 					comment "Failure";
-					["TaskFailed",["","Convoy Cargo Destroyed!"]] remoteExec ['BIS_fnc_showNotification',0];
+					["TaskFailed",["","Convoy Cargo Destroyed!"]] remoteExec ['BIS_fnc_showNotification'];
 					{
 						deleteMarker _x;
 					}forEach _markers;
@@ -8399,7 +8352,7 @@ MAZ_EZM_fnc_initFunction = {
 			[_units] call MAZ_EZM_fnc_addObjectToInterface;
 
 			if(_notify) then {
-				["TaskAssignedIcon",["A3\UI_F\Data\Map\Markers\Military\warning_CA.paa",_townAlert]] remoteExec ['BIS_fnc_showNotification',0];
+				["TaskAssignedIcon",["A3\UI_F\Data\Map\Markers\Military\warning_CA.paa",_townAlert]] remoteExec ['BIS_fnc_showNotification'];
 			};
 
 			true
@@ -8858,7 +8811,7 @@ MAZ_EZM_fnc_initFunction = {
 				private _dir = vectorDir _building;
 				private _up = vectorUp _building;
 				private _worldPos = getPosWorld _building;
-				[_building,true] remoteExec ['hideObject',0,_building];
+				[_building,true] remoteExec ["hideObjectGlobal",2];
 				[_building,false] remoteExec ['allowDamage'];
 				private _temp = _building;
 				_building = _buildingType createVehicle [0,0,0];
@@ -8916,6 +8869,21 @@ MAZ_EZM_fnc_initFunction = {
 				call MAZ_EZM_fnc_localBuildingDestruct;
 			};
 
+		};
+
+		MAZ_EZM_fnc_getNearestBuilding = {
+			params [
+				["_position",[0,0,0],[[],objNull]],
+				["_radius",50,[0]],
+				["_2d",false,[false]]
+			];
+			if(_position isEqualTo [0,0,0]) exitWith {["Provide a position argument to getNearestBuilding!","addItemFailed"] call MAZ_EZM_fnc_systemMessage};
+			if(_position isEqualType objNull) then {_position = getPos _position;};
+			private _nearestBuildings = (nearestObjects [_position, ["building"], _radius, _2d]) select {
+
+				count ([_x] call BIS_fnc_buildingPositions) > 0
+			};
+			(_nearestBuildings select 0)
 		};
 
 		MAZ_EZM_fnc_createBuildingInteriorCall = {
@@ -9040,7 +9008,7 @@ MAZ_EZM_fnc_initFunction = {
 			if(_isTerrainBuilding) then {
 				comment "Replace building, terrain buildings don't invoke BuildingChanged MEH";
 				_building setVariable ["MAZ_EZM_hasCompSetup",false,true];
-				[_building,false] remoteExec ['hideObject',0,_building];
+				_building hideObjectGlobal false;
 				[_building,true] remoteExec ['allowDamage'];
 				private _buildings = nearestObjects [_building,[typeOf _building],20,true];
 				{
@@ -9262,7 +9230,7 @@ MAZ_EZM_fnc_initFunction = {
 				_carrier setPosATL _pos;
 				_carrier setVectorDirAndUp [[sin _dir, cos _dir, 0], [0,0,1]];
 				sleep 0.5;
-				[_carrier] remoteExecCall ["BIS_fnc_Carrier01Init", 0, _carrier];
+				[_carrier] remoteExec ["BIS_fnc_Carrier01Init", 0, _carrier];
 				{deleteVehicle _x} forEach (nearestObjects [[0,0,0], ["Land_Carrier_01_hull_Base_F","DynamicAirport_01_F"], 300, true]);
 				if(!isNull _object) then {
 					{_object deleteVehicleCrew _x} forEach crew _object;
@@ -9294,7 +9262,7 @@ MAZ_EZM_fnc_initFunction = {
 				_destroyer setPosATL _pos;
 				_destroyer setVectorDirAndUp [[sin _dir, cos _dir, 0], [0,0,1]];
 				sleep 0.5;
-				[_destroyer] remoteExecCall ["BIS_fnc_Destroyer01Init", 0, _destroyer];
+				[_destroyer] remoteExec ["BIS_fnc_Destroyer01Init", 0, _destroyer];
 				{deleteVehicle _x} forEach (nearestObjects [[-300,-300,0], ["Land_Destroyer_01_Boat_Rack_01_Base_F","Land_Destroyer_01_hull_base_F","ShipFlag_US_F"], 300, true]);
 				if(!isNull _object) then {
 					{_object deleteVehicleCrew _x} forEach crew _object;
@@ -9358,7 +9326,7 @@ MAZ_EZM_fnc_initFunction = {
 							params ["_expression","_target"];
 							(parsingNamespace getVariable ["BIS_RscDebugConsoleExpressionResultCtrl", controlNull]) ctrlSetText str ([nil] apply {[_target] call _expression} param [0, text ""])
 						}
-					] remoteExec ["call", 0];  
+					] remoteExec ["call"];  
 				};
 
 				if(!isRemoteExecuted || isRemoteExecutedJIP) exitWith {};
@@ -9527,7 +9495,7 @@ MAZ_EZM_fnc_initFunction = {
 				_input = [(ctrlText ((ctrlParent (_this select 0)) displayCtrl 12284))] call MAZ_EZM_fnc_removeComments; 
 				_input = format ["this = _this select 0; %1",_input];
 				
-				[[2, compile _input,_target],{[(_this select 0), (_this select 1), (_this select 2)] call MAZ_EZM_fnc_executeExpression;}] remoteExec ['bis_fnc_call',2]; 
+				[[2, compile _input,_target],{[(_this select 0), (_this select 1), (_this select 2)] call MAZ_EZM_fnc_executeExpression;}] remoteExec ['call',2]; 
 				[(ctrlParent (_this select 0)) displayCtrl 12284] call MAZ_EZM_fnc_saveExpression; 
 				[(ctrlParent (_this select 0)), 2] call MAZ_EZM_fnc_expressionResult; 
 			}]; 
@@ -9540,7 +9508,7 @@ MAZ_EZM_fnc_initFunction = {
 				_input = [(ctrlText ((ctrlParent (_this select 0)) displayCtrl 12284))] call MAZ_EZM_fnc_removeComments; 
 				_input = format ["this = _this select 0; %1",_input];
 				
-				[[1, compile _input,_target],{[(_this select 0), (_this select 1), (_this select 2)] call MAZ_EZM_fnc_executeExpression;}] remoteExec ['bis_fnc_call',2]; 
+				[[1, compile _input,_target],{[(_this select 0), (_this select 1), (_this select 2)] call MAZ_EZM_fnc_executeExpression;}] remoteExec ['call',2]; 
 				[(ctrlParent (_this select 0)) displayCtrl 12284] call MAZ_EZM_fnc_saveExpression; 
 				[(ctrlParent (_this select 0)), 1] call MAZ_EZM_fnc_expressionResult; 
 			}]; 
@@ -10602,8 +10570,7 @@ MAZ_EZM_fnc_initFunction = {
 					_speakers = [];
 					_group = createGroup (playerSide);
 					_crewman = _group createUnit ["B_Story_SF_Captain_F",[0,0,0],[],0,"CAN_COLLIDE"];
-					[_crewman, true] remoteExec ['hideObjectGlobal', 2];
-					[_crewman, name _crewman] remoteExec ['setName'];
+					_crewman hideObjectGlobal true;
 					[_crewman] joinSilent _group;
 					removeAllWeapons _crewman;
 					[_crewman,_group] spawn 
@@ -10712,9 +10679,9 @@ MAZ_EZM_fnc_initFunction = {
 					_values params ["_init","_godMode","_hidden","_sim","_lockState","_tex1","_tex2","_tex3","_tex4"];
 					_entity call (compile _init);
 					_entity allowDamage !_godMode;
-					_entity hideObjectGlobal _hidden;
+					[_entity,_hidden] remoteExec ["hideObjectGlobal",2];
 					[_entity,_sim] remoteExec ["enableSimulationGlobal",2];
-					_entity lock (parseNumber _lockState);
+					[_entity,parseNumber _lockState] remoteExec ["lock"];
 					{
 						_entity setObjectTextureGlobal [_forEachIndex,_x];
 					}forEach [_tex1,_tex2,_tex3,_tex4];
@@ -10732,28 +10699,18 @@ MAZ_EZM_fnc_initFunction = {
 			params ["_entity"];
 			if(_entity isEqualTo objNull) exitWith {["No object selected.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 
-			if(simulationEnabled _entity) then {
-				[_entity,false] remoteExec ["enableSimulationGlobal",2];
-				["Simulation disabled."] call MAZ_EZM_fnc_systemMessage;
-			} else {
-				[_entity,true] remoteExec ["enableSimulationGlobal",2];
-				["Simulation enabled."] call MAZ_EZM_fnc_systemMessage;
-			};
-			playSound "addItemOk";
+			private _simmed = simulationEnabled _entity;
+			[_entity, !_simmed] remoteExec ["enableSimulationGlobal", 2];
+			[["Object's simulation disabled.", "Object's simulation enabled."] select !_simmed,"addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
 
 		MAZ_EZM_fnc_toggleInvincibleModule = {
 			params ["_entity"];
 			if(_entity isEqualTo objNull) exitWith {["No object selected.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 
-			if(isDamageAllowed _entity) then {
-				[_entity,false] remoteExec ["allowDamage",0];
-				["Object is god moded."] call MAZ_EZM_fnc_systemMessage;
-			} else {
-				[_entity,true] remoteExec ["allowDamage",0];
-				["Object is no longer god moded."] call MAZ_EZM_fnc_systemMessage;
-			};
-			playSound "addItemOk";
+			private _god = isDamageAllowed _entity;
+			[_entity,!_god] remoteExec ["allowDamage"];
+			[["Object is god moded", "Object is no longer god moded."] select !_god,"addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
 
 		MAZ_EZM_fnc_toggleHideObjectModule = {
@@ -10780,6 +10737,7 @@ MAZ_EZM_fnc_initFunction = {
 				[_x,false] remoteExec ['hideObjectGlobal',2];
 			}forEach MAZ_EZM_hiddenObjects;
 			MAZ_EZM_hiddenObjects = [];
+			publicVariable "MAZ_EZM_hiddenObjects";
 
 			["All hidden objects are revealed.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
@@ -10804,7 +10762,7 @@ MAZ_EZM_fnc_initFunction = {
 					params ["_newSimpleObj","_logic"];
 					waitUntil {isNull _logic};
 					deleteVehicle _newSimpleObj;
-				}] remoteExec ["Spawn",_logic];
+				}] remoteExec ["spawn",2];
 			};
 			["Object replaced with simple object.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
@@ -10820,7 +10778,7 @@ MAZ_EZM_fnc_initFunction = {
 		};
 
 		MAZ_EZM_fnc_healAndReviveModule = {
-			params ["_entity",["_doMessage",true]];
+			params ["_entity"];
 			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 
 			if(isPlayer _entity) then {
@@ -10832,15 +10790,14 @@ MAZ_EZM_fnc_initFunction = {
 				_entity setDamage 0; 
 			};
 
-			if(_doMessage) then {
-				["The unit has been healed, and revived if possible.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
-			};
+			["The unit has been healed, and revived if possible.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
 
 		MAZ_EZM_fnc_healAndReviveAllModule = {
-			{
-				[_x,false] call MAZ_EZM_fnc_healAndReviveModule;
-			}forEach allPlayers;
+			[[],{
+				player setDamage 0;
+				["#rev",1,player] call BIS_fnc_reviveOnState;
+			}] remoteExec ['spawn',-2];
 			["The players have been healed, and revived if possible.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
 
@@ -10920,10 +10877,6 @@ MAZ_EZM_fnc_initFunction = {
 
 			if(isPlayer _entity) then {
 				[[], {
-					if(!isNil "MAZ_customArsenalRespawnEH") then {
-						player removeEventHandler ["Respawn",MAZ_customArsenalRespawnEH];
-					};
-					player setVariable ["MAZ_customLoadoutFromModule",nil];
 					if (!isNil "M9SD_EH_arsenalRespawnLoadout") then {
 						player removeEventHandler["Respawn", M9SD_EH_arsenalRespawnLoadout];
 					};
@@ -10990,19 +10943,13 @@ MAZ_EZM_fnc_initFunction = {
 					};
 
 					{
-						[[_side,_x],{
-							params ["_sideChange","_sideFriendly"];
-							_sideChange setFriend [_sideFriendly,1];
-						}] remoteExec ['spawn',2];
+						[_side,[_x,1]] remoteExec ["setFriend",2];
 					}forEach _sides;
 					
 					private _enemySides = ([west,east,independent,civilian] - [_side]) - _sides;
 
 					{
-						[[_side,_x],{
-							params ["_sideChange","_sideFriendly"];
-							_sideChange setFriend [_sideFriendly,0.5];
-						}] remoteExec ['spawn',2];
+						[_side,[_x,0.5]] remoteExec ["setFriend",2];
 					}forEach _enemySides;
 				}forEach _values;
 				_display closeDisplay 1;
@@ -11053,7 +11000,7 @@ MAZ_EZM_fnc_initFunction = {
 				if(_score < 2000) then {
 					player addRating (2000 - _score);
 				};
-			}] remoteExec ['spawn',allPlayers];
+			}] remoteExec ['spawn',-2];
 		};
 
 		MAZ_EZM_fnc_disableMortarsModule = {
@@ -12342,7 +12289,7 @@ MAZ_EZM_fnc_initFunction = {
 			_logic spawn {
 				waitUntil {uiSleep 0.1; !isNull (_this getVariable ["bis_fnc_moduleTracers_gunner",objNull])};
 				private _gunner = _this getVariable "bis_fnc_moduleTracers_gunner";
-				[_gunner,true] remoteExec ['hideObjectGlobal',0,_gunner];
+				[_gunner,true] remoteExec ['hideObjectGlobal',2];
 			};
 		};
 
@@ -12705,8 +12652,7 @@ MAZ_EZM_fnc_initFunction = {
 				params ["_values","_pos","_display"];
 				_values params ["_radius"];
 				
-				private ["_modelString","_newObj","_vectorDirUp","_position","_hideTerrain","_type","_blackListFences"];
-				_blackListFences = [
+				private _blackListFences = [
 					"land_pipewall_conretel_8m_f","land_mil_wiredfence_gate_f","land_mil_concretewall_f","land_cncbarrier_f","land_cncbarrier_stripes_f",
 					"land_concrete_smallwall_8m_f","land_concrete_smallwall_4m_f",
 					"land_brickwall_04_l_pole_f","land_brickwall_03_l_pole_f",
@@ -12765,17 +12711,21 @@ MAZ_EZM_fnc_initFunction = {
 				private  _count = 0;
 				{
 					if(!alive _x) then {continue};
-					_modelString = (str _x) splitString " .";
-					_type = format ['land_%1',_modelString select (count _modelString) - 2];
+					private _modelString = ((str _x) splitString ":" select 1) select [1];
+					private _removeExtension = _modelString splitString "." select 0; 
+					private _type = format ['land_%1',_removeExtension];
 					
 					if !((toLower _type) in _blackListFences) then {
 						_count = _count + 1;
-						_position = getPosASL _x;
-						_vectorDirUp = [vectorDir _x,vectorUp _x];
-						_newObj = createSimpleObject [format ["%1",_type],_position];
-						_newObj setVectorDirAndUp [vectorDir _x,vectorUp _x];
-						[_x,true] remoteExec ['hideObject',0,true];
-						[_x,false] remoteExec ['allowDamage',0,true];
+						private _position = getPosASL _x;
+						private _newObj = createSimpleObject [format ["%1",_type],_position];
+						_newObj setPosASL _position;
+						_newObj setVectorDirAndUp [vectorDir _x,surfaceNormal _position];
+						if("pillar" in _type) then {
+							_newObj setVectorUp (vectorUp _x);
+						};
+						[_x,true] remoteExec ["hideObjectGlobal",2];
+						[_x,false] remoteExec ["allowDamage"];
 					};
 				}forEach (nearestTerrainObjects [_pos,["WALL","FENCE"],_radius]);
 
@@ -12841,13 +12791,13 @@ MAZ_EZM_fnc_initFunction = {
 				};
 				if(_hide) then {
 					{
-						[_x,true] remoteExec ['hideObject',0,_x];
-						_x allowDamage false;
+						[_x,true] remoteExec ["hideObjectGlobal",2];
+						[_x,false] remoteExec ["allowDamage"];
 					} forEach _nearestObjects;
 				} else {
 					{
-						[_x,false] remoteExec ['hideObject',0,_x];
-						_x allowDamage true;
+						[_x,false] remoteExec ["hideObjectGlobal",2];
+						[_x,true] remoteExec ["allowDamage"];
 					} forEach _nearestObjects;
 				};
 				_display closeDisplay 1;
@@ -13204,7 +13154,7 @@ MAZ_EZM_fnc_initFunction = {
 						player allowDamage false;
 						player attachTo [_unit,[0,0,0]];
 						[player,""] remoteExec ["switchMove"];
-						[player,true] remoteExec ["hideObjectGlobal"];
+						[player,true] remoteExec ["hideObjectGlobal",2];
 
 						ppeffectdestroy _blur;
 						_cam cameraeffect ["terminate","back"];
@@ -13300,9 +13250,7 @@ MAZ_EZM_fnc_initFunction = {
 						} else {
 							[player] joinSilent _oldGroup;
 						};
-						if(!_initialHidden) then {
-							[player,false] remoteExec ["hideObjectGlobal"];
-						};
+						[player,_initialHidden] remoteExec ["hideObjectGlobal",2];
 						sleep 0.01;
 					};
 				} else {
@@ -13334,11 +13282,7 @@ MAZ_EZM_fnc_initFunction = {
 			params ["_entity"];
 			if(isNull _entity) exitWith {["No object!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 			[[_entity],{
-				params ["_entity"];
-				[[_entity],{
-					params ["_entity"];
-					_entity setVehicleAmmo 1;
-				}] remoteExec ['spawn',owner _entity];
+				[_this,1] remoteExec ["setVehicleAmmo",owner _entity];
 			}] remoteExec ['spawn',2];
 
 			["Vehicle rearmed.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
@@ -13357,9 +13301,7 @@ MAZ_EZM_fnc_initFunction = {
 		MAZ_EZM_fnc_repairVehicleModule = {
 			params ["_entity"];
 			if(isNull _entity) exitWith {["No object!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
-			[_entity,{
-				_this setDamage 0;
-			}] remoteExec ['spawn',_entity];
+			_entity setDamage 0;
 
 			["Vehicle repaired.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
@@ -13838,7 +13780,7 @@ MAZ_EZM_fnc_initFunction = {
 							_santa setVariable ["BIS_enableRandomization", false];   
 							_santa setUnitLoadout [["sgun_HunterShotgun_01_sawedoff_F","","","",["2Rnd_12Gauge_Pellets",2],[],""],[],[],["U_C_Paramedic_01_F",[["FirstAidKit",1],["Chemlight_green",1,1],["2Rnd_12Gauge_Pellets",3,2]]],["V_DeckCrew_red_F",[]],[],"H_Beret_CSAT_01_F","G_Squares",[],["ItemMap","","ItemRadio","ItemCompass","ItemWatch",""]];   
 							_santa setName "Santa Claus";   
-							[_santa, "WhiteHead_26"] remoteExec ['setFace',0,true];   
+							[_santa, "WhiteHead_26"] remoteExec ["setFace"];   
 							_santa allowDamage false;   
 							removeGoggles _santa;   
 							_santa addItem 'G_Squares';   
@@ -13858,10 +13800,10 @@ MAZ_EZM_fnc_initFunction = {
 							{},               
 							{   
 								_unit = (_this select 0);  
-								[_unit,false] remoteExec ["setCaptive",0];  
-								[_unit,"Move"]remoteExec ["enableAI",0];  
-								[_unit,"AmovPercMstpSnonWnonDnon"] remoteExec ["playMove",0];  
-								[_unit] remoteExec ["removeAllActions",0];  
+								[_unit,false] remoteExec ["setCaptive"];  
+								[_unit,"Move"]remoteExec ["enableAI"];  
+								[_unit,"AmovPercMstpSnonWnonDnon"] remoteExec ["playMove"];  
+								[_unit] remoteExec ["removeAllActions"];  
 								detach _unit;  
 							},      
 							{},               
@@ -14189,15 +14131,15 @@ MAZ_EZM_fnc_initFunction = {
 						SANTA setVariable ["BIS_enableRandomization", false];  
 						SANTA setUnitLoadout [["sgun_HunterShotgun_01_sawedoff_F","","","",["2Rnd_12Gauge_Pellets",2],[],""],[],[],["U_C_Paramedic_01_F",[["FirstAidKit",1],["Chemlight_green",1,1],["2Rnd_12Gauge_Pellets",3,2]]],["V_DeckCrew_red_F",[]],[],"H_Beret_CSAT_01_F","G_Squares",[],["ItemMap","","ItemRadio","ItemCompass","ItemWatch",""]];  
 						SANTA setname "Santa Claus";  
-						[SANTA, "WhiteHead_26"] remoteExec ['setFace',0,true];  
+						[SANTA, "WhiteHead_26"] remoteExec ['setFace'];  
 						SANTA allowDamage false;  
 						removeGoggles SANTA;  
 						SANTA addItem 'G_Squares';  
 						SANTA assignItem 'G_Squares';  
 							};
 						[this, santa_base] call BIS_fnc_attachToRelative;
-						[this, 2.1] remoteExec ['setObjectScale', 0, true];;
-						[SANTA, 'crew'] remoteExec ['switchMove',0, true];
+						[this, 2.1] remoteExec ['setObjectScale'];;
+						[SANTA, 'crew'] remoteExec ['switchMove'];
 
 						[SANTA, ["<t color='#00FF00'>Sit on Santa's Lap</t>",  
 						{ 
@@ -15536,9 +15478,8 @@ MAZ_EZM_fnc_editZeusInterface = {
 				};
 
 				MAZ_EZM_fnc_detectLowServerPerformance = {
-					private _svrFnc = missionNamespace getVariable ["MAZ_EZM_fnc_getServerFPS",{}];
-					call _svrFnc;
 					0=[] spawn {
+						"MAZ_EZM_serverFPS"; "defined on server";
 						waitUntil {uiSleep 0.1; !(missionNamespace getVariable ["MAZ_EZM_isPingingServerFPS",false])};
 						private _fps = uiNamespace getVariable "MAZ_EZM_serverFPS";
 						if(!isNil "MAZ_EZM_lowServerFPSWarn") then {
@@ -17316,6 +17257,22 @@ MAZ_EZM_addZeusKeybinds_312 = {
 	}];
 };
 
+MAZ_EZM_fnc_switchGroupSetup = {
+	params ["_side"];
+	private _group = createGroup [_side,true];
+	private _groupName = "Stryker 1-4";
+	[player] join _group;
+	[_group, player] remoteExec ["selectLeader"];					
+	_group setGroupIdGlobal [_groupName];
+	private _leader = leader _group;
+	private _data = ["Curator", _groupName, false]; comment " [<Insignia>, <Group Name>, <Private>] ";
+	["RegisterGroup", [_group, player, _data]] remoteExec ['BIS_fnc_dynamicGroups'];
+	["AddGroupMember", [_group,player]] remoteExec ['BIS_fnc_dynamicGroups'];
+	["SwitchLeader", [_group,player]] remoteExec ['BIS_fnc_dynamicGroups'];
+	["SetPrivateState", [_group,true]] remoteExec ['BIS_fnc_dynamicGroups'];	
+	["SetName", [_group,_groupName]] remoteExec ['BIS_fnc_dynamicGroups'];
+};
+
 MAZ_EZM_fnc_groupMenuTeamSwitcher = {
 	if (!isNull findDisplay 60490) exitWith {};
 	with uiNamespace do 
@@ -17346,23 +17303,7 @@ MAZ_EZM_fnc_groupMenuTeamSwitcher = {
 			_btn_west ctrlSetStructuredText parseText ("<t size='" + (str (0.5 * safeZoneH)) + "' align='center'>BLUFOR</t>");
 			_btn_west ctrladdEventHandler ["ButtonClick", 
 			{
-				_side = west;
-				_groupName = "Stryker 1-4";
-				_groups = ["GetAllGroupsOfSide", [_side]] call BIS_fnc_dynamicGroups;
-				EZM_curator_group = createGroup _side;
-				EZM_curator_group deleteGroupWhenEmpty true;
-				[player] join EZM_curator_group;
-				EZM_curator_group selectLeader player;
-				[EZM_curator_group, player] remoteExec ["selectLeader", groupOwner EZM_curator_group];					
-				EZM_curator_group setGroupIdGlobal [_groupName];
-				private _group = EZM_curator_group;
-				private _leader = leader _group;
-				private _data = [nil, _groupName, false]; comment " [<Insignia>, <Group Name>, <Private>] ";
-				["RegisterGroup", [_group, _leader, _data]] remoteExecCall ['BIS_fnc_dynamic\a3\ui_f_curator\data\rsccommon\rscattributeformation\wedge_ca.paa'];
-				["AddGroupMember", [EZM_curator_group,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["SwitchLeader", [EZM_curator_group,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["SetPrivateState", [EZM_curator_group,true]] remoteExecCall ['BIS_fnc_dynamicGroups'];	
-				["SetName", [EZM_curator_group,_groupName]] remoteExecCall ['BIS_fnc_dynamicGroups'];
+				[west] call MAZ_EZM_fnc_switchGroupSetup;
 			}];
 			_btn_west ctrlCommit 0;
 			_btn_east = _display ctrlCreate ['RscButtonMenu',-1];
@@ -17371,23 +17312,7 @@ MAZ_EZM_fnc_groupMenuTeamSwitcher = {
 			_btn_east ctrlSetStructuredText parseText ("<t size='" + (str (0.5 * safeZoneH)) + "' align='center'>OPFOR</t>");
 			_btn_east ctrladdEventHandler ["ButtonClick", 
 			{
-				_side = east;
-				_groupName = "Stryker 1-4";
-				_groups = ["GetAllGroupsOfSide", [_side]] call BIS_fnc_dynamicGroups;
-				EZM_curator_group = createGroup _side;
-				EZM_curator_group deleteGroupWhenEmpty true;
-				[player] join EZM_curator_group;
-				EZM_curator_group selectLeader player;
-				[EZM_curator_group, player] remoteExec ["selectLeader", groupOwner EZM_curator_group];					
-				EZM_curator_group setGroupIdGlobal [_groupName];
-				private _group = EZM_curator_group;
-				private _leader = leader _group;
-				private _data = [nil, _groupName, false]; comment " [<Insignia>, <Group Name>, <Private>] ";
-				["RegisterGroup", [_group, _leader, _data]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["AddGroupMember", [EZM_curator_group,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["SwitchLeader", [EZM_curator_group,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["SetPrivateState", [EZM_curator_group,true]] remoteExecCall ['BIS_fnc_dynamicGroups'];	
-				["SetName", [EZM_curator_group,_groupName]] remoteExecCall ['BIS_fnc_dynamicGroups'];
+				[east] call MAZ_EZM_fnc_switchGroupSetup;
 			}];
 			_btn_east ctrlCommit 0;
 			_btn_indep = _display ctrlCreate ['RscButtonMenu',-1];
@@ -17396,23 +17321,7 @@ MAZ_EZM_fnc_groupMenuTeamSwitcher = {
 			_btn_indep ctrlSetStructuredText parseText ("<t size='" + (str (0.5 * safeZoneH)) + "' align='center'>INDEP</t>");
 			_btn_indep ctrladdEventHandler ["ButtonClick", 
 			{
-				_side = independent;
-				_groupName = "Stryker 1-4";
-				_groups = ["GetAllGroupsOfSide",[_side]] call BIS_fnc_dynamicGroups;
-				EZM_curator_group = createGroup _side;
-				EZM_curator_group deleteGroupWhenEmpty true;
-				[player] join EZM_curator_group;
-				EZM_curator_group selectLeader player;
-				[EZM_curator_group, player] remoteExec ["selectLeader", groupOwner EZM_curator_group];					
-				EZM_curator_group setGroupIdGlobal [_groupName];
-				private _group = EZM_curator_group;
-				private _leader = leader _group;
-				private _data = [nil, _groupName, false]; comment " [<Insignia>, <Group Name>, <Private>] ";
-				["RegisterGroup", [_group, _leader, _data]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["AddGroupMember", [EZM_curator_group,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["SwitchLeader", [EZM_curator_group,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["SetPrivateState", [EZM_curator_group,true]] remoteExecCall ['BIS_fnc_dynamicGroups'];	
-				["SetName", [EZM_curator_group,_groupName]] remoteExecCall ['BIS_fnc_dynamicGroups'];
+				[independent] call MAZ_EZM_fnc_switchGroupSetup;
 			}];
 			_btn_indep ctrlCommit 0;
 			_btn_civ = _display ctrlCreate ['RscButtonMenu',-1];
@@ -17421,23 +17330,7 @@ MAZ_EZM_fnc_groupMenuTeamSwitcher = {
 			_btn_civ ctrlSetStructuredText parseText ("<t size='" + (str (0.5 * safeZoneH)) + "' align='center'>CIV</t>");
 			_btn_civ ctrladdEventHandler ["ButtonClick", 
 			{
-				_side = civilian;
-				_groupName = "Stryker 1-4";
-				_groups = ["GetAllGroupsOfSide",[_side]] call BIS_fnc_dynamicGroups;
-				EZM_curator_group = createGroup _side;
-				EZM_curator_group deleteGroupWhenEmpty true;
-				[player] join EZM_curator_group;
-				EZM_curator_group selectLeader player;
-				[EZM_curator_group, player] remoteExec ["selectLeader", groupOwner EZM_curator_group];					
-				EZM_curator_group setGroupIdGlobal [_groupName];
-				private _group = EZM_curator_group;
-				private _leader = leader _group;
-				private _data = [nil, _groupName, false]; comment " [<Insignia>, <Group Name>, <Private>] ";
-				["RegisterGroup", [_group, _leader, _data]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["AddGroupMember", [EZM_curator_group,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["SwitchLeader", [EZM_curator_group,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["SetPrivateState", [EZM_curator_group,true]] remoteExecCall ['BIS_fnc_dynamicGroups'];	
-				["SetName", [EZM_curator_group,_groupName]] remoteExecCall ['BIS_fnc_dynamicGroups'];
+				[civilian] call MAZ_EZM_fnc_switchGroupSetup;
 			}];
 			_btn_civ ctrlCommit 0;
 			_btn_zeus = _display ctrlCreate ['RscButtonMenu',-1];
@@ -17446,23 +17339,7 @@ MAZ_EZM_fnc_groupMenuTeamSwitcher = {
 			_btn_zeus ctrlSetStructuredText parseText ("<t size='" + (str (0.5 * safeZoneH)) + "' align='center'>ZEUS</t>");
 			_btn_zeus ctrladdEventHandler ["ButtonClick", 
 			{
-				_side = sideLogic;
-				_groupName = "Stryker 1-4";
-				_groups = ["GetAllGroupsOfSide",[_side]] call BIS_fnc_dynamicGroups;
-				EZM_curator_group = createGroup _side;
-				EZM_curator_group deleteGroupWhenEmpty true;
-				[player] join EZM_curator_group;
-				EZM_curator_group selectLeader player;
-				[EZM_curator_group, player] remoteExec ["selectLeader", groupOwner EZM_curator_group];					
-				EZM_curator_group setGroupIdGlobal [_groupName];
-				private _group = EZM_curator_group;
-				private _leader = leader _group;
-				private _data = [nil, _groupName, false]; comment " [<Insignia>, <Group Name>, <Private>] ";
-				["RegisterGroup", [_group, _leader, _data]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["AddGroupMember", [EZM_curator_group,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["SwitchLeader", [EZM_curator_group,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["SetPrivateState", [EZM_curator_group,true]] remoteExecCall ['BIS_fnc_dynamicGroups'];	
-				["SetName", [EZM_curator_group,_groupName]] remoteExecCall ['BIS_fnc_dynamicGroups'];
+				[sideLogic] call MAZ_EZM_fnc_switchGroupSetup;
 			}];
 			_btn_zeus ctrlCommit 0;
 		};
@@ -17476,7 +17353,7 @@ MAZ_EZM_fnc_initMainLoop = {
 	while {MAZ_EZM_mainLoop_Active} do {
 		waitUntil {uiSleep 0.01; (!isNull (findDisplay 312))};
 		if(!isNil "MAZ_EP_ServerDLCs" && !isNil "MAZ_CDLC_EP_fnc_newZeus" && isNil "MAZ_CDLC_Setup") then {
-			[getAssignedCuratorLogic player] remoteExec ["unassignCurator"];
+			[getAssignedCuratorLogic player] remoteExec ["unassignCurator",2];
 			waitUntil {isNull (getAssignedCuratorLogic player)};
 			[[player],{
 				params ["_unit"];
