@@ -6057,7 +6057,8 @@ MAZ_EZM_fnc_initFunction = {
 		private _allPlayers = [];
 		if(_zeusCanSeeCutscene) then {
 			comment "always prevent game mod from seeing the cutscene to avoid breaking their camera; only works if they don't have ezm running as well";
-			_allPlayers = allPlayers - allCurators;
+			private _zeusPlayers = allCurators apply {getAssignedCuratorUnit _x};
+			_allPlayers = allPlayers - _zeusPlayers;
 		} else {
 			comment "make sure zeus running command is also excluded";
 			_allPlayers = allPlayers - allCurators - player;
