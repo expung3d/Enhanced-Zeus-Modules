@@ -6018,11 +6018,15 @@ MAZ_EZM_fnc_initFunction = {
 	comment "maybe we should check if players are in a vehicle during cutscene, if so disable vehicle simulation";
 
 	MAZ_EZM_fnc_handleIntroCinematic = {
+		params ["_cinematicType","_backgroundSong","_intertitles", "_target"];
+
+		comment "get mission name";
 		private _briefingName = missionnamespace getvariable ["bis_fnc_moduleMissionName_name",""];
 		if (_briefingName == "") then {
 			_briefingName = briefingName;
 		};
 
+		comment "get zeus name(s)";
 		_author = "";
 		if (count allcurators > 0) then {
 			_authors = [];
@@ -6042,11 +6046,24 @@ MAZ_EZM_fnc_initFunction = {
 		};
 		if (_author != "") then {_author = format [localize "STR_FORMAT_AUTHOR_SCRIPTED",_author];};
 
-		params ["_cinematicType","_backgroundSong","_intertitles"];
+		comment "show intro titles";
 		[0, 2, true, true] call BIS_fnc_cinemaBorder;
 		cutText ["", "BLACK", 2];
 		[format["<t color='#ffffff' font='PuristaBold' size='2'>%1</t><t color='#B57F50' font='TahomaB' size='0.6'><br />%2</t>",_briefingName, _author],0,0.3,4,1,0,789] spawn BIS_fnc_dynamicText;
 
+		sleep 2;
+		cutText ["", "PLAIN", 0];
+		if (_cinematicType == "Orbit") then {
+			comment "in orbit mode, we select the module location as our target, and the camera paths are automatically designated at 0, 90, and 270 degrees";
+			private _camTarget = "Land_HelipadEmpty_F" createVehicleLocal _target;
+			private _camSrc0 = [_target select 0, _target select 1, (_target select 2) + 100];
+			
+			private _camera = "camera" camCreate _camSrc0;
+			_camera cameraEffect ["internal", "back"];
+			_camera camPrepareTarget _camTarget;
+			_camera camSetFov 0.5;
+			_camera camCommitPrepared 0;
+		};
 
 	};
 
@@ -6095,7 +6112,8 @@ MAZ_EZM_fnc_initFunction = {
 				private _cinematicType = _values select 0;
 				private _backgroundSong = _values select 1;
 				private _intertitles = [_values select 2, _values select 3];
-				[_cinematicType, _backgroundSong, _intertitles] call MAZ_EZM_fnc_handleIntroCinematic;
+				private _target = [true] call MAZ_EZM_fnc_getScreenPosition;
+				[_cinematicType, _backgroundSong, _intertitles, _target] spawn MAZ_EZM_fnc_handleIntroCinematic;
 				_display closeDisplay 1;
 			};
 			private _onCancel = {
