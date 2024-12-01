@@ -6052,17 +6052,23 @@ MAZ_EZM_fnc_initFunction = {
 		[format["<t color='#ffffff' font='PuristaBold' size='2'>%1</t><t color='#B57F50' font='TahomaB' size='0.6'><br />%2</t>",_briefingName, _author],0,0.3,4,1,0,789] spawn BIS_fnc_dynamicText;
 
 		sleep 2;
-		cutText ["", "PLAIN", 0];
+		cutText ["", "PLAIN", 2];
 		if (_cinematicType == "Orbit") then {
-			comment "in orbit mode, we select the module location as our target, and the camera paths are automatically designated at 0, 90, and 270 degrees";
+			comment "in orbit mode, we select the module location as our target, and the camera paths are automatically designated at 0 and 90 degrees";
 			private _camTarget = "Land_HelipadEmpty_F" createVehicleLocal _target;
-			private _camSrc0 = [_target select 0, _target select 1, (_target select 2) + 100];
+			private _circleRadius = 200;
+			private _camHeight = 200;
+			private _camSrc0 = [_target select 0, (_target select 1) + _circleRadius, (_target select 2) + _camHeight];
+			private _camSrc90 = [(_target select 0) + _circleRadius, _target select 1, (_target select 2) + _camHeight];
 			
 			private _camera = "camera" camCreate _camSrc0;
 			_camera cameraEffect ["internal", "back"];
 			_camera camPrepareTarget _camTarget;
-			_camera camSetFov 0.5;
+			_camera camSetFov 1;
 			_camera camCommitPrepared 0;
+
+			_camera camPreparePos _camSrc90;
+			_camera camCommitPrepared 15;
 		};
 
 	};
