@@ -17417,13 +17417,17 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 };
 
 private _changelog = [
-	"Changed loading of new Modules and Factions to auto refresh after 10 seconds instead of instantly",
-	"Changed AIO Arsenal functions to be modular",
-	"Changed Airdrop module arsenal to not show markers",
-	"Fixed background colors for Expand and Collapse buttons",
-	"Fixed various undefined variable script errors",
-	"Fixed system that opens the respawn modules when no respawn is available was using slow method",
-	"Fixed Cleaner system would not delete bodies"
+	"Changed Auto Cleaner to run on the server so that the bodies get deleted even after the Zeus who placed them leaves",
+	"Changed Mortar Area to do a ranging round first with a delay of 5-10 seconds before the main barrage",
+	"Fixed Suppressive Fire to actually work",
+	"Fixed vehicle attributes not applying",
+	"Fixed unit skill percentage showing up with an insane amount of decimals",
+	"Fixed the Auto Cleaner not deleting dead bodies",
+	"Fixed God Mode fences would remove gates",
+	"Fixed aircraft carrier module wouldn't delete bad carriers",
+	"Fixed issue with the Create Zeus Unit bugging Zeuses out of their interface",
+	"Removed AVG FPS function. Was almost setting Bohemia servers on fire",
+	"Did a remoteExec audit, hopefully pleasing Dwarden and sparing the Bohemia server logs"
 ];
 
 private _changelogString = "";
