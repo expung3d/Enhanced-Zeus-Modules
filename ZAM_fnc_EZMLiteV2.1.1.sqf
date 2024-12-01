@@ -6194,79 +6194,77 @@ MAZ_EZM_fnc_initFunction = {
 
 	HYPER_EZM_fnc_introCinematicModule = {
 		params ["_entity"];
-		[] spawn {
-			private _dialogTitle = "Intro Cinematic";
-			private _content = [
-				[
-					"COMBO",
-					"Cinematic Type",
-					[
-						["Flyby"],
-						["Flyby"],
-						0
-					]
-				],
-				[
-					"COMBO",
-					"Background Song",
-					[
-						["random", "epic", "action", "stealth"],
-						["Random Event Track", "Epic", "Action", "Stealth"],
-						0
-					]
-				],
-				[
-					"EDIT",
-					"Intertitle 1",
-					[
-						"",
-						1
-					]
-				],
-				[
-					"EDIT",
-					"Intertitle 2",
-					[
-						"",
-						1
-					]
-				],
-				[
-					"TOOLBOX:YESNO",
-					["Zeus Can See Cutscene?","Enabling this may break the camera for Zeus players."],
-					[false]
-				],
-								[
-					"COMBO",
-					"Post-Process Filter",
-					[
-						["none", "highcontrast", "blue", "dull", "yellowgamma", "greengamma"],
-						["None", "High Contrast", "Blue", "Dull", "Yellow Gamma", "Green Gamma"],
-						0
-					]
-				]
-			];
-			private _onConfirm = {
-				params ["_values", "_args", "_display"];
-				_values params ["_cinematicType","_backgroundSong","_text1","_text2","_zeusCanSeeCutscene","_postProcess"];
-				private _intertitles = [_text1,_text2];
-				private _target = [true] call MAZ_EZM_fnc_getScreenPosition;
-				[_cinematicType, _backgroundSong, _intertitles, _zeusCanSeeCutscene, _postProcess, _target] spawn HYPER_EZM_fnc_handleIntroCinematic;
-				_display closeDisplay 1;
-			};
-			private _onCancel = {
-				params ["_values", "_args", "_display"];
-				_display closeDisplay 2;
-			};
+		private _dialogTitle = "Intro Cinematic";
+		private _content = [
 			[
-				_dialogTitle,
-				_content,
-				_onConfirm,
-				_onCancel,
-				[]
-			] call MAZ_EZM_fnc_createDialog;
-			
+				"COMBO",
+				"Cinematic Type",
+				[
+					["Flyby"],
+					["Flyby"],
+					0
+				]
+			],
+			[
+				"COMBO",
+				"Background Song",
+				[
+					["random", "epic", "action", "stealth"],
+					["Random Event Track", "Epic", "Action", "Stealth"],
+					0
+				]
+			],
+			[
+				"EDIT",
+				"Intertitle 1",
+				[
+					"",
+					1
+				]
+			],
+			[
+				"EDIT",
+				"Intertitle 2",
+				[
+					"",
+					1
+				]
+			],
+			[
+				"TOOLBOX:YESNO",
+				["Zeus Can See Cutscene?","Enabling this may break the camera for Zeus players."],
+				[false]
+			],
+							[
+				"COMBO",
+				"Post-Process Filter",
+				[
+					["none", "highcontrast", "blue", "dull", "yellowgamma", "greengamma"],
+					["None", "High Contrast", "Blue", "Dull", "Yellow Gamma", "Green Gamma"],
+					0
+				]
+			]
+		];
+		private _onConfirm = {
+			params ["_values", "_args", "_display"];
+			_values params ["_cinematicType","_backgroundSong","_text1","_text2","_zeusCanSeeCutscene","_postProcess"];
+			private _intertitles = [_text1,_text2];
+			private _target = [true] call MAZ_EZM_fnc_getScreenPosition;
+			[_cinematicType, _backgroundSong, _intertitles, _zeusCanSeeCutscene, _postProcess, _target] spawn HYPER_EZM_fnc_handleIntroCinematic;
+			_display closeDisplay 1;
 		};
+		private _onCancel = {
+			params ["_values", "_args", "_display"];
+			_display closeDisplay 2;
+		};
+		[
+			_dialogTitle,
+			_content,
+			_onConfirm,
+			_onCancel,
+			[]
+		] call MAZ_EZM_fnc_createDialog;
+		
 	};
 
 	comment "TODO: remove cinematic bars module that also un-blacks out screen";
