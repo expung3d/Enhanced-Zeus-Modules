@@ -4010,6 +4010,7 @@ comment "Dynamic Faction Addons";
 	};
 
 	MAZ_EZM_fnc_setInterfaceToRefresh = {
+		params [["_refreshTime", 10]];
 		private _refresh = missionNamespace getVariable "MAZ_EZM_refreshTime";
 		if(isNil "_refresh") then {
 			private _refreshOnClose = ["onZeusInterfaceClosed", {
@@ -4020,7 +4021,7 @@ comment "Dynamic Faction Addons";
 				};
 			}] call MAZ_EZM_fnc_addEZMEventHandler;
 			
-			missionNamespace setVariable ["MAZ_EZM_refreshTime",time + 10];
+			missionNamespace setVariable ["MAZ_EZM_refreshTime",time + _refreshTime];
 			_refreshOnClose spawn {
 				while {time < (missionNamespace getVariable "MAZ_EZM_refreshTime")} do {
 					titleText [format ["NEW MODULES ADDED TO EZM\nYOUR ZEUS INTERFACE WILL BE AUTOMATICALLY REFRESHED IN %1 SECONDS", ceil ((missionNamespace getVariable "MAZ_EZM_refreshTime") - time)],"PLAIN DOWN",0.01];
@@ -4035,7 +4036,7 @@ comment "Dynamic Faction Addons";
 				["onZeusInterfaceClosed", _this] call MAZ_EZM_fnc_removeEZMEventHandler;
 			};
 		} else {
-			missionNamespace setVariable ["MAZ_EZM_refreshTime", time + 10];
+			missionNamespace setVariable ["MAZ_EZM_refreshTime", time + _refreshTime];
 		};
 	};
 
@@ -6047,10 +6048,20 @@ MAZ_EZM_fnc_initFunction = {
 		_lines
 	};
 
-	MAZ_EZM_fnc_handleIntroCinematic = {
-		params ["_cinematicType","_backgroundSong","_intertitles", "_target"];
+	HYPER_EZM_fnc_handleIntroCinematic = {
+		params ["_cinematicType","_backgroundSong","_intertitles", "_zeusCanSeeCutscene", "_target"];
 
 		["Intro cinematic initiated for all players.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+
+		comment "if zeus shouldn't see the cutscene, we need to get the player set differenced with zeus player set";
+		private _allPlayers = [];
+		if(_zeusCanSeeCutscene) then {
+			comment "always prevent game mod from seeing the cutscene to avoid breaking their camera; only works if they don't have ezm running as well";
+			_allPlayers = allPlayers - allCurators;
+		} else {
+			comment "make sure zeus running command is also excluded";
+			_allPlayers = allPlayers - allCurators - player;
+		};
 
 		comment "get mission name";
 		private _briefingName = missionnamespace getvariable ["bis_fnc_moduleMissionName_name",""];
@@ -6129,11 +6140,15 @@ MAZ_EZM_fnc_initFunction = {
 
 		};
 
+		if(_zeusCanSeeCutscene) then {
+			[1] call MAZ_EZM_fnc_setInterfaceToRefresh;	
+		};
+
 		["Intro cinematic completed."] call MAZ_EZM_fnc_systemMessage;
 
 	};
 
-	MAZ_EZM_fnc_introCinematicModule = {
+	HYPER_EZM_fnc_introCinematicModule = {
 		params ["_entity"];
 		[] spawn {
 			private _dialogTitle = "Intro Cinematic";
@@ -6142,8 +6157,8 @@ MAZ_EZM_fnc_initFunction = {
 					"COMBO",
 					"Cinematic Type",
 					[
-						["Flyby", "Dynamic"],
-						["Flyby", "Dynamic"],
+						["Flyby"],
+						["Flyby"],
 						0
 					]
 				],
@@ -6171,6 +6186,14 @@ MAZ_EZM_fnc_initFunction = {
 						"",
 						1
 					]
+				],
+				[
+					"TOOLBOX",
+					"Zeus Sees Cutscene",
+					[
+						false,
+						["No", "Yes"]
+					]
 				]
 			];
 			private _onConfirm = {
@@ -6178,13 +6201,13 @@ MAZ_EZM_fnc_initFunction = {
 				private _cinematicType = _values select 0;
 				private _backgroundSong = _values select 1;
 				private _intertitles = [_values select 2, _values select 3];
+				private _zeusCanSeeCutscene = _values select 4;
 				private _target = [true] call MAZ_EZM_fnc_getScreenPosition;
-				[_cinematicType, _backgroundSong, _intertitles, _target] spawn MAZ_EZM_fnc_handleIntroCinematic;
+				[_cinematicType, _backgroundSong, _intertitles, _zeusCanSeeCutscene, _target] spawn HYPER_EZM_fnc_handleIntroCinematic;
 				_display closeDisplay 1;
 			};
 			private _onCancel = {
 				params ["_values", "_args", "_display"];
-				systemChat "Intro Cinematic dialog canceled.";
 				_display closeDisplay 2;
 			};
 			[
@@ -16120,7 +16143,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_Cinematics,
 					"Intro Cinematic",
 					"Create an exciting cinematic introduction to your missions (by bijx)",
-					"MAZ_EZM_fnc_introCinematicModule",
+					"HYPER_EZM_fnc_introCinematicModule",
 					"a3\ui_f\data\igui\cfg\islandmap\iconcamera_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
