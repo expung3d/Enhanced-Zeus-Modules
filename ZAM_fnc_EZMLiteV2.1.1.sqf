@@ -6016,9 +6016,12 @@ MAZ_EZM_fnc_initFunction = {
 	comment "Cinematics";
 	comment "the plan here is as follows: when intro cinematic module is placed, a window pops up with one of two options: 'orbit' or 'dynamic'. in either case, the black bars appear for users, screen fades to black, and then the cinematic begins. The screen starts at black with a title and the name of the zeus'. If orbit is selected, the cinematic will be like a UAV flying above where the module was placed. Music choice can be selected, and up to 2 additional texts can be written to appear in the cinematic. once the cinematic ends, black screen appears again, and black bars fade.";
 	comment "maybe we should check if players are in a vehicle during cutscene, if so disable vehicle simulation";
+	comment "TODO: exclude curators from cutscene because it breaks their camera. instead, display systemChat showing status of cutscene.";
 
 	MAZ_EZM_fnc_handleIntroCinematic = {
 		params ["_cinematicType","_backgroundSong","_intertitles", "_target"];
+
+		["Intro cinematic initiated for all players.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 
 		comment "get mission name";
 		private _briefingName = missionnamespace getvariable ["bis_fnc_moduleMissionName_name",""];
@@ -6054,7 +6057,7 @@ MAZ_EZM_fnc_initFunction = {
 		sleep 2;
 		cutText ["", "PLAIN", 2];
 		if (_cinematicType == "Orbit") then {
-			comment "in orbit mode, we select the module location as our target, and the camera paths are automatically designated at 0 and 90 degrees";
+			comment "in orbit mode, we select the module location as our target, and the camera paths are automatically designated at 0, 90, and 180 degrees";
 			private _camTarget = "Land_HelipadEmpty_F" createVehicleLocal _target;
 			private _circleRadius = 200;
 			private _camHeight = 200;
@@ -6069,7 +6072,16 @@ MAZ_EZM_fnc_initFunction = {
 
 			_camera camPreparePos _camSrc90;
 			_camera camCommitPrepared 15;
+			waitUntil { camCommitted _camera };
+			cutRsc ["RscStatic", "PLAIN"];
+			sleep 0.4;
+			_camera cameraEffect ["terminate", "back"];
+			cutText ["", "BLACK IN", 2];
+			[1, 2, true, true] call BIS_fnc_cinemaBorder;
+
 		};
+
+		["Intro cinematic completed."] call MAZ_EZM_fnc_systemMessage;
 
 	};
 
