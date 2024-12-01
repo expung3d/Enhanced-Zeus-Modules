@@ -5314,21 +5314,6 @@ MAZ_EZM_fnc_initFunction = {
 			},_entity] call MAZ_EZM_fnc_createDialog;   
 		};
 
-		MAZ_EZM_fnc_getNearestBuilding = {
-			params [
-				["_position",[0,0,0],[[],objNull]],
-				["_radius",50,[0]],
-				["_2d",false,[false]]
-			];
-			if(_position isEqualTo [0,0,0]) exitWith {["Provide a position argument to getNearestBuilding!","addItemFailed"] call MAZ_EZM_fnc_systemMessage};
-			if(_position isEqualType objNull) then {_position = getPos _position;};
-			private _nearestBuildings = (nearestObjects [_position, ["building"], _radius, _2d]) select {
-
-				count ([_x] call BIS_fnc_buildingPositions) > 0
-			};
-			(_nearestBuildings select 0)
-		};
-
 		MAZ_EZM_fnc_garrisonInstantModule = {
 			params ["_entity"];
 			if(isNull _entity || !((typeOf _entity) isKindOf "CAManBase")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
@@ -6806,8 +6791,13 @@ MAZ_EZM_fnc_initFunction = {
 				{
 					params ["_values","_pos","_display"];
 					_values params ["_roundType","_radius","_rounds","_min","_max"];
-					[_pos,_roundType,_radius,_rounds,[_min,_max]] spawn BIS_fnc_fireSupportVirtual;
 					_display closeDisplay 1;
+					[_pos,_roundType,_radius,_rounds,_min,_max] spawn {
+						params ["_pos","_roundType","_radius","_rounds","_min","_max"];
+						[_pos,_roundType,_radius * 1.1,1,[_min,_max],{false},(_radius * 0.75)] spawn BIS_fnc_fireSupportVirtual;
+						sleep (5 + random 5);
+						[_pos,_roundType,_radius,_rounds,[_min,_max]] spawn BIS_fnc_fireSupportVirtual;
+					};
 				},
 				{
 					params ["_values","_args","_display"];
@@ -8881,6 +8871,21 @@ MAZ_EZM_fnc_initFunction = {
 
 		};
 
+		MAZ_EZM_fnc_getNearestBuilding = {
+			params [
+				["_position",[0,0,0],[[],objNull]],
+				["_radius",50,[0]],
+				["_2d",false,[false]]
+			];
+			if(_position isEqualTo [0,0,0]) exitWith {["Provide a position argument to getNearestBuilding!","addItemFailed"] call MAZ_EZM_fnc_systemMessage};
+			if(_position isEqualType objNull) then {_position = getPos _position;};
+			private _nearestBuildings = (nearestObjects [_position, ["building"], _radius, _2d]) select {
+
+				count ([_x] call BIS_fnc_buildingPositions) > 0
+			};
+			(_nearestBuildings select 0)
+		};
+
 		MAZ_EZM_fnc_createBuildingInteriorCall = {
 			params ["_entity"];
 			if(
@@ -10705,7 +10710,7 @@ MAZ_EZM_fnc_initFunction = {
 
 			private _god = isDamageAllowed _entity;
 			[_entity,!_god] remoteExec ["allowDamage"];
-			[["Object is god moded", "Object is no longer god moded."] select _god,"addItemOk"] call MAZ_EZM_fnc_systemMessage;
+			[["Object is god moded", "Object is no longer god moded."] select !_god,"addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
 
 		MAZ_EZM_fnc_toggleHideObjectModule = {
