@@ -6169,6 +6169,7 @@ MAZ_EZM_fnc_initFunction = {
 
 	HYPER_EZM_fnc_introCinematicModule = {
 		params ["_entity"];
+		private _target = [true] call MAZ_EZM_fnc_getScreenPosition;
 		private _dialogTitle = "Intro Cinematic";
 		private _content = [
 			[
@@ -6223,8 +6224,8 @@ MAZ_EZM_fnc_initFunction = {
 		private _onConfirm = {
 			params ["_values", "_args", "_display"];
 			_values params ["_cinematicType","_backgroundSong","_text1","_text2","_zeusCanSeeCutscene","_postProcess"];
+			private _target = _args # 0;
 			private _intertitles = [_text1,_text2];
-			private _target = [true] call MAZ_EZM_fnc_getScreenPosition;
 			[_cinematicType, _backgroundSong, _intertitles, _zeusCanSeeCutscene, _postProcess, _target] spawn HYPER_EZM_fnc_handleIntroCinematic;
 			_display closeDisplay 1;
 		};
@@ -6237,7 +6238,7 @@ MAZ_EZM_fnc_initFunction = {
 			_content,
 			_onConfirm,
 			_onCancel,
-			[]
+			[_target]
 		] call MAZ_EZM_fnc_createDialog;
 		
 	};
