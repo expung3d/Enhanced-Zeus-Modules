@@ -6050,13 +6050,20 @@ MAZ_EZM_fnc_initFunction = {
 		if (_author != "") then {_author = format [localize "STR_FORMAT_AUTHOR_SCRIPTED",_author];};
 
 		comment "show intro titles";
-		[0, 2, true, true] call BIS_fnc_cinemaBorder;
-		cutText ["", "BLACK", 2];
+		switch (_backgroundSong) do {
+			case "epic": {playMusic "Music_Arrival";};
+			case "action": {playMusic "EventTrack02a_F_EPB";};
+			case "stealth": {playMusic "AmbientTrack02d_F_EXP";};
+			case "random": {playMusic (selectRandom ["EventTrack01a_F_EPA","EventTrack01a_F_EPB","EventTrack01_F_EPA","EventTrack03_F_EPB","EventTrack03a_F_EPB","EventTrack02b_F_EPC"]);};
+			default {playMusic "EventTrack01a_F_EPA";};
+		};
+		[0, 4, true, true] call BIS_fnc_cinemaBorder;
+		cutText ["", "BLACK", 4];
 		[format["<t color='#ffffff' font='PuristaBold' size='2'>%1</t><t color='#B57F50' font='TahomaB' size='0.6'><br />%2</t>",_briefingName, _author],0,0.3,4,1,0,789] spawn BIS_fnc_dynamicText;
 
 		sleep 2;
 		cutText ["", "PLAIN", 2];
-		if (_cinematicType == "Orbit") then {
+		if (_cinematicType == "Flyby") then {
 			comment "in orbit mode, we select the module location as our target, and the camera paths are automatically designated at 0, 90, and 180 degrees";
 			private _camTarget = "Land_HelipadEmpty_F" createVehicleLocal _target;
 			private _circleRadius = 200;
@@ -6094,8 +6101,8 @@ MAZ_EZM_fnc_initFunction = {
 					"COMBO",
 					"Cinematic Type",
 					[
-						["Orbit", "Dynamic"],
-						["Orbit", "Dynamic"],
+						["Flyby", "Dynamic"],
+						["Flyby", "Dynamic"],
 						0
 					]
 				],
@@ -6103,8 +6110,8 @@ MAZ_EZM_fnc_initFunction = {
 					"COMBO",
 					"Background Song",
 					[
-						["epic", "action", "stealth"],
-						["Epic", "Action", "Stealth"],
+						["epic", "action", "stealth", "random"],
+						["Epic", "Action", "Stealth", "Random Event Track"],
 						0
 					]
 				],
