@@ -6013,6 +6013,15 @@ MAZ_EZM_fnc_initFunction = {
 			},[]] call MAZ_EZM_fnc_createDialog;
 		};
 
+	comment "Cinematics";
+	comment "the plan here is as follows: when intro cinematic module is placed, a window pops up with one of two options: 'orbit' or 'dynamic'. in either case, the black bars appear for users, screen fades to black, and then the cinematic begins. The screen starts at black with a title and the name of the zeus'. If orbit is selected, the cinematic will be like a UAV flying above where the module was placed. Music choice can be selected, and up to 2 additional texts can be written to appear in the cinematic. once the cinematic ends, black screen appears again, and black bars fade.";
+
+	MAZ_EZM_fnc_introCinematicModule = {
+
+	};
+
+	comment "TODO: remove cinematic bars module";
+
 	comment "AI Supports";
 
 		MAZ_EZM_fnc_airDropSupportModule = {
@@ -15919,6 +15928,22 @@ MAZ_EZM_fnc_editZeusInterface = {
 					"Resets EZM interior data to the default. \nYOU WILL LOSE ALL CHANGES YOU MADE TO YOUR INTERIORS WITHOUT UPDATING MAZ_EZM_fnc_loadDefaultInteriorsData!",
 					"MAZ_EZM_fnc_getDefaultInteriors",
 					"a3\3den\data\displays\display3den\toolbar\undo_ca.paa"
+				] call MAZ_EZM_fnc_zeusAddModule;
+			
+			comment "Cinematics";
+				MAZ_Cinematics = [
+					MAZ_zeusModulesTree,
+					"Cinematics",
+					"a3\3den\data\displays\display3den\panelleft\entitylist_delete_ca.paa"
+				] call MAZ_EZM_fnc_zeusAddCategory;
+
+				[
+					MAZ_zeusModulesTree,
+					MAZ_Cinematics,
+					"Intro Cinematic",
+					"Create an exciting cinematic introduction to your missions (by bijx)",
+					"MAZ_EZM_fnc_introCinematicModule",
+					"a3\3den\data\displays\display3den\panelleft\entitylist_delete_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
 			comment "Clean Up Stuff";
