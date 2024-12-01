@@ -1061,7 +1061,7 @@ comment "Attributes Dialog Creation";
 		private _sliderEdit = _display ctrlCreate ["RscEdit",IDC_ATTRIBS_SLIDER_EDIT,_rowControlsGroup];
 		_sliderEdit ctrlSetPosition [["W",23.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,pixelH,["W",2.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,((["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH)];
 		if(_isPercent) then {
-			_sliderEdit ctrlSetText ((str (_default * 100)) + "%");
+			_sliderEdit ctrlSetText ((str (round (_default * 100))) + "%");
 		} else {
 			_sliderEdit ctrlSetText (str _default);
 		};
@@ -1594,12 +1594,12 @@ comment "Attributes Dialog Creation";
 		params ["_unit","_attributes"];
 		_attributes params ["_name","_rank","_stance","_health","_skill","_respawn"];
 		[_unit,_name] remoteExec ['setName'];
-		_unit setRank _rank;
-		_unit setUnitPos _stance;
+		[_unit,_rank] remoteExec ["setRank"];
+		[_unit,_stance] remoteExec ["setUnitPos"];
 		MAZ_EZM_stanceForAI = _stance;
 		_unit setDamage (1 - _health);
 		if(!(_unit getVariable ["MAZ_EZM_doesHaveCustomSkills",false])) then {
-			_unit setSkill _skill;
+			[_unit, _skill] remoteExec ["setSkill"];
 		};
 
 		[_unit,_respawn] call MAZ_EZM_applyCreateRespawnToUnitAttribs;
@@ -2424,15 +2424,10 @@ comment "Attributes Dialog Creation";
 		params ["_vehicle","_attributes"];
 		_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],"_respawn"];
 		_vehicle setDamage (1-_health);
-		[[_vehicle,_fuel,_lockState,_engineState,_lightState], {
-			[_this,{
-				params ["_vehicle","_fuel","_lockState","_engineState","_light"];
-				_vehicle setFuel _fuel;
-				_vehicle lock (parseNumber _lockState);
-				_vehicle engineOn _engineState;
-				_vehicle setPilotLight _light;
-			}] remoteExec ["spawn",owner (_this # 0)];
-		}] remoteExec ["spawn",2];
+		[_vehicle,_fuel] remoteExec ["setFuel"];
+		[_vehicle,_lockState] remoteExec ["lock"];
+		[_vehicle,_engineState] remoteExec ["engineOn"];
+		[_vehicle,_lightState] remoteExec ["setPilotLight"];
 
 		[_vehicle,_respawn] call MAZ_EZM_applyCreateRespawnToUnitAttribs;
 	};
@@ -2565,17 +2560,11 @@ comment "Attributes Dialog Creation";
 		params ["_vehicle","_attributes"];
 		_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],["_colLightState",isCollisionLightOn _vehicle],"_respawn"];
 		_vehicle setDamage (1-_health);
-
-		[[_vehicle,_fuel,_lockState,_engineState,_lightState,_colLightState], {
-			[_this,{
-				params ["_vehicle","_fuel","_lockState","_engineState","_light","_colLight"];
-				_vehicle setFuel _fuel;
-				_vehicle lock (parseNumber _lockState);
-				_vehicle engineOn _engineState;
-				_vehicle setPilotLight _light;
-				_vehicle setCollisionLight _colLight;
-			}] remoteExec ["spawn",owner (_this # 0)];
-		}] remoteExec ["spawn",2];
+		[_vehicle,_fuel] remoteExec ["setFuel"];
+		[_vehicle,_lockState] remoteExec ["lock"];
+		[_vehicle,_engineState] remoteExec ["engineOn"];
+		[_vehicle,_lightState] remoteExec ["setPilotLight"];
+		[_vehicle,_colLightState] remoteExec ["setCollisionLight"];
 
 		[_vehicle,_respawn] call MAZ_EZM_applyCreateRespawnToUnitAttribs;
 	};
@@ -5859,7 +5848,7 @@ MAZ_EZM_fnc_initFunction = {
 				[
 					"SLIDER",
 					"Duration of Suppress",
-					[5, 100, 10]
+					[5, 60, 10]
 				]
 			], {
 				params ["_values", "_entity", "_display"];
@@ -5880,8 +5869,9 @@ MAZ_EZM_fnc_initFunction = {
 					[_entity, _duration, _target] spawn {
 						params ["_entity", "_duration", "_target"];
 						_entity setVariable ["MAZ_EZM_isSuppressing", true, true];
-						_entity doSuppressivefire _target;
+						_entity doSuppressiveFire _target;
 						_entity suppressFor _duration;
+						private _behaviorPrior = behaviour _entity;
 						_entity setBehaviour "COMBAT";
 						_entity doWatch _target;
 
@@ -5913,6 +5903,7 @@ MAZ_EZM_fnc_initFunction = {
 						
 						_entity doWatch objNull;
 						deletevehicle _target;
+						_entity setBehaviour _behaviorPrior;
 						_entity setVariable ["MAZ_EZM_isSuppressing", false, true];
 					};
 				}, _entity, [_entity, _duration], "a3\ui_f\data\igui\cfg\cursors\attack_ca.paa", 45] call MAZ_EZM_fnc_selectSecondaryposition;
@@ -8830,7 +8821,7 @@ MAZ_EZM_fnc_initFunction = {
 				private _dir = vectorDir _building;
 				private _up = vectorUp _building;
 				private _worldPos = getPosWorld _building;
-				_building hideObjectGlobal true;
+				[_building,true] remoteExec ["hideObjectGlobal",2];
 				[_building,false] remoteExec ['allowDamage'];
 				private _temp = _building;
 				_building = _buildingType createVehicle [0,0,0];
