@@ -4101,6 +4101,7 @@ MAZ_EZM_fnc_createUnitForZeus = {
 	private _pos = getPos player;
 	private _zeusLogic = getAssignedCuratorLogic player;
 	if(isNull _zeusLogic) exitWith {};
+	private _zeusIndex = allCurators find _zeusLogic;
 	private _isGameMod = false;
 	private _grp = createGroup [_sideToJoin,true];
 	private _zeusObject = _grp createUnit ["B_officer_F",[0,0,0],[],0,"CAN_COLLIDE"];
@@ -4115,10 +4116,16 @@ MAZ_EZM_fnc_createUnitForZeus = {
 	[_zeusLogic] remoteExec ['unassignCurator',2];
 
 	waitUntil{(getAssignedCuratorUnit _zeusLogic) != _oldPlayer};
+	deleteVehicle _oldPlayer;
 	waitUntil{isNull (getAssignedCuratorUnit _zeusLogic)};
 
-	while{isNull (getAssignedCuratorUnit _zeusLogic)} do {
-		[player,_zeusLogic] remoteExec ['assignCurator',2];
+	private _wl = missionNamespace getVariable ["MAZ_EZM_CuratorWhitelist",[]];
+	_wl pushBackUnique _zeusLogic;
+	missionNamespace setVariable ["MAZ_EZM_CuratorWhitelist",_wl,true];
+	waitUntil {_zeusLogic in (missionNamespace getVariable ["MAZ_EZM_CuratorWhitelist",[]])};
+
+	while{isNull (getAssignedCuratorUnit (allCurators select _zeusIndex))} do {
+		[player,allCurators select _zeusIndex] remoteExec ['assignCurator',2];
 		sleep 0.1;
 	};
 
@@ -4131,7 +4138,7 @@ MAZ_EZM_fnc_createUnitForZeus = {
 	} else {
 		_zeusObject setUnitLoadout _zeusLoadout;
 	};
-	sleep 0.1;
+	sleep 0.2;
 
 	while {(isNull (findDisplay 312))} do {
 		openCuratorInterface;
@@ -4139,12 +4146,11 @@ MAZ_EZM_fnc_createUnitForZeus = {
 
 	waitUntil{!(isNull (findDisplay 312))};
 	playSound "beep_target";
-	sleep 0.1;
+	sleep 0.2;
 
 	[_oldPlayer,true] remoteExec ["hideObjectGlobal"];
 	[_zeusObject,_namePlayer] remoteExec ["setName"];
 	[_zeusObject] call MAZ_EZM_fnc_addObjectToInterface;
-	deleteVehicle _oldPlayer;
 	
 	["Zeus Unit created, you can adjust its loadout by setting a Zeus Loadout."] call MAZ_EZM_fnc_systemMessage;
 	if(isNil "MAZ_EZM_mainLoop_Active") then {
@@ -13650,52 +13656,6 @@ MAZ_EZM_fnc_initFunction = {
             _soldier
         }; 
 
-		MAZ_EZM_fnc_addVehicleCrewActions = {
-			[_this, {
-				params ["_mainVehicle","_turretVehicle",["_separateGunner",true],["_separateCommander",false]];
-
-				_turretVehicle lock 2;
-				_mainVehicle setVariable ["MAZ_EZM_turretVehicle",_turretVehicle,true];
-				_turretVehicle setVariable ["MAZ_EZM_mainVehicle",_mainVehicle,true];
-
-				[[_mainVehicle,_turretVehicle,_separateGunner,_separateCommander], {
-					params ["_mainVehicle","_turretVehicle",["_separateGunner",true],["_separateCommander",false]];
-					_turretVehicle addAction [
-						"Get in Driver",
-						{
-							params ["_target", "_caller", "_actionId", "_arguments"];
-							_arguments params ["_mainVehicle","_turretVehicle"];
-							moveOut player;
-							player moveInDriver _mainVehicle;
-						},
-						[_mainVehicle,_turretVehicle],
-						1.5,
-						true,
-						true,
-						"",
-						"(vehicle _this == _this && _this distance _target < 4) || (vehicle _this == _target) && isNull (driver (_target getVariable 'MAZ_EZM_mainVehicle'))"
-					];
-					if(_separateGunner) then {
-						_mainVehicle addAction [
-							"Get in Gunner",
-							{
-								params ["_target", "_caller", "_actionId", "_arguments"];
-								_arguments params ["_mainVehicle","_turretVehicle"];
-								moveOut player;
-								player moveInGunner _turretVehicle;
-							},
-							[_mainVehicle,_turretVehicle],
-							1.5,
-							true,
-							true,
-							"",
-							"(vehicle _this == _this && _this distance _target < 4) || (vehicle _this == _target) && isNull (gunner (_target getVariable 'MAZ_EZM_turretVehicle'))"
-						];
-					};
-				}] remoteExec ["spawn",0,_mainVehicle];
-			}] remoteExec ["spawn",2];
-		};
-
 	comment "Pylon Editor";
 
 		"TODO : Rewrite and use a GUI instead. 3D icons is just too aids to handle with the internal bays.";
@@ -15643,7 +15603,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 				[] spawn {
 					while {!isNull (findDisplay 312)} do {
 						call MAZ_EZM_fnc_detectRespawnsUnavailable;
-						call MAZ_EZM_fnc_detectLowServerPerformance;
+						"call MAZ_EZM_fnc_detectLowServerPerformance";
 						sleep 5;
 					};
 				};
