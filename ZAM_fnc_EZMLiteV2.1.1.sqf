@@ -4924,17 +4924,23 @@ MAZ_EZM_fnc_initFunction = {
 		MAZ_EZM_fnc_cleanerWaitTilNoPlayers = {
 			params ["_object"];
 			if(!MAZ_EZM_enableCleaner) exitWith {};
-			waitUntil {!alive _object};
-			waitUntil {
-				(count (allPlayers select { (getPos _x) distance _object < 3000 })) == 0 ||
-				isNull _object
-			};
-			if(!isNull _object) then {
-				sleep 300;
-				comment "After 5 minutes check if players are still near, if they are, call function again, else delete.";
-				if(count (allPlayers select { (getPos _x) distance _object < 3000 }) != 0) exitWith {[_object] spawn MAZ_EZM_fnc_cleanerWaitTilNoPlayers;};
-				deleteVehicle _object;
-			};
+			[[_object], {
+				private _fnc_cleaner = {
+					params ["_object"];
+					waitUntil {uiSleep 0.1; !alive _object};
+					waitUntil {
+						(count (allPlayers select { (getPos _x) distance _object < 1600 })) == 0 ||
+						isNull _object
+					};
+					if(!isNull _object) then {
+						sleep 300;
+						"After 5 minutes check if players are still near, if they are, call function again, else delete.";
+						if(count (allPlayers select { (getPos _x) distance _object < 1600 }) != 0) exitWith {[_object] spawn _fnc_cleaner;};
+						deleteVehicle _object;
+					};
+				};
+				_this spawn _fnc_cleaner;
+			}] remoteExec ["spawn",2];
 		};
 
 		MAZ_EZM_fnc_ezmShamelessPlug = {
