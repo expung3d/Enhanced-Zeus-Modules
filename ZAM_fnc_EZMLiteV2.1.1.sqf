@@ -6018,6 +6018,35 @@ MAZ_EZM_fnc_initFunction = {
 	comment "maybe we should check if players are in a vehicle during cutscene, if so disable vehicle simulation";
 	comment "TODO: exclude curators from cutscene because it breaks their camera. instead, display systemChat showing status of cutscene.";
 
+	HYPER_fnc_splitMaxLine = {
+		params ["_inputString"];
+		private _maxLength = 22;
+		private _words = _inputString splitString " ";
+		private _lines = [];
+		private _currentLine = "";
+		
+		{
+			private _word = _x;
+			if (_currentLine isEqualTo "") then {
+				_currentLine = _word;
+			} else {
+				private _tentativeLine = format ["%1 %2", _currentLine, _word];
+				if (count _tentativeLine <= _maxLength) then {
+					_currentLine = _tentativeLine;
+				} else {
+					_lines pushBack _currentLine;
+					_currentLine = _word;
+				};
+			};
+		} forEach _words;
+		
+		if (!(_currentLine isEqualTo "")) then {
+			_lines pushBack _currentLine;
+		};
+		
+		_lines
+	};
+
 	MAZ_EZM_fnc_handleIntroCinematic = {
 		params ["_cinematicType","_backgroundSong","_intertitles", "_target"];
 
@@ -6057,14 +6086,26 @@ MAZ_EZM_fnc_initFunction = {
 			case "random": {playMusic (selectRandom ["EventTrack01a_F_EPA","EventTrack01a_F_EPB","EventTrack01_F_EPA","EventTrack03_F_EPB","EventTrack03a_F_EPB","EventTrack02b_F_EPC"]);};
 			default {playMusic "EventTrack01a_F_EPA";};
 		};
-		[0, 4, true, true] call BIS_fnc_cinemaBorder;
-		cutText ["", "BLACK", 4];
+		private _delay = 6;
+		[0, _delay, true, true] call BIS_fnc_cinemaBorder;
+		cutText ["", "BLACK", _delay];
 		[format["<t color='#ffffff' font='PuristaBold' size='2'>%1</t><t color='#B57F50' font='TahomaB' size='0.6'><br />%2</t>",_briefingName, _author],0,0.3,4,1,0,789] spawn BIS_fnc_dynamicText;
 
-		sleep 2;
+		sleep _delay;
 		cutText ["", "PLAIN", 2];
+		comment "cutRsc
+		 [""SplashNoise"", ""PLAIN""];";
+		[_intertitles] spawn {
+			params ["_intertitles"];
+			private _line1 = [_intertitles # 0] call HYPER_fnc_splitMaxLine;
+			private _line2 = [_intertitles # 1] call HYPER_fnc_splitMaxLine;
+			sleep 3;
+			_line1 spawn BIS_fnc_infoText;
+			sleep 5;
+			_line2 spawn BIS_fnc_infoText;
+		};
 		if (_cinematicType == "Flyby") then {
-			comment "in orbit mode, we select the module location as our target, and the camera paths are automatically designated at 0, 90, and 180 degrees";
+			comment "in flyby mode, we select the module location as our target, and the camera paths are automatically designated at 0 and 90 degrees";
 			private _camTarget = "Land_HelipadEmpty_F" createVehicleLocal _target;
 			private _circleRadius = 200;
 			private _camHeight = 200;
@@ -6110,8 +6151,8 @@ MAZ_EZM_fnc_initFunction = {
 					"COMBO",
 					"Background Song",
 					[
-						["epic", "action", "stealth", "random"],
-						["Epic", "Action", "Stealth", "Random Event Track"],
+						["random", "epic", "action", "stealth"],
+						["Random Event Track", "Epic", "Action", "Stealth"],
 						0
 					]
 				],
@@ -16071,7 +16112,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 				MAZ_Cinematics = [
 					MAZ_zeusModulesTree,
 					"Cinematics",
-					"a3\3den\data\displays\display3den\panelleft\entitylist_delete_ca.paa"
+					"a3\ui_f\data\gui\cfg\keyframeanimation\iconcamera_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddCategory;
 
 				[
@@ -16080,7 +16121,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					"Intro Cinematic",
 					"Create an exciting cinematic introduction to your missions (by bijx)",
 					"MAZ_EZM_fnc_introCinematicModule",
-					"a3\3den\data\displays\display3den\panelleft\entitylist_delete_ca.paa"
+					"a3\ui_f\data\igui\cfg\islandmap\iconcamera_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
 			comment "Clean Up Stuff";
