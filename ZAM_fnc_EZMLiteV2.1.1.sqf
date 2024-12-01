@@ -5867,7 +5867,6 @@ MAZ_EZM_fnc_initFunction = {
 
 					private _target = (createGroup [east,true]) createUnit ["O_Soldier_unarmed_F",_position,[],0,"CAN_COLLIDE"];
 					_target disableAI "MOVE";
-					_target hideObject true;
 
 					_target hideObjectGlobal true;
 					_target setUnitPOs "UP";
