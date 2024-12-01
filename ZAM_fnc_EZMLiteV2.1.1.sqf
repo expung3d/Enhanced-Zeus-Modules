@@ -6056,12 +6056,12 @@ MAZ_EZM_fnc_initFunction = {
 		comment "if zeus shouldn't see the cutscene, we need to get the player set differenced with zeus player set";
 		private _allPlayers = [];
 		if(_zeusCanSeeCutscene) then {
-			comment "always prevent game mod from seeing the cutscene to avoid breaking their camera; only works if they don't have ezm running as well";
+			comment "remove all curators except zeus who called the script";
+			private _zeusPlayers = allCurators apply {getAssignedCuratorUnit _x};
+			_allPlayers = (allPlayers - _zeusPlayers) + [player];
+		} else {
 			private _zeusPlayers = allCurators apply {getAssignedCuratorUnit _x};
 			_allPlayers = allPlayers - _zeusPlayers;
-		} else {
-			comment "make sure zeus running command is also excluded";
-			_allPlayers = allPlayers - allCurators - player;
 		};
 
 		comment "get mission name";
