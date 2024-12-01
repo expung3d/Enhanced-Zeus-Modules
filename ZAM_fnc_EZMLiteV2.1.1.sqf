@@ -5841,7 +5841,7 @@ MAZ_EZM_fnc_initFunction = {
 				["Unit is now surrendered.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 			};
 		};
-		
+
 		MAZ_EZM_fnc_suppressiveFireModule = {
 			params ["_entity"];
 		
@@ -12650,8 +12650,7 @@ MAZ_EZM_fnc_initFunction = {
 				params ["_values","_pos","_display"];
 				_values params ["_radius"];
 				
-				private ["_modelString","_newObj","_vectorDirUp","_position","_hideTerrain","_type","_blackListFences"];
-				_blackListFences = [
+				private _blackListFences = [
 					"land_pipewall_conretel_8m_f","land_mil_wiredfence_gate_f","land_mil_concretewall_f","land_cncbarrier_f","land_cncbarrier_stripes_f",
 					"land_concrete_smallwall_8m_f","land_concrete_smallwall_4m_f",
 					"land_brickwall_04_l_pole_f","land_brickwall_03_l_pole_f",
@@ -12710,15 +12709,19 @@ MAZ_EZM_fnc_initFunction = {
 				private  _count = 0;
 				{
 					if(!alive _x) then {continue};
-					_modelString = (str _x) splitString " .";
-					_type = format ['land_%1',_modelString select (count _modelString) - 2];
+					private _modelString = ((str _x) splitString ":" select 1) select [1];
+					private _removeExtension = _modelString splitString "." select 0; 
+					private _type = format ['land_%1',_removeExtension];
 					
 					if !((toLower _type) in _blackListFences) then {
 						_count = _count + 1;
-						_position = getPosASL _x;
-						_vectorDirUp = [vectorDir _x,vectorUp _x];
-						_newObj = createSimpleObject [format ["%1",_type],_position];
-						_newObj setVectorDirAndUp [vectorDir _x,vectorUp _x];
+						private _position = getPosASL _x;
+						private _newObj = createSimpleObject [format ["%1",_type],_position];
+						_newObj setPosASL _position;
+						_newObj setVectorDirAndUp [vectorDir _x,surfaceNormal _position];
+						if("pillar" in _type) then {
+							_newObj setVectorUp (vectorUp _x);
+						};
 						[_x,true] remoteExec ["hideObjectGlobal",2];
 						[_x,false] remoteExec ["allowDamage"];
 					};
