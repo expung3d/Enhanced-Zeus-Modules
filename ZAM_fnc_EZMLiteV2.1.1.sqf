@@ -6090,6 +6090,13 @@ MAZ_EZM_fnc_initFunction = {
 		};
 		if (_author != "") then {_author = format [localize "STR_FORMAT_AUTHOR_SCRIPTED",_author];};
 
+		comment "disable simulation on any vehicles to avoid crashing mid cutscene";
+		{
+			if !(_x == vehicle _x) then {
+				[vehicle _x, false] remoteExec ["enableSimulationGlobal", 2];
+			};
+		} forEach allPlayers;
+
 		comment "show intro titles";
 		switch (_backgroundSong) do {
 			case "epic": {playMusic "Music_Arrival";};
@@ -6187,6 +6194,12 @@ MAZ_EZM_fnc_initFunction = {
 		"colorCorrections" ppEffectAdjust[1,1,0,[0,0,0,0],[1,1,1,1],[0,0,0,0]];
 		"colorCorrections" ppEffectCommit 0;
 		"colorCorrections" ppEffectEnable true;
+
+		{
+			if !(_x == vehicle _x) then {
+				[vehicle _x, true] remoteExec ["enableSimulationGlobal", 2];
+			};
+		} forEach allPlayers;
 
 		["Intro cinematic completed."] call MAZ_EZM_fnc_systemMessage;
 
