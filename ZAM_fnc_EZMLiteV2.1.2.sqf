@@ -4010,6 +4010,7 @@ comment "Dynamic Faction Addons";
 	};
 
 	MAZ_EZM_fnc_setInterfaceToRefresh = {
+		params [["_refreshTime",10]];
 		private _refresh = missionNamespace getVariable "MAZ_EZM_refreshTime";
 		if(isNil "_refresh") then {
 			private _refreshOnClose = ["onZeusInterfaceClosed", {
@@ -4020,7 +4021,7 @@ comment "Dynamic Faction Addons";
 				};
 			}] call MAZ_EZM_fnc_addEZMEventHandler;
 			
-			missionNamespace setVariable ["MAZ_EZM_refreshTime",time + 10];
+			missionNamespace setVariable ["MAZ_EZM_refreshTime",time + _refreshTime];
 			_refreshOnClose spawn {
 				while {time < (missionNamespace getVariable "MAZ_EZM_refreshTime")} do {
 					titleText [format ["NEW MODULES ADDED TO EZM\nYOUR ZEUS INTERFACE WILL BE AUTOMATICALLY REFRESHED IN %1 SECONDS", ceil ((missionNamespace getVariable "MAZ_EZM_refreshTime") - time)],"PLAIN DOWN",0.01];
@@ -4035,7 +4036,7 @@ comment "Dynamic Faction Addons";
 				["onZeusInterfaceClosed", _this] call MAZ_EZM_fnc_removeEZMEventHandler;
 			};
 		} else {
-			missionNamespace setVariable ["MAZ_EZM_refreshTime", time + 10];
+			missionNamespace setVariable ["MAZ_EZM_refreshTime", time + _refreshTime];
 		};
 	};
 
