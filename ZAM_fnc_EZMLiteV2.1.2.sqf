@@ -611,7 +611,6 @@ comment "Dialog Creation";
 		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
 
 		_numOfEdits = [_numOfEdits,2,3] call BIS_fnc_clamp;
-		private _width = if(_numOfEdits == 2) then {6.5} else {4.5};
 
 		private _labelColors = [[0.765,0.18,0.1,1],[0.575,0.815,0.22,1],[0.26,0.52,0.92,1]];
 
