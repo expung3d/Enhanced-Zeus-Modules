@@ -468,10 +468,10 @@ comment "Dialog Creation";
 			["_min",0,[0]],
 			["_max",100,[100]],
 			["_defaultValue",50,[50]],
-			["_isPercent",false,[false]],
 			["_drawRadius",false,[false]],
 			["_radiusCenter",objNull,[objNull,[]]],
-			["_radiusColor",[1,1,1,1],[[]]]
+			["_radiusColor",[1,1,1,1],[[]]],
+			["_isPercent",false,[false]]
 		];
 
 		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
@@ -765,6 +765,9 @@ comment "Dialog Creation";
 					[_display,_data,_onChange] call MAZ_EZM_fnc_createSidesRow;
 				};
 				case "SLIDER": {
+					_data params ["_min","_max","_default","_radiusCenter","_radiusColor","_isPercent"];
+					private _drawRadius = (!isNull _radiusCenter) || typeName _radiusCenter == "ARRAY";
+					_data insert [3,[_drawRadius]];
 					[_display,_data,_onChange] call MAZ_EZM_fnc_createSliderRow;
 				};
 				case "TOOLBOX": {
