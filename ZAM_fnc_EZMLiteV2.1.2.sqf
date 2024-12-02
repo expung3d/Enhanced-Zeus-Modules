@@ -615,21 +615,25 @@ comment "Dialog Creation";
 
 		private _labelColors = [[0.765,0.18,0.1,1],[0.575,0.815,0.22,1],[0.26,0.52,0.92,1]];
 
+		private _startingX = ["W",10] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
+		private _totalWidth = ["W",16] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
+		private _widthPerVector = _totalWidth / _numOfEdits;
+		private _labelWidth = ["W",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
+		private _editWidth = _widthPerVector - _labelWidth - (["W",0.2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+
 		for "_i" from 0 to (_numOfEdits - 1) do {
-			private _widthPosLabel = (_i * _width) + ((_i + 1) * (0.2 * 3)) + 10;
-			private _widthPos = _widthPosLabel + 1.2;
-			_widthPos = ["W",_widthPos] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
-			_widthPosLabel = ["W",_widthPosLabel] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
+			private _labelPosX = (_widthPerVector * _i) + (["W",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+			private _editPosX = _labelPosX + (["W",1.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 
 			private _editLabel = _display ctrlCreate ["RscStructuredText",-1,_rowControlGroup];
 			_editLabel ctrlSetStructuredText parseText (format ["<t align='center'>%1</t>",_labels select _i]);
 			_editLabel ctrlSetBackgroundColor (_labelColors select _i);
-			_editLabel ctrlSetPosition [_widthPosLabel,0,["W",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
+			_editLabel ctrlSetPosition [_startingX + _labelPosX,0,["W",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
 			_editLabel ctrlCommit 0;
 
 			private _editBox  = _display ctrlCreate ["RscEdit",[220,221,222] select _i,_rowControlGroup];
 			_editBox ctrlSetText (str (_defaultValues select _i));
-			_editBox ctrlSetPosition [_widthPos,0,["W",_width - 1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
+			_editBox ctrlSetPosition [_startingX + _editPosX,0,_editWidth,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
 			_editBox ctrlCommit 0;
 		};
 
