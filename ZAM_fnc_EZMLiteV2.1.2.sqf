@@ -16961,6 +16961,10 @@ MAZ_EZM_addZeusKeybinds_312 = {
 		(findDisplay 312) displayRemoveEventHandler ["KeyDown",MAZ_EZM_copyPasteFix];
 	};
 
+	if(!isNil "MAZ_EZM_SelfTeleport") then {
+		(findDisplay 312) displayRemoveEventHandler ["KeyDown",MAZ_EZM_SelfTeleport];
+	};
+
 	MAZ_EZM_closeZeusInterface = (findDisplay 312) displayAddEventHandler ["KeyDown", {
 		params ["_displayOrControl", "_key", "_shift", "_ctrl", "_alt"];
 		if(_key == 21 && _ctrl) then {
@@ -17255,6 +17259,25 @@ MAZ_EZM_addZeusKeybinds_312 = {
 			};
 		};
 	}];
+
+	MAZ_EZM_SelfTeleport = (findDisplay 312) displayAddEventHandler ["KeyDown",{  
+		params ["_displayorcontrol", "_key", "_shift", "_ctrl", "_alt"];  
+		_keyCode_keyPressed = _key;  
+		_keyCode_H = 35;  
+		if (  
+			(_keyCode_keyPressed == _keyCode_H) &&   
+			(_ctrl) && (not _shift) &&(not _alt)  
+		)
+		then {  
+			if (visibleMap) then {  
+				_zeusMapCtrl_IDC = 50;  
+				vehicle player setPos ((_displayorcontrol displayCtrl _zeusMapCtrl_IDC) ctrlMapScreenToWorld (getMousePosition));  
+			}
+			else {  
+        		vehicle player setPos (screenToWorld (getMousePosition));  
+			};  
+		};  
+	}]; 
 };
 
 MAZ_EZM_fnc_switchGroupSetup = {
