@@ -369,6 +369,8 @@ The basic structure of a row in the content array will look like this:
 
 ##### COMBO
 The combo box creates a dropdown list of things to choose from and returns an index of what was selected. 
+
+The value returned from this element is the data string or, if data is left empty, a string of the selected index. Use `parseNumber` to get the index from the string.
 ```sqf
 [
 	"COMBO", 
@@ -405,6 +407,8 @@ This is the simplest implementation of a COMBO, however, we can get more complex
 ##### EDIT
 The EDIT creates a row that allows for inputting text. This can be either one line or multiple lines. We can change this using a subtype. Subtypes are used by having the main type followed by the subtype after a ":": "EDIT:MULTI").
 
+The value returned from this is a string of the text.
+
 ```sqf
 //Subtypes: MULTI.
 [
@@ -421,6 +425,9 @@ The EDIT creates a row that allows for inputting text. This can be either one li
 
 ##### LIST
 The LIST creates a row that has a list of items to choose from. Similar to the combo except it isn't a dropdown, the list is always expanded. 
+
+The value returned from this element is the data string or, if data is left empty, a string of the selected index. Use `parseNumber` to get the index from the string.
+
 ```sqf
 [
 	"LIST", 
@@ -439,6 +446,8 @@ The text labels can be edited in the same way as the COMBO ones can with tooltip
 
 ##### SIDES
 The SIDES creates a row with all the sides and allows for the sides to be chosen from.
+
+The value returned from this element is either a single SIDE or an ARRAY of SIDES. Depending on if the element allows multiple selections or not.
 ```sqf
 [
 	"SIDES",
@@ -453,8 +462,9 @@ The SIDES creates a row with all the sides and allows for the sides to be chosen
 
 ##### SLIDER
 The SLIDER creates a row with a slider that allows them to pick any number between two.
+
+The value returned from this element is a float value from the slider's position.
 ```sqf
-//Subtypes: RADIUS
 [
 	"SLIDER",
 	"Set health",
@@ -462,7 +472,7 @@ The SLIDER creates a row with a slider that allows them to pick any number betwe
 		0, //Minimum value
 		1, //Maximum value
 		0, //Default value
-		objNull, //Radius center (For use with RADIUS subtype)
+		objNull, //Radius center (Can either be an OBJECT or position ARRAY) If left as objNull no radius will be drawn.
 		[1,1,1,0.7], //Radius color
 		false //Is percentage value
 	]
@@ -473,6 +483,8 @@ The SLIDER creates a row with a slider that allows them to pick any number betwe
 
 ##### TOOLBOX
 The TOOLBOX creates a toggle switch. Because scripting has been neglected when compared to modding we can only have two values available in a toolbox, unfortunately.
+
+The value returned from this element is a boolean value.
 ```sqf
 //Subtypes: YESNO, ENABLED
 //YESNO creates selections of NO or YES
@@ -491,6 +503,8 @@ The TOOLBOX creates a toggle switch. Because scripting has been neglected when c
 
 ##### VECTOR
 The VECTOR is not as cleanly made as the rest and is hardly used. However, it creates up to 3 edit boxes for modifying positions, rotation, etc.
+
+The value returned from this element is an array of the vector values.
 ```sqf
 [
 	"VECTOR",
