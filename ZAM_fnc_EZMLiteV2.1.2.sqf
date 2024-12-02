@@ -613,6 +613,8 @@ comment "Dialog Creation";
 		_numOfEdits = [_numOfEdits,2,3] call BIS_fnc_clamp;
 		private _width = if(_numOfEdits == 2) then {6.5} else {4.5};
 
+		private _labelColors = [[0.765,0.18,0.1,1],[0.575,0.815,0.22,1],[0.26,0.52,0.92,1]];
+
 		for "_i" from 0 to (_numOfEdits - 1) do {
 			private _widthPosLabel = (_i * _width) + ((_i + 1) * (0.2 * 3)) + 10;
 			private _widthPos = _widthPosLabel + 1.2;
@@ -626,7 +628,7 @@ comment "Dialog Creation";
 			_editLabel ctrlCommit 0;
 
 			private _editBox  = _display ctrlCreate ["RscEdit",[220,221,222] select _i,_rowControlGroup];
-			_editBox ctrlSetText (str (_defaultValue select _i));
+			_editBox ctrlSetText (str (_defaultValues select _i));
 			_editBox ctrlSetPosition [_widthPos,0,["W",_width - 1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
 			_editBox ctrlCommit 0;
 		};
@@ -766,7 +768,7 @@ comment "Dialog Creation";
 				};
 				case "SLIDER": {
 					_data params ["_min","_max","_default","_radiusCenter","_radiusColor","_isPercent"];
-					private _drawRadius = (!isNull _radiusCenter) || typeName _radiusCenter == "ARRAY";
+					private _drawRadius = (typeName _radiusCenter isEqualTo "OBJECT" && {!isNull _radiusCenter}) || typeName _radiusCenter == "ARRAY";
 					_data insert [3,[_drawRadius]];
 					[_display,_data,_onChange] call MAZ_EZM_fnc_createSliderRow;
 				};
@@ -6482,7 +6484,7 @@ MAZ_EZM_fnc_initFunction = {
 				params ["_values","_pos","_display"];
 				_values params ["_directionIndex","_side","_helicopterType","_numToLeave"];
 				_display closeDisplay 1;
-				private _dir = switch (_directionIndex) do {
+				private _dir = switch (parseNumber _directionIndex) do {
 					case 0: {'North'};
 					case 1: {'South'};
 					case 2: {'East'};
@@ -9944,7 +9946,7 @@ MAZ_EZM_fnc_initFunction = {
 					]
 				],
 				[
-					"SLIDER:RADIUS",
+					"SLIDER",
 					"IED Explosive Radius",
 					[3,15,7,_pos,[1,0,0,1]]
 				],
@@ -9956,13 +9958,14 @@ MAZ_EZM_fnc_initFunction = {
 			],{
 				params ["_values","_pos","_display"];
 				_values params ["_iedType","_radius","_sides"];
+				systemChat (str _values);
 				private _trashCanTypes = ["Land_GarbageBin_01_F","TrashBagHolder_01_F"];
 				private _cardboardBox = ["Land_PaperBox_01_small_destroyed_brown_F"];
 				private _luggageTypes = ["Land_LuggageHeap_01_F","Land_LuggageHeap_03_F"];
 				private _barrelTypes = ["Land_MetalBarrel_empty_F","Land_BarrelEmpty_grey_F","Land_BarrelEmpty_F"];
 				private _vehicleWreckTypes = ["Land_Wreck_Skodovka_F","Land_Wreck_CarDismantled_F","Land_Wreck_Truck_F","Land_Wreck_Van_F","Land_Wreck_Offroad_F","Land_Wreck_Truck_dropSide_F","Land_Wreck_Offroad2_F","Land_Wreck_Car3_F","Land_Wreck_Car_F","Land_Wreck_Car2_F"];
 
-				_iedType = switch (_iedType) do {
+				_iedType = switch (parseNumber _iedType) do {
 					case 0: {selectRandom _cardboardBox};
 					case 1: {selectRandom _luggageTypes};
 					case 2: {selectRandom _trashCanTypes};
@@ -10195,7 +10198,7 @@ MAZ_EZM_fnc_initFunction = {
 					[
 						0,
 						1,
-						1,
+						markerAlpha _marker,
 						objNull,
 						[1,1,1,1],
 						true
@@ -10335,7 +10338,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_3DSpeakModule = {
 			params ["_entity"];
-			if (isNull _object) exitWith {["Place this module onto a unit!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if (isNull _entity) exitWith {["Place this module onto a unit!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 			[
 				"3D Speak Message",
 				[
@@ -13314,7 +13317,7 @@ MAZ_EZM_fnc_initFunction = {
 				[
 					"TOOLBOX",
 					"Disable Game Mod?",
-					[true,[["No, enable","Enables Game Moderator Rights."],["Yes, disable","Removes Game Moderator rights."]]]
+					[missionNamespace getVariable ["MAZ_EZM_disableModerator",true],[["No, enable","Enables Game Moderator Rights."],["Yes, disable","Removes Game Moderator rights."]]]
 				]
 			],{
 				params ["_values","_args","_display"];
