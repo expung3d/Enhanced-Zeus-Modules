@@ -6103,6 +6103,7 @@ MAZ_EZM_fnc_initFunction = {
 		};
 
 		comment "Post processing";
+		comment "TODO: this probably overwrites existing post-processing effects on player clients, maybe there is a way to store current PP settings before changing it, and then setting it to those settings later";
 		switch (_postProcess) do {
 			case "none": {
 				[[],HYPER_remotePostProcessing] remoteExec ["call", _allPlayers];
@@ -6126,37 +6127,53 @@ MAZ_EZM_fnc_initFunction = {
 
 		if (_cinematicType == "Flyby") then {
 			comment "in flyby mode, we select the module location as our target, and the camera paths are automatically designated at 0 and 90 degrees";
-			private _camTarget = "Land_HelipadEmpty_F" createVehicleLocal _target;
-			private _circleRadius = 200;
-			private _camHeight = 200;
-			private _camSrc0 = [_target select 0, (_target select 1) + _circleRadius, (_target select 2) + _camHeight];
-			private _camSrc90 = [(_target select 0) + _circleRadius, _target select 1, (_target select 2) + _camHeight];
-			
-			private _camera = "camera" camCreate _camSrc0;
-			_camera cameraEffect ["internal", "back"];
-			_camera camPrepareTarget _camTarget;
-			_camera camSetFov 1;
-			_camera camCommitPrepared 0;
+			HYPER_fnc_remoteCamera = {
+				params ["_target"];
+				private _camTarget = "Land_HelipadEmpty_F" createVehicleLocal _target;
+				private _circleRadius = 200;
+				private _camHeight = 200;
+				private _camSrc0 = [_target select 0, (_target select 1) + _circleRadius, (_target select 2) + _camHeight];
+				private _camSrc90 = [(_target select 0) + _circleRadius, _target select 1, (_target select 2) + _camHeight];
+				
+				private _camera = "camera" camCreate _camSrc0;
+				_camera cameraEffect ["internal", "back"];
+				_camera camPrepareTarget _camTarget;
+				_camera camSetFov 1;
+				_camera camCommitPrepared 0;
 
-			_camera camPreparePos _camSrc90;
-			_camera camCommitPrepared 15;
-			waitUntil { camCommitted _camera };
-			cutRsc ["RscStatic", "PLAIN"];
-			sleep 0.4;
-			_camera cameraEffect ["terminate", "back"];
-			cutText ["", "BLACK IN", 2];
-			[1, 2, true, true] remoteExec ["BIS_fnc_cinemaBorder", _allPlayers];
+				_camera camPreparePos _camSrc90;
+				_camera camCommitPrepared 15;
+				waitUntil { camCommitted _camera };
+				cutRsc ["RscStatic", "PLAIN"];
+				sleep 0.4;
+
+				_camera cameraEffect ["terminate", "back"];
+				camDestroy _camera;
+
+				comment "remove color correction right after cutscene is done so we don't have to remoteExec it";
+				"colorCorrections" ppEffectAdjust[1,1,0,[0,0,0,0],[1,1,1,1],[0,0,0,0]];
+				"colorCorrections" ppEffectCommit 0;
+				"colorCorrections" ppEffectEnable true;
+				
+				cutText ["", "BLACK IN", 2];
+				[1, 2, true, true] call BIS_fnc_cinemaBorder;
+			};
+			[[_target],HYPER_fnc_remoteCamera] remoteExec ["spawn", _allPlayers];
 		};
+
+		comment "TODO: fix this; super arbitrary number that exists because the spawn runs async on remote machines, so I gotta wait till the process is complete before attempting to clean up. Better way to do this?";
+		sleep 16;
 
 		comment "clean up scripts";
 		if(_zeusCanSeeCutscene) then {
 			[] call MAZ_EZM_fnc_refreshInterface;
 		};
 
-		"colorCorrections" ppEffectAdjust[1,1,0,[0,0,0,0],[1,1,1,1],[0,0,0,0]];
-		"colorCorrections" ppEffectCommit 0;
-		"colorCorrections" ppEffectEnable true;
 
+		[[],HYPER_remotePostProcessing] remoteExec ["call", _allPlayers];
+
+		comment "re-enable simulation on player vehicles";
+		comment "TODO: this may be an issue if the zeus crashes mid-cutscene, as the simulation will not be re-enabled for players. Maybe best to move this logic into the remotely executed code? idk";
 		{
 			if !(_x == vehicle _x) then {
 				[vehicle _x, true] remoteExec ["enableSimulationGlobal", 2];
