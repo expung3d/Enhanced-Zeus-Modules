@@ -6071,7 +6071,7 @@ MAZ_EZM_fnc_initFunction = {
 			default {["EventTrack01a_F_EPA"] remoteExec ["playMusic", _allPlayers];};
 		};
 		private _delay = 6;
-		[[0, _delay, true, true]] remoteExec ["BIS_fnc_cinemaBorder", _allPlayers];
+		[0, _delay, true, true] remoteExec ["BIS_fnc_cinemaBorder", _allPlayers];
 		[["", "BLACK", _delay]] remoteExec ["cutText", _allPlayers];
 		[format["<t color='#ffffff' font='PuristaBold' size='2'>%1</t><t color='#B57F50' font='TahomaB' size='0.6'><br />%2</t>",_briefingName, _author],0,0.3,4,1,0,789] spawn BIS_fnc_dynamicText;
 
@@ -6145,7 +6145,7 @@ MAZ_EZM_fnc_initFunction = {
 			sleep 0.4;
 			_camera cameraEffect ["terminate", "back"];
 			cutText ["", "BLACK IN", 2];
-			[[1, 2, true, true]] remoteExec ["BIS_fnc_cinemaBorder"];
+			[1, 2, true, true] remoteExec ["BIS_fnc_cinemaBorder", _allPlayers];
 		};
 
 		comment "clean up scripts";
