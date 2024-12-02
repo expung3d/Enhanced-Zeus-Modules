@@ -6070,7 +6070,7 @@ MAZ_EZM_fnc_initFunction = {
 			default {["EventTrack01a_F_EPA"] remoteExec ["playMusic", _allPlayers];};
 		};
 		private _delay = 6;
-		[0, _delay, true, true] call BIS_fnc_cinemaBorder;
+		[[0, _delay, true, true]] remoteExec ["BIS_fnc_cinemaBorder"];
 		cutText ["", "BLACK", _delay];
 		[format["<t color='#ffffff' font='PuristaBold' size='2'>%1</t><t color='#B57F50' font='TahomaB' size='0.6'><br />%2</t>",_briefingName, _author],0,0.3,4,1,0,789] spawn BIS_fnc_dynamicText;
 
@@ -6103,22 +6103,22 @@ MAZ_EZM_fnc_initFunction = {
 		comment "Post processing";
 		switch (_postProcess) do {
 			case "none": {
-				[[],HYPER_remotePostProcessing] remoteExec ["call"];
+				[[],HYPER_remotePostProcessing] remoteExec ["call", _allPlayers];
 			};
 			case "highcontrast": {
-				[[[1, 0.9, -0.002, [0.0, 0.0, 0.0, 0.0], [1.0, 0.6, 0.4, 0.6],  [0.199, 0.587, 0.114, 0.0]]],HYPER_remotePostProcessing] remoteExec ["call"];
+				[[[1, 0.9, -0.002, [0.0, 0.0, 0.0, 0.0], [1.0, 0.6, 0.4, 0.6],  [0.199, 0.587, 0.114, 0.0]]],HYPER_remotePostProcessing] remoteExec ["call", _allPlayers];
 			};
 			case "blue": {
-				[[[1, 1, 0, [0.0, 0.0, 0.0, 0.0], [0.6, 0.6, 1.8, 0.7],  [0.199, 0.587, 0.114, 0.0]]],HYPER_remotePostProcessing] remoteExec ["call"];
+				[[[1, 1, 0, [0.0, 0.0, 0.0, 0.0], [0.6, 0.6, 1.8, 0.7],  [0.199, 0.587, 0.114, 0.0]]],HYPER_remotePostProcessing] remoteExec ["call", _allPlayers];
 			};
 			case "dull": {
-				[[[1, 0.8, -0.002, [0.0, 0.0, 0.0, 0.0], [0.6, 0.7, 0.8, 0.65],  [0.199, 0.587, 0.114, 0.0]]],HYPER_remotePostProcessing] remoteExec ["call"];
+				[[[1, 0.8, -0.002, [0.0, 0.0, 0.0, 0.0], [0.6, 0.7, 0.8, 0.65],  [0.199, 0.587, 0.114, 0.0]]],HYPER_remotePostProcessing] remoteExec ["call", _allPlayers];
 			};
 			case "yellowgamma": {
-				[[[1, 1, 0, [0.0, 0.0, 0.0, 0.0], [1.8, 1.8, 0.3, 0.7],  [0.199, 0.587, 0.114, 0.0]]],HYPER_remotePostProcessing] remoteExec ["call"];
+				[[[1, 1, 0, [0.0, 0.0, 0.0, 0.0], [1.8, 1.8, 0.3, 0.7],  [0.199, 0.587, 0.114, 0.0]]],HYPER_remotePostProcessing] remoteExec ["call", _allPlayers];
 			};
 			case "greengamma": {
-				[[[1, 1, 0, [0.0, 0.0, 0.0, 0.0], [0.6, 1.4, 0.6, 0.7],  [0.199, 0.587, 0.114, 0.0]]],HYPER_remotePostProcessing] remoteExec ["call"];
+				[[[1, 1, 0, [0.0, 0.0, 0.0, 0.0], [0.6, 1.4, 0.6, 0.7],  [0.199, 0.587, 0.114, 0.0]]],HYPER_remotePostProcessing] remoteExec ["call", _allPlayers];
 			};
 		};
 
