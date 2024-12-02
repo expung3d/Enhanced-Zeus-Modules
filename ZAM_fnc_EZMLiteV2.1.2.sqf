@@ -17436,12 +17436,21 @@ private _changelogString = "";
 	[
 		"TOOLBOX:YESNO",
 		["Join a Side Channel?","Whether you will be set as a certain side and be able to hear their side chat."],
-		[true]
+		[true],
+		{true},
+		{
+			params ["_display","_value"];
+			_display setVariable ["MAZ_EZM_showSides",_value];
+		}
 	],
 	[
 		"SIDES",
 		"Side to Join",
-		west
+		west,
+		{
+			params ["_display"];
+			_display getVariable ["MAZ_EZM_showSides",true];
+		}
 	],
 	[
 		"EDIT:MULTI",
@@ -17469,7 +17478,10 @@ private _changelogString = "";
 },{
 	params ["_values","_args","_display"];
 	_display closeDisplay 2;
-},[]] call MAZ_EZM_fnc_createDialog;
+},[],{
+	params ["_display"];
+	_display setVariable ["MAZ_EZM_showSides",true];
+}] call MAZ_EZM_fnc_createDialog;
 
 comment "
 	TODO Expung3d:
