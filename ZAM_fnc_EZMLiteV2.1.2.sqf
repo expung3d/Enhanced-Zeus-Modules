@@ -6061,11 +6061,13 @@ MAZ_EZM_fnc_initFunction = {
 
 		comment "show intro titles";
 		switch (_backgroundSong) do {
-			case "epic": {playMusic "Music_Arrival";};
-			case "action": {playMusic "EventTrack02a_F_EPB";};
-			case "stealth": {playMusic "AmbientTrack02d_F_EXP";};
-			case "random": {playMusic (selectRandom ["EventTrack01a_F_EPA","EventTrack01a_F_EPB","EventTrack01_F_EPA","EventTrack03_F_EPB","EventTrack03a_F_EPB","EventTrack02b_F_EPC"]);};
-			default {playMusic "EventTrack01a_F_EPA";};
+			case "epic": {["Music_Arrival"] remoteExec ["playMusic", _allPlayers];};
+			case "action": {["EventTrack02a_F_EPB"] remoteExec ["playMusic", _allPlayers];};
+			case "stealth": {["AmbientTrack02d_F_EXP"] remoteExec ["playMusic", _allPlayers];};
+			case "random": {
+				private _track = selectRandom ["EventTrack01a_F_EPA","EventTrack01a_F_EPB","EventTrack01_F_EPA","EventTrack03_F_EPB","EventTrack03a_F_EPB","EventTrack02b_F_EPC"];
+				[_track] remoteExec ["playMusic", _allPlayers];};
+			default {["EventTrack01a_F_EPA"] remoteExec ["playMusic", _allPlayers];};
 		};
 		private _delay = 6;
 		[0, _delay, true, true] call BIS_fnc_cinemaBorder;
@@ -6101,7 +6103,7 @@ MAZ_EZM_fnc_initFunction = {
 		comment "Post processing";
 		switch (_postProcess) do {
 			case "none": {
-				[[[]],HYPER_remotePostProcessing] remoteExec ["call"];
+				[[],HYPER_remotePostProcessing] remoteExec ["call"];
 			};
 			case "highcontrast": {
 				[[[1, 0.9, -0.002, [0.0, 0.0, 0.0, 0.0], [1.0, 0.6, 0.4, 0.6],  [0.199, 0.587, 0.114, 0.0]]],HYPER_remotePostProcessing] remoteExec ["call"];
