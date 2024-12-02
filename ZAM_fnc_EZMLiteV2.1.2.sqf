@@ -6010,6 +6010,7 @@ MAZ_EZM_fnc_initFunction = {
 		_lines
 	};
 
+	comment "TODO: make more graceful way of remoteExec'ing instead of continuously passing `_allPlayers` to remote execs";
 	HYPER_EZM_fnc_handleIntroCinematic = {
 		params ["_cinematicType","_backgroundSong","_intertitles", "_zeusCanSeeCutscene", "_postProcess", "_target"];
 
@@ -6070,25 +6071,26 @@ MAZ_EZM_fnc_initFunction = {
 			default {["EventTrack01a_F_EPA"] remoteExec ["playMusic", _allPlayers];};
 		};
 		private _delay = 6;
-		[[0, _delay, true, true]] remoteExec ["BIS_fnc_cinemaBorder"];
-		cutText ["", "BLACK", _delay];
+		[[0, _delay, true, true]] remoteExec ["BIS_fnc_cinemaBorder", _allPlayers];
+		[["", "BLACK", _delay]] remoteExec ["cutText", _allPlayers];
 		[format["<t color='#ffffff' font='PuristaBold' size='2'>%1</t><t color='#B57F50' font='TahomaB' size='0.6'><br />%2</t>",_briefingName, _author],0,0.3,4,1,0,789] spawn BIS_fnc_dynamicText;
 
 		sleep _delay;
-		cutText ["", "PLAIN", 2];
+		[["", "PLAIN", 2]] remoteExec ["cutText", _allPlayers];
 		comment "cutRsc
 		 [""SplashNoise"", ""PLAIN""];";
 
 		comment "show intertitles";
-		[_intertitles] spawn {
-			params ["_intertitles"];
-			private _line1 = [_intertitles # 0] call HYPER_fnc_splitMaxLine;
-			private _line2 = [_intertitles # 1] call HYPER_fnc_splitMaxLine;
+		private _line1 = [_intertitles # 0] call HYPER_fnc_splitMaxLine;
+		private _line2 = [_intertitles # 1] call HYPER_fnc_splitMaxLine;
+		HYPER_fnc_showIntertitles = {
+			params ["_line1", "_line2"];
 			sleep 3;
 			_line1 spawn BIS_fnc_infoText;
 			sleep 5;
 			_line2 spawn BIS_fnc_infoText;
 		};
+		[[_line1, _line2], HYPER_fnc_showIntertitles] remoteExec ["spawn", _allPlayers];
 
 		HYPER_remotePostProcessing = {
 			params [
@@ -6143,8 +6145,7 @@ MAZ_EZM_fnc_initFunction = {
 			sleep 0.4;
 			_camera cameraEffect ["terminate", "back"];
 			cutText ["", "BLACK IN", 2];
-			[1, 2, true, true] call BIS_fnc_cinemaBorder;
-
+			[[1, 2, true, true]] remoteExec ["BIS_fnc_cinemaBorder"];
 		};
 
 		comment "clean up scripts";
