@@ -3,16 +3,16 @@
 Everything you need to know about contributing to E.Z.M.
 
 ## New Modules
-Adding new modules is very simple compared to the previous methods, now there are automated methods by which you, the amazing contributor you are, can add them dynamically to an already running E.Z.M. version. Firstly, we must define the functions that will be called by the modules. Second, we must create a function to add them to our modules list. Lastly, we need to load the function that adds them into the modules list into E.Z.M.'s automated system.
+Adding new modules is very simple now compared to the previous methods. Now there are automated methods by which you, the amazing contributor you are, can add them dynamically to an already running E.Z.M. version. Firstly, we must define the functions that will be called by the modules. Second, we must create a function to add them to our modules list. Lastly, we need to load the function that adds them into the modules list into E.Z.M.'s automated system.
 <hr>
 
-When adding modules, ensure they are things that *should* be Zeus modules. If it a system that can work independently from Zeus, make it into its own script, don't incorporate it into E.Z.M. For example, do not add a module that creates a roles system or changes how vehicles perform into E.Z.M., this should be separate from Zeus as it can act independently.
+When adding modules, ensure they are things that *should* be Zeus modules. If it's a system that can work independently from Zeus, make it into its own script, don't incorporate it into E.Z.M. For example, do not add a module that creates a roles system or changes how vehicles perform into E.Z.M., this should be separate from Zeus as it can act independently.
 
 I would go as far as to say even having earplugs added to E.Z.M. should not be done. E.Z.M. should focus on modifying *only* Zeus and their abilities. 
 <hr>
 
-### Adding the function
-Adding the function is very simple. Simply define the function you want to call. Our example will simply `systemChat` "Hello World!" and put the type of the object we placed it on.
+### Creating Functions
+Adding the function is very simple. Simply define the function you want to call how you normally would as a global function. Our example will simply `systemChat` "Hello World!" and put the type of the object we placed it on.
 
 Make sure that when you're creating a function that you use a unique prefix! The format to follow would be `TAG_MAZ_EZM_fnc_`. TAG is replaced with your own function tag, our function will simply be called `MAZ_EZM_fnc_helloWorld`.
 ```sqf
@@ -28,36 +28,46 @@ MAZ_EZM_fnc_helloWorld = {
 ```
 <hr>
 
-### Adding the module
-Adding the module can be confusing, especially if aiming to create a new category for modules. Find the function `JAM_MAZ_EZM_editZeusInterface`. Inside here are all the changes that happen to the Zeus interface, color changes, adding modules, the warning system, etc. In the function you will find examples you can look at to see how modules are added. You can see existing trees and add to them in your custom additions. In our example, we will add a module to the "AI Modifiers" tree, which is assigned the variable `MAZ_EditAITree`. 
+### Adding the Module to the Zeus Interface
+
+#### Function Syntax
+
+Find the function `MAZ_EZM_fnc_editZeusInterface`. Inside here are all the changes that happen to the Zeus interface, color changes, adding modules, the warning system, etc. In the function you will find examples you can look at to see how modules are added. You can see existing trees and add to them in your custom additions. In our example, we will add a module to the "AI Modifiers" tree, which is assigned the variable `MAZ_EditAITree`. 
+
+**Do not directly modify `MAZ_EZM_fnc_editZeusInterface`! Instead create an EZM addon, like I'm showing you how to do, so you can always have the most up-to-date version of EZM.**
+
 ```sqf
-//Inside of JAM_MAZ_EZM_editZeusInterface two actions are being performed.
+//Inside of MAZ_EZM_fnc_editZeusInterface two actions are being performed.
 
 //Creating the category for the modules
-MAZ_EditAITree = [ //Returns our parent category, used for creating the module
-	MAZ_zeusModulesTree,//Predefined variable for modules control tree
-	"AI Modifiers", //The name of the category you wish to add
+MAZ_EditAITree = [ 			//Returns our parent category, used for creating the module
+	MAZ_zeusModulesTree,		//Predefined variable for modules control tree
+	"AI Modifiers",			//The name of the category you wish to add
 	'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\intel_ca.paa', //The icon shown
-	[1,1,1,1], //The color of the text
-	"" //The tooltip shown when hovering over the category
+	[1,1,1,1],			//The color of the text
+	""				//The tooltip shown when hovering over the category
 ] call MAZ_EZM_fnc_zeusAddCategory;
 
 
 //Creating the actual module within said category
 [
-	MAZ_zeusModulesTree, //The modules control tree
-	MAZ_EditAITree, //The parent category we defined prior
-	"Easy Mode", //The module name
-	"Decreases difficulty and makes AI stand.", //The tooltip/description of the module
-	"MAZ_EZM_fnc_easyModeModule", //The function that is called (STRING)
+	MAZ_zeusModulesTree, 		//The modules control tree
+	MAZ_EditAITree, 		//The parent category we defined prior OR a pre-defined category made by MAZ_EZM_fnc_editZeusInterface
+	"Easy Mode", 			//The module display name
+	"Decreases difficulty and makes AI stand.", //The tooltip/description of the module. Can use \n for new lines
+	"MAZ_EZM_fnc_easyModeModule", 	//The function that is called (STRING)
 	'\A3\ui_f\data\IGUI\Cfg\mptable\infantry_ca.paa' //The icon of the module
-	[1,1,1,1], //The text color
-	[1,1,1,1], //The icon color
-	[0,0,0,1], //Icon color selected
-	[0.8,0,0,0.8] //Icon color disabled
+	[1,1,1,1], 			//The text color
+	[1,1,1,1], 			//The icon color
+	[0,0,0,1], 			//Icon color selected
+	[0.8,0,0,0.8] 			//Icon color disabled
 ] call MAZ_EZM_fnc_zeusAddModule;
+
+//Everything after the function name are optional parameters for the module.
 ```
 <br>
+
+#### Creating our Own Module Function
 
 Our module needs to be held within a function that holds all our additions to the modules. We'll name this `MAZ_EZM_fnc_ourAddedModules`.
 
@@ -75,7 +85,7 @@ MAZ_EZM_fnc_ourAddedModules = {
 	};
 };
 ```
-Now, all we have to do is load this into the automated system within E.Z.M. to load the modules! To do so, we will take the function we just created and load it into a function that will be called during the Zeus interface's creation.
+Now, all we have to do is load this into the automated system within EZM to load the modules! To do so, we will take the function we just created and load it into a function that will be called during the Zeus interface's creation.
 ```sqf
 //For modules
 ["MAZ_EZM_fnc_ourAddedModules"] call MAZ_EZM_fnc_addNewModulesToDynamicModules;
@@ -263,7 +273,7 @@ MAZ_EZM_NF_fnc_createNewVehicle = {
 <hr>
 
 ### Creating the Faction Category
-Creating a faction category is just like with a module, the only difference is instead of adding it to `MAZ_zeusModulesTree` (the modules tab) we add it to one of the following: `MAZ_UnitsTree_BLUFOR`, `MAZ_UnitsTree_OPFOR`, `MAZ_UnitsTree_INDEP`, or `MAZ_UnitsTree_CIVILIAN`.  Again, everything here happens in the function `JAM_MAZ_EZM_editZeusInterface`.
+Creating a faction category is just like with a module, the only difference is instead of adding it to `MAZ_zeusModulesTree` (the modules tab) we add it to one of the following: `MAZ_UnitsTree_BLUFOR`, `MAZ_UnitsTree_OPFOR`, `MAZ_UnitsTree_INDEP`, or `MAZ_UnitsTree_CIVILIAN`.  Again, everything here happens in the function `MAZ_EZM_fnc_editZeusInterface`.
 
 For example:
 ```sqf
@@ -306,6 +316,7 @@ For example:
 	"a3\soft_f\mrap_01\data\ui\map_mrap_01_ca.paa" //The icon
 ] call MAZ_EZM_fnc_zeusAddModule_BLUFOR;
 ```
+<hr>
 
 ## Framework Functionality
 Enhanced Zeus Modules has two main frameworks in it that you'll want to know about when making a module. The Dialog Creation framework (using `MAZ_EZM_fnc_createDialog`) creates any UI you need for a module. The Context Menu framework (using `MAZ_EZM_fnc_createNewContextAction`) creates any right click buttons you need.
@@ -336,7 +347,8 @@ This portion is super easy, simply give it a name, content, code to run on confi
 		_display closeDisplay 2;
 		//exiting with 2 denotes a CANCEL exit
 	},
-	[] //Arguments (Optional, default is nil)
+	[], //Arguments (Optional, default is nil)
+	{}  //onLoad event. (Optional) Code in this executes before the dialog updates. PARAMS: 0 - DIALOG DISPLAY
 ] call MAZ_EZM_fnc_createDialog;
 ```
 This will create our basic skeleton for the dialog. Now lets look at the rows to fill it with.
@@ -346,7 +358,9 @@ The basic structure of a row in the content array will look like this:
 	[
 		"TYPE", //The type of the content
 		"Label", //The label shown to the left
-		[] //Values that go into the type
+		[], //Values that go into the type
+		{true}, //Condition for the element to be shown. (Optional) PARAMS: 0 - DIALOG DISPLAY
+		{} //onChange event. (Optional) Code in this executes when the element's value changes. PARAMS: 0 - DIALOG DISPLAY | 1 - NEW VALUE
 	]
 ]
 ```
@@ -392,7 +406,7 @@ This is the simplest implementation of a COMBO, however, we can get more complex
 The EDIT creates a row that allows for inputting text. This can be either one line or multiple lines. We can change this using a subtype. Subtypes are used by having the main type followed by the subtype after a ":": "EDIT:MULTI").
 
 ```sqf
-//Subtypes: MULTI, CODE.
+//Subtypes: MULTI.
 [
 	"EDIT", 
 	"My Text Box", 
@@ -547,8 +561,9 @@ MAZ_EZM_action_myNewContextAction = [ //Stores our action ID in this variable
 
 <hr>
 
-### Other Useful Functions
-E.Z.M. has a ton of useful functions for repetitive tasks. Use these whenever possible.
+### Utility Functions
+EZM has a ton of useful functions for repetitive tasks. Use these whenever possible. No need to re-invent the wheel.
+<hr>
 
 #### MAZ_EZM_fnc_systemMessage
 This function systemChats your message with the prefix "[ Enhanced Zeus Modules ] : " and can play a sound along with it.
@@ -632,6 +647,67 @@ This function adds the object passed into the cleaner system so it can be auto-d
 ```sqf
 //Must be in scheduled environment. You cannot CALL this function.
 [_myEntity] spawn MAZ_EZM_fnc_cleanerWaitTilNoPlayers;
+```
+
+<hr>
+
+#### MAZ_EZM_fnc_refreshInterface
+This function refreshes the Zeus's interface. Closing the interface and re-opening it.
+```sqf
+call MAZ_EZM_fnc_refreshInterface;
+```
+
+<hr>
+
+### EZM EventHandlers
+Event handlers specifically for EZM. Relating to Zeus and objects created.
+
+<hr>
+
+#### MAZ_EZM_fnc_addEZMEventHandler
+This function adds an EZM eventhandler. Takes an event type and code to execute when the event is triggered. Returns an index to the event handler.
+
+```sqf
+MAZ_EZM_EH_ZIC_example = ["onZeusInterfaceClosed", {systemChat "Interface closed!";}] call MAZ_EZM_fnc_addEZMEventHandler;
+```
+
+<hr>
+
+#### MAZ_EZM_fnc_addEZMEventHandler
+This function removes an EZM eventhandler. Takes an event type and an index to the event handler. Returns a bool if the EH is removed.
+
+```sqf
+private _removed = ["onZeusInterfaceClosed", MAZ_EZM_EH_ZIC_example] call MAZ_EZM_fnc_removeEZMEventHandler;
+```
+
+<hr>
+
+#### EventHandler Types
+
+<hr>
+
+##### onZeusInterfaceClosed
+Triggered when the Zeus interface is closed. No parameters.
+<hr>
+
+##### onZeusInterfaceOpened
+Triggered when the Zeus interface is opened. 
+```sqf
+params ["_display"];
+```
+<hr>
+
+##### onVehicleCreated
+Triggered when a vehicle is created either by Zeus or `MAZ_EZM_fnc_createVehicle`.
+```sqf
+params ["_vehicle"];
+```
+<hr>
+
+##### onManCreated
+Triggered when a unit is created either by Zeus or `MAZ_EZM_fnc_createMan`.
+```sqf
+params ["_unit"];
 ```
 
 <hr>
