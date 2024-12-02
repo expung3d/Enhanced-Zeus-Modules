@@ -4010,6 +4010,7 @@ comment "Dynamic Faction Addons";
 	};
 
 	MAZ_EZM_fnc_setInterfaceToRefresh = {
+		params [["_refreshTime", 10]];
 		private _refresh = missionNamespace getVariable "MAZ_EZM_refreshTime";
 		if(isNil "_refresh") then {
 			private _refreshOnClose = ["onZeusInterfaceClosed", {
@@ -4020,7 +4021,7 @@ comment "Dynamic Faction Addons";
 				};
 			}] call MAZ_EZM_fnc_addEZMEventHandler;
 			
-			missionNamespace setVariable ["MAZ_EZM_refreshTime",time + 10];
+			missionNamespace setVariable ["MAZ_EZM_refreshTime",time + _refreshTime];
 			_refreshOnClose spawn {
 				while {time < (missionNamespace getVariable "MAZ_EZM_refreshTime")} do {
 					titleText [format ["NEW MODULES ADDED TO EZM\nYOUR ZEUS INTERFACE WILL BE AUTOMATICALLY REFRESHED IN %1 SECONDS", ceil ((missionNamespace getVariable "MAZ_EZM_refreshTime") - time)],"PLAIN DOWN",0.01];
@@ -4035,7 +4036,7 @@ comment "Dynamic Faction Addons";
 				["onZeusInterfaceClosed", _this] call MAZ_EZM_fnc_removeEZMEventHandler;
 			};
 		} else {
-			missionNamespace setVariable ["MAZ_EZM_refreshTime", time + 10];
+			missionNamespace setVariable ["MAZ_EZM_refreshTime", time + _refreshTime];
 		};
 	};
 
@@ -5978,6 +5979,274 @@ MAZ_EZM_fnc_initFunction = {
 				_display closeDisplay 2;
 			},[]] call MAZ_EZM_fnc_createDialog;
 		};
+
+	comment "Cinematics";
+	comment "the plan here is as follows: when intro cinematic module is placed, a window pops up with one of two options: 'orbit' or 'dynamic'. in either case, the black bars appear for users, screen fades to black, and then the cinematic begins. The screen starts at black with a title and the name of the zeus'. If orbit is selected, the cinematic will be like a UAV flying above where the module was placed. Music choice can be selected, and up to 2 additional texts can be written to appear in the cinematic. once the cinematic ends, black screen appears again, and black bars fade.";
+	comment "maybe we should check if players are in a vehicle during cutscene, if so disable vehicle simulation";
+	comment "TODO: exclude curators from cutscene because it breaks their camera. instead, display systemChat showing status of cutscene.";
+
+	HYPER_fnc_splitMaxLine = {
+		params ["_inputString"];
+		private _maxLength = 22;
+		private _words = _inputString splitString " ";
+		private _lines = [];
+		private _currentLine = "";
+		
+		{
+			private _word = _x;
+			if (_currentLine isEqualTo "") then {
+				_currentLine = _word;
+			} else {
+				private _tentativeLine = format ["%1 %2", _currentLine, _word];
+				if (count _tentativeLine <= _maxLength) then {
+					_currentLine = _tentativeLine;
+				} else {
+					_lines pushBack _currentLine;
+					_currentLine = _word;
+				};
+			};
+		} forEach _words;
+		
+		if (!(_currentLine isEqualTo "")) then {
+			_lines pushBack _currentLine;
+		};
+		
+		_lines
+	};
+
+	HYPER_EZM_fnc_handleIntroCinematic = {
+		params ["_cinematicType","_backgroundSong","_intertitles", "_zeusCanSeeCutscene", "_postProcess", "_target"];
+
+		["Intro cinematic initiated for all players.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+
+		comment "if zeus shouldn't see the cutscene, we need to get the player set differenced with zeus player set";
+		private _allPlayers = [];
+		if(_zeusCanSeeCutscene) then {
+			comment "remove all curators except zeus who called the script";
+			private _zeusPlayers = allCurators apply {getAssignedCuratorUnit _x};
+			_allPlayers = (allPlayers - _zeusPlayers) + [player];
+		} else {
+			private _zeusPlayers = allCurators apply {getAssignedCuratorUnit _x};
+			_allPlayers = allPlayers - _zeusPlayers;
+		};
+
+		comment "get mission name";
+		private _briefingName = missionnamespace getvariable ["bis_fnc_moduleMissionName_name",""];
+		if (_briefingName == "") then {
+			_briefingName = briefingName;
+		};
+
+		comment "get zeus name(s)";
+		_author = "";
+		if (count allcurators > 0) then {
+			_authors = [];
+			{
+				_curatorPlayer = getassignedcuratorunit _x;
+				if (isplayer _curatorPlayer) then {_authors set [count _authors,name _curatorPlayer];};
+			} foreach allcurators;
+			{
+				_prefix = "";
+				if (_foreachindex > 0) then {
+					_prefix = if (_foreachindex == count _authors - 1) then {" &amp; "} else {", "};
+				};
+				_author = _author + _prefix + _x;
+			} foreach _authors;
+		} else {
+			_author = gettext (missionconfigfile >> "onLoadName");
+		};
+		if (_author != "") then {_author = format [localize "STR_FORMAT_AUTHOR_SCRIPTED",_author];};
+
+		comment "disable simulation on any vehicles to avoid crashing mid cutscene";
+		{
+			if !(_x == vehicle _x) then {
+				[vehicle _x, false] remoteExec ["enableSimulationGlobal", 2];
+			};
+		} forEach allPlayers;
+
+		comment "show intro titles";
+		switch (_backgroundSong) do {
+			case "epic": {playMusic "Music_Arrival";};
+			case "action": {playMusic "EventTrack02a_F_EPB";};
+			case "stealth": {playMusic "AmbientTrack02d_F_EXP";};
+			case "random": {playMusic (selectRandom ["EventTrack01a_F_EPA","EventTrack01a_F_EPB","EventTrack01_F_EPA","EventTrack03_F_EPB","EventTrack03a_F_EPB","EventTrack02b_F_EPC"]);};
+			default {playMusic "EventTrack01a_F_EPA";};
+		};
+		private _delay = 6;
+		[0, _delay, true, true] call BIS_fnc_cinemaBorder;
+		cutText ["", "BLACK", _delay];
+		[format["<t color='#ffffff' font='PuristaBold' size='2'>%1</t><t color='#B57F50' font='TahomaB' size='0.6'><br />%2</t>",_briefingName, _author],0,0.3,4,1,0,789] spawn BIS_fnc_dynamicText;
+
+		sleep _delay;
+		cutText ["", "PLAIN", 2];
+		comment "cutRsc
+		 [""SplashNoise"", ""PLAIN""];";
+
+		comment "show intertitles";
+		[_intertitles] spawn {
+			params ["_intertitles"];
+			private _line1 = [_intertitles # 0] call HYPER_fnc_splitMaxLine;
+			private _line2 = [_intertitles # 1] call HYPER_fnc_splitMaxLine;
+			sleep 3;
+			_line1 spawn BIS_fnc_infoText;
+			sleep 5;
+			_line2 spawn BIS_fnc_infoText;
+		};
+
+		comment "Post processing";
+		switch (_postProcess) do {
+			case "none": {
+				"colorCorrections" ppEffectAdjust[1,1,0,[0,0,0,0],[1,1,1,1],[0,0,0,0]];
+				"colorCorrections" ppEffectCommit 0;
+				"colorCorrections" ppEffectEnable true;
+			};
+			case "highcontrast": {
+				"colorCorrections" ppEffectAdjust [1, 0.9, -0.002, [0.0, 0.0, 0.0, 0.0], [1.0, 0.6, 0.4, 0.6],  [0.199, 0.587, 0.114, 0.0]];
+				"colorCorrections" ppEffectCommit 0;
+				"colorCorrections" ppEffectEnable true;
+			};
+			case "blue": {
+				"colorCorrections" ppEffectAdjust [1, 1, 0, [0.0, 0.0, 0.0, 0.0], [0.6, 0.6, 1.8, 0.7],  [0.199, 0.587, 0.114, 0.0]];
+				"colorCorrections" ppEffectCommit 0;
+				"colorCorrections" ppEffectEnable true;
+			};
+			case "dull": {
+				"colorCorrections" ppEffectAdjust [1, 0.8, -0.002, [0.0, 0.0, 0.0, 0.0], [0.6, 0.7, 0.8, 0.65],  [0.199, 0.587, 0.114, 0.0]];
+				"colorCorrections" ppEffectCommit 0;
+				"colorCorrections" ppEffectEnable true;
+			};
+			case "yellowgamma": {
+				"colorCorrections" ppEffectAdjust [1, 1, 0, [0.0, 0.0, 0.0, 0.0], [0.6, 1.4, 0.6, 0.7],  [0.199, 0.587, 0.114, 0.0]];
+				"colorCorrections" ppEffectCommit 0;
+				"colorCorrections" ppEffectEnable true;
+			};
+			case "greengamma": {
+				"colorCorrections" ppEffectAdjust [1, 1, 0, [0.0, 0.0, 0.0, 0.0], [1.8, 1.8, 0.3, 0.7],  [0.199, 0.587, 0.114, 0.0]];
+				"colorCorrections" ppEffectCommit 0;
+				"colorCorrections" ppEffectEnable true;
+
+			};
+		};
+
+		if (_cinematicType == "Flyby") then {
+			comment "in flyby mode, we select the module location as our target, and the camera paths are automatically designated at 0 and 90 degrees";
+			private _camTarget = "Land_HelipadEmpty_F" createVehicleLocal _target;
+			private _circleRadius = 200;
+			private _camHeight = 200;
+			private _camSrc0 = [_target select 0, (_target select 1) + _circleRadius, (_target select 2) + _camHeight];
+			private _camSrc90 = [(_target select 0) + _circleRadius, _target select 1, (_target select 2) + _camHeight];
+			
+			private _camera = "camera" camCreate _camSrc0;
+			_camera cameraEffect ["internal", "back"];
+			_camera camPrepareTarget _camTarget;
+			_camera camSetFov 1;
+			_camera camCommitPrepared 0;
+
+			_camera camPreparePos _camSrc90;
+			_camera camCommitPrepared 15;
+			waitUntil { camCommitted _camera };
+			cutRsc ["RscStatic", "PLAIN"];
+			sleep 0.4;
+			_camera cameraEffect ["terminate", "back"];
+			cutText ["", "BLACK IN", 2];
+			[1, 2, true, true] call BIS_fnc_cinemaBorder;
+
+		};
+
+		comment "clean up scripts";
+		if(_zeusCanSeeCutscene) then {
+			[] call MAZ_EZM_fnc_refreshInterface;
+		};
+
+		"colorCorrections" ppEffectAdjust[1,1,0,[0,0,0,0],[1,1,1,1],[0,0,0,0]];
+		"colorCorrections" ppEffectCommit 0;
+		"colorCorrections" ppEffectEnable true;
+
+		{
+			if !(_x == vehicle _x) then {
+				[vehicle _x, true] remoteExec ["enableSimulationGlobal", 2];
+			};
+		} forEach allPlayers;
+
+		["Intro cinematic completed."] call MAZ_EZM_fnc_systemMessage;
+
+	};
+
+	HYPER_EZM_fnc_introCinematicModule = {
+		params ["_entity"];
+		private _dialogTitle = "Intro Cinematic";
+		private _content = [
+			[
+				"COMBO",
+				"Cinematic Type",
+				[
+					["Flyby"],
+					["Flyby"],
+					0
+				]
+			],
+			[
+				"COMBO",
+				"Background Song",
+				[
+					["random", "epic", "action", "stealth"],
+					["Random Event Track", "Epic", "Action", "Stealth"],
+					0
+				]
+			],
+			[
+				"EDIT",
+				"Intertitle 1",
+				[
+					"",
+					1
+				]
+			],
+			[
+				"EDIT",
+				"Intertitle 2",
+				[
+					"",
+					1
+				]
+			],
+			[
+				"TOOLBOX:YESNO",
+				["Zeus Can See Cutscene?","Enabling this may break the camera for Zeus players."],
+				[false]
+			],
+							[
+				"COMBO",
+				"Post-Process Filter",
+				[
+					["none", "highcontrast", "blue", "dull", "yellowgamma", "greengamma"],
+					["None", "High Contrast", "Blue", "Dull", "Yellow Gamma", "Green Gamma"],
+					0
+				]
+			]
+		];
+		private _onConfirm = {
+			params ["_values", "_args", "_display"];
+			_values params ["_cinematicType","_backgroundSong","_text1","_text2","_zeusCanSeeCutscene","_postProcess"];
+			private _intertitles = [_text1,_text2];
+			private _target = [true] call MAZ_EZM_fnc_getScreenPosition;
+			[_cinematicType, _backgroundSong, _intertitles, _zeusCanSeeCutscene, _postProcess, _target] spawn HYPER_EZM_fnc_handleIntroCinematic;
+			_display closeDisplay 1;
+		};
+		private _onCancel = {
+			params ["_values", "_args", "_display"];
+			_display closeDisplay 2;
+		};
+		[
+			_dialogTitle,
+			_content,
+			_onConfirm,
+			_onCancel,
+			[]
+		] call MAZ_EZM_fnc_createDialog;
+		
+	};
+
+	comment "TODO: remove cinematic bars module that also un-blacks out screen";
 
 	comment "AI Supports";
 
@@ -15871,6 +16140,22 @@ MAZ_EZM_fnc_editZeusInterface = {
 					"Resets EZM interior data to the default. \nYOU WILL LOSE ALL CHANGES YOU MADE TO YOUR INTERIORS WITHOUT UPDATING MAZ_EZM_fnc_loadDefaultInteriorsData!",
 					"MAZ_EZM_fnc_getDefaultInteriors",
 					"a3\3den\data\displays\display3den\toolbar\undo_ca.paa"
+				] call MAZ_EZM_fnc_zeusAddModule;
+			
+			comment "Cinematics";
+				MAZ_Cinematics = [
+					MAZ_zeusModulesTree,
+					"Cinematics",
+					"a3\ui_f\data\gui\cfg\keyframeanimation\iconcamera_ca.paa"
+				] call MAZ_EZM_fnc_zeusAddCategory;
+
+				[
+					MAZ_zeusModulesTree,
+					MAZ_Cinematics,
+					"Intro Cinematic",
+					"Create an exciting cinematic introduction to your missions (by bijx)",
+					"HYPER_EZM_fnc_introCinematicModule",
+					"a3\ui_f\data\igui\cfg\islandmap\iconcamera_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
 			comment "Clean Up Stuff";
