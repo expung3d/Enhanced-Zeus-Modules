@@ -6088,38 +6088,35 @@ MAZ_EZM_fnc_initFunction = {
 			_line2 spawn BIS_fnc_infoText;
 		};
 
+		HYPER_remotePostProcessing = {
+			params [
+				["_postProcessValues", [1,1,0,[0,0,0,0],[1,1,1,1],[0,0,0,0]]],
+				["_targets", allPlayers]
+			];
+			"colorCorrections" ppEffectAdjust _postProcessValues;
+			"colorCorrections" ppEffectCommit 0;
+			"colorCorrections" ppEffectEnable true;
+		};
+
 		comment "Post processing";
 		switch (_postProcess) do {
 			case "none": {
-				"colorCorrections" ppEffectAdjust[1,1,0,[0,0,0,0],[1,1,1,1],[0,0,0,0]];
-				"colorCorrections" ppEffectCommit 0;
-				"colorCorrections" ppEffectEnable true;
+				[[[]],HYPER_remotePostProcessing] remoteExec ["call"];
 			};
 			case "highcontrast": {
-				"colorCorrections" ppEffectAdjust [1, 0.9, -0.002, [0.0, 0.0, 0.0, 0.0], [1.0, 0.6, 0.4, 0.6],  [0.199, 0.587, 0.114, 0.0]];
-				"colorCorrections" ppEffectCommit 0;
-				"colorCorrections" ppEffectEnable true;
+				[[[1, 0.9, -0.002, [0.0, 0.0, 0.0, 0.0], [1.0, 0.6, 0.4, 0.6],  [0.199, 0.587, 0.114, 0.0]]],HYPER_remotePostProcessing] remoteExec ["call"];
 			};
 			case "blue": {
-				"colorCorrections" ppEffectAdjust [1, 1, 0, [0.0, 0.0, 0.0, 0.0], [0.6, 0.6, 1.8, 0.7],  [0.199, 0.587, 0.114, 0.0]];
-				"colorCorrections" ppEffectCommit 0;
-				"colorCorrections" ppEffectEnable true;
+				[[[1, 1, 0, [0.0, 0.0, 0.0, 0.0], [0.6, 0.6, 1.8, 0.7],  [0.199, 0.587, 0.114, 0.0]]],HYPER_remotePostProcessing] remoteExec ["call"];
 			};
 			case "dull": {
-				"colorCorrections" ppEffectAdjust [1, 0.8, -0.002, [0.0, 0.0, 0.0, 0.0], [0.6, 0.7, 0.8, 0.65],  [0.199, 0.587, 0.114, 0.0]];
-				"colorCorrections" ppEffectCommit 0;
-				"colorCorrections" ppEffectEnable true;
+				[[[1, 0.8, -0.002, [0.0, 0.0, 0.0, 0.0], [0.6, 0.7, 0.8, 0.65],  [0.199, 0.587, 0.114, 0.0]]],HYPER_remotePostProcessing] remoteExec ["call"];
 			};
 			case "yellowgamma": {
-				"colorCorrections" ppEffectAdjust [1, 1, 0, [0.0, 0.0, 0.0, 0.0], [0.6, 1.4, 0.6, 0.7],  [0.199, 0.587, 0.114, 0.0]];
-				"colorCorrections" ppEffectCommit 0;
-				"colorCorrections" ppEffectEnable true;
+				[[[1, 1, 0, [0.0, 0.0, 0.0, 0.0], [1.8, 1.8, 0.3, 0.7],  [0.199, 0.587, 0.114, 0.0]]],HYPER_remotePostProcessing] remoteExec ["call"];
 			};
 			case "greengamma": {
-				"colorCorrections" ppEffectAdjust [1, 1, 0, [0.0, 0.0, 0.0, 0.0], [1.8, 1.8, 0.3, 0.7],  [0.199, 0.587, 0.114, 0.0]];
-				"colorCorrections" ppEffectCommit 0;
-				"colorCorrections" ppEffectEnable true;
-
+				[[[1, 1, 0, [0.0, 0.0, 0.0, 0.0], [0.6, 1.4, 0.6, 0.7],  [0.199, 0.587, 0.114, 0.0]]],HYPER_remotePostProcessing] remoteExec ["call"];
 			};
 		};
 
