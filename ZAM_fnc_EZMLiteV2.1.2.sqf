@@ -5979,7 +5979,6 @@ MAZ_EZM_fnc_initFunction = {
 	comment "Cinematics";
 	comment "the plan here is as follows: when intro cinematic module is placed, a window pops up with one of two options: 'orbit' or 'dynamic'. in either case, the black bars appear for users, screen fades to black, and then the cinematic begins. The screen starts at black with a title and the name of the zeus'. If orbit is selected, the cinematic will be like a UAV flying above where the module was placed. Music choice can be selected, and up to 2 additional texts can be written to appear in the cinematic. once the cinematic ends, black screen appears again, and black bars fade.";
 	comment "maybe we should check if players are in a vehicle during cutscene, if so disable vehicle simulation";
-	comment "TODO: exclude curators from cutscene because it breaks their camera. instead, display systemChat showing status of cutscene.";
 
 	HYPER_fnc_splitMaxLine = {
 		params ["_inputString"];
@@ -6073,7 +6072,8 @@ MAZ_EZM_fnc_initFunction = {
 		private _delay = 6;
 		[0, _delay, true, true] remoteExec ["BIS_fnc_cinemaBorder", _allPlayers];
 		[["", "BLACK", _delay]] remoteExec ["cutText", _allPlayers];
-		[format["<t color='#ffffff' font='PuristaBold' size='2'>%1</t><t color='#B57F50' font='TahomaB' size='0.6'><br />%2</t>",_briefingName, _author],0,0.3,4,1,0,789] spawn BIS_fnc_dynamicText;
+
+		[format["<t color='#ffffff' font='PuristaBold' size='2'>%1</t><t color='#B57F50' font='TahomaB' size='0.6'><br />%2</t>",_briefingName, _author],0,0.3,4,1,0,789] remoteExec ["BIS_fnc_dynamicText", _allPlayers];
 
 		sleep _delay;
 		[["", "PLAIN", 2]] remoteExec ["cutText", _allPlayers];
@@ -6092,7 +6092,7 @@ MAZ_EZM_fnc_initFunction = {
 		};
 		[[_line1, _line2], HYPER_fnc_showIntertitles] remoteExec ["spawn", _allPlayers];
 
-		HYPER_remotePostProcessing = {
+		HYPER_fnc_remotePostProcessing = {
 			params [
 				["_postProcessValues", [1,1,0,[0,0,0,0],[1,1,1,1],[0,0,0,0]]],
 				["_targets", allPlayers]
@@ -6106,22 +6106,22 @@ MAZ_EZM_fnc_initFunction = {
 		comment "TODO: this probably overwrites existing post-processing effects on player clients, maybe there is a way to store current PP settings before changing it, and then setting it to those settings later";
 		switch (_postProcess) do {
 			case "none": {
-				[[],HYPER_remotePostProcessing] remoteExec ["call", _allPlayers];
+				[[],HYPER_fnc_remotePostProcessing] remoteExec ["call", _allPlayers];
 			};
 			case "highcontrast": {
-				[[[1, 0.9, -0.002, [0.0, 0.0, 0.0, 0.0], [1.0, 0.6, 0.4, 0.6],  [0.199, 0.587, 0.114, 0.0]]],HYPER_remotePostProcessing] remoteExec ["call", _allPlayers];
+				[[[1, 0.9, -0.002, [0.0, 0.0, 0.0, 0.0], [1.0, 0.6, 0.4, 0.6],  [0.199, 0.587, 0.114, 0.0]]],HYPER_fnc_remotePostProcessing] remoteExec ["call", _allPlayers];
 			};
 			case "blue": {
-				[[[1, 1, 0, [0.0, 0.0, 0.0, 0.0], [0.6, 0.6, 1.8, 0.7],  [0.199, 0.587, 0.114, 0.0]]],HYPER_remotePostProcessing] remoteExec ["call", _allPlayers];
+				[[[1, 1, 0, [0.0, 0.0, 0.0, 0.0], [0.6, 0.6, 1.8, 0.7],  [0.199, 0.587, 0.114, 0.0]]],HYPER_fnc_remotePostProcessing] remoteExec ["call", _allPlayers];
 			};
 			case "dull": {
-				[[[1, 0.8, -0.002, [0.0, 0.0, 0.0, 0.0], [0.6, 0.7, 0.8, 0.65],  [0.199, 0.587, 0.114, 0.0]]],HYPER_remotePostProcessing] remoteExec ["call", _allPlayers];
+				[[[1, 0.8, -0.002, [0.0, 0.0, 0.0, 0.0], [0.6, 0.7, 0.8, 0.65],  [0.199, 0.587, 0.114, 0.0]]],HYPER_fnc_remotePostProcessing] remoteExec ["call", _allPlayers];
 			};
 			case "yellowgamma": {
-				[[[1, 1, 0, [0.0, 0.0, 0.0, 0.0], [1.8, 1.8, 0.3, 0.7],  [0.199, 0.587, 0.114, 0.0]]],HYPER_remotePostProcessing] remoteExec ["call", _allPlayers];
+				[[[1, 1, 0, [0.0, 0.0, 0.0, 0.0], [1.8, 1.8, 0.3, 0.7],  [0.199, 0.587, 0.114, 0.0]]],HYPER_fnc_remotePostProcessing] remoteExec ["call", _allPlayers];
 			};
 			case "greengamma": {
-				[[[1, 1, 0, [0.0, 0.0, 0.0, 0.0], [0.6, 1.4, 0.6, 0.7],  [0.199, 0.587, 0.114, 0.0]]],HYPER_remotePostProcessing] remoteExec ["call", _allPlayers];
+				[[[1, 1, 0, [0.0, 0.0, 0.0, 0.0], [0.6, 1.4, 0.6, 0.7],  [0.199, 0.587, 0.114, 0.0]]],HYPER_fnc_remotePostProcessing] remoteExec ["call", _allPlayers];
 			};
 		};
 
@@ -6154,34 +6154,25 @@ MAZ_EZM_fnc_initFunction = {
 				"colorCorrections" ppEffectAdjust[1,1,0,[0,0,0,0],[1,1,1,1],[0,0,0,0]];
 				"colorCorrections" ppEffectCommit 0;
 				"colorCorrections" ppEffectEnable true;
+
+				comment "re-enable simulation on player vehicles";
+				if!(player == vehicle player) then {
+					[vehicle player, true] remoteExec ["enableSimulationGlobal", 2];
+				};
 				
 				cutText ["", "BLACK IN", 2];
 				[1, 2, true, true] call BIS_fnc_cinemaBorder;
 			};
-			[[_target],HYPER_fnc_remoteCamera] remoteExec ["spawn", _allPlayers];
-		};
-
-		comment "TODO: fix this; super arbitrary number that exists because the spawn runs async on remote machines, so I gotta wait till the process is complete before attempting to clean up. Better way to do this?";
-		sleep 16;
-
-		comment "clean up scripts";
-		if(_zeusCanSeeCutscene) then {
-			[] call MAZ_EZM_fnc_refreshInterface;
-		};
+			[[_target],HYPER_fnc_remoteCamera] remoteExec ["spawn", _allPlayers - [player]];
 
 
-		[[],HYPER_remotePostProcessing] remoteExec ["call", _allPlayers];
-
-		comment "re-enable simulation on player vehicles";
-		comment "TODO: this may be an issue if the zeus crashes mid-cutscene, as the simulation will not be re-enabled for players. Maybe best to move this logic into the remotely executed code? idk";
-		{
-			if !(_x == vehicle _x) then {
-				[vehicle _x, true] remoteExec ["enableSimulationGlobal", 2];
+			comment "if zeus can see the cutscene, we need to spawn the function for them as well";
+			if(_zeusCanSeeCutscene) then {
+				_scriptHandle = [_target] spawn HYPER_fnc_remoteCamera;
+				waitUntil { scriptDone _scriptHandle };
+				[] call MAZ_EZM_fnc_refreshInterface;
 			};
-		} forEach allPlayers;
-
-		["Intro cinematic completed."] call MAZ_EZM_fnc_systemMessage;
-
+		};
 	};
 
 	HYPER_EZM_fnc_introCinematicModule = {
@@ -6225,10 +6216,10 @@ MAZ_EZM_fnc_initFunction = {
 			],
 			[
 				"TOOLBOX:YESNO",
-				["Zeus Can See Cutscene?","Enabling this may break the camera for Zeus players."],
+				["Zeus Can See Cutscene?","Zeus player may experience a small lag spike when cutscene ends."],
 				[false]
 			],
-							[
+			[
 				"COMBO",
 				"Post-Process Filter",
 				[
