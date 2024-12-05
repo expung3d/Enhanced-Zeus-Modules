@@ -2968,7 +2968,7 @@ comment "Attributes Dialog Creation";
 
 comment "Context Menu";
 
-	ZAM_fnc_createNewContextAction = {
+	MAZ_EZM_fnc_createNewContextAction = {
 		params [
 			["_displayName","CONTEXT ACTION",[""]],
 			["_code",{},[{}]],
@@ -2978,22 +2978,22 @@ comment "Context Menu";
 			["_color",[1,1,1,1],[[]]],
 			["_childActions",[],[[]]]
 		];
-		if(isNil "ZAM_EZM_contextMenuActions") then {
-			ZAM_EZM_contextMenuActions = [];
+		if(isNil "MAZ_EZM_contextMenuActions") then {
+			MAZ_EZM_contextMenuActions = [];
 		};
-		private _index = ZAM_EZM_contextMenuActions pushBack [_displayName,_code,_condition,_priority,_img,_color,_childActions];
+		private _index = MAZ_EZM_contextMenuActions pushBack [_displayName,_code,_condition,_priority,_img,_color,_childActions];
 		_index
 	};
 
-	ZAM_fnc_removeContextAction = {
+	MAZ_EZM_fnc_removeContextAction = {
 		params ["_index"];
-		if(_index < 0 || _index >= (count ZAM_EZM_contextMenuActions)) exitWith {
+		if(_index < 0 || _index >= (count MAZ_EZM_contextMenuActions)) exitWith {
 			["Failed to remove action","addItemFailed"] call MAZ_EZM_fnc_systemMessage;
 		};
-		ZAM_EZM_contextMenuActions set [_index,nil];
+		MAZ_EZM_contextMenuActions set [_index,nil];
 	};
 
-	ZAM_fnc_createContextMenuBase = {
+	MAZ_EZM_fnc_createContextMenuBase = {
 		params ["_xPos","_yPos"];
 		
 		private _display = findDisplay 312;
@@ -3010,7 +3010,7 @@ comment "Context Menu";
 		[MAZ_EZM_contextMenuBase,_controlGroupFrame]
 	};
 
-	ZAM_fnc_createContextMenuRow = {
+	MAZ_EZM_fnc_createContextMenuRow = {
 		params ["_ctrlGroup","_yPos","_displayName","_code","_img","_color"];
 		private _display = findDisplay 312;
 		private _ctrl = _display ctrlCreate ["RscButtonMenu",-1,_ctrlGroup];
@@ -3034,17 +3034,17 @@ comment "Context Menu";
 		_ctrl
 	};
 
-	ZAM_fnc_destroyContextMenu = {
+	MAZ_EZM_fnc_destroyContextMenu = {
 		sleep 0.01;
 		private _ctrlGroup = uiNamespace getVariable ["MAZ_EZM_contextMenuBase",controlNull];
 		if(isNull _ctrlGroup) exitWith {};
-		[_ctrlGroup] call ZAM_fnc_closeAllSubControls;
+		[_ctrlGroup] call MAZ_EZM_fnc_closeAllSubControls;
 		private _childrenGroup = uiNamespace getVariable ["MAZ_EZM_contextChildrenGroup",controlNull];
 		if(isNull _childrenGroup) exitWith {};
-		[_childrenGroup] call ZAM_fnc_closeAllSubControls;
+		[_childrenGroup] call MAZ_EZM_fnc_closeAllSubControls;
 	};
 
-	ZAM_fnc_addContextMenuChildRows = {
+	MAZ_EZM_fnc_addContextMenuChildRows = {
 		params ["_position","_children","_ctrlParent"];
 		private _controlGroupParentOfParent = ctrlParentControlsGroup _ctrlParent;
 		_position = _position vectorAdd (ctrlPosition _controlGroupParentOfParent);
@@ -3102,32 +3102,32 @@ comment "Context Menu";
 		_controlGroup
 	};
 
-	ZAM_fnc_isContextMenuOpen = {
+	MAZ_EZM_fnc_isContextMenuOpen = {
 		private _contextBase = uiNamespace getVariable ["MAZ_EZM_contextMenuBase",controlNull];
 		!(isNull _contextBase)
 	};
 	
-	ZAM_fnc_closeContextMenu = {
-		if !(call ZAM_fnc_isContextMenuOpen) exitWith {};
-		[] spawn ZAM_fnc_destroyContextMenu;
+	MAZ_EZM_fnc_closeContextMenu = {
+		if !(call MAZ_EZM_fnc_isContextMenuOpen) exitWith {};
+		[] spawn MAZ_EZM_fnc_destroyContextMenu;
 	};
 
-	ZAM_fnc_closeAllSubControls = {
+	MAZ_EZM_fnc_closeAllSubControls = {
 		params ["_control"];
 		if((count (allControls _control)) > 0) then {
 			{
-				[_x] call ZAM_fnc_closeAllSubControls;
+				[_x] call MAZ_EZM_fnc_closeAllSubControls;
 			}forEach (allControls _control);
 		};
 		ctrlDelete _control;
 	};
 
-	ZAM_fnc_createContextMenu = {
+	MAZ_EZM_fnc_createContextMenu = {
 		comment "Check for actions";
-		if(isNil "ZAM_EZM_contextMenuActions") exitWith {};
+		if(isNil "MAZ_EZM_contextMenuActions") exitWith {};
 		private _contextBase = uiNamespace getVariable ["MAZ_EZM_contextMenuBase",controlNull];
 		if(!isNull _contextBase) then {
-			[_contextBase] call ZAM_fnc_closeAllSubControls;
+			[_contextBase] call MAZ_EZM_fnc_closeAllSubControls;
 			uiNamespace setVariable ["MAZ_EZM_contextMenuBase",controlNull];
 		};
 
@@ -3142,12 +3142,12 @@ comment "Context Menu";
 		with uiNamespace do {
 			private _posArray = getMousePosition;
 			_posArray params ["_mouseX","_mouseY"];
-			(_posArray call (missionNamespace getVariable "ZAM_fnc_createContextMenuBase")) params ["_ctrlGroup","_ctrlGroupFrame"];
+			(_posArray call (missionNamespace getVariable "MAZ_EZM_fnc_createContextMenuBase")) params ["_ctrlGroup","_ctrlGroupFrame"];
 			_ctrlGroup ctrlAddEventHandler ["MouseExit",{
 				params ["_control"];
 				private _currentChildren = uiNamespace getVariable "MAZ_EZM_contextChildrenGroup";
 				if(!isNull _currentChildren) then {
-					[_currentChildren] call ZAM_fnc_closeAllSubControls;
+					[_currentChildren] call MAZ_EZM_fnc_closeAllSubControls;
 					uiNamespace setVariable ["MAZ_EZM_contextChildrenGroup",controlNull];
 				};
 			}];
@@ -3155,7 +3155,7 @@ comment "Context Menu";
 
 			comment "Run conditionals";
 			private _yPos = 0;
-			private _actions = +(missionNamespace getVariable "ZAM_EZM_contextMenuActions");
+			private _actions = +(missionNamespace getVariable "MAZ_EZM_contextMenuActions");
 			_actions = [_actions,[],{_x select 3},"ASCEND"] call BIS_fnc_sortBy;
 			{
 				if(isNil "_x") then {continue};
@@ -3166,7 +3166,7 @@ comment "Context Menu";
 				};
 				if(MAZ_EZM_contextConditionResult) then {
 					_code = compile (format ["params ['_control'];(_control getVariable 'contextMenuParams') params ['_pos','_entity'];[_pos,_entity] call %1;",_code]);
-					private _ctrl = [_ctrlGroup,_yPos,_displayName,_code,_img,_color] call (missionNamespace getVariable "ZAM_fnc_createContextMenuRow");
+					private _ctrl = [_ctrlGroup,_yPos,_displayName,_code,_img,_color] call (missionNamespace getVariable "MAZ_EZM_fnc_createContextMenuRow");
 					_ctrl setVariable ["contextMenuParams",[_worldPos,_entity]];
 					(ctrlPosition _ctrl) params ["","","","_posH"];
 					if(count _childActions != 0) then {
@@ -3195,11 +3195,11 @@ comment "Context Menu";
 						params ["_control"];
 						private _currentChildren = uiNamespace getVariable ["MAZ_EZM_contextChildrenGroup",controlNull];
 						if(!isNull _currentChildren) then {
-							[_currentChildren] call ZAM_fnc_closeAllSubControls;
+							[_currentChildren] call MAZ_EZM_fnc_closeAllSubControls;
 						};
 						private _children = _control getVariable "MAZ_EZM_contextChildrenData";
 						if(!isNil "_children") then {
-							private _childGroup = [ctrlPosition _control,_children,_control] call (missionNamespace getVariable "ZAM_fnc_addContextMenuChildRows");
+							private _childGroup = [ctrlPosition _control,_children,_control] call (missionNamespace getVariable "MAZ_EZM_fnc_addContextMenuChildRows");
 							uiNamespace setVariable ["MAZ_EZM_contextChildrenGroup",_childGroup];
 						};
 					}];
@@ -3223,7 +3223,7 @@ comment "Context Menu";
 	"General Actions";
 
 		if(!isNil "MAZ_EZM_action_openDebugConsole") then {
-			[MAZ_EZM_action_openDebugConsole] call ZAM_fnc_removeContextAction;
+			[MAZ_EZM_action_openDebugConsole] call MAZ_EZM_fnc_removeContextAction;
 		};
 		MAZ_EZM_action_openDebugConsole = [
 			"Open Debug Console",
@@ -3236,10 +3236,10 @@ comment "Context Menu";
 			"a3\3den\data\displays\display3den\entitymenu\findconfig_ca.paa",
 			[1,1,1,1],
 			[]
-		] call ZAM_fnc_createNewContextAction;
+		] call MAZ_EZM_fnc_createNewContextAction;
 
 		if(!isNil "MAZ_EZM_action_addEditableObjects") then {
-			[MAZ_EZM_action_addEditableObjects] call ZAM_fnc_removeContextAction;
+			[MAZ_EZM_action_addEditableObjects] call MAZ_EZM_fnc_removeContextAction;
 		};
 		MAZ_EZM_action_addEditableObjects = [
 			"Add Editable Objects",
@@ -3309,10 +3309,10 @@ comment "Context Menu";
 					[1,1,1,1]
 				]
 			]
-		] call ZAM_fnc_createNewContextAction;
+		] call MAZ_EZM_fnc_createNewContextAction;
 
 		if(!isNil "MAZ_EZM_action_removeEditableObjects") then {
-			[MAZ_EZM_action_removeEditableObjects] call ZAM_fnc_removeContextAction;
+			[MAZ_EZM_action_removeEditableObjects] call MAZ_EZM_fnc_removeContextAction;
 		};
 		MAZ_EZM_action_removeEditableObjects = [
 			"Remove Edit Objects",
@@ -3382,10 +3382,10 @@ comment "Context Menu";
 					[1,1,1,1]
 				]
 			]
-		] call ZAM_fnc_createNewContextAction;
+		] call MAZ_EZM_fnc_createNewContextAction;
 
 		if(!isNil "MAZ_EZM_action_teleportHere") then {
-			[MAZ_EZM_action_teleportHere] call ZAM_fnc_removeContextAction;
+			[MAZ_EZM_action_teleportHere] call MAZ_EZM_fnc_removeContextAction;
 		};
 		MAZ_EZM_action_teleportHere = [
 			"Teleport Here",
@@ -3454,7 +3454,7 @@ comment "Context Menu";
 					{
 						private _return = false;
 						if(_this isEqualType grpNull) exitWith {_return};
-						if(!((typeOf _this) isKindOf "CAManBase") && (alive _this) && !(isNull _this) && ((typeOf _this) isKindOf "AllVehicles") && ([_this] call ZAM_EZM_fnc_canMoveIn)) then {
+						if(!((typeOf _this) isKindOf "CAManBase") && (alive _this) && !(isNull _this) && ((typeOf _this) isKindOf "AllVehicles") && ([_this] call MAZ_EZM_fnc_canMoveIn)) then {
 							_return = true;
 						};
 
@@ -3464,12 +3464,12 @@ comment "Context Menu";
 					[1,1,1,1]
 				]
 			]
-		] call ZAM_fnc_createNewContextAction;
+		] call MAZ_EZM_fnc_createNewContextAction;
 
 	"Unit Actions";
 
 		if(!isNil "MAZ_EZM_action_remoteControl") then {
-			[MAZ_EZM_action_remoteControl] call ZAM_fnc_removeContextAction;
+			[MAZ_EZM_action_remoteControl] call MAZ_EZM_fnc_removeContextAction;
 		};
 		MAZ_EZM_action_remoteControl = [
 			"Remote Control",
@@ -3490,10 +3490,10 @@ comment "Context Menu";
 			5,
 			"\a3\Modules_F_Curator\Data\portraitRemoteControl_ca.paa",
 			[1,1,1,1]
-		] call ZAM_fnc_createNewContextAction;
+		] call MAZ_EZM_fnc_createNewContextAction;
 
 		if(!isNil "MAZ_EZM_action_suppressiveFire") then {
-			[MAZ_EZM_action_suppressiveFire] call ZAM_fnc_removeContextAction;
+			[MAZ_EZM_action_suppressiveFire] call MAZ_EZM_fnc_removeContextAction;
 		};
 		MAZ_EZM_action_suppressiveFire = [
 			"Suppressive Fire",
@@ -3513,10 +3513,10 @@ comment "Context Menu";
 			5,
 			"a3\static_f_oldman\hmg_02\data\ui\icon_hmg_02_ca.paa",
 			[1,1,1,1]
-		] call ZAM_fnc_createNewContextAction;
+		] call MAZ_EZM_fnc_createNewContextAction;
 
 		if(!isNil "MAZ_EZM_action_editLoadout") then {
-			[MAZ_EZM_action_editLoadout] call ZAM_fnc_removeContextAction;
+			[MAZ_EZM_action_editLoadout] call MAZ_EZM_fnc_removeContextAction;
 		};
 		MAZ_EZM_action_editLoadout = [
 			"Edit Loadout",
@@ -3594,10 +3594,10 @@ comment "Context Menu";
 					[1,1,1,1]
 				]
 			]
-		] call ZAM_fnc_createNewContextAction;
+		] call MAZ_EZM_fnc_createNewContextAction;
 
 		if(!isNil "MAZ_EZM_action_healUnit") then {
-			[MAZ_EZM_action_healUnit] call ZAM_fnc_removeContextAction;
+			[MAZ_EZM_action_healUnit] call MAZ_EZM_fnc_removeContextAction;
 		};
 		MAZ_EZM_action_healUnit = [
 			"Heal Unit",
@@ -3617,10 +3617,10 @@ comment "Context Menu";
 			3,
 			"a3\ui_f\data\map\vehicleicons\pictureheal_ca.paa",
 			[1,1,1,1]
-		] call ZAM_fnc_createNewContextAction;
+		] call MAZ_EZM_fnc_createNewContextAction;
 
 		if(!isNil "MAZ_EZM_action_changeSide") then {
-			[MAZ_EZM_action_changeSide] call ZAM_fnc_removeContextAction;
+			[MAZ_EZM_action_changeSide] call MAZ_EZM_fnc_removeContextAction;
 		};
 		MAZ_EZM_action_changeSide = [
 			"Change Unit Side",
@@ -3681,12 +3681,12 @@ comment "Context Menu";
 					[1,1,1,1]
 				]
 			]
-		] call ZAM_fnc_createNewContextAction;
+		] call MAZ_EZM_fnc_createNewContextAction;
 
 	"Vehicle Actions";
 
 		if(!isNil "MAZ_EZM_action_repairVehicle") then {
-			[MAZ_EZM_action_repairVehicle] call ZAM_fnc_removeContextAction;
+			[MAZ_EZM_action_repairVehicle] call MAZ_EZM_fnc_removeContextAction;
 		};
 		MAZ_EZM_action_repairVehicle = [
 			"Repair",
@@ -3706,10 +3706,10 @@ comment "Context Menu";
 			2,
 			"a3\ui_f\data\igui\cfg\cursors\iconrepairvehicle_ca.paa",
 			[1,1,1,1]
-		] call ZAM_fnc_createNewContextAction;
+		] call MAZ_EZM_fnc_createNewContextAction;
 
 		if(!isNil "MAZ_EZM_action_refuelVehicle") then {
-			[MAZ_EZM_action_refuelVehicle] call ZAM_fnc_removeContextAction;
+			[MAZ_EZM_action_refuelVehicle] call MAZ_EZM_fnc_removeContextAction;
 		};
 		MAZ_EZM_action_refuelVehicle = [
 			"Refuel",
@@ -3729,10 +3729,10 @@ comment "Context Menu";
 			2,
 			"a3\ui_f\data\igui\cfg\actions\refuel_ca.paa",
 			[1,1,1,1]
-		] call ZAM_fnc_createNewContextAction;
+		] call MAZ_EZM_fnc_createNewContextAction;
 
 		if(!isNil "MAZ_EZM_action_rearmVehicle") then {
-			[MAZ_EZM_action_rearmVehicle] call ZAM_fnc_removeContextAction;
+			[MAZ_EZM_action_rearmVehicle] call MAZ_EZM_fnc_removeContextAction;
 		};
 		MAZ_EZM_action_rearmVehicle = [
 			"Rearm",
@@ -3752,10 +3752,10 @@ comment "Context Menu";
 			2,
 			"a3\ui_f\data\igui\cfg\simpletasks\types\rearm_ca.paa",
 			[1,1,1,1]
-		] call ZAM_fnc_createNewContextAction;
+		] call MAZ_EZM_fnc_createNewContextAction;
 
 		if(!isNil "MAZ_EZM_action_editPylons") then {
-			[MAZ_EZM_action_editPylons] call ZAM_fnc_removeContextAction;
+			[MAZ_EZM_action_editPylons] call MAZ_EZM_fnc_removeContextAction;
 		};
 		MAZ_EZM_action_editPylons = [
 			"Edit Pylons",
@@ -3802,16 +3802,16 @@ comment "Context Menu";
 					[1,1,1,1]
 				]
 			]
-		] call ZAM_fnc_createNewContextAction;
+		] call MAZ_EZM_fnc_createNewContextAction;
 
 		if(!isNil "MAZ_EZM_action_garageEdit") then {
-			[MAZ_EZM_action_garageEdit] call ZAM_fnc_removeContextAction;
+			[MAZ_EZM_action_garageEdit] call MAZ_EZM_fnc_removeContextAction;
 		};
 		MAZ_EZM_action_garageEdit = [
 			"Edit Appearance",
 			{
 				params ["_pos","_entity"];
-				[_entity] spawn ZAM_fnc_createGarageInterface;
+				[_entity] spawn MAZ_EZM_fnc_createGarageInterface;
 			},
 			{
 				private _return = false;
@@ -3822,12 +3822,12 @@ comment "Context Menu";
 			1,
 			"a3\ui_f\data\gui\rsc\rscdisplayarsenal\spacegarage_ca.paa",
 			[1,1,1,1]
-		] call ZAM_fnc_createNewContextAction;
+		] call MAZ_EZM_fnc_createNewContextAction;
 
 	"Group Actions";
 
 		if(!isNil "MAZ_EZM_action_garrison") then {
-			[MAZ_EZM_action_garrison] call ZAM_fnc_removeContextAction;
+			[MAZ_EZM_action_garrison] call MAZ_EZM_fnc_removeContextAction;
 		};
 		MAZ_EZM_action_garrison = [
 			"Garrison",
@@ -3874,10 +3874,10 @@ comment "Context Menu";
 					[1,1,1,1]
 				]
 			]
-		] call ZAM_fnc_createNewContextAction;
+		] call MAZ_EZM_fnc_createNewContextAction;
 
 		if(!isNil "MAZ_EZM_action_changeSideGroup") then {
-			[MAZ_EZM_action_changeSideGroup] call ZAM_fnc_removeContextAction;
+			[MAZ_EZM_action_changeSideGroup] call MAZ_EZM_fnc_removeContextAction;
 		};
 		MAZ_EZM_action_changeSideGroup = [
 			"Change Group Side",
@@ -3941,9 +3941,9 @@ comment "Context Menu";
 					[1,1,1,1]
 				]
 			]
-		] call ZAM_fnc_createNewContextAction;
+		] call MAZ_EZM_fnc_createNewContextAction;
 
-	ZAM_EZM_fnc_canMoveIn = {
+	MAZ_EZM_fnc_canMoveIn = {
 		params ["_vehicle"];
 		private _crewData = fullCrew [_vehicle,"",true];
 		private _return = false;
@@ -3959,7 +3959,7 @@ comment "Context Menu";
 
 comment "Virtual Garage";
 
-	ZAM_fnc_getVehicleCustomization = {
+	MAZ_EZM_fnc_getVehicleCustomization = {
 		params [["_vehicle",objNull,[objNull,""]]];
 		private _input = [];
 		private _className = "";
@@ -3984,7 +3984,7 @@ comment "Virtual Garage";
 		_customization
 	};
 
-	ZAM_fnc_getAllTextureTypes = {
+	MAZ_EZM_fnc_getAllTextureTypes = {
 		params [["_vehicle",objNull,[objNull,""]]];
 		private _objectType = "";
 		private _deleteAfter = false;
@@ -4046,7 +4046,7 @@ comment "Virtual Garage";
 		_return
 	};
 
-	ZAM_fnc_createGarageInterface = {
+	MAZ_EZM_fnc_createGarageInterface = {
 		params ["_vehicle"];
 		addCuratorSelected [_vehicle]; 
 		if(isNull (findDisplay 312)) exitWith {["Not in Zeus interface!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
@@ -4070,7 +4070,7 @@ comment "Virtual Garage";
 					EZM_garage_TextureButton ctrlSetTextColor [1,1,1,1];
 					EZM_garage_AnimationsButton ctrlSetTextColor [1,1,1,0.6];
 				};
-				[uiNamespace getVariable "EZM_garage_listBox",uiNamespace getVariable "EZM_garage_editVehicle"] call ZAM_fnc_garagePopulateListBoxTextures;
+				[uiNamespace getVariable "EZM_garage_listBox",uiNamespace getVariable "EZM_garage_editVehicle"] call MAZ_EZM_fnc_garagePopulateListBoxTextures;
 			}];
 			EZM_garage_TextureButton ctrlCommit 0;
 
@@ -4091,7 +4091,7 @@ comment "Virtual Garage";
 					EZM_garage_AnimationsButton ctrlSetTextColor [1,1,1,1];
 					EZM_garage_TextureButton ctrlSetTextColor [1,1,1,0.6];
 				};
-				[uiNamespace getVariable "EZM_garage_listBox",uiNamespace getVariable "EZM_garage_editVehicle"] call ZAM_fnc_garagePopulateListBoxAnimations;
+				[uiNamespace getVariable "EZM_garage_listBox",uiNamespace getVariable "EZM_garage_editVehicle"] call MAZ_EZM_fnc_garagePopulateListBoxAnimations;
 			}];
 			EZM_garage_AnimationsButton ctrlCommit 0;
 
@@ -4118,7 +4118,7 @@ comment "Virtual Garage";
 			EZM_garage_listBox ctrlCommit 0;
 		};
 		uiNamespace setVariable ["EZM_garage_editVehicle",_vehicle];
-		[uiNamespace getVariable "EZM_garage_listBox",_vehicle] call ZAM_fnc_garagePopulateListBoxTextures;
+		[uiNamespace getVariable "EZM_garage_listBox",_vehicle] call MAZ_EZM_fnc_garagePopulateListBoxTextures;
 
 		waitUntil {(!(_vehicle in (curatorSelected # 0))) || isNull _vehicle || !alive _vehicle};
 
@@ -4130,14 +4130,14 @@ comment "Virtual Garage";
 		};
 	};
 
-	ZAM_fnc_garagePopulateListBoxTextures = {
+	MAZ_EZM_fnc_garagePopulateListBoxTextures = {
 		params ["_listBox","_vehicle"];
 		lbClear _listBox;
 		if(!isNil "EZM_garage_listEH") then {
 			_listBox ctrlRemoveEventHandler ["LBSelChanged",EZM_garage_listEH];
 		};
 		_listBox setVariable ["EZM_garage_selectIndex",-1];
-		private _textures = [_vehicle] call ZAM_fnc_getAllTextureTypes;
+		private _textures = [_vehicle] call MAZ_EZM_fnc_getAllTextureTypes;
 		if(_textures isEqualTo []) exitWith {
 			_listBox lbAdd "No Textures...";
 		};
@@ -4152,7 +4152,7 @@ comment "Virtual Garage";
 				_control setVariable ["EZM_garage_selectIndex",_selectedIndex];
 
 				private _vehicle = uiNamespace getVariable "EZM_garage_editVehicle";
-				private _textures = [_vehicle] call ZAM_fnc_getAllTextureTypes;
+				private _textures = [_vehicle] call MAZ_EZM_fnc_getAllTextureTypes;
 				private _newTexture = _textures select _selectedIndex;
 				_newTexture params ["","_newTextures"];
 				{
@@ -4171,14 +4171,14 @@ comment "Virtual Garage";
 		}forEach _textures;
 	};
 
-	ZAM_fnc_garagePopulateListBoxAnimations = {
+	MAZ_EZM_fnc_garagePopulateListBoxAnimations = {
 		params ["_listBox","_vehicle"];
 		lbClear _listBox;
 		if(!isNil "EZM_garage_listEH") then {
 			_listBox ctrlRemoveEventHandler ["LBSelChanged",EZM_garage_listEH];
 		};
 		_listBox setVariable ["EZM_garage_selectIndex",-1];
-		private _animations = [_vehicle] call ZAM_fnc_getVehicleCustomization;
+		private _animations = [_vehicle] call MAZ_EZM_fnc_getVehicleCustomization;
 		if(_animations isEqualTo []) exitWith {
 			_listBox lbAdd "No Customization...";
 		};
@@ -4188,7 +4188,7 @@ comment "Virtual Garage";
 		EZM_garage_listEH = _listBox ctrlAddEventHandler ["LBSelChanged",{
 			params ["_control", "_selectedIndex"];
 			private _vehicle = uiNamespace getVariable "EZM_garage_editVehicle";
-			private _animations = [_vehicle] call ZAM_fnc_getVehicleCustomization;
+			private _animations = [_vehicle] call MAZ_EZM_fnc_getVehicleCustomization;
 			(_animations select _selectedIndex) params ["_animDisplayName","_animationName","_state"];
 
 			if(_state == 1) then {
@@ -11033,7 +11033,7 @@ MAZ_EZM_fnc_initFunction = {
 				MAZ_EZM_areaMarkers = [];
 				publicVariable 'MAZ_EZM_areaMarkers';
 			};
-			private _marker = createMarker [format ["ZAM_EZM_marker_%1",count MAZ_EZM_areaMarkers],_position];
+			private _marker = createMarker [format ["MAZ_EZM_marker_%1",count MAZ_EZM_areaMarkers],_position];
 			_marker setMarkerSize [50,50];
 			_marker setMarkerShape "ELLIPSE";
 			MAZ_EZM_areaMarkers pushBack _marker;
@@ -17827,8 +17827,8 @@ MAZ_EZM_editZeusLogic = {
 			private _hovering = curatorMouseOver;
 			if(_hovering isEqualTo [""] || {_group != (group (_hovering # 1))}) then {
 				[] spawn {
-					waitUntil {call ZAM_fnc_isContextMenuOpen};
-					call ZAM_fnc_closeContextMenu;
+					waitUntil {call MAZ_EZM_fnc_isContextMenuOpen};
+					call MAZ_EZM_fnc_closeContextMenu;
 				};
 			} else {
 				deleteWaypoint _wp;
@@ -18138,12 +18138,12 @@ MAZ_EZM_addZeusKeybinds_312 = {
 				
 				if (_distanceTraveled <= _wiggleRoom) then 
 				{
-					[] call ZAM_fnc_createContextMenu;
+					[] call MAZ_EZM_fnc_createContextMenu;
 				};
 			};
 		} else {
-			if(call ZAM_fnc_isContextMenuOpen) then {
-				[] spawn ZAM_fnc_destroyContextMenu;
+			if(call MAZ_EZM_fnc_isContextMenuOpen) then {
+				[] spawn MAZ_EZM_fnc_destroyContextMenu;
 			};
 		};
 	}];
