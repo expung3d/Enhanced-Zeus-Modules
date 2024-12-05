@@ -153,6 +153,108 @@ comment "Dialog Creation";
 		_controlsGroupRow
 	};
 
+	MAZ_EZM_fnc_createColorRow = {
+		params ["_display","_data","_onChange"];
+		_data params [
+			["_rgb",[],[[]]]
+		];
+
+		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
+
+		private _doAlpha = (count _rgb) == 4;
+		private _endIndex = if(_doAlpha) then {237} else {235};
+		_rowControlGroup setVariable ["MAZ_EZM_doAlpha",_doAlpha];
+
+		private _rowColors = [
+			[1,0,0,1],
+			[0,1,0,1],
+			[0,0,1,1],
+			[1,1,1,1]
+		];
+		private _index = 0;
+		private _yPos = 0;
+		for "_i" from 230 to _endIndex step 2 do {
+			private _color = _rowColors # _index;
+			private _inactiveColor = +_color;
+			_inactiveColor set [3,0.6];
+
+			private _slider = _display ctrlCreate ["RscXSliderH",_i,_rowControlGroup];
+			_slider ctrlSetPosition [(["W",10.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),_yPos,(["W",13.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+			_slider ctrlSetForegroundColor _inactiveColor;
+			_slider ctrlSetActiveColor _color;
+			_slider sliderSetRange [0, 1];
+			_slider sliderSetSpeed [0.1, 0.1];
+			_slider sliderSetPosition (_rgb # _index);
+			_slider ctrlCommit 0;
+			_slider setVariable ["MAZ_EZM_onChange",_onChange];
+
+			private _sliderEdit = _display ctrlCreate ["RscEdit",_i + 1,_rowControlGroup];
+			_sliderEdit ctrlSetPosition [(["W",23.7] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),_yPos + pixelH,(["W",2.3] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),((["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH)];
+			_sliderEdit ctrlSetTextColor [1,1,1,1];
+			_sliderEdit ctrlSetBackgroundColor [0,0,0,0.2];
+			_sliderEdit ctrlSetText (str (sliderPosition _slider));
+			_sliderEdit ctrlCommit 0;
+
+			_slider ctrlAddEventHandler ["sliderPosChanged", {
+				params ["_ctrlSlider", "_value"];
+				private _controlGroup = ctrlParentControlsGroup _ctrlSlider;
+				private _ctrlEdit = _controlGroup controlsGroupCtrl (ctrlIDC _ctrlSlider + 1);
+				private _roundedValue = (round (_value * 100) / 100);
+				_ctrlEdit ctrlSetText format ["%1",_roundedValue];
+
+				private _valueRGB = [_controlGroup] call (_controlGroup getVariable "controlValue");
+				private _picture = _controlGroup controlsGroupCtrl 238;
+				if(count _valueRGB == 4) then {
+					_picture ctrlSetText (format ["#(argb,8,8,3)color(%1,%2,%3,%4)",_valueRGB#0,_valueRGB#1,_valueRGB#2,_valueRGB#3]);
+				} else {
+					_picture ctrlSetText (format ["#(argb,8,8,3)color(%1,%2,%3,1)",_valueRGB#0,_valueRGB#1,_valueRGB#2]);
+				};
+				
+				[ctrlParent _ctrlSlider,_valueRGB] call (_ctrlSlider getVariable "MAZ_EZM_onChange");
+			}];
+
+			_sliderEdit ctrlAddEventHandler ["keyUp",{
+				params ["_control", "_key", "_shift", "_ctrl", "_alt"];
+				private _num = parseNumber (ctrlText _control);
+				private _ctrlGroup = ctrlParentControlsGroup _control;
+				private _sliderCtrl = _ctrlGroup controlsGroupCtrl (ctrlIDC _control - 1);
+				_sliderCtrl sliderSetPosition _num;
+			}];	
+
+			_yPos = _yPos + (["H",1.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+			_index = _index + 1;
+		};	
+
+		private _picture = _display ctrlCreate ["RscPicture",238,_rowControlGroup];
+		if(_doAlpha) then {
+			_picture ctrlSetText (format ["#(argb,8,8,3)color(%1,%2,%3,%4)",_rgb#0,_rgb#1,_rgb#2,_rgb#3]);
+		} else {
+			_picture ctrlSetText (format ["#(argb,8,8,3)color(%1,%2,%3,1)",_rgb#0,_rgb#1,_rgb#2]);
+		};
+		_picture ctrlSetPosition [0,(["H",1.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",10] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),_yPos - (["H",1.2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+		_picture ctrlCommit 0;
+
+		_rowControlGroup ctrlSetPositionH _yPos;
+		_rowControlGroup ctrlCommit 0;
+
+		_rowControlGroup setVariable ["controlValue",{
+			params ["_controlsGroup"];
+
+			private _doAlpha = _controlsGroup getVariable ["MAZ_EZM_doAlpha",false];
+			private _endIndex = if(_doAlpha) then {237} else {235};
+			private _rgb = [];
+			for "_i" from 230 to _endIndex step 2 do {
+				private _slider = _controlsGroup controlsGroupCtrl _i;
+				private _value = sliderPosition _slider;
+				_rgb pushBack (round (_value * 100) / 100);
+			};
+			if(!_doAlpha) then {_rgb pushBack 1};
+			_rgb;
+		}];
+
+		_rowControlGroup
+	};
+
 	MAZ_EZM_fnc_createComboRow = {
 		params ["_display","_data","_onChange"];
 		_data params [
@@ -752,8 +854,7 @@ comment "Dialog Creation";
 
 			private _result = switch (_type) do {
 				case "COLOR": {
-					_error = _error + "COLOR is not implemented. ";
-					false;
+					[_display,_data,_onChange] call MAZ_EZM_fnc_createColorRow;
 				};
 				case "COMBO": {
 					[_display,_data,_onChange] call MAZ_EZM_fnc_createComboRow;
