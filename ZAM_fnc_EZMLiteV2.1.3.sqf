@@ -7171,6 +7171,9 @@ MAZ_EZM_fnc_initFunction = {
 			],{
 				params ["_values","_pos","_display"];
 				_values params ["_side","_dir"];
+				if(_side == civilian) exitWith {
+					["You can't reinforce with a civilian group!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;
+				};
 				[_side,_dir] spawn MAZ_EZM_fnc_callReinforcementsChooseGroup;
 				_display closeDisplay 1;
 			},{
