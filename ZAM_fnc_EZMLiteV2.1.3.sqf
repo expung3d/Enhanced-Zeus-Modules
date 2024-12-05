@@ -5169,11 +5169,12 @@ MAZ_EZM_fnc_initFunction = {
 		
 		MAZ_EZM_fnc_serverProtection = {
 			"Troll and malicious scripter kicklist";
-			call { 
+			call {
 				private _fnc = { 
 					params ["_varName"];
 					if (!hasInterface) exitWith {}; 
 					waitUntil {!isNil {player} && {!isNull player}}; 
+					waitUntil {!isNull (findDisplay 46)};
 					missionNamespace setVariable [_varName,nil];
 
 					"Trolls and/or malicious scripters, prevent them from entering protected servers.";
@@ -5206,12 +5207,13 @@ MAZ_EZM_fnc_initFunction = {
 								findDisplay 312;
 							};
 							[
-								parseText "
+								parseText (format ["
 								<t size='1.3' align='center' color='#00BFBF'>You've Been Flagged as a Troll</t><br/>
-								<t size='1.0' align='center'>If you'd like to appeal this decision, contact Expung3d in the ZAM discord.</t> ", 
+								<t size='1.0' align='center'>If you'd like to appeal this decision, contact Expung3d in the ZAM discord.</t><br/>
+								<t size='1.0' align='center'>Reason: %1</t>",_reason]), 
 								"EZM Server Protection System", 
 								true, 
-								true,
+								false,
 								_display
 							] call BIS_fnc_guiMessage;
 						};
@@ -14656,6 +14658,25 @@ MAZ_EZM_fnc_initFunction = {
 
 					private _pylonMaxAmmo = getNumber (configFile >> "CfgMagazines" >> _newWeapon >> "count");
 					[_vehicle,[_pylon,_pylonMaxAmmo]] remoteExec ["setAmmoOnPylon"];
+
+					private _pylonMags = getPylonMagazines _vehicle;
+					{
+						private _weapon = _x;
+						private _defaultWeapons = getArray (configFile >> "CfgVehicles" >> typeOf _vehicle >> "weapons");
+						if(_weapon in _defaultWeapons) then {continue};
+						private _mags = getArray (configFile >> "CfgWeapons" >> _weapon >> "magazines");
+
+						private _magInPylons = false;
+						{
+							if(_x in _pylonMags) then {
+								_magInPylons = true;
+								break;
+							};
+						}forEach _mags;
+						if(!_magInPylons) then {
+							[_vehicle,_weapon] remoteExec ["removeWeapon"];
+						};
+					}forEach (weapons _vehicle);
 				}];
 			}forEach _pylonSlots;
 		};
