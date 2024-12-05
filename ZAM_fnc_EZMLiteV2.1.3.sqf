@@ -10499,7 +10499,10 @@ MAZ_EZM_fnc_initFunction = {
 		MAZ_EZM_fnc_openGUIEditor = {
 			[] spawn {
 				(findDisplay 312) closeDisplay 0;
-				sleep 0.5;
+				waitUntil {isNull (findDisplay 312)};
+				if(!isMultiplayer) then {
+					sleep 0.5;
+				};
 				call BIS_fnc_GUIeditor;
 			};
 		};
@@ -16323,6 +16326,9 @@ MAZ_EZM_fnc_editZeusInterface = {
 						MAZ_GroupsTree_CIVILIAN tvCollapse [_n];
 					";
 				};
+
+				MAZ_zeusModulesTree ctrlSetTooltipColorBox [0,0,0,1];
+				MAZ_zeusModulesTree ctrlSetTooltipColorShade [0.1,0.1,0.1,0.9];
 				
 				{
 					_x ctrlAddEventhandler ["TreeSelChanged","[(_this select 1)] call MAZ_EZM_fnc_updateModuleSelection"];
@@ -16525,7 +16531,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_ArsenalTree,
 					"AIO Arsenal",
-					"----------------------------------------------------------------------------------------------------------------------------------------------------------------------\nAll-In-One Arsenal (by M9-SD)\n----------------------------------------------------------------------------------------------------------------------------------------------------------------------\n\nDescription:\n There are two ways to use this module:\n(1) Place onto another object to make it an AIO arsenal.\n(2) Place on ground to spawn supply box AIO arsenal.\n\nIncludes the following options:\n- Full Arsenal\n- Quick Rearm\n- Copy Loadout\n- Empty Loadout\n- Save Respawn Loadout\n- Load Respawn Loadout\n- Delete Respawn Loadout\n- Edit Group Loadouts",
+					"All-In-One Arsenal (by M9-SD)\n\nDescription:\n There are two ways to use this module:\n(1) Place onto another object to make it an AIO arsenal.\n(2) Place on ground to spawn supply box AIO arsenal.\n\nIncludes the following options:\n- Full Arsenal\n- Quick Rearm\n- Copy Loadout\n- Empty Loadout\n- Save Respawn Loadout\n- Load Respawn Loadout\n- Delete Respawn Loadout\n- Edit Group Loadouts",
 					"MAZ_EZM_fnc_createAIOArsenalDialog",
 					'\A3\ui_f\data\Logos\a_64_ca.paa'
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -16534,7 +16540,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_ArsenalTree,
 					"Reset All Saved Loadouts",
-					"----------------------------------------------------------------------------------------------------------------------------------------------------------------------\nDelete All Saved Loadouts\n----------------------------------------------------------------------------------------------------------------------------------------------------------------------\n\nDescription:\n This module will remove the saved loadouts from all players.",
+					"Delete All Saved Loadouts\n\nDescription:\n This module will remove the saved loadouts from all players.",
 					"MAZ_EZM_fnc_resetSavedLoadouts",
 					'\A3\ui_f\data\Logos\a_64_ca.paa'
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -16606,7 +16612,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_BuildingInteriorsTree,
 					"Get Default Interior Data",
-					"Resets EZM interior data to the default. \nYOU WILL LOSE ALL CHANGES YOU MADE TO YOUR INTERIORS WITHOUT UPDATING MAZ_EZM_fnc_loadDefaultInteriorsData!",
+					"Resets EZM interior data to the default. \nThis will remove any custom compositions you may have created!",
 					"MAZ_EZM_fnc_getDefaultInteriors",
 					"a3\3den\data\displays\display3den\toolbar\undo_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -16631,7 +16637,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_Cinematics,
 					"Intro Cinematic",
-					"Create an exciting cinematic introduction to your missions (by bijx)",
+					"Create an introduction cinematic showcasing the scenario name, your name, and some optional text.\nCreated by: Bijx",
 					"HYPER_EZM_fnc_introCinematicModule",
 					"a3\ui_f\data\igui\cfg\islandmap\iconcamera_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -16725,7 +16731,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_DeleteShipTree,
 					"Create Carrier",
-					"When placed on a boat, creates the USS Freedom at its position.",
+					"Creates the USS Freedom at its position.\nIf placed on a boat the ship will face the direction of the boat.",
 					"MAZ_EZM_fnc_createCarrierModule"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
@@ -16733,7 +16739,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_DeleteShipTree,
 					"Create Destroyer",
-					"When placed on a boat, creates the USS Liberty at its position.",
+					"Creates the USS Liberty at its position.\nIf placed on a boat the ship will face the direction of the boat.",
 					"MAZ_EZM_fnc_createDestroyerModule"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
@@ -16765,7 +16771,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_DevToolsTree,
 					"Animation Viewer",
-					"Opens the Animation Viewer, if placed on a unit it will open using that unit and its current animation.",
+					"Opens the Animation Viewer.\nIf placed on a unit it will open using that unit and its current animation.",
 					"MAZ_EZM_fnc_openAnimViewerModule",
 					"a3\ui_f\data\gui\cfg\keyframeanimation\iconcamera_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -16774,7 +16780,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_DevToolsTree,
 					"Open Debug Console",
-					"Opens the Debug Console.",
+					"Opens the Debug Console.\nthis refers to the entity the console is placed onto.",
 					"MAZ_EZM_fnc_debugConsoleLocalModule",
 					"a3\3den\data\displays\display3den\entitymenu\findconfig_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -16852,7 +16858,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_ExplosivesTree,
 					"Create Minefield",
-					"Create a minefield.",
+					"Create a minefield of specific mines in a radius.",
 					"MAZ_EZM_fnc_createMinefieldModule",
 					"a3\ui_f_curator\data\cfgmarkers\minefieldap_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -16861,7 +16867,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_ExplosivesTree,
 					"Create IED",
-					"Create an IED.",
+					"Create an IED that will detonate when a specific side gets close.",
 					"MAZ_EZM_fnc_createIEDModule",
 					"a3\ui_f_curator\data\cfgmarkers\minefieldap_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -17233,7 +17239,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_SpecialFXTree,
 					"Particle Effect",
-					"Creates a particle effect.",
+					"Creates a particle effect of your choosing.\nSmoke and Fire effects of various sizes.",
 					"MAZ_EZM_fnc_createParticleEffectModule",
 					"a3\ui_f\data\igui\cfg\actions\obsolete\ui_action_fire_in_flame_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -17285,7 +17291,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_terrainObjectModTree,
 					"God Mode Fences",
-					"Allows you to god mode fences in a radius.",
+					"Allows you to god mode fences in a radius.\nPlayers will no longer be able to ram through walls that aren't half destroyed.",
 					"MAZ_EZM_fnc_godModeFencesModule",
 					"a3\modules_f\data\editterrainobject\texturechecked_wall_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -18253,6 +18259,7 @@ private _changelog = [
 	"Changed the Dialog system to have conditions and onChanged events",
 	"Changed the Dialog system to have increased performance, speeding up loading",
 	"Changed Airdrop and Create Zeus Unit dialogs to use conditional elements",
+	"Changed tooltips background color to be readable",
 	"Fixed issues where dynamic modules would be removed if the player ran EZM again"
 ];
 
