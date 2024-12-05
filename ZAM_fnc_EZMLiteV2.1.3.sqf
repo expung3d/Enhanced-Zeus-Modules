@@ -19,11 +19,11 @@ if(isNil "MAZ_EZM_moduleAddons") then {
 };
 
 comment "Color Override";
-	EZM_themeColor = [0, 0.75, 0.75, 1];
-	EZM_zeusTransparency = profileNamespace getVariable ["MAZ_EZM_zeusTransparency_currentValue",1];	
-	EZM_dialogColor = [0,0.5,0.5,1];	
+	EZM_themeColor = profileNamespace getVariable ["MAZ_EZM_ThemeColor",[0, 0.75, 0.75, 1]];
+	uiNamespace setVariable ["EZM_themeColor", EZM_themeColor];
+	EZM_zeusTransparency = profileNamespace getVariable ["MAZ_EZM_Transparency",1];
+	EZM_dialogColor = profileNamespace getVariable ["MAZ_EZM_DialogColor",[0,0.5,0.5,1]];
 	EZM_dialogBackgroundCO = [0, 0, 0, 0.7];
-	uiNamespace setVariable ['EZM_themeColor', EZM_themeColor];
 
 comment "Dialog Creation";
 
@@ -3761,7 +3761,7 @@ comment "Context Menu";
 			"Edit Pylons",
 			{
 				params ["_pos","_entity"];
-				[_entity] spawn ZAM_EZM_fnc_editVehiclePylons;
+				[_entity] spawn MAZ_EZM_fnc_editVehiclePylons;
 			},
 			{
 				private _return = false;
@@ -3778,7 +3778,7 @@ comment "Context Menu";
 					"Change Pylons",
 					{
 						params ["_pos","_entity"];
-						[_entity] spawn ZAM_EZM_fnc_editVehiclePylons;
+						[_entity] spawn MAZ_EZM_fnc_editVehiclePylons;
 					},
 					{true},
 					"",
@@ -4017,8 +4017,12 @@ comment "Virtual Garage";
 			_textures = _textures apply {toLower _x};
 			private _isCurrentTexture = true;
 			private _objectTextures = getObjectTextures _vehicle;
-			private _dataSlots = _objectTextures;
+			private _dataSlots = +_objectTextures;
 			{
+				if(_forEachIndex >= count _textures) then {
+					_dataSlots deleteAt _forEachIndex;
+					continue;
+				};
 				if((_textures select _forEachIndex) find _x != -1) then {
 					_dataSlots set [_forEachIndex,true];
 				} else {
@@ -4027,6 +4031,7 @@ comment "Virtual Garage";
 			}forEach _objectTextures;
 			{
 				if(!_isCurrentTexture) exitWith {};
+				if(typeName _x == "STRING") then {continue};
 				if(_x) then {
 					_isCurrentTexture = true;
 				} else {
@@ -4189,11 +4194,17 @@ comment "Virtual Garage";
 			if(_state == 1) then {
 				comment "Undo change";
 				_control lbSetPicture [_selectedIndex,getText (configfile >> "RscCheckBox" >> "textureUnchecked")];
-				_vehicle animate [_animationName,0,true];
+				_vehicle animate [_animationName,0,false];
+				if("wing_fold" in _animationName) then {
+					_vehicle animate ["wing_fold_r",0,false];
+				};
 			} else {
 				comment "Apply change";
 				_control lbSetPicture [_selectedIndex,getText (configfile >> "RscCheckBox" >> "textureChecked")];
-				_vehicle animate [_animationName,1,true];
+				_vehicle animate [_animationName,1,false];
+				if("wing_fold" in _animationName) then {
+					_vehicle animate ["wing_fold_r",1,false];
+				};
 			};
 		}];
 		{
@@ -9522,8 +9533,6 @@ MAZ_EZM_fnc_initFunction = {
 		call MAZ_EZM_fnc_checkForInteriorData;
 
 	comment "Cinematics";
-		comment "the plan here is as follows: when intro cinematic module is placed, a window pops up with one of two options: 'orbit' or 'dynamic'. in either case, the black bars appear for users, screen fades to black, and then the cinematic begins. The screen starts at black with a title and the name of the zeus'. If orbit is selected, the cinematic will be like a UAV flying above where the module was placed. Music choice can be selected, and up to 2 additional texts can be written to appear in the cinematic. once the cinematic ends, black screen appears again, and black bars fade.";
-		comment "maybe we should check if players are in a vehicle during cutscene, if so disable vehicle simulation";
 
 		HYPER_EZM_fnc_showIntertitles = {
 			params ["_line1", "_line2"];
@@ -9967,8 +9976,6 @@ MAZ_EZM_fnc_initFunction = {
 				_pos
 			] call MAZ_EZM_fnc_createDialog;
 		};
-
-		comment "TODO: remove cinematic bars module that also un-blacks out screen";
 
 	comment "Clean Up";
 
@@ -14272,6 +14279,54 @@ MAZ_EZM_fnc_initFunction = {
 			},[]] call MAZ_EZM_fnc_createDialog;
 		};
 
+		MAZ_EZM_fnc_editZeusInterfaceColors = {
+			[
+				"EDIT INTERFACE COLORS",
+				[
+					[
+						"COLOR",
+						"Theme Color:",
+						[EZM_themeColor]
+					],
+					[
+						"COLOR",
+						"Dialog Color:",
+						[EZM_dialogColor]
+					],
+					[
+						"SLIDER",
+						"Opacity:",
+						[
+							0,
+							1,
+							EZM_zeusTransparency,
+							objNull,
+							[1,1,1,1],
+							true
+						]
+					]
+				],
+				{
+					params ["_values","_args","_display"];
+					_values params ["_theme","_dialog","_transparency"];
+					EZM_themeColor = _theme;
+					profileNamespace setVariable ["MAZ_EZM_ThemeColor",EZM_themeColor];
+					EZM_dialogColor = _dialog;
+					profileNamespace setVariable ["MAZ_EZM_DialogColor",EZM_dialogColor];
+					EZM_zeusTransparency = _transparency;
+					profileNamespace setVariable ["MAZ_EZM_Transparency",EZM_zeusTransparency];
+					[] spawn MAZ_EZM_fnc_refreshInterface;
+					_display closeDisplay 1;
+				},
+				{
+					params ["_values","_args","_display"];
+					
+					_display closeDisplay 2;
+				},
+				[]
+			] call MAZ_EZM_fnc_createDialog;
+		};
+
 	comment "Auto-Add to Interface";
 	
 		MAZ_EZM_fnc_addToInterface = {
@@ -14506,129 +14561,89 @@ MAZ_EZM_fnc_initFunction = {
 
 	comment "Pylon Editor";
 
-		"TODO : Rewrite and use a GUI instead. 3D icons is just too aids to handle with the internal bays.";
-		"https://steamcommunity.com/sharedfiles/filedetails/?id=1867660876";
-		ZAM_EZM_fnc_editVehiclePylons = {
+		MAZ_EZM_fnc_editVehiclePylons = {
 			params ["_veh"];
-			private _pylons = [];
-			{
-				if(_x find "pylon" != -1 && _x find "proxy" != -1) then {
-					_pylons pushBack _x;
-				};
-			}forEach (_veh selectionNames "FireGeometry");
+			createDialog "RscDisplayEmpty";
+			showchat true;
+			private _display = findDisplay -1;
 
-			private _pylonSlotsUnfiltered = (configFile >> "CfgVehicles" >> typeOf _veh >> "Components" >> "TransportPylonsComponent" >> "Pylons") call BIS_fnc_getCfgSubClasses;
-			private _pylonSlots = [];
-			{
-				if((toLower _x) find "bay" == -1) then {
-					_pylonSlots pushBack _x;
-				};
-			}forEach _pylonSlotsUnfiltered;
-			private _pylonsNew = [];
-			{
-				private _numberOfPylon = _x splitString ".";
-				private _pylonIndex = -1;
-				if(count _numberOfPylon != 2) then {} else {
-					_pylonIndex = (parseNumber (_numberOfPylon # 1)) - 1;
-					if(_pylonIndex <= (count _pylonSlots -1)) then {
-						_pylonsNew set [_pylonIndex,_veh selectionPosition _x]; 
-					};
-				};
-			}forEach _pylons;
+			private _label = _display ctrlCreate ["RscText",-1];
+			_label ctrlSetText (format ["EDIT AIRCRAFT PYLONS - (%1)",getText (configfile >> "CfgVehicles" >> typeOf _veh >> "displayName")]);
+			_label ctrlSetPosition [0.29375 * safezoneW + safezoneX,(0.203 * safezoneH + safezoneY) - (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0.4125 * safezoneW,(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+			_label ctrlSetBackgroundColor EZM_dialogColor;
+			_label ctrlCommit 0;
 
+			private _okayButton = _display ctrlCreate ["RscButtonMenuOk",-1];
+			_okayButton ctrlSetPosition [(["X",3.3] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(0.775 * safezoneH + safezoneY) + (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",33.4] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+			_okayButton ctrlSetText "OK, DONE EDITING";
+			_okayButton ctrlAddEventhandler ["ButtonClick",{
+				params ["_control"];
+				private _display = ctrlParent _control;
+				_display closeDisplay 0;
+			}];
+			_okayButton ctrlCommit 0;
 
+			private _uiPicture = getText (configfile >> "CfgVehicles" >> typeOf _veh >> "Components" >> "TransportPylonsComponent" >> "uiPicture");
+			
+			private _controlsGroup = _display ctrlCreate ["RscControlsGroupNoScrollbars",-1];
+			_controlsGroup ctrlSetPosition [0.29375 * safezoneW + safezoneX,0.225 * safezoneH + safezoneY,0.4125 * safezoneW,0.55 * safezoneH];
+			_controlsGroup ctrlCommit 0;
+			
+			private _pictureBG = _display ctrlCreate ["RscPicture",-1,_controlsGroup];
+			_pictureBG ctrlSetText "#(argb,8,8,3)color(0.4,0.4,0.4,0.9)";
+			_pictureBG ctrlSetPosition [0,0,1,1];
+			_pictureBG ctrlCommit 0;
+
+			private _picture = _display ctrlCreate ["RscPictureKeepAspect",-1,_controlsGroup];
+			_picture ctrlSetText _uiPicture;
+			_picture ctrlSetPosition [0,0,1,1];
+			_picture ctrlCommit 0;
+			
 			private _currentMags = getPylonMagazines _veh;
-			private _pylonWeapons = [];
-			private _pylonDisplayNames = [];
-
+			private _pylonSlots = (configFile >> "CfgVehicles" >> typeOf _veh >> "Components" >> "TransportPylonsComponent" >> "Pylons") call BIS_fnc_getCfgSubClasses;
 			{
 				private _pylon = _x;
-				private _compatMags = _veh getCompatiblePylonMagazines _x;
-				private _temp = [];
+				private _pylonIndex = _forEachIndex;
+
+				private _UIPos = getArray (configFile >> "CfgVehicles" >> typeOf _veh >> "Components" >> "TransportPylonsComponent" >> "Pylons" >> _x >> "UIposition");
+				_UIPos pushBack (0.061875 * safezoneW);
+				_UIPos pushBack (0.022 * safezoneH);
+				_UIPos = _UIPos vectorAdd [0.1,0.2,0,0];
+				
+				private _combo = _display ctrlCreate ["RscCombo",-1];
+				_combo ctrlSetPosition _UIPos;
+				_combo ctrlSetTooltip _pylon;
+				_combo setVariable ["MAZ_EZM_PylonData",[_veh,_pylon]];
+				_combo ctrlCommit 0;
+
+				_combo lbAdd "None";
+				_combo lbSetData [0,""];
+				_combo lbSetTooltip [0,"Remove this Pylon's weapon"];
+
+				private _compatMags = _veh getCompatiblePylonMagazines _pylon;
 				{
-					_temp pushBack (getText (configFile >> "CfgMagazines" >> _x >> "displayName"));
-				}forEach _compatMags;
-				_pylonWeapons pushBack _compatMags;
-				_pylonDisplayNames pushBack _temp;
-			}forEach _pylonSlots;
-
-			private _display = findDisplay 312;
-			private _controls = [];
-			{
-				private _control = _display ctrlCreate ["RscCombo",-1];
-				_control setVariable ["pylonEditorPylon",_x];
-				private _pylonNames = _pylonDisplayNames select _forEachIndex;
-				private _pylonConfigNames = _pylonWeapons select _forEachIndex;
-				private _currentMag = _currentMags select _forEachIndex;
-				private _indexPylon = _pylonConfigNames find _currentMag;
-				{
-					private _index = _control lbAdd _x;
-					_control lbSetData [_index,_pylonConfigNames select _forEachIndex];
-				}forEach _pylonNames;
-				_control setVariable ["pylonEditorVehicle",_veh];
-				_control ctrlAddEventHandler ["LBSelChanged",{
-					params ["_control", "_selectedIndex"];
-					private _vehicle = _control getVariable 'pylonEditorVehicle';
-					private _pylonSlot = _control getVariable "pylonEditorPylon";
-					private _pylonNew = _control lbData _selectedIndex;
-					private _pylonMaxAmmo = getNumber (configFile >> "CfgMagazines" >> _pylonNew >> "count");
-
-					comment "TODO : Fix pylons not saving globally.";
-					[_vehicle,[_pylonSlot,_pylonNew]] remoteExec ['setPylonLoadout'];
-					_vehicle setPylonLoadout [_pylonSlot,_pylonNew];
-					comment "_vehicle setPylonLoadout [_pylonSlot,_pylonNew]";
-					_vehicle setAmmoOnPylon [_pylonSlot,_pylonMaxAmmo];
-				}];
-				_control lbSetCurSel _indexPylon;
-
-				_controls pushBack _control;
-			}forEach _pylonSlots;
-
-			if(!isNil "MAZ_updateEachFramePylons") then {
-				private _pylonEditorControls = player getVariable ["pylonEditorControls",[]];
-				{
-					ctrlDelete _x;
-				}forEach _pylonEditorControls;
-				player setVariable ["pylonEditorControls",[]];
-				[MAZ_updateEachFramePylons,"onEachFrame"] call BIS_fnc_removeStackedEventHandler;
-			};
-			player setVariable ["pylonEditorControls",_controls];
-
-			MAZ_updateEachFramePylons = ["MAZ_updatePylonsEachFrame","onEachFrame",{
-				params ["_vehicle","_pylons","_controls"];
-				if(isNull findDisplay 312) exitWith {
-					[MAZ_updateEachFramePylons,"onEachFrame"] call BIS_fnc_removeStackedEventHandler;
-				};
-
-				if(curatorCamera distance _vehicle > 125) then {
-					[MAZ_updateEachFramePylons,"onEachFrame"] call BIS_fnc_removeStackedEventHandler;
-					{ctrlDelete _x} forEach _controls;
-				};
-
-				{
-					private _control = _controls select _forEachIndex;
-
-					private _position = _vehicle modelToWorldVisual _x;
-					private _distance = curatorCamera distance _position;
-					private _screenPos = worldToScreen _position;
-
-					if(_screenPos isEqualTo [] || {_distance > 75}) then {
-						_control ctrlShow false;
-					} else {
-						_control ctrlShow true;
-
-						_screenPos params ["_posX","_posY"];
-
-						private _size = linearConversion [0,100,_distance,1.75,1,true];
-						private _posW = ["W",(_size*4)] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
-						private _posH = ["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
-
-						_control ctrlSetPosition [_posX - _posW / 2, _posY - _posH / 2,_posW,_posH];
-						_control ctrlCommit 0;
+					private _compatMag = _x;
+					private _displayName = getText (configFile >> "CfgMagazines" >> _compatMag >> "displayName");
+					private _descriptionShort = getText (configfile >> "CfgMagazines" >> _compatMag >> "descriptionShort");
+					private _tooltip = format ["%1\n%2",_displayName,_descriptionShort];
+					private _index = _combo lbAdd _displayName;
+					_combo lbSetData [_index,_compatMag];
+					_combo lbSetTooltip [_index,_tooltip];
+					if((_currentMags # _pylonIndex) == _compatMag) then {
+						_combo lbSetCurSel _index;
 					};
-				} forEach _pylons;
+				}forEach _compatMags;
 
-			},[_veh,_pylonsNew,_controls]] call BIS_fnc_addStackedEventHandler;
+				_combo ctrlAddEventHandler ["LBSelChanged", {
+					params ["_control","_index"];
+					(_control getVariable "MAZ_EZM_PylonData") params ["_vehicle","_pylon"];
+					private _newWeapon = _control lbData _index;
+					[_vehicle,[_pylon,_newWeapon]] remoteExec ["setPylonLoadout"];
+
+					private _pylonMaxAmmo = getNumber (configFile >> "CfgMagazines" >> _newWeapon >> "count");
+					[_vehicle,[_pylon,_pylonMaxAmmo]] remoteExec ["setAmmoOnPylon"];
+				}];
+			}forEach _pylonSlots;
 		};
 
 	comment "Collapse Expand Trees";
@@ -15756,7 +15771,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 			comment "Transparency & Function Defines";
 
 				missionNamespace setVariable ['MAZ_zeusModulesWithFunction', []];
-				private _transparency = profilenamespace getVariable ['MAZ_EZM_zeusTransparency_currentValue', 1];
+				private _transparency = profilenamespace getVariable ['MAZ_EZM_Transparency', 1];
 				[_transparency] call (missionNamespace getvariable ['MAZ_EZM_fnc_setZeusTransparency', {}]);
 
 				MAZ_EZM_fnc_zeusAddCategory = {
@@ -17589,6 +17604,15 @@ MAZ_EZM_fnc_editZeusInterface = {
 					"a3\3den\data\attributes\taskstates\canceled_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
+				[
+					MAZ_zeusModulesTree,
+					MAZ_ZeusTree,
+					"Edit Zeus Interface",
+					"Change the Zeus interface colors and opacity.",
+					"MAZ_EZM_fnc_editZeusInterfaceColors",
+					"a3\modules_f_curator\data\iconpostprocess_ca.paa"
+				] call MAZ_EZM_fnc_zeusAddModule;
+
 			comment "Zeus Preview";
 				[] call MAZ_EZM_fnc_zeusPreviewImage;
 				[] call MAZ_EZM_fnc_addZeusPreviewEvents;
@@ -18403,8 +18427,12 @@ private _changelog = [
 	"Changed the Dialog system to have increased performance, speeding up loading",
 	"Changed Airdrop and Create Zeus Unit dialogs to use conditional elements",
 	"Changed tooltips background color to be readable",
-	"Changed various tooltips to be more descriptive",
-	"Fixed issues where dynamic modules would be removed if the player ran EZM again"
+	"Changed various module tooltips to be more descriptive",
+	"Changed the Edit Vehicle Appearance elements to be more readable",
+	"Changed Pylon Editor to use a GUI instead of 3D controls",
+	"Fixed issues where dynamic modules would be removed if the player ran EZM again",
+	"Fixed issue where the Blackwasp Appearance was not editable",
+	"Fixed issue where wings were only folding the left wing"
 ];
 
 private _changelogString = "";
