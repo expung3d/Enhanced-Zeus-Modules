@@ -2999,12 +2999,12 @@ comment "Context Menu";
 		private _display = findDisplay 312;
 		MAZ_EZM_contextMenuBase = _display ctrlCreate ["RscControlsGroupNoScrollbars",-1];
 		MAZ_EZM_contextMenuBase ctrlSetPosition [_xPos,_yPos,["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0];
-		MAZ_EZM_contextMenuBase ctrlSetBackgroundColor [0,0,0,0.4];
+		MAZ_EZM_contextMenuBase ctrlSetBackgroundColor [0,0,0,0.6];
 		MAZ_EZM_contextMenuBase ctrlCommit 0;
 
 		private _controlGroupFrame = _display ctrlCreate ["RscFrame",-1,MAZ_EZM_contextMenuBase];
 		_controlGroupFrame ctrlSetPosition [0,0,["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0];
-		_controlGroupFrame ctrlSetTextColor [0,0,0,0.6];
+		_controlGroupFrame ctrlSetTextColor [0,0,0,0.8];
 		_controlGroupFrame ctrlCommit 0;
 
 		[MAZ_EZM_contextMenuBase,_controlGroupFrame]
@@ -3026,8 +3026,8 @@ comment "Context Menu";
 		_ctrl ctrlSetFont "RobotoCondensed";
 		_ctrl ctrlSetPosition [0,_yPos,["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
 		_ctrl ctrlSetTextColor _color;
-		_ctrl ctrlSetBackgroundColor [0,0,0,0.4];
-		_ctrl ctrlSetActiveColor [0,0,0,0.6];
+		_ctrl ctrlSetBackgroundColor [0,0,0,0.6];
+		_ctrl ctrlSetActiveColor [0,0,0,0.7];
 		_ctrl ctrlAddEventHandler ["ButtonClick",_code];
 		_ctrl ctrlCommit 0;
 
@@ -3053,7 +3053,7 @@ comment "Context Menu";
 		private _display = findDisplay 312;
 		private _controlGroup = _display ctrlCreate ["RscControlsGroupNoScrollbars",-1];
 		_controlGroup ctrlSetPosition [_xPos + (["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),_yPos,["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0];
-		_controlGroup ctrlSetBackgroundColor [0,0,0,0.4];
+		_controlGroup ctrlSetBackgroundColor [0,0,0,0.6];
 		_controlGroup ctrlCommit 0;
 
 		private _controlGroupFrame = _display ctrlCreate ["RscFrame",-1,_controlGroup];
@@ -3079,8 +3079,8 @@ comment "Context Menu";
 			_ctrl ctrlSetFont "RobotoCondensed";
 			_ctrl ctrlSetPosition [0,_groupHeight,["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
 			_ctrl ctrlSetTextColor _color;
-			_ctrl ctrlSetBackgroundColor [0,0,0,0.4];
-			_ctrl ctrlSetActiveColor [0,0,0,0.6];
+			_ctrl ctrlSetBackgroundColor [0,0,0,0.6];
+			_ctrl ctrlSetActiveColor [0,0,0,0.7];
 			_ctrl ctrlAddEventHandler ["ButtonClick",_code];
 			_ctrl ctrlCommit 0;
 
@@ -3220,589 +3220,728 @@ comment "Context Menu";
 		};
 	};
 
-	if(!isNil "MAZ_EZM_action_openDebugConsole") then {
-		[MAZ_EZM_action_openDebugConsole] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_openDebugConsole = [
-		"Open Debug Console",
-		{
-			params ["_pos","_entity"];
-			[_entity] call MAZ_EZM_fnc_debugConsoleLocalModule;
-		},
-		{true},
-		6,
-		"a3\3den\data\displays\display3den\entitymenu\findconfig_ca.paa",
-		[1,1,1,1],
-		[]
-	] call ZAM_fnc_createNewContextAction;
+	"General Actions";
 
-	if(!isNil "MAZ_EZM_action_addEditableObjects") then {
-		[MAZ_EZM_action_addEditableObjects] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_addEditableObjects = [
-		"Add Editable Objects",
-		{
-			params ["_pos"];
-			private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
-			[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
-		},
-		{true},
-		7,
-		"a3\3den\data\displays\display3den\panelright\customcomposition_add_ca.paa",
-		[1,1,1,1],
-		[
-			[
-				"50m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,50] call MAZ_EZM_fnc_getEditableObjectsRadius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"100m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"250m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,250] call MAZ_EZM_fnc_getEditableObjectsRadius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"500m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,500] call MAZ_EZM_fnc_getEditableObjectsRadius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"1000m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,1000] call MAZ_EZM_fnc_getEditableObjectsRadius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			]
-		]
-	] call ZAM_fnc_createNewContextAction;
+		if(!isNil "MAZ_EZM_action_openDebugConsole") then {
+			[MAZ_EZM_action_openDebugConsole] call ZAM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_openDebugConsole = [
+			"Open Debug Console",
+			{
+				params ["_pos","_entity"];
+				[_entity] call MAZ_EZM_fnc_debugConsoleLocalModule;
+			},
+			{true},
+			6,
+			"a3\3den\data\displays\display3den\entitymenu\findconfig_ca.paa",
+			[1,1,1,1],
+			[]
+		] call ZAM_fnc_createNewContextAction;
 
-	if(!isNil "MAZ_EZM_action_removeEditableObjects") then {
-		[MAZ_EZM_action_removeEditableObjects] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_removeEditableObjects = [
-		"Remove Edit Objects",
-		{
-			params ["_pos"];
-			private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
-			[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
-		},
-		{true},
-		6,
-		"a3\3den\data\cfg3den\group\iconcustomcomposition_ca.paa",
-		[1,1,1,1],
-		[
+		if(!isNil "MAZ_EZM_action_addEditableObjects") then {
+			[MAZ_EZM_action_addEditableObjects] call ZAM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_addEditableObjects = [
+			"Add Editable Objects",
+			{
+				params ["_pos"];
+				private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
+				[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+			},
+			{true},
+			6,
+			"a3\3den\data\displays\display3den\panelright\customcomposition_add_ca.paa",
+			[1,1,1,1],
 			[
-				"50m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,50] call MAZ_EZM_fnc_getEditableObjectsRadius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"100m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"250m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,250] call MAZ_EZM_fnc_getEditableObjectsRadius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"500m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,500] call MAZ_EZM_fnc_getEditableObjectsRadius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"1000m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,1000] call MAZ_EZM_fnc_getEditableObjectsRadius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			]
-		]
-	] call ZAM_fnc_createNewContextAction;
-
-	if(!isNil "MAZ_EZM_action_teleportHere") then {
-		[MAZ_EZM_action_teleportHere] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_teleportHere = [
-		"Teleport Here",
-		{
-			params ["_pos"];
-			if(surfaceIsWater _pos) exitWith {
-				private _newPos = [true] call MAZ_EZM_fnc_getScreenPosition;
-				_newPos = AGLtoASL _newPos;
-				player setPosASL _newPos;
-			};
-			player setPosATL _pos;
-		},
-		{true},
-		5.9,
-		"a3\3den\data\cfgwaypoints\move_ca.paa",
-		[1,1,1,1],
-		[
-			[
-				"Teleport Player Here",
-				{
-					params ["_pos","_entity"];
-					[objNull,_pos] call MAZ_EZM_fnc_teleportPlayerModule;
-				},
-				{true},
-				"a3\ui_f\data\gui\rsc\rscdisplaymain\menu_singleplayer_ca.paa",
-				[1,1,1,1]
-			],
-			[
-				"Teleport Everyone",
-				{
-					params ["_pos","_entity"];
+				[
+					"50m",
 					{
-						_x setPos _pos;
-					}forEach allPlayers;
-				},
-				{true},
-				"a3\ui_f\data\gui\rsc\rscdisplaymain\menu_multiplayer_ca.paa",
-				[1,1,1,1]
-			],
-			[
-				"Teleport In Vehicle",
-				{
-					params ["_pos","_entity"];
-					private _crewData = fullCrew [_entity,"",true];
-					private _return = false;
-					private _moveInCode = "";
+						params ["_pos"];
+						private _objects = [_pos,50] call MAZ_EZM_fnc_getEditableObjectsRadius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"100m",
 					{
-						_x params ["_unit","_role","_cargoIndex","_turretPath","_personTurret"];
-						if(_return) exitWith {};
-						if(_role != "turret") then {
-							if(isNull _unit || !alive _unit) then {
-								if(!isNull _unit) then {moveOut _unit};
-								_moveInCode = compile (format ["player moveIn%1 _this",_role]);
-								_return = true;
+						params ["_pos"];
+						private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"250m",
+					{
+						params ["_pos"];
+						private _objects = [_pos,250] call MAZ_EZM_fnc_getEditableObjectsRadius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"500m",
+					{
+						params ["_pos"];
+						private _objects = [_pos,500] call MAZ_EZM_fnc_getEditableObjectsRadius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"1000m",
+					{
+						params ["_pos"];
+						private _objects = [_pos,1000] call MAZ_EZM_fnc_getEditableObjectsRadius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				]
+			]
+		] call ZAM_fnc_createNewContextAction;
+
+		if(!isNil "MAZ_EZM_action_removeEditableObjects") then {
+			[MAZ_EZM_action_removeEditableObjects] call ZAM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_removeEditableObjects = [
+			"Remove Edit Objects",
+			{
+				params ["_pos"];
+				private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
+				[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
+			},
+			{true},
+			7,
+			"a3\3den\data\cfg3den\group\iconcustomcomposition_ca.paa",
+			[1,1,1,1],
+			[
+				[
+					"50m",
+					{
+						params ["_pos"];
+						private _objects = [_pos,50] call MAZ_EZM_fnc_getEditableObjectsRadius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"100m",
+					{
+						params ["_pos"];
+						private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"250m",
+					{
+						params ["_pos"];
+						private _objects = [_pos,250] call MAZ_EZM_fnc_getEditableObjectsRadius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"500m",
+					{
+						params ["_pos"];
+						private _objects = [_pos,500] call MAZ_EZM_fnc_getEditableObjectsRadius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"1000m",
+					{
+						params ["_pos"];
+						private _objects = [_pos,1000] call MAZ_EZM_fnc_getEditableObjectsRadius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				]
+			]
+		] call ZAM_fnc_createNewContextAction;
+
+		if(!isNil "MAZ_EZM_action_teleportHere") then {
+			[MAZ_EZM_action_teleportHere] call ZAM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_teleportHere = [
+			"Teleport Here",
+			{
+				params ["_pos"];
+				if(surfaceIsWater _pos) exitWith {
+					private _newPos = [true] call MAZ_EZM_fnc_getScreenPosition;
+					_newPos = AGLtoASL _newPos;
+					player setPosASL _newPos;
+				};
+				player setPosATL _pos;
+			},
+			{true},
+			5.9,
+			"a3\3den\data\cfgwaypoints\move_ca.paa",
+			[1,1,1,1],
+			[
+				[
+					"Teleport Player Here",
+					{
+						params ["_pos","_entity"];
+						[objNull,_pos] call MAZ_EZM_fnc_teleportPlayerModule;
+					},
+					{true},
+					"a3\ui_f\data\gui\rsc\rscdisplaymain\menu_singleplayer_ca.paa",
+					[1,1,1,1]
+				],
+				[
+					"Teleport Everyone",
+					{
+						params ["_pos","_entity"];
+						{
+							_x setPos _pos;
+						}forEach allPlayers;
+					},
+					{true},
+					"a3\ui_f\data\gui\rsc\rscdisplaymain\menu_multiplayer_ca.paa",
+					[1,1,1,1]
+				],
+				[
+					"Teleport In Vehicle",
+					{
+						params ["_pos","_entity"];
+						private _crewData = fullCrew [_entity,"",true];
+						private _return = false;
+						private _moveInCode = "";
+						{
+							_x params ["_unit","_role","_cargoIndex","_turretPath","_personTurret"];
+							if(_return) exitWith {};
+							if(_role != "turret") then {
+								if(isNull _unit || !alive _unit) then {
+									if(!isNull _unit) then {moveOut _unit};
+									_moveInCode = compile (format ["player moveIn%1 _this",_role]);
+									_return = true;
+								};
+							} else {
+								if(isNull _unit || !alive _unit) then {
+									if(!isNull _unit) then {moveOut _unit};
+									_moveInCode = compile (format ["player moveIn%1 [_this,%2]",_role,_turretPath]);
+									_return = true;
+								};
 							};
-						} else {
-							if(isNull _unit || !alive _unit) then {
-								if(!isNull _unit) then {moveOut _unit};
-								_moveInCode = compile (format ["player moveIn%1 [_this,%2]",_role,_turretPath]);
-								_return = true;
-							};
+						}forEach _crewData;
+						_entity call _moveInCode;
+					},
+					{
+						private _return = false;
+						if(_this isEqualType grpNull) exitWith {_return};
+						if(!((typeOf _this) isKindOf "CAManBase") && (alive _this) && !(isNull _this) && ((typeOf _this) isKindOf "AllVehicles") && ([_this] call ZAM_EZM_fnc_canMoveIn)) then {
+							_return = true;
 						};
-					}forEach _crewData;
-					_entity call _moveInCode;
-				},
-				{
-					private _return = false;
-					if(_this isEqualType grpNull) exitWith {_return};
-					if(!((typeOf _this) isKindOf "CAManBase") && (alive _this) && !(isNull _this) && ((typeOf _this) isKindOf "AllVehicles") && ([_this] call ZAM_EZM_fnc_canMoveIn)) then {
-						_return = true;
-					};
 
-					_return
-				},
-				"a3\3den\data\cfgwaypoints\getin_ca.paa",
-				[1,1,1,1]
+						_return
+					},
+					"a3\3den\data\cfgwaypoints\getin_ca.paa",
+					[1,1,1,1]
+				]
 			]
-		]
-	] call ZAM_fnc_createNewContextAction;
+		] call ZAM_fnc_createNewContextAction;
 
-	if(!isNil "MAZ_EZM_action_remoteControl") then {
-		[MAZ_EZM_action_remoteControl] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_remoteControl = [
-		"Remote Control",
-		{
-			params ["_pos","_entity"];
-			private _logic = createVehicle ["Land_HelipadEmpty_F",[0,0,0],[],0,"CAN_COLLIDE"];
-			[_logic,_entity,true] spawn MAZ_EZM_BIS_fnc_remoteControlUnit;
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this && !(isPlayer _this)) then {
-				_return = true;
-			};
+	"Unit Actions";
 
-			_return
-		},
-		5,
-		"\a3\Modules_F_Curator\Data\portraitRemoteControl_ca.paa",
-		[1,1,1,1]
-	] call ZAM_fnc_createNewContextAction;
+		if(!isNil "MAZ_EZM_action_remoteControl") then {
+			[MAZ_EZM_action_remoteControl] call ZAM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_remoteControl = [
+			"Remote Control",
+			{
+				params ["_pos","_entity"];
+				private _logic = createVehicle ["Land_HelipadEmpty_F",[0,0,0],[],0,"CAN_COLLIDE"];
+				[_logic,_entity,true] spawn MAZ_EZM_BIS_fnc_remoteControlUnit;
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this && !(isPlayer _this)) then {
+					_return = true;
+				};
 
-	if(!isNil "MAZ_EZM_action_suppressiveFire") then {
-		[MAZ_EZM_action_suppressiveFire] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_suppressiveFire = [
-		"Suppressive Fire",
-		{
-			params ["_pos","_entity"];
-			[_entity] spawn MAZ_EZM_fnc_suppressiveFireModule;
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this && !(isPlayer _this)) then {
-				_return = true;
-			};
+				_return
+			},
+			5,
+			"\a3\Modules_F_Curator\Data\portraitRemoteControl_ca.paa",
+			[1,1,1,1]
+		] call ZAM_fnc_createNewContextAction;
 
-			_return
-		},
-		5,
-		"a3\static_f_oldman\hmg_02\data\ui\icon_hmg_02_ca.paa",
-		[1,1,1,1]
-	] call ZAM_fnc_createNewContextAction;
+		if(!isNil "MAZ_EZM_action_suppressiveFire") then {
+			[MAZ_EZM_action_suppressiveFire] call ZAM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_suppressiveFire = [
+			"Suppressive Fire",
+			{
+				params ["_pos","_entity"];
+				[_entity] spawn MAZ_EZM_fnc_suppressiveFireModule;
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this && !(isPlayer _this)) then {
+					_return = true;
+				};
 
-	if(!isNil "MAZ_EZM_action_editLoadout") then {
-		[MAZ_EZM_action_editLoadout] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_editLoadout = [
-		"Edit Loadout",
-		{
-			params ["_pos","_entity"];
-			["Preload"] call BIS_fnc_arsenal;
-			["Open",[true,nil,_entity]] call BIS_fnc_arsenal;
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(player == _this) exitWith {!_return};
-			if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this && !(isPlayer _this)) then {
-				_return = true;
-			};
+				_return
+			},
+			5,
+			"a3\static_f_oldman\hmg_02\data\ui\icon_hmg_02_ca.paa",
+			[1,1,1,1]
+		] call ZAM_fnc_createNewContextAction;
 
-			_return
-		},
-		4,
-		"a3\ui_f\data\igui\cfg\actions\gear_ca.paa",
-		[1,1,1,1],
-		[
+		if(!isNil "MAZ_EZM_action_editLoadout") then {
+			[MAZ_EZM_action_editLoadout] call ZAM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_editLoadout = [
+			"Edit Loadout",
+			{
+				params ["_pos","_entity"];
+				["Preload"] call BIS_fnc_arsenal;
+				["Open",[true,nil,_entity]] call BIS_fnc_arsenal;
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(player == _this) exitWith {!_return};
+				if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this && !(isPlayer _this)) then {
+					_return = true;
+				};
+
+				_return
+			},
+			4,
+			"a3\ui_f\data\igui\cfg\actions\gear_ca.paa",
+			[1,1,1,1],
 			[
-				"Change Loadout",
-				{
-					params ["_pos","_entity"];
-					["Preload"] call BIS_fnc_arsenal;
-					["Open",[true,nil,_entity]] call BIS_fnc_arsenal;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"Reset Loadout",
-				{
-					params ["_pos","_entity"];
-					_entity setUnitLoadout (getUnitLoadout (configFile >> "CfgVehicles" >> typeOf _entity));
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"Copy Loadout",
-				{
-					params ["_pos","_entity"];
-					MAZ_EZM_copiedUnitLoadout = getUnitLoadout _entity;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"Paste Loadout",
-				{
-					params ["_pos","_entity"];
-					_entity setUnitLoadout MAZ_EZM_copiedUnitLoadout;
-				},
-				{
-					(!isNil "MAZ_EZM_copiedUnitLoadout")
-				},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"Set Zeus Loadout",
-				{
-					params ["_pos","_entity"];
-					profileNamespace setVariable ["MAZ_EZM_ZeusLoadout",getUnitLoadout _entity];
-					["Zeus loadout saved","addItemOK"] call MAZ_EZM_fnc_systemMessage;
-				},
-				{true},
-				"a3\ui_f_curator\data\logos\arma3_zeus_icon_ca.paa",
-				[1,1,1,1]
-			]
-		]
-	] call ZAM_fnc_createNewContextAction;
-
-	if(!isNil "MAZ_EZM_action_healUnit") then {
-		[MAZ_EZM_action_healUnit] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_healUnit = [
-		"Heal Unit",
-		{
-			params ["_pos","_entity"];
-			[_entity] call MAZ_EZM_fnc_healAndReviveModule;
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this) then {
-				_return = true;
-			};
-
-			_return
-		},
-		3,
-		"a3\ui_f\data\map\vehicleicons\pictureheal_ca.paa",
-		[1,1,1,1]
-	] call ZAM_fnc_createNewContextAction;
-
-	if(!isNil "MAZ_EZM_action_repairVehicle") then {
-		[MAZ_EZM_action_repairVehicle] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_repairVehicle = [
-		"Repair",
-		{
-			params ["_pos","_entity"];
-			_entity setDamage 0;
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles") then {
-				_return = true;
-			};
-
-			_return
-		},
-		2,
-		"a3\ui_f\data\igui\cfg\cursors\iconrepairvehicle_ca.paa",
-		[1,1,1,1]
-	] call ZAM_fnc_createNewContextAction;
-
-	if(!isNil "MAZ_EZM_action_refuelVehicle") then {
-		[MAZ_EZM_action_refuelVehicle] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_refuelVehicle = [
-		"Refuel",
-		{
-			params ["_pos","_entity"];
-			[_entity,1] remoteExec ['setFuel'];
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles") then {
-				_return = true;
-			};
-
-			_return
-		},
-		2,
-		"a3\ui_f\data\igui\cfg\actions\refuel_ca.paa",
-		[1,1,1,1]
-	] call ZAM_fnc_createNewContextAction;
-
-	if(!isNil "MAZ_EZM_action_rearmVehicle") then {
-		[MAZ_EZM_action_rearmVehicle] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_rearmVehicle = [
-		"Rearm",
-		{
-			params ["_pos","_entity"];
-			[_entity,1] remoteExec ['setVehicleAmmo'];
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles") then {
-				_return = true;
-			};
-
-			_return
-		},
-		2,
-		"a3\ui_f\data\igui\cfg\simpletasks\types\rearm_ca.paa",
-		[1,1,1,1]
-	] call ZAM_fnc_createNewContextAction;
-
-	if(!isNil "MAZ_EZM_action_editPylons") then {
-		[MAZ_EZM_action_editPylons] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_editPylons = [
-		"Edit Pylons",
-		{
-			params ["_pos","_entity"];
-			[_entity] spawn ZAM_EZM_fnc_editVehiclePylons;
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			private _pylons = (configFile >> "CfgVehicles" >> typeOf _this >> "Components" >> "TransportPylonsComponent" >> "Pylons") call BIS_fnc_getCfgSubClasses; 
-			if(count _pylons == 0) exitWith {false}; 
-			true
-		},
-		1,
-		"a3\ui_f\data\igui\cfg\actions\gear_ca.paa",
-		[1,1,1,1],
-		[
-			[
-				"Change Pylons",
-				{
-					params ["_pos","_entity"];
-					[_entity] spawn ZAM_EZM_fnc_editVehiclePylons;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"Reset Pylons",
-				{
-					params ["_pos","_entity"];
-					private _pylons = (configFile >> "CfgVehicles" >> typeOf _entity >> "Components" >> "TransportPylonsComponent" >> "Pylons") call BIS_fnc_getCfgSubClasses;
+				[
+					"Change Loadout",
 					{
-						private _pylon = _x;
-						private _pylonDefaultMag = getText (configfile >> "CfgVehicles" >> typeOf _entity >> "Components" >> "TransportPylonsComponent" >> "Pylons" >> _pylon >> "attachment");
-						private _pylonMaxAmmo = getNumber (configFile >> "CfgMagazines" >> _pylonDefaultMag >> "count");
-						_entity setPylonLoadout [_pylon,_pylonDefaultMag];
-						_entity setAmmoOnPylon [_pylon,_pylonMaxAmmo];
-					}forEach _pylons;
-				},
-				{true},
-				"",
-				[1,1,1,1]
+						params ["_pos","_entity"];
+						["Preload"] call BIS_fnc_arsenal;
+						["Open",[true,nil,_entity]] call BIS_fnc_arsenal;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"Reset Loadout",
+					{
+						params ["_pos","_entity"];
+						_entity setUnitLoadout (getUnitLoadout (configFile >> "CfgVehicles" >> typeOf _entity));
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"Copy Loadout",
+					{
+						params ["_pos","_entity"];
+						MAZ_EZM_copiedUnitLoadout = getUnitLoadout _entity;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"Paste Loadout",
+					{
+						params ["_pos","_entity"];
+						_entity setUnitLoadout MAZ_EZM_copiedUnitLoadout;
+					},
+					{
+						(!isNil "MAZ_EZM_copiedUnitLoadout")
+					},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"Set Zeus Loadout",
+					{
+						params ["_pos","_entity"];
+						profileNamespace setVariable ["MAZ_EZM_ZeusLoadout",getUnitLoadout _entity];
+						["Zeus loadout saved","addItemOK"] call MAZ_EZM_fnc_systemMessage;
+					},
+					{true},
+					"a3\ui_f_curator\data\logos\arma3_zeus_icon_ca.paa",
+					[1,1,1,1]
+				]
 			]
-		]
-	] call ZAM_fnc_createNewContextAction;
+		] call ZAM_fnc_createNewContextAction;
 
-	if(!isNil "MAZ_EZM_action_garageEdit") then {
-		[MAZ_EZM_action_garageEdit] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_garageEdit = [
-		"Edit Appearance",
-		{
-			params ["_pos","_entity"];
-			[_entity] spawn ZAM_fnc_createGarageInterface;
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(typeOf _entity isKindOf "AllVehicles" && !(typeOf _entity isKindOf "Animal") && !(typeOf _entity isKindOf "CAManBase")) then {_return = true};
-			_return
-		},
-		1,
-		"a3\ui_f\data\gui\rsc\rscdisplayarsenal\spacegarage_ca.paa",
-		[1,1,1,1]
-	] call ZAM_fnc_createNewContextAction;
+		if(!isNil "MAZ_EZM_action_healUnit") then {
+			[MAZ_EZM_action_healUnit] call ZAM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_healUnit = [
+			"Heal Unit",
+			{
+				params ["_pos","_entity"];
+				[_entity] call MAZ_EZM_fnc_healAndReviveModule;
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this) then {
+					_return = true;
+				};
 
-	if(!isNil "MAZ_EZM_action_garrison") then {
-		[MAZ_EZM_action_garrison] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_garrison = [
-		"Garrison",
-		{
-			params ["_pos","_entity"];
-			[leader _entity] call MAZ_EZM_fnc_garrisonInstantModule;
-		},
-		{
-			if(_this isEqualType grpNull) exitWith {true};
-			false
-		},
-		1,
-		'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\run_ca.paa',
-		[1,1,1,1],
-		[
+				_return
+			},
+			3,
+			"a3\ui_f\data\map\vehicleicons\pictureheal_ca.paa",
+			[1,1,1,1]
+		] call ZAM_fnc_createNewContextAction;
+
+		if(!isNil "MAZ_EZM_action_changeSide") then {
+			[MAZ_EZM_action_changeSide] call ZAM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_changeSide = [
+			"Change Unit Side",
+			{
+				
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this) then {
+					_return = true;
+				};
+
+				_return
+			},
+			3,
+			"a3\ui_f_curator\data\displays\rscdisplaycurator\side_unknown_ca.paa",
+			[1,1,1,1],
 			[
-				"Garrison (Instant)",
-				{
-					params ["_pos","_entity"];
-					[leader _entity] call MAZ_EZM_fnc_garrisonInstantModule;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"Garrison (Search)",
-				{
-					params ["_pos","_entity"];
-					[leader _entity] call MAZ_EZM_fnc_garrisonSearchModule;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"Un-Garrison",
-				{
-					params ["_pos","_entity"];
-					[leader _entity] call MAZ_EZM_fnc_unGarrisonModule;
-				},
-				{true},
-				"",
-				[1,1,1,1]
+				[
+					"BLUFOR",
+					{
+						params ["_pos","_entity"];
+						[_entity] joinSilent (createGroup [west,true]);
+					},
+					{true},
+					"a3\3den\data\displays\display3den\panelright\side_west_ca.paa",
+					[1,1,1,1]
+				],
+				[
+					"OPFOR",
+					{
+						params ["_pos","_entity"];
+						[_entity] joinSilent (createGroup [east,true]);
+					},
+					{true},
+					"a3\3den\data\displays\display3den\panelright\side_east_ca.paa",
+					[1,1,1,1]
+				],
+				[
+					"INDFOR",
+					{
+						params ["_pos","_entity"];
+						[_entity] joinSilent (createGroup [independent,true]);
+					},
+					{true},
+					"a3\3den\data\displays\display3den\panelright\side_guer_ca.paa",
+					[1,1,1,1]
+				],
+				[
+					"CIVILIAN",
+					{
+						params ["_pos","_entity"];
+						[_entity] joinSilent (createGroup [civilian,true]);
+					},
+					{true},
+					"a3\3den\data\displays\display3den\panelright\side_civ_ca.paa",
+					[1,1,1,1]
+				]
 			]
-		]
-	] call ZAM_fnc_createNewContextAction;
+		] call ZAM_fnc_createNewContextAction;
+
+	"Vehicle Actions";
+
+		if(!isNil "MAZ_EZM_action_repairVehicle") then {
+			[MAZ_EZM_action_repairVehicle] call ZAM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_repairVehicle = [
+			"Repair",
+			{
+				params ["_pos","_entity"];
+				_entity setDamage 0;
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles") then {
+					_return = true;
+				};
+
+				_return
+			},
+			2,
+			"a3\ui_f\data\igui\cfg\cursors\iconrepairvehicle_ca.paa",
+			[1,1,1,1]
+		] call ZAM_fnc_createNewContextAction;
+
+		if(!isNil "MAZ_EZM_action_refuelVehicle") then {
+			[MAZ_EZM_action_refuelVehicle] call ZAM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_refuelVehicle = [
+			"Refuel",
+			{
+				params ["_pos","_entity"];
+				[_entity,1] remoteExec ['setFuel'];
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles") then {
+					_return = true;
+				};
+
+				_return
+			},
+			2,
+			"a3\ui_f\data\igui\cfg\actions\refuel_ca.paa",
+			[1,1,1,1]
+		] call ZAM_fnc_createNewContextAction;
+
+		if(!isNil "MAZ_EZM_action_rearmVehicle") then {
+			[MAZ_EZM_action_rearmVehicle] call ZAM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_rearmVehicle = [
+			"Rearm",
+			{
+				params ["_pos","_entity"];
+				[_entity,1] remoteExec ['setVehicleAmmo'];
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles") then {
+					_return = true;
+				};
+
+				_return
+			},
+			2,
+			"a3\ui_f\data\igui\cfg\simpletasks\types\rearm_ca.paa",
+			[1,1,1,1]
+		] call ZAM_fnc_createNewContextAction;
+
+		if(!isNil "MAZ_EZM_action_editPylons") then {
+			[MAZ_EZM_action_editPylons] call ZAM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_editPylons = [
+			"Edit Pylons",
+			{
+				params ["_pos","_entity"];
+				[_entity] spawn ZAM_EZM_fnc_editVehiclePylons;
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				private _pylons = (configFile >> "CfgVehicles" >> typeOf _this >> "Components" >> "TransportPylonsComponent" >> "Pylons") call BIS_fnc_getCfgSubClasses; 
+				if(count _pylons == 0) exitWith {false}; 
+				true
+			},
+			1,
+			"a3\ui_f\data\igui\cfg\actions\gear_ca.paa",
+			[1,1,1,1],
+			[
+				[
+					"Change Pylons",
+					{
+						params ["_pos","_entity"];
+						[_entity] spawn ZAM_EZM_fnc_editVehiclePylons;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"Reset Pylons",
+					{
+						params ["_pos","_entity"];
+						private _pylons = (configFile >> "CfgVehicles" >> typeOf _entity >> "Components" >> "TransportPylonsComponent" >> "Pylons") call BIS_fnc_getCfgSubClasses;
+						{
+							private _pylon = _x;
+							private _pylonDefaultMag = getText (configfile >> "CfgVehicles" >> typeOf _entity >> "Components" >> "TransportPylonsComponent" >> "Pylons" >> _pylon >> "attachment");
+							private _pylonMaxAmmo = getNumber (configFile >> "CfgMagazines" >> _pylonDefaultMag >> "count");
+							_entity setPylonLoadout [_pylon,_pylonDefaultMag];
+							_entity setAmmoOnPylon [_pylon,_pylonMaxAmmo];
+						}forEach _pylons;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				]
+			]
+		] call ZAM_fnc_createNewContextAction;
+
+		if(!isNil "MAZ_EZM_action_garageEdit") then {
+			[MAZ_EZM_action_garageEdit] call ZAM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_garageEdit = [
+			"Edit Appearance",
+			{
+				params ["_pos","_entity"];
+				[_entity] spawn ZAM_fnc_createGarageInterface;
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(typeOf _entity isKindOf "AllVehicles" && !(typeOf _entity isKindOf "Animal") && !(typeOf _entity isKindOf "CAManBase")) then {_return = true};
+				_return
+			},
+			1,
+			"a3\ui_f\data\gui\rsc\rscdisplayarsenal\spacegarage_ca.paa",
+			[1,1,1,1]
+		] call ZAM_fnc_createNewContextAction;
+
+	"Group Actions";
+
+		if(!isNil "MAZ_EZM_action_garrison") then {
+			[MAZ_EZM_action_garrison] call ZAM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_garrison = [
+			"Garrison",
+			{
+				params ["_pos","_entity"];
+				[leader _entity] call MAZ_EZM_fnc_garrisonInstantModule;
+			},
+			{
+				if(_this isEqualType grpNull) exitWith {true};
+				false
+			},
+			1,
+			'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\run_ca.paa',
+			[1,1,1,1],
+			[
+				[
+					"Garrison (Instant)",
+					{
+						params ["_pos","_entity"];
+						[leader _entity] call MAZ_EZM_fnc_garrisonInstantModule;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"Garrison (Search)",
+					{
+						params ["_pos","_entity"];
+						[leader _entity] call MAZ_EZM_fnc_garrisonSearchModule;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"Un-Garrison",
+					{
+						params ["_pos","_entity"];
+						[leader _entity] call MAZ_EZM_fnc_unGarrisonModule;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				]
+			]
+		] call ZAM_fnc_createNewContextAction;
+
+		if(!isNil "MAZ_EZM_action_changeSideGroup") then {
+			[MAZ_EZM_action_changeSideGroup] call ZAM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_changeSideGroup = [
+			"Change Group Side",
+			{
+				
+			},
+			{
+				if(_this isEqualType grpNull) exitWith {true};
+				false
+			},
+			3,
+			"a3\ui_f_curator\data\displays\rscdisplaycurator\side_unknown_ca.paa",
+			[1,1,1,1],
+			[
+				[
+					"BLUFOR",
+					{
+						params ["_pos","_entity"];
+						private _group = createGroup [west,true];
+						private _leader = leader _entity;
+						(units _entity) joinSilent _group;
+					},
+					{true},
+					"a3\3den\data\displays\display3den\panelright\side_west_ca.paa",
+					[1,1,1,1]
+				],
+				[
+					"OPFOR",
+					{
+						params ["_pos","_entity"];
+						private _group = createGroup [east,true];
+						private _leader = leader _entity;
+						(units _entity) joinSilent _group;
+					},
+					{true},
+					"a3\3den\data\displays\display3den\panelright\side_east_ca.paa",
+					[1,1,1,1]
+				],
+				[
+					"INDFOR",
+					{
+						params ["_pos","_entity"];
+						private _group = createGroup [independent,true];
+						private _leader = leader _entity;
+						(units _entity) joinSilent _group;
+					},
+					{true},
+					"a3\3den\data\displays\display3den\panelright\side_guer_ca.paa",
+					[1,1,1,1]
+				],
+				[
+					"CIVILIAN",
+					{
+						params ["_pos","_entity"];
+						private _group = createGroup [civilian,true];
+						private _leader = leader _entity;
+						(units _entity) joinSilent _group;
+					},
+					{true},
+					"a3\3den\data\displays\display3den\panelright\side_civ_ca.paa",
+					[1,1,1,1]
+				]
+			]
+		] call ZAM_fnc_createNewContextAction;
 
 	ZAM_EZM_fnc_canMoveIn = {
 		params ["_vehicle"];
@@ -3913,7 +4052,7 @@ comment "Virtual Garage";
 			EZM_garageControls = [];
 			
 			private _textureButtonBG = _display ctrlCreate ["RscPicture",-1];
-			_textureButtonBG ctrlSetText "#(argb,8,8,3)color(0,0,0,0.5)";
+			_textureButtonBG ctrlSetText "#(argb,8,8,3)color(0,0,0,0.8)";
 			_textureButtonBG ctrlSetposition [["X",-7.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["Y",-8.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["W",3] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
 			_textureButtonBG ctrlCommit 0;
 			EZM_garage_TextureButton = _display ctrlCreate ["RscActivePicture",8001];
@@ -3934,7 +4073,7 @@ comment "Virtual Garage";
 			EZM_garageControls pushBack _textureButtonBG;
 
 			private _animButtonBG = _display ctrlCreate ["RscPicture",-1];
-			_animButtonBG ctrlSetText "#(argb,8,8,3)color(0,0,0,0.5)";
+			_animButtonBG ctrlSetText "#(argb,8,8,3)color(0,0,0,0.8)";
 			_animButtonBG ctrlSetposition [["X",-7.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["Y",-5.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["W",3] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
 			_animButtonBG ctrlCommit 0;
 			EZM_garage_AnimationsButton = _display ctrlCreate ["RscActivePicture",8002];
@@ -3969,6 +4108,7 @@ comment "Virtual Garage";
 
 			EZM_garage_listBox = _display ctrlCreate ["RscListbox",8003,_controlGroup];
 			EZM_garage_listBox ctrlSetposition [0,0,["W",11.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",13.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
+			EZM_garage_listBox ctrlSetBackgroundColor [0.1,0.1,0.1,0.9];
 			lbClear EZM_garage_listBox;
 			EZM_garage_listBox ctrlCommit 0;
 		};
@@ -18256,10 +18396,14 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 private _changelog = [
 	"Added Server Protection System. Detects unauthorized Zeus access, players joining with different names, and a known troll banlist.",
 	"Added first iteration of Cinematics modules - Thanks Bijx",
+	"Added COLOR dialog element",
+	"Added Change Unit/Group Side context actions",
+	"Changed context menu to have a darker background for better readability",
 	"Changed the Dialog system to have conditions and onChanged events",
 	"Changed the Dialog system to have increased performance, speeding up loading",
 	"Changed Airdrop and Create Zeus Unit dialogs to use conditional elements",
 	"Changed tooltips background color to be readable",
+	"Changed various tooltips to be more descriptive",
 	"Fixed issues where dynamic modules would be removed if the player ran EZM again"
 ];
 
