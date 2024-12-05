@@ -624,6 +624,7 @@ comment "Dialog Creation";
 		if(_isPercent) then {
 			private _text = (str (round (_defaultValue * 100))) + "%";
 			_sliderEdit ctrlSetText _text;
+			_slider sliderSetSpeed [0.1, 0.1];
 		} else {
 			_sliderEdit ctrlSetText (str _defaultValue);
 		};
@@ -9729,21 +9730,23 @@ MAZ_EZM_fnc_initFunction = {
 				camUseNVG true;
 			};
 
+			if(_operationName != "") then {
+				private _grid = mapGridPosition _pos;
+				[
+					[
+						[format ["OPERATION %1",toUpper _operationName], "<t align='center' shadow='1' size='1.0' font='PuristaSemiBold'>%1</t><br/>", 10],
+						[format ["%1",toUpper _operationDetail], "<t align='center' shadow='1' size='0.8'>%1</t><br/>", 10],
+						[format ["GRID %1-%2",_grid select [0,3], _grid select [3]], "<t align='center' shadow='1' size='0.6'>%1</t>", 20]
+					],
+					0,
+					safeZoneY + ((safeZoneH / 4) * 3)
+				] spawn BIS_fnc_typeText;
+			};
+
 			private _posASL = AGLtoASL _pos;
 			private _height = _posASL # 2;
 			_cam camPrepareTarget _pos;
 			_cam camCommitPrepared 0;
-
-			private _grid = mapGridPosition _pos;
-			[
-				[
-					[format ["OPERATION %1",toUpper _operationName], "<t align='center' shadow='1' size='1.0' font='PuristaSemiBold'>%1</t><br/>", 10],
-					[format ["%1",toUpper _operationDetail], "<t align='center' shadow='1' size='0.8'>%1</t><br/>", 10],
-					[format ["GRID %1-%2",_grid select [0,3], _grid select [3]], "<t align='center' shadow='1' size='0.6'>%1</t>", 20]
-				],
-				0,
-				safeZoneY + ((safeZoneH / 4) * 3)
-			] spawn BIS_fnc_typeText;
 
 			private _posStart = _pos getPos [_radius,0];
 			_posStart set [2,_height + _altitude];
@@ -9800,13 +9803,13 @@ MAZ_EZM_fnc_initFunction = {
 					],
 					[
 						"EDIT",
-						"Operation Name:",
-						["BREAKER"]
+						["Operation Name:","Leave blank to have no text appear"],
+						[""]
 					],
 					[
 						"EDIT",
 						"Operation Details:",
-						["10 minutes until start"]
+						["Text to appear under the operation's name"]
 					]
 				],
 				{
