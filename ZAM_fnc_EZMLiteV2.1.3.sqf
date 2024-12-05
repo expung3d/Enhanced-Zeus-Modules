@@ -17190,7 +17190,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_ServerSettingsTree,
 					"Toggle Server Protections",
-					"Prevents known trolls and malicious scripters from joining the server.\nAlerts Zeus if an unauthorized person has access to Zeus.",
+					"Prevents known trolls and malicious scripters from joining the server.\nAlerts players if an unauthorized person has access to Zeus.\nAlerts players when someone rejoins with a different name.",
 					"MAZ_EZM_fnc_toggleServerProtections",
 					"a3\ui_f\data\igui\cfg\holdactions\holdaction_secure_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
