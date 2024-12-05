@@ -9672,9 +9672,16 @@ MAZ_EZM_fnc_initFunction = {
 			publicVariable "MAZ_EZM_fnc_createCinematicCam";
 
 			MAZ_EZM_fnc_enterCinematicCamera = {
+				"Close Zeus";
 				if(!isNull (findDisplay 312)) then {
 					(findDisplay 312) closeDisplay 0;
 					waitUntil {isNull (findDisplay 312)};
+				};
+
+				"Close arsenal";
+				if (!isNull ((findDisplay -1) displayCtrl 44046)) then {  
+					(findDisplay -1) closeDisplay 0;  
+					waitUntil {(isNull ((findDisplay -1) displayCtrl 44046))};
 				};
 
 				if (player != vehicle player) then {
