@@ -411,6 +411,8 @@ comment "Dialog Creation";
 			};
 		};
 
+		_listBox lbAdd " ";
+
 		"TODO : See if this is needed.";
 		'_listBox lbAdd " ";
 		_listBox lbAdd "  ";
@@ -7105,12 +7107,20 @@ MAZ_EZM_fnc_initFunction = {
 				if(!(_side in _sides)) then {continue};
 				{
 					private _name = getText (_x >> "name");
+					private _cfgs = if(_name == "Spetsnaz") then {
+						("true" configClasses (_x >> "SpecOps"))
+					} else {
+						("true" configClasses (_x >> "Infantry"))
+					};
 					private _groups = [];
 					{
 						private _groupName = getText (_x >> "name");
 						_groups pushBack [_groupName,_x];
-					}forEach ("true" configClasses (_x >> "Infantry"));
+					}forEach _cfgs;
 					private _flag = getText (configfile >> "CfgFactionClasses" >> configName _x >> "flag");
+					if(_flag == "" && _name == "FIA") then {
+						_flag = "\a3\Data_f\Flags\flag_FIA_co.paa";
+					};
 					private _icon = getText (configfile >> "CfgFactionClasses" >> configName _x >> "icon");
 					_factions pushBack [_name,_flag,_icon,_groups];
 				}forEach ("true" configClasses _x)
@@ -7182,6 +7192,7 @@ MAZ_EZM_fnc_initFunction = {
 					(_listData select 1) pushBack [format ["%1 (%2)",_name,_groupName],"",_flag];
 				}forEach _groups;
 			}forEach _factions;
+			
 			["Spawn Reinforcements (Group Select)",[
 				[
 					"LIST",
