@@ -962,7 +962,7 @@ comment "Attributes Dialog Creation";
 		_label ctrlSetPositionX (["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_label ctrlSetPositionW (["W",27] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_label ctrlSetPositionH (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-		_label ctrlSetBackgroundColor [0,0.5,0.5,1];
+		_label ctrlSetBackgroundColor EZM_dialogColor;
 		_label ctrlSetText _labelText;
 		_label ctrlCommit 0;
 
@@ -4774,8 +4774,7 @@ MAZ_EZM_fnc_setZeusTransparency = {
 		(_display displayCtrl 646) ctrlCommit 0; 
 
 		(_display displayCtrl 152) ctrlSetTextColor EZM_themeColor; 
-		(_display displayCtrl 152) ctrlAddEventHandler ["MouseButtonClick",
-		{
+		(_display displayCtrl 152) ctrlAddEventHandler ["MouseButtonClick", {
 			params ["_control"];
 			_control spawn 
 			{
@@ -9882,7 +9881,7 @@ MAZ_EZM_fnc_initFunction = {
 		};
 
 		MAZ_EZM_fnc_circleCinematic = {
-			params ["_pos","_radius","_altitude","_effect","_operationName","_operationDetail"];
+			params ["_pos","_radius","_altitude","_effect","_operationName","_operationDetail","_showGrid"];
 			private _cam = call MAZ_EZM_fnc_createCinematicCam;
 			[] spawn MAZ_EZM_fnc_enterCinematicCamera;
 
@@ -9897,11 +9896,12 @@ MAZ_EZM_fnc_initFunction = {
 
 			if(_operationName != "") then {
 				private _grid = mapGridPosition _pos;
+				private _gridString = if(_showGrid) then {format ["GRID %1-%2",_grid select [0,3], _grid select [3]]} else {""};
 				[
 					[
 						[format ["OPERATION %1",toUpper _operationName], "<t align='center' shadow='1' size='1.0' font='PuristaSemiBold'>%1</t><br/>", 10],
 						[format ["%1",toUpper _operationDetail], "<t align='center' shadow='1' size='0.8'>%1</t><br/>", 10],
-						[format ["GRID %1-%2",_grid select [0,3], _grid select [3]], "<t align='center' shadow='1' size='0.6'>%1</t>", 20]
+						[_gridString, "<t align='center' shadow='1' size='0.6'>%1</t>", 20]
 					],
 					0,
 					safeZoneY + ((safeZoneH / 4) * 3)
@@ -9975,13 +9975,18 @@ MAZ_EZM_fnc_initFunction = {
 						"EDIT",
 						"Operation Details:",
 						["Text to appear under the operation's name"]
+					],
+					[
+						"TOOLBOX:YESNO",
+						"Show Grid:",
+						[true]
 					]
 				],
 				{
 					params ["_values","_args","_display"];
-					_values params ["_radius","_height","_effect","_opName","_opDescription"];
+					_values params ["_radius","_height","_effect","_opName","_opDescription","_showGrid"];
 
-					[[_args,_radius,_height,_effect,_opName,_opDescription],MAZ_EZM_fnc_circleCinematic] remoteExec ["spawn"];
+					[[_args,_radius,_height,_effect,_opName,_opDescription],MAZ_EZM_fnc_circleCinematic,_showGrid] remoteExec ["spawn"];
 
 					_display closeDisplay 1;
 				},
@@ -14326,6 +14331,7 @@ MAZ_EZM_fnc_initFunction = {
 					params ["_values","_args","_display"];
 					_values params ["_theme","_dialog","_transparency"];
 					EZM_themeColor = _theme;
+					uiNamespace setVariable ["EZM_themeColor", EZM_themeColor];
 					profileNamespace setVariable ["MAZ_EZM_ThemeColor",EZM_themeColor];
 					EZM_dialogColor = _dialog;
 					profileNamespace setVariable ["MAZ_EZM_DialogColor",EZM_dialogColor];
@@ -15791,7 +15797,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 							params [['_display', displayNull]];
 							uiSleep 0.01;
 							if (isNull _display) exitWith {};
-							(_display displayCtrl 15717) ctrlSetTextColor [0,0.6,0.6,0.7];
+							(_display displayCtrl 15717) ctrlSetTextColor EZM_themeColor;
 							if(_display getVariable ["MAZ_EZM_hideWarnings",false]) then {
 								_display setVariable ["MAZ_EZM_hideWarnings",false];
 								call (uiNamespace getVariable "MAZ_EZM_fnc_unhideAllWarnings");
