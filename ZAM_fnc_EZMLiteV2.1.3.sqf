@@ -5185,9 +5185,9 @@ MAZ_EZM_fnc_initFunction = {
 						"76561198153376863", "Mike Main", "Troll menu, killing servers",
 						"76561199804439314", "Mike Alt", "Troll menu, killing servers",
 						"76561198063175176", "Fatty", "Troll menu, killing servers",
-						"76561198836581836", "Chadgaskerman", "Troll menu, killing servers",
-						"76561199549143480", "Chad alt", "Troll menu, killing servers",
-						"76561199550089982", "Atakjak", "Troll menu, killing servers",
+						"76561198836581836", "Chadgaskerman Main", "Troll menu, killing servers",
+						"76561199549143480", "Chadgaskerman Alt", "Troll menu, killing servers",
+						"76561199550089982", "Atakjak Alt", "Troll menu, killing servers",
 						"76561197970363940", "Greebo", "Troll menu, killing servers"
 					];
 					private _index = _trollList find (getPlayerUID player);
@@ -5311,7 +5311,8 @@ MAZ_EZM_fnc_initFunction = {
 							"76561198983415876",
 							"76561198395886568",
 							"76561198358820610",
-							"76561198874058939"
+							"76561198874058939",
+							"76561198973138476"
 						]) then {
 							EDC_BE_init = nil;
 							if (!isNil 'EDC_fnc_editDebugConsole') then {
@@ -5321,6 +5322,9 @@ MAZ_EZM_fnc_initFunction = {
 								findDisplay 49 closeDisplay 0;
 							};
 						};
+
+						"Remove anti-kick system";
+							["STOP_COMMAND","onEachFrame"] call BIS_fnc_removeStackedEventHandler;
 					};
 
 					private _isGodMode = false;
