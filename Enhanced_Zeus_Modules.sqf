@@ -6136,7 +6136,17 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_changeDifficultyModule = {
 			params ["_entity"];
-			["Set Difficulty",[
+			private _content = [
+				[
+					"TOOLBOX:YESNO",
+					["Advanced Difficulty?","Whether to set each skill individually."],
+					[false],
+					{true},
+					{
+						params ["_display","_value"];
+						_display setVariable ["MAZ_EZM_advancedDifficulty",_value];
+					}
+				],
 				[
 					"LIST",
 					"Difficulty",
@@ -6152,7 +6162,11 @@ MAZ_EZM_fnc_initFunction = {
 							"Hard (100%)"
 						],
 						0
-					]
+					],
+					{
+						params ["_display"];
+						!(_display getVariable ["MAZ_EZM_advancedDifficulty",false]);
+					}
 				],
 				[
 					"SLIDER",
@@ -6164,38 +6178,84 @@ MAZ_EZM_fnc_initFunction = {
 						objNull,
 						[1,1,1,1],
 						true
-					]
+					],
+					{
+						params ["_display"];
+						!(_display getVariable ["MAZ_EZM_advancedDifficulty",false]);
+					}
 				]
-			],{
+			];
+
+			{
+				private _default = missionNamespace getVariable [format ["MAZ_EZM_Skill_%1",_x], 0.5];
+				_content pushBack [
+					"SLIDER",
+					_x,
+					[
+						0,
+						1,
+						_default,
+						objNull,
+						[1,1,1,1],
+						true
+					],
+					{
+						params ["_display"];
+						_display getVariable ["MAZ_EZM_advancedDifficulty",false];
+					}
+				]
+			}forEach ["Courage","AimingAccuracy","AimingShake","AimingSpeed","Commanding","SpotDistance","SpotTime","ReloadSpeed"];
+
+			["Set Difficulty",_content,{
 				params ["_values","_args","_display"];
-				_values params ["_listSelection","_overrideValue"];
-				if(_overrideValue != 0) exitWith {
-					_overrideValue = (round (_overrideValue * 100)) / 100;
-					[[_overrideValue], {
-						params ["_skillLevel"];
+				_values params ["_advanced","_listSelection","_overrideValue"];
+				if(!_advanced) exitWith {
+					if(_overrideValue != 0) exitWith {
+						_overrideValue = (round (_overrideValue * 100)) / 100;
+						[[_overrideValue], {
+							params ["_skillLevel"];
+							{
+								_x setSkill _skillLevel;
+							} forEach allUnits;
+						}] remoteExec ["spawn"];
+						[format ["Difficulty set to %1.",_overrideValue]] call MAZ_EZM_fnc_systemMessage;
+					};
+					private _skill = switch (_value) do {
+						case "easy": {0};
+						case "medium": {0.5};
+						case "hard": {1};
+					};
+					[_skill, {
 						{
-							_x setSkill _skillLevel;
+							_x setSkill _this;
 						} forEach allUnits;
 					}] remoteExec ["spawn"];
-					[format ["Difficulty set to %1.",_overrideValue]] call MAZ_EZM_fnc_systemMessage;
+					[format ["Difficulty set to %1.",toUpper _value],"addItemOk"] call MAZ_EZM_fnc_systemMessage;
 				};
-				private _skill = switch (_value) do {
-					case "easy": {0};
-					case "medium": {0.5};
-					case "hard": {1};
-				};
-				[_skill, {
+				private _advancedValues = _values select [3,8];
+				[_advancedValues, {
 					{
-						_x setSkill _this;
-					} forEach allUnits;
+						private _unit = _x;
+						{
+							private _skillValue = _this select _forEachIndex;
+							_unit setSkill [_x,_skillValue];
+						}forEach ["Courage","AimingAccuracy","AimingShake","AimingSpeed","Commanding","SpotDistance","SpotTime","ReloadSpeed"];
+					}forEach (allUnits - allPlayers);
 				}] remoteExec ["spawn"];
-				[format ["Difficulty set to %1.",toUpper _value]] call MAZ_EZM_fnc_systemMessage;
-				playSound 'addItemOk';
+
+				{
+					missionNamespace setVariable [format ["MAZ_EZM_Skill_%1",_x], _advancedValues # _forEachIndex];
+				}forEach ["Courage","AimingAccuracy","AimingShake","AimingSpeed","Commanding","SpotDistance","SpotTime","ReloadSpeed"];
+				["Custom difficulty applied to all units.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+
 				_display closeDisplay 1;
 			},{
 				params ["_values","_args","_display"];
 				_display closeDisplay 2;
-			},[]] call MAZ_EZM_fnc_createDialog;
+			},[],{
+				params ["_display"];
+				_display setVariable ["MAZ_EZM_advancedDifficulty",false];
+			}] call MAZ_EZM_fnc_createDialog;
 		};
 
 		MAZ_EZM_fnc_changeStanceModule = {
@@ -9879,7 +9939,7 @@ MAZ_EZM_fnc_initFunction = {
 		};
 
 		MAZ_EZM_fnc_circleCinematic = {
-			params ["_pos","_radius","_altitude","_effect","_operationName","_operationDetail","_showGrid"];
+			params ["_pos","_radius","_altitude","_effect","_showText","_operationName","_operationDetail","_showGrid"];
 			private _cam = call MAZ_EZM_fnc_createCinematicCam;
 			[] spawn MAZ_EZM_fnc_enterCinematicCamera;
 
@@ -9892,7 +9952,7 @@ MAZ_EZM_fnc_initFunction = {
 				camUseNVG true;
 			};
 
-			if(_operationName != "") then {
+			if(_showText && _operationName != "") then {
 				private _grid = mapGridPosition _pos;
 				private _gridString = if(_showGrid) then {format ["GRID %1-%2",_grid select [0,3], _grid select [3]]} else {""};
 				[
@@ -9965,26 +10025,48 @@ MAZ_EZM_fnc_initFunction = {
 						]
 					],
 					[
+						"TOOLBOX:YESNO",
+						"Cinematic Text?",
+						[false],
+						{true},
+						{
+							params ["_display","_value"];
+							_display setVariable ["MAZ_EZM_ShowText",_value];
+						}
+					],
+					[
 						"EDIT",
-						["Operation Name:","Leave blank to have no text appear"],
-						[""]
+						"Operation Name:",
+						["BREAKER"],
+						{
+							params ["_display"];
+							_display getVariable "MAZ_EZM_ShowText";
+						}
 					],
 					[
 						"EDIT",
 						"Operation Details:",
-						["Text to appear under the operation's name"]
+						["Text to appear under the operation's name"],
+						{
+							params ["_display"];
+							_display getVariable "MAZ_EZM_ShowText";
+						}
 					],
 					[
 						"TOOLBOX:YESNO",
 						"Show Grid:",
-						[true]
+						[true],
+						{
+							params ["_display"];
+							_display getVariable "MAZ_EZM_ShowText";
+						}
 					]
 				],
 				{
 					params ["_values","_args","_display"];
-					_values params ["_radius","_height","_effect","_opName","_opDescription","_showGrid"];
+					_values params ["_radius","_height","_effect","_showText","_opName","_opDescription","_showGrid"];
 
-					[[_args,_radius,_height,_effect,_opName,_opDescription],MAZ_EZM_fnc_circleCinematic,_showGrid] remoteExec ["spawn"];
+					[[_args,_radius,_height,_effect,_showText,_opName,_opDescription,_showGrid],MAZ_EZM_fnc_circleCinematic] remoteExec ["spawn"];
 
 					_display closeDisplay 1;
 				},
@@ -9992,7 +10074,11 @@ MAZ_EZM_fnc_initFunction = {
 					params ["_values","_args","_display"];
 					_display closeDisplay 2;
 				},
-				_pos
+				_pos,
+				{
+					params ["_display"];
+					_display setVariable ["MAZ_EZM_ShowText",false];
+				}
 			] call MAZ_EZM_fnc_createDialog;
 		};
 
@@ -18441,7 +18527,9 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 };
 
 private _changelog = [
-	"Fixed issue where the Teleport One Player module was not working"
+	"Changed Change Difficulty module to have an advanced settings menu",
+	"Fixed issue where the Teleport One Player module was not working",
+	"Fixed Circle Cinematic text and script error"
 ];
 
 private _changelogString = "";
