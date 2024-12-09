@@ -13839,7 +13839,7 @@ MAZ_EZM_fnc_initFunction = {
 				[
 					"SIDES",
 					"Side to teleport:",
-					[west,east,independent,civilian]
+					[west]
 				]
 			],{
 				params ["_values","_args","_display"];
@@ -18441,21 +18441,7 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 };
 
 private _changelog = [
-	"Added Server Protection System. Detects unauthorized Zeus access, players joining with different names, and a known troll banlist.",
-	"Added first iteration of Cinematics modules - Thanks Bijx",
-	"Added COLOR dialog element",
-	"Added Change Unit/Group Side context actions",
-	"Changed context menu to have a darker background for better readability",
-	"Changed the Dialog system to have conditions and onChanged events",
-	"Changed the Dialog system to have increased performance, speeding up loading",
-	"Changed Airdrop and Create Zeus Unit dialogs to use conditional elements",
-	"Changed tooltips background color to be readable",
-	"Changed various module tooltips to be more descriptive",
-	"Changed the Edit Vehicle Appearance elements to be more readable",
-	"Changed Pylon Editor to use a GUI instead of 3D controls",
-	"Fixed issues where dynamic modules would be removed if the player ran EZM again",
-	"Fixed issue where the Blackwasp Appearance was not editable",
-	"Fixed issue where wings were only folding the left wing"
+	"Fixed issue where the Teleport One Player module was not working"
 ];
 
 private _changelogString = "";
