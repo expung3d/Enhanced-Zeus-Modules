@@ -5184,11 +5184,10 @@ MAZ_EZM_fnc_initFunction = {
 						"76561198804630831", "Christian/Infamous Alt", "Racism, mass teamkilling",
 						"76561198153376863", "Mike Main", "Troll menu, killing servers",
 						"76561199804439314", "Mike Alt", "Troll menu, killing servers",
-						"76561198063175176", "Fatty", "Troll menu, killing servers",
 						"76561198836581836", "Chadgaskerman Main", "Troll menu, killing servers",
 						"76561199549143480", "Chadgaskerman Alt", "Troll menu, killing servers",
-						"76561199550089982", "Atakjak Alt", "Troll menu, killing servers",
-						"76561197970363940", "Greebo", "Troll menu, killing servers"
+						"76561198063175176", "Atakjak Main", "Troll menu, killing servers",
+						"76561199550089982", "Atakjak Alt", "Troll menu, killing servers"
 					];
 					private _index = _trollList find (getPlayerUID player);
 
@@ -13826,7 +13825,7 @@ MAZ_EZM_fnc_initFunction = {
 			],{
 				params ["_values","_args","_display"];
 				private _value = _values # 0;
-				private _unit = (allPlayers select _value);
+				private _unit = (allPlayers select (parseNumber _value));
 				if(surfaceIsWater _args) then {
 					_args = AGLtoASL _args;
 					_unit setPosASL _args;
@@ -13850,33 +13849,17 @@ MAZ_EZM_fnc_initFunction = {
 			],{
 				params ["_values","_args","_display"];
 				_values = _values # 0;
-				_values apply {
-					private _return = _x;
-					if(str _x == "GUER") then {
-						_return = independent;
-					};
-					if(str _x == "CIV") then {
-						_return = civilian;
-					};
-				};
-				private _allUnits = [];
-				{
-					{
-						if(isPlayer _x) then {
-							_allUnits pushback _x;
-						};
-					}forEach (units _x);
-				}forEach _values;
+				private _allPlayers = allPlayers select {side (group _x) in _values};
 
 				if(surfaceIsWater _args) then {
 					_args = AGLtoASL _args;
 					{
 						_x setPosASL _args;
-					}forEach _allUnits;
+					}forEach _allPlayers;
 				} else {
 					{
 						_x setPosATL _args;
-					}forEach _allUnits;
+					}forEach _allPlayers;
 				};
 				
 				_display closeDisplay 1;
