@@ -11036,9 +11036,8 @@ MAZ_EZM_fnc_initFunction = {
 
 	comment "Gameplay";
 
-	
 		HYPER_EZM_fnc_handleCreateIntel = {
-			params ["_title","_description","_intelObject","_deleteOnPickup", "_target", "_holdDuration"];
+			params ["_title","_description","_intelObject","_deleteOnPickup", "_target", "_holdDuration", "_visibility"];
 
 			comment "we set the default model as the documents for both redundancy and so we dont have to have a default case below";
 			private _intelObjModel = "Item_Laptop_Unfolded";
@@ -11065,7 +11064,7 @@ MAZ_EZM_fnc_initFunction = {
 				{
 					private _intel = _this select 0; 
 					private _args = _this select 3;
-					_args params ["_title","_description","_deleteOnPickup"];
+					_args params ["_title","_description","_deleteOnPickup", "_visibility"];
 
 					[_intel,0] remoteExec ["removeAction",0,true];
 					["IntelAdded",[format ["%1 picked up %2", (name _caller), _title], "a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa"]] remoteExec ['BIS_fnc_showNotification',0];
@@ -11083,7 +11082,7 @@ MAZ_EZM_fnc_initFunction = {
 					};
 				},
 				{},
-				[_title, _description, _deleteOnPickup],
+				[_title, _description, _deleteOnPickup, _visibility],
 				_holdDuration, 
 				10, 
 				true,
@@ -11098,60 +11097,68 @@ MAZ_EZM_fnc_initFunction = {
 		HYPER_EZM_fnc_createIntel = {
 				private _dialogTitle = "Create Intel";
 				private _target = [true] call MAZ_EZM_fnc_getScreenPosition;
-				// add sides selection, or something like "share to group, side, global".
 				private _content = [
+					[
+						"EDIT",
+						"Title",
 						[
-							"EDIT",
-							"Title",
-							[
-									"",
-									1
-							]
-						],
-						[
-							"EDIT",
-							"Description",
-							[
-									"",
-									3
-							]
-						],
-						[
-							"COMBO",
-							"Intel Object",
-							[
-									["documents", "laptop", "ruggedtablet", "tablet", "folder"],
-									["Documents", "Laptop", "Rugged Tablet", "Tablet", "Folder"],
-									0
-							]
-						],
-						[
-							"TOOLBOX",
-							"Delete on Pick Up",
-							[
-									true,
-									["No", "Yes"]
-							]
-						],
-						[
-							"SLIDER",
-							"Hold Duration",
-							[
-								1,
-								12,
-								3,
-								objNull,
-								[1,1,1,0.7],
-								false
-							]
+								"",
+								1
 						]
+					],
+					[
+						"EDIT",
+						"Description",
+						[
+								"",
+								3
+						]
+					],
+					[
+						"COMBO",
+						"Intel Object",
+						[
+								["documents", "laptop", "ruggedtablet", "tablet", "folder"],
+								["Documents", "Laptop", "Rugged Tablet", "Tablet", "Folder"],
+								0
+						]
+					],
+					[
+						"TOOLBOX",
+						"Delete on Pick Up",
+						[
+								true,
+								["No", "Yes"]
+						]
+					],
+					[
+						"SLIDER",
+						"Hold Duration",
+						[
+							1,
+							12,
+							3,
+							objNull,
+							[1,1,1,0.7],
+							false
+						]
+					],
+					[
+						"COMBO",
+						"Show Intel To",
+						[
+								["group", "side", "global"],
+								["Group", "Side", "Global"],
+								1
+						]
+					]
 
 				];
 				private _onConfirm = {
 						params ["_values", "_args", "_display"];
-						_values params ["_title","_description","_intelObject","_deleteOnPickup","_holdDuration"];
+						_values params ["_title","_description","_intelObject","_deleteOnPickup","_holdDuration", "_visibility"];
 						private _target = _args # 0;
-						[ _title, _description, _intelObject, _deleteOnPickup, _target, _holdDuration ] call HYPER_EZM_fnc_handleCreateIntel;
+						[ _title, _description, _intelObject, _deleteOnPickup, _target, _holdDuration, _visibility ] call HYPER_EZM_fnc_handleCreateIntel;
 						_display closeDisplay 1;
 				};
 				private _onCancel = {
