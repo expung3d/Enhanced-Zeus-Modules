@@ -11078,9 +11078,9 @@ MAZ_EZM_fnc_initFunction = {
 
 					private _intelParams = ["Diary", [format["%1", _title], format["%1", _description]]];
 	
-					{
-						[_x, _intelParams] remoteExec ["createDiaryRecord", _x];
-					} forEach _targetPlayers;
+					[_intelParams, {
+						player createDiaryRecord _this;
+					}] remoteExec ["spawn", _targetPlayers];
 
 					if (_deleteOnPickup) then {
 						deleteVehicle _intel;
