@@ -11107,32 +11107,32 @@ MAZ_EZM_fnc_initFunction = {
 						"EDIT",
 						"Title",
 						[
-								"",
-								1
+							"",
+							1
 						]
 					],
 					[
 						"EDIT:MULTI",
 						"Description",
 						[
-								"",
-								3
+							"",
+							3
 						]
 					],
 					[
 						"COMBO",
 						"Intel Object",
 						[
-								["documents", "laptop", "ruggedtablet", "tablet", "folder"],
-								["Documents", "Laptop", "Rugged Tablet", "Tablet", "Folder"],
-								0
+							["documents", "laptop", "ruggedtablet", "tablet", "folder"],
+							["Documents", "Laptop", "Rugged Tablet", "Tablet", "Folder"],
+							0
 						]
 					],
 					[
 						"TOOLBOX:YESNO",
 						"Delete on Pick Up",
 						[
-								true
+							true
 						]
 					],
 					[
@@ -11148,9 +11148,9 @@ MAZ_EZM_fnc_initFunction = {
 						"COMBO",
 						"Show Intel To",
 						[
-								["side", "global"],
-								["Side", "Global"],
-								0
+							["side", "global"],
+							["Side", "Global"],
+							0
 						]
 					]
 
