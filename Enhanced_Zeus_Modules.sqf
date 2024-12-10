@@ -11039,14 +11039,13 @@ MAZ_EZM_fnc_initFunction = {
 		HYPER_EZM_fnc_handleCreateIntel = {
 			params ["_title","_description","_intelObject","_deleteOnPickup", "_target", "_holdDuration", "_visibility"];
 
-			comment "we set the default model as the documents for both redundancy and so we dont have to have a default case below";
-			private _intelObjModel = "Item_Laptop_Unfolded";
-			switch (_intelObject) do {
-				case "laptop": {_intelObjModel = "Item_Laptop_Unfolded"};
-				case "ruggedtablet": {_intelObjModel = "Land_Tablet_02_black_F"};
-				case "tablet": {_intelObjModel = "Land_Tablet_01_F"};
-				case "documents": {_intelObjModel = "LanD_File1_f"};
-				case "folder": {_intelObjModel = "Land_File_research_F"};
+			private _intelObjModel = switch (_intelObject) do {
+				case "laptop": {"Item_Laptop_Unfolded"};
+				case "ruggedtablet": {"Land_Tablet_02_black_F"};
+				case "tablet": {"Land_Tablet_01_F"};
+				case "documents": {"LanD_File1_f"};
+				case "folder": {"Land_File_research_F"};
+				default {"LanD_File1_f"};
 			};
 			private _intelObj = _intelObjModel createVehicle _target;
 			_intelObj setDamage 1;
