@@ -11072,8 +11072,10 @@ MAZ_EZM_fnc_initFunction = {
 					comment "for all players, remoteExec the createDiaryRecord";
 
 					private _intelParams = ["Diary", [format["%1", _title], format["%1", _description]]];
-
-					[_x, _intelParams] remoteExec ["createDiaryRecord", _x, allPlayers];
+	
+					{
+						[_x, _intelParams] remoteExec ["createDiaryRecord", _x];
+					} forEach allPlayers;
 
 					if (_deleteOnPickup) then {
 						deleteVehicle _intel;
@@ -11122,11 +11124,10 @@ MAZ_EZM_fnc_initFunction = {
 						]
 					],
 					[
-						"TOOLBOX",
+						"TOOLBOX:YESNO",
 						"Delete on Pick Up",
 						[
-								true,
-								["No", "Yes"]
+								true
 						]
 					],
 					[
@@ -11135,10 +11136,7 @@ MAZ_EZM_fnc_initFunction = {
 						[
 							1,
 							12,
-							3,
-							objNull,
-							[1,1,1,0.7],
-							false
+							3
 						]
 					],
 					[
