@@ -11152,13 +11152,12 @@ MAZ_EZM_fnc_initFunction = {
 				private _onConfirm = {
 						params ["_values", "_args", "_display"];
 						_values params ["_title","_description","_intelObject","_deleteOnPickup","_holdDuration", "_visibility"];
-						private _target = _args # 0;
+						private _target = _args;
 						[ _title, _description, _intelObject, _deleteOnPickup, _target, _holdDuration, _visibility ] call HYPER_EZM_fnc_handleCreateIntel;
 						_display closeDisplay 1;
 				};
 				private _onCancel = {
 						params ["_values", "_args", "_display"];
-						systemChat "Create Intel dialog canceled.";
 						_display closeDisplay 2;
 				};
 				[
@@ -11166,7 +11165,7 @@ MAZ_EZM_fnc_initFunction = {
 						_content,
 						_onConfirm,
 						_onCancel,
-						[_target]
+						_target
 				] call MAZ_EZM_fnc_createDialog;
 		};
 
