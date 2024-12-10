@@ -11066,7 +11066,7 @@ MAZ_EZM_fnc_initFunction = {
 					private _args = _this select 3;
 					_args params ["_title","_description","_deleteOnPickup", "_visibility"];
 
-					[_intel,0] remoteExec ["removeAction",0,true];
+					[_intel,0] remoteExec ["removeAction",0];
 					["IntelAdded",[format ["%1 picked up %2", (name _caller), _title], "a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa"]] remoteExec ['BIS_fnc_showNotification',0];
 
 					comment "for all players, remoteExec the createDiaryRecord";
