@@ -11105,7 +11105,7 @@ MAZ_EZM_fnc_initFunction = {
 						]
 					],
 					[
-						"EDIT",
+						"EDIT:MULTI",
 						"Description",
 						[
 								"",
