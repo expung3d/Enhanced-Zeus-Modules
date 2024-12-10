@@ -11036,6 +11036,119 @@ MAZ_EZM_fnc_initFunction = {
 
 	comment "Gameplay";
 
+	
+		HYPER_EZM_fnc_handleCreateIntel = {
+			params ["_title","_description","_intelObject","_deleteOnPickup", "_target"];
+			private _intelObj = "Item_Laptop_Unfolded" createVehicle _target;
+			_intelObj setDamage 1;
+			_intelObj setPosATL _target;
+			systemChat format ["params received: %1",_description];
+			// this needs to remoteExec a function that creates the holdAction locally, but also passes the intel info along to each client.
+
+			private _actionParams = [
+				_intelObj,
+				"<t color='#ff9b00'>Pick up Intel</t>", 
+				"a3\ui_f\data\igui\cfg\holdactions\holdaction_search_ca.paa", 
+				"a3\ui_f\data\igui\cfg\holdactions\holdaction_search_ca.paa", 
+				"_this distance _target < 3",
+				"_caller distance _target < 3",  
+				{},
+				{},
+				{
+					private _intel = _this select 0; 
+					[_intel,0] remoteExec ["removeAction",0,true];
+					["TaskSucceeded",["",format ["%1 picked up %2", (name _caller), str _title]]] remoteExec ['BIS_fnc_showNotification',0];
+
+					comment "for all players, remoteExec the createDiaryRecord";
+
+					private _intelParams = ["Diary", [format["%1", _title], format["%1", _description]]];
+
+					{
+						[_x, _intelParams] remoteExec ["createDiaryRecord", _x];
+					} forEach allPlayers;
+
+					deleteVehicle _intel;
+
+				},
+				{},
+				[],
+				3, 
+				10, 
+				true, 
+				false 
+			];
+			_actionParams remoteExec ["BIS_fnc_holdActionAdd", 0, _intelObj];
+
+			[_intelObj] call MAZ_EZM_fnc_addObjectToInterface;
+			["Intel created.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+		};
+
+		HYPER_EZM_fnc_createIntel = {
+				private _dialogTitle = "Create Intel";
+				private _target = [true] call MAZ_EZM_fnc_getScreenPosition;
+				// add sides selection, or something like "share to group, side, global".
+				private _content = [
+						[
+								"EDIT",
+								"Title",
+								[
+										"",
+										1
+								]
+						],
+						[
+								"EDIT",
+								"Description",
+								[
+										"",
+										3
+								]
+						],
+						[
+								"COMBO",
+								"Intel Object",
+								[
+										["laptop"],
+										["Laptop"],
+										0
+								]
+						],
+						[
+								"TOOLBOX",
+								"Delete on Pick Up",
+								[
+										false,
+										["No", "Yes"]
+								]
+						]
+				];
+				private _onConfirm = {
+						params ["_values", "_args", "_display"];
+						private _title = _values select 0;
+						private _description = _values select 1;
+						private _intelObject = _values select 2;
+						private _deleteOnPickup = _values select 3;
+						private _target = _args # 0;
+						systemChat format ["Creating Intel: %1",_description];
+						[ _title, _description, _intelObject, _deleteOnPickup, _target ] call HYPER_EZM_fnc_handleCreateIntel;
+						_display closeDisplay 1;
+				};
+				private _onCancel = {
+						params ["_values", "_args", "_display"];
+						systemChat "Create Intel dialog canceled.";
+						_display closeDisplay 2;
+				};
+				[
+						_dialogTitle,
+						_content,
+						_onConfirm,
+						_onCancel,
+						[_target]
+				] call MAZ_EZM_fnc_createDialog;
+		};
+
+		
+
 		MAZ_EZM_fnc_startCountdown = {
 			params ["_time"];
 			_time = time + _time;
@@ -17161,6 +17274,15 @@ MAZ_EZM_fnc_editZeusInterface = {
 					"Creates an on screen countdown for players of specified side.",
 					"MAZ_EZM_fnc_createCountdownModule",
 					"a3\ui_f\data\igui\cfg\actions\settimer_ca.paa"
+				] call MAZ_EZM_fnc_zeusAddModule;
+
+				[
+					MAZ_zeusModulesTree,
+					MAZ_GameplayTree,
+					"Create Intel",
+					"Creates an intel object to be picked up by the players (by bijx).",
+					"HYPER_EZM_fnc_createIntel",
+					"a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
 			comment "Markers";
