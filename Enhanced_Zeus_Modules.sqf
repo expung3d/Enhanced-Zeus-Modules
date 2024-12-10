@@ -11065,8 +11065,14 @@ MAZ_EZM_fnc_initFunction = {
 					private _args = _this select 3;
 					_args params ["_title","_description","_deleteOnPickup", "_visibility"];
 
+					private _targetPlayers = switch (_visibility) do {
+						case "side": {allPlayers select {side _x == side player}};
+						case "global": {allPlayers};
+						default {allPlayers};
+					};
+
 					[_intel,0] remoteExec ["removeAction",0];
-					["IntelAdded",[format ["%1 picked up %2", (name _caller), _title], "a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa"]] remoteExec ['BIS_fnc_showNotification',0];
+					["IntelAdded",[format ["%1 picked up %2", (name _caller), _title], "a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa"]] remoteExec ['BIS_fnc_showNotification', _targetPlayers];
 
 					comment "for all players, remoteExec the createDiaryRecord";
 
@@ -11074,7 +11080,7 @@ MAZ_EZM_fnc_initFunction = {
 	
 					{
 						[_x, _intelParams] remoteExec ["createDiaryRecord", _x];
-					} forEach allPlayers;
+					} forEach _targetPlayers;
 
 					if (_deleteOnPickup) then {
 						deleteVehicle _intel;
@@ -11142,9 +11148,9 @@ MAZ_EZM_fnc_initFunction = {
 						"COMBO",
 						"Show Intel To",
 						[
-								["group", "side", "global"],
-								["Group", "Side", "Global"],
-								1
+								["side", "global"],
+								["Side", "Global"],
+								0
 						]
 					]
 
