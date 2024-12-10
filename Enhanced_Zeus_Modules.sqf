@@ -11039,10 +11039,20 @@ MAZ_EZM_fnc_initFunction = {
 	
 		HYPER_EZM_fnc_handleCreateIntel = {
 			params ["_title","_description","_intelObject","_deleteOnPickup", "_target"];
-			private _intelObj = "Item_Laptop_Unfolded" createVehicle _target;
+
+			comment "we set the default model as the documents for both redundancy and so we dont have to have a default case below";
+			private _intelObjModel = "Item_Laptop_Unfolded";
+			switch (_intelObject) do {
+				case "laptop": {_intelObjModel = "Item_Laptop_Unfolded"};
+				case "ruggedtablet": {_intelObjModel = "Land_Tablet_02_black_F"};
+				case "tablet": {_intelObjModel = "Land_Tablet_01_F"};
+				case "documents": {_intelObjModel = "LanD_File1_f"};
+				case "folder": {_intelObjModel = "Land_File_research_F"};
+			};
+			private _intelObj = _intelObjModel createVehicle _target;
 			_intelObj setDamage 1;
 			_intelObj setPosATL _target;
-			systemChat format ["params received: %1",_description];
+
 			// this needs to remoteExec a function that creates the holdAction locally, but also passes the intel info along to each client.
 
 			private _actionParams = [
@@ -11108,8 +11118,8 @@ MAZ_EZM_fnc_initFunction = {
 								"COMBO",
 								"Intel Object",
 								[
-										["laptop"],
-										["Laptop"],
+										["documents", "laptop", "ruggedtablet", "tablet", "folder"],
+										["Documents", "Laptop", "Rugged Tablet", "Tablet", "Folder"],
 										0
 								]
 						],
