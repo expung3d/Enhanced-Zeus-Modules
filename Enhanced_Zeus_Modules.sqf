@@ -11038,7 +11038,7 @@ MAZ_EZM_fnc_initFunction = {
 
 	
 		HYPER_EZM_fnc_handleCreateIntel = {
-			params ["_title","_description","_intelObject","_deleteOnPickup", "_target"];
+			params ["_title","_description","_intelObject","_deleteOnPickup", "_target", "_holdDuration"];
 
 			comment "we set the default model as the documents for both redundancy and so we dont have to have a default case below";
 			private _intelObjModel = "Item_Laptop_Unfolded";
@@ -11052,8 +11052,6 @@ MAZ_EZM_fnc_initFunction = {
 			private _intelObj = _intelObjModel createVehicle _target;
 			_intelObj setDamage 1;
 			_intelObj setPosATL _target;
-
-			// this needs to remoteExec a function that creates the holdAction locally, but also passes the intel info along to each client.
 
 			private _actionParams = [
 				_intelObj,
@@ -11070,7 +11068,7 @@ MAZ_EZM_fnc_initFunction = {
 					_args params ["_title","_description","_deleteOnPickup"];
 
 					[_intel,0] remoteExec ["removeAction",0,true];
-					["TaskSucceeded",["",format ["%1 picked up %2", (name _caller), _title]]] remoteExec ['BIS_fnc_showNotification',0];
+					["IntelAdded",[format ["%1 picked up %2", (name _caller), _title], "a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa"]] remoteExec ['BIS_fnc_showNotification',0];
 
 					comment "for all players, remoteExec the createDiaryRecord";
 
@@ -11080,14 +11078,15 @@ MAZ_EZM_fnc_initFunction = {
 						[_x, _intelParams] remoteExec ["createDiaryRecord", _x];
 					} forEach allPlayers;
 
-					deleteVehicle _intel;
-
+					if (_deleteOnPickup) then {
+						deleteVehicle _intel;
+					};
 				},
 				{},
 				[_title, _description, _deleteOnPickup],
-				3, 
+				_holdDuration, 
 				10, 
-				true, 
+				true,
 				false 
 			];
 			_actionParams remoteExec ["BIS_fnc_holdActionAdd", 0, _intelObj];
@@ -11102,48 +11101,57 @@ MAZ_EZM_fnc_initFunction = {
 				// add sides selection, or something like "share to group, side, global".
 				private _content = [
 						[
-								"EDIT",
-								"Title",
-								[
-										"",
-										1
-								]
+							"EDIT",
+							"Title",
+							[
+									"",
+									1
+							]
 						],
 						[
-								"EDIT",
-								"Description",
-								[
-										"",
-										3
-								]
+							"EDIT",
+							"Description",
+							[
+									"",
+									3
+							]
 						],
 						[
-								"COMBO",
-								"Intel Object",
-								[
-										["documents", "laptop", "ruggedtablet", "tablet", "folder"],
-										["Documents", "Laptop", "Rugged Tablet", "Tablet", "Folder"],
-										0
-								]
+							"COMBO",
+							"Intel Object",
+							[
+									["documents", "laptop", "ruggedtablet", "tablet", "folder"],
+									["Documents", "Laptop", "Rugged Tablet", "Tablet", "Folder"],
+									0
+							]
 						],
 						[
-								"TOOLBOX",
-								"Delete on Pick Up",
-								[
-										false,
-										["No", "Yes"]
-								]
+							"TOOLBOX",
+							"Delete on Pick Up",
+							[
+									true,
+									["No", "Yes"]
+							]
+						],
+						[
+							"SLIDER",
+							"Hold Duration",
+							[
+								1,
+								12,
+								3,
+								objNull,
+								[1,1,1,0.7],
+								false
+							]
 						]
+
 				];
 				private _onConfirm = {
 						params ["_values", "_args", "_display"];
-						private _title = _values select 0;
-						private _description = _values select 1;
-						private _intelObject = _values select 2;
-						private _deleteOnPickup = _values select 3;
+						_values params ["_title","_description","_intelObject","_deleteOnPickup","_holdDuration"];
 						private _target = _args # 0;
-						systemChat format ["Creating Intel: %1",_description];
-						[ _title, _description, _intelObject, _deleteOnPickup, _target ] call HYPER_EZM_fnc_handleCreateIntel;
+						[ _title, _description, _intelObject, _deleteOnPickup, _target, _holdDuration ] call HYPER_EZM_fnc_handleCreateIntel;
 						_display closeDisplay 1;
 				};
 				private _onCancel = {
