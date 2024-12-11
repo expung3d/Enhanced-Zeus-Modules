@@ -1482,7 +1482,7 @@ comment "Attributes Dialog Creation";
 		};
 
 		private _contentHeight = (_yOffset - (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
-		private _mainDisplayGroup = _display displayCtrl 8957;
+		private _mainDisplayGroup = _display displayCtrl 100;
 		private _displayContent = _mainDisplayGroup controlsGroupCtrl 103;
 		_displayContent ctrlSetPositionH _contentHeight;
 		_displayContent ctrlCommit 0;
@@ -2285,17 +2285,6 @@ comment "Attributes Dialog Functions";
 							}, 
 							_vehicle
 						] 
-					],
-					[ 
-						"NEWBUTTON", 
-						"GARAGE", 
-						[ 
-							"WIP : Edit vehicle in the Virtual Garage.", 
-							{
-								params ["_display","_args"];
-							}, 
-							_vehicle
-						] 
 					]
 				],{
 					params ["_display","_values","_args"];
@@ -2422,17 +2411,6 @@ comment "Attributes Dialog Functions";
 							}, 
 							_vehicle
 						] 
-					],
-					[ 
-						"NEWBUTTON", 
-						"GARAGE", 
-						[ 
-							"WIP : Edit vehicle in the Virtual Garage.", 
-							{
-								params ["_display","_args"];
-							}, 
-							_vehicle
-						] 
 					]
 				],{
 					params ["_display","_values","_args"];
@@ -2496,6 +2474,11 @@ comment "Attributes Dialog Functions";
 			],{
 				params ["_display","_values","_args"];
 				_display closeDisplay 1;
+				if(typeOf _args isKindOf "LandVehicle") then {
+					[_args] spawn MAZ_EZM_createLandVehicleAttributesDialog;
+				} else {
+					[_args] spawn MAZ_EZM_createVehicleAttributesDialog;
+				};
 			},{
 				params ["_display","_values","_args"];
 				[_args,_values] call MAZ_EZM_createVehicleRespawn;
