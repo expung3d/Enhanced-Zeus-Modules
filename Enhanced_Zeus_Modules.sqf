@@ -1533,17 +1533,17 @@ comment "Attributes Dialog Creation";
 
 			if(_type != "NEWBUTTON") then {
 				_label params ["_label",["_tooltip",""]];
-				private _label = _controlsGroup controlsGroupCtrl 150;
-				_label ctrlSetText _label;
-				_label ctrlSetTooltip _tooltip;
+				private _labelCtrl = _controlsGroup controlsGroupCtrl 150;
+				_labelCtrl ctrlSetText _label;
+				_labelCtrl ctrlSetTooltip _tooltip;
 
 				_controlsGroup ctrlSetPositionY _yOffset;
 				_controlsGroup ctrlCommit 0;
 
 				_yOffset = _yOffset + (ctrlPosition _controlsGroup select 3) + (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+				
+				_controls pushBack _controlsGroup;
 			};
-
-			_controls pushBack _controlsGroup;
 		}forEach _content;
 		
 		private _displayContent = _display displayCtrl IDC_ATTRIBS_CONTENT;
