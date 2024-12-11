@@ -965,29 +965,27 @@ comment "Attributes Dialog Creation";
 		showchat true;
 		private _display = findDisplay -1;
 
-		private _label = _display ctrlCreate ["RscText",IDC_ATTRIBS_TITLE];
-		_label ctrlSetPositionX (["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-		_label ctrlSetPositionW (["W",27] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-		_label ctrlSetPositionH (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		private _primaryContentGroup = _display ctrlCreate ["RscControlsGroupNoScrollbars",8957];
+		_primaryContentGroup ctrlSetPosition [["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0,["W",27] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0];
+		_primaryContentGroup ctrlCommit 0;
+
+		private _label = _display ctrlCreate ["RscText",IDC_ATTRIBS_TITLE,_primaryContentGroup];
+		_label ctrlSetPosition [0,0,1,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
 		_label ctrlSetBackgroundColor EZM_dialogColor;
 		_label ctrlSetText _labelText;
 		_label ctrlCommit 0;
 
-		private _background = _display ctrlCreate ["RscText",IDC_ATTRIBS_BG];
-		_background ctrlSetPositionX (["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-		_background ctrlSetPositionW (["W",27] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		private _background = _display ctrlCreate ["RscText",IDC_ATTRIBS_BG,_primaryContentGroup];
+		_background ctrlSetPosition [0,0,1,0];
 		_background ctrlSetBackgroundColor [0,0,0,0.7];
 		_background ctrlCommit 0;
 
-		private _contentGroup = _display ctrlCreate ["RscControlsGroup",IDC_ATTRIBS_CONTENT];
-		_contentGroup ctrlSetPositionX (["X",7] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-		_contentGroup ctrlSetPositionW (["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		private _contentGroup = _display ctrlCreate ["RscControlsGroup",IDC_ATTRIBS_CONTENT,_primaryContentGroup];
+		_contentGroup ctrlSetPosition [0.015,["Y",1.6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0];
 		_contentGroup ctrlCommit 0;
 
 		private _okayButton = _display ctrlCreate ["RscButtonMenuOk",IDC_ATTRIBS_CONFIRM];
-		_okayButton ctrlSetPositionX (["X",28.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-		_okayButton ctrlSetPositionW (["W",5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-		_okayButton ctrlSetPositionH (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		_okayButton ctrlSetPosition [(["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) + (["W",22] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,["W",5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
 		_okayButton ctrlAddEventhandler ["ButtonClick",{
 			params ["_control"];
 			private _display = ctrlParent _control;
@@ -1003,9 +1001,7 @@ comment "Attributes Dialog Creation";
 		_okayButton ctrlCommit 0;
 
 		private _cancelButton = _display ctrlCreate ["RscButtonMenuCancel",IDC_ATTRIBS_CANCEL];
-		_cancelButton ctrlSetPositionX (["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-		_cancelButton ctrlSetPositionW (["W",5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-		_cancelButton ctrlSetPositionH (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		_cancelButton ctrlSetPosition [["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0,["W",5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
 		_cancelButton ctrlAddEventhandler ["ButtonClick",{
 			params ["_control"];
 			private _display = ctrlParent _control;
@@ -1486,7 +1482,7 @@ comment "Attributes Dialog Creation";
 			["_onCancel",{},[{}]],
 			["_onConfirm",{},[{}]],
 			["_args",[]],
-			["_maxHeight",-1,[-1]]
+			["_maxHeight",30,[30]]
 		];
 
 		private _display = [_title] call MAZ_EZM_createAttributesMenuBase;
@@ -1541,16 +1537,43 @@ comment "Attributes Dialog Creation";
 				_controlsGroup ctrlCommit 0;
 
 				_yOffset = _yOffset + (ctrlPosition _controlsGroup select 3) + (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-				
+
 				_controls pushBack _controlsGroup;
 			};
 		}forEach _content;
 		
-		private _displayContent = _display displayCtrl IDC_ATTRIBS_CONTENT;
-		_displayContent ctrlSetPositionH (_yOffset - (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
+		private _maxHeight = ["H",_maxHeight] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
+		if(_yOffset > _maxHeight) then {
+			_yOffset = _maxHeight;
+		};
+
+		private _contentHeight = (_yOffset - (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
+		private _mainDisplayGroup = _display displayCtrl 8957;
+		private _displayContent = _mainDisplayGroup controlsGroupCtrl IDC_ATTRIBS_CONTENT;
+		_displayContent ctrlSetPositionH _contentHeight;
 		_displayContent ctrlCommit 0;
 
-		[_display,_maxHeight] call MAZ_EZM_fnc_changeAttribsDisplayHeights;
+		private _totalHeight = _yOffset + (["H",2.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		private _topOfDisplay = (0.5 - (_totalHeight / 2));
+
+		_mainDisplayGroup ctrlSetPositionY _topOfDisplay;
+		_mainDisplayGroup ctrlSetPositionH _totalHeight;
+		_mainDisplayGroup ctrlCommit 0;
+
+		private _contentBG = _mainDisplayGroup controlsGroupCtrl IDC_ATTRIBS_BG;
+		_contentBG ctrlSetPositionY (["Y",1.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		_contentBG ctrlSetPositionH (_contentHeight + (["Y",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
+		_contentBG ctrlCommit 0;
+
+		private _okButton = _display displayCtrl IDC_ATTRIBS_CONFIRM;
+		private _cancelButton = _display displayCtrl IDC_ATTRIBS_CANCEL;
+
+		private _buttonHeight = _topOfDisplay + _totalHeight - (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) + (["Y",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		private _additionalButtons = _display getVariable ["MAZ_EZM_attribsButtons",[]];
+		{
+			_x ctrlSetPositionY _buttonHeight;
+			_x ctrlCommit 0;
+		}forEach (_additionalButtons + [_okButton,_cancelButton]);
 
 		_display setVariable ["MAZ_EZM_attributesDialogInfo",[_display,_controls,_args]];
 	};
