@@ -117,10 +117,10 @@ comment "Dialog Creation";
 		}];
 		_cancelButton ctrlCommit 0;
 
-		_display displayAddEventHandler ["KeyDown", {
-			params ["_display", "_keyCode"];
+		_display displayAddEventHandler ["Unload", {
+			params ["_display", "_exitCode"];
 
-			if (_keyCode == 1) then {
+			if (_exitCode == 2) then {
 				(_display getVariable "MAZ_moduleMenuInfo") params ["_controls","_onConfirm","_onCancel","_args"];
 
 				private _values = _controls apply {
@@ -992,11 +992,10 @@ comment "Attributes Dialog Creation";
 			[_display,_values,_args] call (_display getVariable 'MAZ_EZM_onAttribsCancel');
 		}];
 
-		_display displayAddEventHandler ["KeyDown", {
-			params ["_display", "_keyCode"];
+		_display displayAddEventHandler ["Unload", {
+			params ["_display", "_exitCode"];
 
-			if (_keyCode == 1) then {
-				private _display = ctrlParent _control;
+			if (_exitCode == 2) then {
 				(_display getVariable "MAZ_EZM_attributesDialogInfo") params ["_display","_controls","_args"];
 				private _values = [];
 				{
@@ -2257,7 +2256,7 @@ comment "Attributes Dialog Functions";
 					],
 					[
 						"RESPAWN",
-						"Respawn on Object For:",
+						["Respawn on Vehicle For:","Makes this vehicle a respawn for the specified side."],
 						[
 							_vehicle getVariable ["MAZ_EZM_respawnType",4],
 							_vehicle
@@ -2383,7 +2382,7 @@ comment "Attributes Dialog Functions";
 					],
 					[
 						"RESPAWN",
-						"Respawn on Object For:",
+						["Respawn on Vehicle For:","Makes this vehicle a respawn for the specified side."],
 						[
 							_vehicle getVariable ["MAZ_EZM_respawnType",4],
 							_vehicle
