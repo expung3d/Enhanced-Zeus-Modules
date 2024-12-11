@@ -11104,82 +11104,80 @@ MAZ_EZM_fnc_initFunction = {
 		};
 
 		HYPER_EZM_fnc_createIntel = {
-				private _dialogTitle = "Create Intel";
-				private _target = [true] call MAZ_EZM_fnc_getScreenPosition;
-				private _content = [
-					[
-						"EDIT",
-						"Title",
-						[
-							"",
-							1
-						]
-					],
-					[
-						"EDIT:MULTI",
-						"Description",
-						[
-							"",
-							3
-						]
-					],
-					[
-						"COMBO",
-						"Intel Object",
-						[
-							["documents", "laptop", "ruggedtablet", "tablet", "folder"],
-							["Documents", "Laptop", "Rugged Tablet", "Tablet", "Folder"],
-							0
-						]
-					],
-					[
-						"TOOLBOX:YESNO",
-						"Delete on Pick Up",
-						[
-							true
-						]
-					],
-					[
-						"SLIDER",
-						"Hold Duration",
-						[
-							1,
-							12,
-							3
-						]
-					],
-					[
-						"COMBO",
-						"Show Intel To",
-						[
-							["side", "global"],
-							["Side", "Global"],
-							0
-						]
-					]
-
-				];
-				private _onConfirm = {
-						params ["_values", "_args", "_display"];
-						_values params ["_title","_description","_intelObject","_deleteOnPickup","_holdDuration", "_visibility"];
-						private _target = _args;
-						[ _title, _description, _intelObject, _deleteOnPickup, _target, _holdDuration, _visibility ] call HYPER_EZM_fnc_handleCreateIntel;
-						_display closeDisplay 1;
-				};
-				private _onCancel = {
-						params ["_values", "_args", "_display"];
-						_display closeDisplay 2;
-				};
+			private _dialogTitle = "Create Intel";
+			private _target = [true] call MAZ_EZM_fnc_getScreenPosition;
+			private _content = [
 				[
-						_dialogTitle,
-						_content,
-						_onConfirm,
-						_onCancel,
-						_target
-				] call MAZ_EZM_fnc_createDialog;
-		};
+					"EDIT",
+					"Title",
+					[
+						"",
+						1
+					]
+				],
+				[
+					"EDIT:MULTI",
+					"Description",
+					[
+						"",
+						3
+					]
+				],
+				[
+					"COMBO",
+					"Intel Object",
+					[
+						["documents", "laptop", "ruggedtablet", "tablet", "folder"],
+						["Documents", "Laptop", "Rugged Tablet", "Tablet", "Folder"],
+						0
+					]
+				],
+				[
+					"TOOLBOX:YESNO",
+					"Delete on Pick Up",
+					[
+						true
+					]
+				],
+				[
+					"SLIDER",
+					"Hold Duration",
+					[
+						1,
+						12,
+						3
+					]
+				],
+				[
+					"COMBO",
+					"Show Intel To",
+					[
+						["side", "global"],
+						["Side", "Global"],
+						0
+					]
+				]
 
-		
+			];
+			private _onConfirm = {
+				params ["_values", "_args", "_display"];
+				_values params ["_title","_description","_intelObject","_deleteOnPickup","_holdDuration", "_visibility"];
+				private _target = _args;
+				[ _title, _description, _intelObject, _deleteOnPickup, _target, _holdDuration, _visibility ] call HYPER_EZM_fnc_handleCreateIntel;
+				_display closeDisplay 1;
+			};
+			private _onCancel = {
+				params ["_values", "_args", "_display"];
+				_display closeDisplay 2;
+			};
+			[
+				_dialogTitle,
+				_content,
+				_onConfirm,
+				_onCancel,
+				_target
+			] call MAZ_EZM_fnc_createDialog;
+		};
 
 		MAZ_EZM_fnc_startCountdown = {
 			params ["_time"];
