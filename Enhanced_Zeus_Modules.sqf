@@ -939,7 +939,7 @@ comment "Dialog Creation";
 
 comment "Attributes Dialog Creation";
 
-	MAZ_EZM_createAttributesMenuBase = {
+	MAZ_EZM_fnc_createAttributesMenuBase = {
 		params ["_labelText"];
 		createDialog "RscDisplayEmpty";
 		showchat true;
@@ -1012,7 +1012,7 @@ comment "Attributes Dialog Creation";
 		_display
 	};
 
-	MAZ_EZM_createAttributesRowBase = {
+	MAZ_EZM_fnc_createAttributesRowBase = {
 		params ["_display"];
 		private _contentGroup = _display displayCtrl 103;
 		private _controlsGroup = _display ctrlCreate ["RscControlsGroupNoScrollbars",151,_contentGroup];
@@ -1032,10 +1032,10 @@ comment "Attributes Dialog Creation";
 		_controlsGroup
 	};
 
-	MAZ_EZM_createAttribEditRow = {
+	MAZ_EZM_fnc_createAttribEditRow = {
 		params ["_display","_settings"];
 		_settings params ["_default"];
-		private _rowControlsGroup = [_display] call MAZ_EZM_createAttributesRowBase;
+		private _rowControlsGroup = [_display] call MAZ_EZM_fnc_createAttributesRowBase;
 
 		private _rowEditBox = _display ctrlCreate ["RscEdit",160,_rowControlsGroup];
 		_rowEditBox ctrlSetPosition [["W",9.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,pixelH,["W",16.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,((["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH)];
@@ -1051,10 +1051,10 @@ comment "Attributes Dialog Creation";
 		_rowControlsGroup
 	};
 
-	MAZ_EZM_createAttribEditMultiRow = {
+	MAZ_EZM_fnc_createAttribEditMultiRow = {
 		params ["_display","_settings"];
 		_settings params ["_default","_align"];
-		private _rowControlsGroup = [_display] call MAZ_EZM_createAttributesRowBase;
+		private _rowControlsGroup = [_display] call MAZ_EZM_fnc_createAttributesRowBase;
 		_rowControlsGroup ctrlSetPositionH (["H",4] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_rowControlsGroup ctrlCommit 0;
 
@@ -1078,10 +1078,10 @@ comment "Attributes Dialog Creation";
 		_rowControlsGroup
 	};
 
-	MAZ_EZM_createAttribSliderWithEditRow = {
+	MAZ_EZM_fnc_createAttribSliderWithEditRow = {
 		params ["_display","_settings"];
 		_settings params ["_default","_min","_max",["_isPercent",false]];
-		private _rowControlsGroup = [_display] call MAZ_EZM_createAttributesRowBase;
+		private _rowControlsGroup = [_display] call MAZ_EZM_fnc_createAttributesRowBase;
 
 		private _slider = _display ctrlCreate ["RscXSliderH",170,_rowControlsGroup];
 		_slider ctrlSetPosition [["W",9.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0,["W",13.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
@@ -1138,10 +1138,10 @@ comment "Attributes Dialog Creation";
 		_rowControlsGroup
 	};
 
-	MAZ_EZM_createAttribIconsRow = {
+	MAZ_EZM_fnc_createAttribIconsRow = {
 		params ["_display","_settings"];
 		_settings params ["_default","_values","_icons","_tooltips","_positions","_sizes",["_height",2.5],["_colors",[]]];
-		private _rowControlsGroup = [_display] call MAZ_EZM_createAttributesRowBase;
+		private _rowControlsGroup = [_display] call MAZ_EZM_fnc_createAttributesRowBase;
 		_rowControlsGroup ctrlSetPositionH (["H",_height] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_rowControlsGroup ctrlCommit 0;
 
@@ -1220,10 +1220,10 @@ comment "Attributes Dialog Creation";
 		_rowControlsGroup
 	};
 
-	MAZ_EZM_createAttribComboRow = {
+	MAZ_EZM_fnc_createAttribComboRow = {
 		params ["_display","_settings"];
 		_settings params ["_default","_entries"];
-		private _rowControlsGroup = [_display] call MAZ_EZM_createAttributesRowBase;
+		private _rowControlsGroup = [_display] call MAZ_EZM_fnc_createAttributesRowBase;
 		private _rowBG = _rowControlsGroup controlsGroupCtrl 152;
 		ctrlDelete _rowBG;
 
@@ -1255,7 +1255,7 @@ comment "Attributes Dialog Creation";
 		_rowControlsGroup
 	};
 
-	MAZ_EZM_createAttribNewButton = {
+	MAZ_EZM_fnc_createAttribNewButton = {
 		params ["_display","_settings"];
 		_settings params ["_tooltip","_onButtonClick","_args"];
 		private _existingButtons = _display getVariable ["MAZ_EZM_attribsButtons",[]];
@@ -1280,10 +1280,10 @@ comment "Attributes Dialog Creation";
 		_display setVariable ["MAZ_EZM_attribsButtons",_existingButtons];
 	};
 
-	MAZ_EZM_createAttribNewRespawnRow = {
+	MAZ_EZM_fnc_createAttribNewRespawnRow = {
 		params ["_display","_settings"];
 		_settings params ["_default","_unit"];
-		private _rowControlsGroup = [_display] call MAZ_EZM_createAttributesRowBase;
+		private _rowControlsGroup = [_display] call MAZ_EZM_fnc_createAttributesRowBase;
 		_rowControlsGroup ctrlSetPositionH (["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_rowControlsGroup ctrlCommit 0;
 
@@ -1369,10 +1369,10 @@ comment "Attributes Dialog Creation";
 		_rowControlsGroup
 	};
 
-	MAZ_EZM_createAttribToolboxRow = {
+	MAZ_EZM_fnc_createAttribToolboxRow = {
 		params ["_display","_settings"];
 		_settings params ["_default","_strings"];
-		private _rowControlsGroup = [_display] call MAZ_EZM_createAttributesRowBase;
+		private _rowControlsGroup = [_display] call MAZ_EZM_fnc_createAttributesRowBase;
 
 		private _rowToolbox = _display ctrlCreate ["RscToolbox",190,_rowControlsGroup];
 		_rowToolbox ctrlSetPosition [["W",9.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0,["W",16.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
@@ -1404,7 +1404,7 @@ comment "Attributes Dialog Creation";
 		_rowControlsGroup
 	};
 	
-	MAZ_EZM_createAttributesDialog = {
+	MAZ_EZM_fnc_createAttributesDialog = {
 		params [
 			["_title","Edit Attributes",[""]],
 			["_content",[],[[]]],
@@ -1414,7 +1414,7 @@ comment "Attributes Dialog Creation";
 			["_maxHeight",30,[30]]
 		];
 
-		private _display = [_title] call MAZ_EZM_createAttributesMenuBase;
+		private _display = [_title] call MAZ_EZM_fnc_createAttributesMenuBase;
 		_display setVariable ['MAZ_EZM_onAttribsCancel',_onCancel];
 		_display setVariable ['MAZ_EZM_onAttribsConfirm',_onConfirm];
 
@@ -1430,28 +1430,28 @@ comment "Attributes Dialog Creation";
 			(toUpper _typeData) splitString ":" params ["_type","_subType"];
 			private _controlsGroup = switch (_type) do {
 				case "COMBO": {
-					[_display,_settings] call MAZ_EZM_createAttribComboRow;
+					[_display,_settings] call MAZ_EZM_fnc_createAttribComboRow;
 				};
 				case "EDIT": {
-					[_display,_settings] call MAZ_EZM_createAttribEditRow;
+					[_display,_settings] call MAZ_EZM_fnc_createAttribEditRow;
 				};
 				case "EDITMULTI": {
-					[_display,_settings] call MAZ_EZM_createAttribEditMultiRow;
+					[_display,_settings] call MAZ_EZM_fnc_createAttribEditMultiRow;
 				};
 				case "ICONS": {
-					[_display,_settings] call MAZ_EZM_createAttribIconsRow;
+					[_display,_settings] call MAZ_EZM_fnc_createAttribIconsRow;
 				};
 				case "NEWBUTTON": {
-					[_display,_settings] call MAZ_EZM_createAttribNewButton;
+					[_display,_settings] call MAZ_EZM_fnc_createAttribNewButton;
 				};
 				case "RESPAWN": {
-					[_display,_settings] call MAZ_EZM_createAttribNewRespawnRow;
+					[_display,_settings] call MAZ_EZM_fnc_createAttribNewRespawnRow;
 				};
 				case "SLIDER": {
-					[_display,_settings] call MAZ_EZM_createAttribSliderWithEditRow;
+					[_display,_settings] call MAZ_EZM_fnc_createAttribSliderWithEditRow;
 				};
 				case "TOOLBOX": {
-					[_display,_settings] call MAZ_EZM_createAttribToolboxRow;
+					[_display,_settings] call MAZ_EZM_fnc_createAttribToolboxRow;
 				};
 			};
 
@@ -1516,7 +1516,7 @@ comment "Attributes Dialog Functions";
 
 	comment "Dialog Creation";
 
-		MAZ_EZM_createManAttributesDialog = {
+		MAZ_EZM_fnc_createManAttributesDialog = {
 			params ["_entity"];
 			if(dialog) then {
 				closeDialog 2;
@@ -1643,7 +1643,7 @@ comment "Attributes Dialog Functions";
 							{
 								params ["_display","_args"];
 								_display closeDisplay 0;
-								[_args] spawn MAZ_EZM_createSkillsDialog;
+								[_args] spawn MAZ_EZM_fnc_createSkillsDialog;
 							}, 
 							_entity
 						] 
@@ -1656,7 +1656,7 @@ comment "Attributes Dialog Functions";
 							{
 								params ["_display","_args"];
 								_display closeDisplay 0;
-								[_args] spawn MAZ_EZM_createToggleAIDialog;
+								[_args] spawn MAZ_EZM_fnc_createToggleAIDialog;
 							}, 
 							_entity
 						] 
@@ -1668,11 +1668,11 @@ comment "Attributes Dialog Functions";
 					params ["_display","_values","_args"];
 					[_args,_values] call MAZ_EZM_applyAttributeChangesToMan;
 					_display closeDisplay 0;
-				},_entity] call MAZ_EZM_createAttributesDialog;
+				},_entity] call MAZ_EZM_fnc_createAttributesDialog;
 			};
 		};
 
-		MAZ_EZM_createPlayerAttributesDialog = {
+		MAZ_EZM_fnc_createPlayerAttributesDialog = {
 			params ["_entity"];
 			if(dialog) then {
 				closeDialog 2;
@@ -1750,13 +1750,13 @@ comment "Attributes Dialog Functions";
 					_display closeDisplay 1;
 				},{
 					params ["_display","_values","_args"];
-					[_args,_values] call MAZ_EZM_applyAttributeChangesToPlayer;
+					[_args,_values] call MAZ_EZM_fnc_applyAttributeChangesToPlayer;
 					_display closeDisplay 0;
-				},_entity] call MAZ_EZM_createAttributesDialog;
+				},_entity] call MAZ_EZM_fnc_createAttributesDialog;
 			};
 		};
 
-		MAZ_EZM_createSkillsDialog = {
+		MAZ_EZM_fnc_createSkillsDialog = {
 			params ["_unit"];
 			sleep 0.1;
 			[format ["EDIT SKILLS %1",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _unit >> "displayName"))],[
@@ -1812,16 +1812,16 @@ comment "Attributes Dialog Functions";
 				]
 			],{
 				params ["_display","_values","_args"];
-				[_args] spawn MAZ_EZM_createManAttributesDialog;
+				[_args] spawn MAZ_EZM_fnc_createManAttributesDialog;
 				_display closeDisplay 1;
 			},{
 				params ["_display","_values","_args"];
 				_display closeDisplay 0;
-				[_args,_values] call MAZ_EZM_applySkillsToUnit;
-			},_unit] call MAZ_EZM_createAttributesDialog;
+				[_args,_values] call MAZ_EZM_fnc_applySkillsToUnit;
+			},_unit] call MAZ_EZM_fnc_createAttributesDialog;
 		};
 
-		MAZ_EZM_createToggleAIDialog = {
+		MAZ_EZM_fnc_createToggleAIDialog = {
 			params ["_unit"];
 			sleep 0.1;
 			[format ["TOGGLE %1 AI",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _unit >> "displayName"))],[
@@ -1947,16 +1947,16 @@ comment "Attributes Dialog Functions";
 				]
 			],{
 				params ["_display","_values","_args"];
-				[_args] spawn MAZ_EZM_createManAttributesDialog;
+				[_args] spawn MAZ_EZM_fnc_createManAttributesDialog;
 				_display closeDisplay 1;
 			},{
 				params ["_display","_values","_args"];
 				_display closeDisplay 0;
-				[_args,_values] call MAZ_EZM_applyToggleAIToUnit;
-			},_unit] call MAZ_EZM_createAttributesDialog;
+				[_args,_values] call MAZ_EZM_fnc_applyToggleAI;
+			},_unit] call MAZ_EZM_fnc_createAttributesDialog;
 		};
 
-		MAZ_EZM_createGroupAttributesDialog = {
+		MAZ_EZM_fnc_createGroupAttributesDialog = {
 			params ["_group"];
 			if(dialog) then {
 				closeDialog 2;
@@ -2180,13 +2180,13 @@ comment "Attributes Dialog Functions";
 					_display closeDisplay 1;
 				},{
 					params ["_display","_values","_args"];
-					[_args,_values] call MAZ_EZM_applyAttributeChangesToGroup;
+					[_args,_values] call MAZ_EZM_fnc_applyAttributeChangesToGroup;
 					_display closeDisplay 0;
-				},_group] call MAZ_EZM_createAttributesDialog;
+				},_group] call MAZ_EZM_fnc_createAttributesDialog;
 			};
 		};
 
-		MAZ_EZM_createLandVehicleAttributesDialog = {
+		MAZ_EZM_fnc_createLandVehicleAttributesDialog = {
 			params ["_vehicle"];
 			if(dialog) then {
 				closeDialog 2;
@@ -2270,7 +2270,7 @@ comment "Attributes Dialog Functions";
 							{
 								params ["_display","_args"];
 								_display closeDisplay 0;
-								[_args] spawn MAZ_EZM_createDamageDialog;
+								[_args] spawn MAZ_EZM_fnc_createDamageDialog;
 							}, 
 							_vehicle
 						] 
@@ -2283,7 +2283,7 @@ comment "Attributes Dialog Functions";
 							{
 								params ["_display","_args"];
 								_display closeDisplay 0;
-								[_args] spawn MAZ_EZM_createVehicleRespawnDialog;
+								[_args] spawn MAZ_EZM_fnc_createVehicleRespawnDialog;
 							}, 
 							_vehicle
 						] 
@@ -2293,13 +2293,13 @@ comment "Attributes Dialog Functions";
 					_display closeDisplay 1;
 				},{
 					params ["_display","_values","_args"];
-					[_args,_values] call MAZ_EZM_applyAttributeChangesToLandVehicle;
+					[_args,_values] call MAZ_EZM_fnc_applyAttributeChangesToLandVehicle;
 					_display closeDisplay 0;
-				},_vehicle] call MAZ_EZM_createAttributesDialog;
+				},_vehicle] call MAZ_EZM_fnc_createAttributesDialog;
 			};
 		};
 		
-		MAZ_EZM_createVehicleAttributesDialog = {
+		MAZ_EZM_fnc_createVehicleAttributesDialog = {
 			params ["_vehicle"];
 			if(dialog) then {
 				closeDialog 2;
@@ -2396,7 +2396,7 @@ comment "Attributes Dialog Functions";
 							{
 								params ["_display","_args"];
 								_display closeDisplay 0;
-								[_args] spawn MAZ_EZM_createDamageDialog;
+								[_args] spawn MAZ_EZM_fnc_createDamageDialog;
 							}, 
 							_vehicle
 						] 
@@ -2409,7 +2409,7 @@ comment "Attributes Dialog Functions";
 							{
 								params ["_display","_args"];
 								_display closeDisplay 0;
-								[_args] spawn MAZ_EZM_createVehicleRespawnDialog;
+								[_args] spawn MAZ_EZM_fnc_createVehicleRespawnDialog;
 							}, 
 							_vehicle
 						] 
@@ -2419,13 +2419,13 @@ comment "Attributes Dialog Functions";
 					_display closeDisplay 1;
 				},{
 					params ["_display","_values","_args"];
-					[_args,_values] call MAZ_EZM_applyAttributeChangesToVehicle;
+					[_args,_values] call MAZ_EZM_fnc_applyAttributeChangesToVehicle;
 					_display closeDisplay 0;
-				},_vehicle] call MAZ_EZM_createAttributesDialog;
+				},_vehicle] call MAZ_EZM_fnc_createAttributesDialog;
 			};
 		};
 
-		MAZ_EZM_createDamageDialog = {
+		MAZ_EZM_fnc_createDamageDialog = {
 			params ["_vehicle"];
 			private _damages = getAllHitPointsDamage _vehicle;
 			_damages params ["_hitPoints","_sections","_damage"];
@@ -2443,19 +2443,19 @@ comment "Attributes Dialog Functions";
 			{
 				params ["_display","_values","_args"];
 				if(typeOf _args isKindOf "LandVehicle") then {
-					[_args] spawn MAZ_EZM_createLandVehicleAttributesDialog;
+					[_args] spawn MAZ_EZM_fnc_createLandVehicleAttributesDialog;
 				} else {
-					[_args] spawn MAZ_EZM_createVehicleAttributesDialog;
+					[_args] spawn MAZ_EZM_fnc_createVehicleAttributesDialog;
 				};
 				_display closeDisplay 1;
 			},{
 				params ["_display","_values","_args"];
 				_display closeDisplay 0;
-				[_args,_values] call MAZ_EZM_applyDamagesToVehicle;
-			},_vehicle,25] call MAZ_EZM_createAttributesDialog;
+				[_args,_values] call MAZ_EZM_fnc_applyDamagesToVehicle;
+			},_vehicle,25] call MAZ_EZM_fnc_createAttributesDialog;
 		};
 
-		MAZ_EZM_createVehicleRespawnDialog = {
+		MAZ_EZM_fnc_createVehicleRespawnDialog = {
 			params ["_vehicle"];
 			[format ["CREATE RESPAWNING %1",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _vehicle >> "displayName"))],[
 				[
@@ -2481,19 +2481,19 @@ comment "Attributes Dialog Functions";
 			],{
 				params ["_display","_values","_args"];
 				if(typeOf _args isKindOf "LandVehicle") then {
-					[_args] spawn MAZ_EZM_createLandVehicleAttributesDialog;
+					[_args] spawn MAZ_EZM_fnc_createLandVehicleAttributesDialog;
 				} else {
-					[_args] spawn MAZ_EZM_createVehicleAttributesDialog;
+					[_args] spawn MAZ_EZM_fnc_createVehicleAttributesDialog;
 				};
 				_display closeDisplay 1;
 			},{
 				params ["_display","_values","_args"];
-				[_args,_values] call MAZ_EZM_createVehicleRespawn;
+				[_args,_values] call MAZ_EZM_fnc_createVehicleRespawn;
 				_display closeDisplay 0;
-			},_vehicle] call MAZ_EZM_createAttributesDialog;
+			},_vehicle] call MAZ_EZM_fnc_createAttributesDialog;
 		};
 
-		MAZ_EZM_createMarkerAttributesDialog = {
+		MAZ_EZM_fnc_createMarkerAttributesDialog = {
 			params ["_marker"];
 			if(dialog) then {
 				closeDialog 2;
@@ -2654,15 +2654,15 @@ comment "Attributes Dialog Functions";
 					_display closeDisplay 1;
 				},{
 					params ["_display","_values","_args"];
-					[_args,_values] call MAZ_EZM_applyAttributeChangesToMarker;
+					[_args,_values] call MAZ_EZM_fnc_applyAttributeChangesToMarker;
 					_display closeDisplay 0;
-				},_marker] call MAZ_EZM_createAttributesDialog;
+				},_marker] call MAZ_EZM_fnc_createAttributesDialog;
 			};
 		};
 
 	comment "Dialog Apply";
 
-		MAZ_EZM_applyCreateRespawnToUnitAttribs = {
+		MAZ_EZM_fnc_applyUnitRespawn = {
 			params ["_unit","_respawn"];
 			private _currentRespawn = _unit getVariable ["MAZ_EZM_respawnType",4];
 			if(_currentRespawn == _respawn) exitWith {};
@@ -2698,10 +2698,10 @@ comment "Attributes Dialog Functions";
 				[_unit, _skill] remoteExec ["setSkill"];
 			};
 
-			[_unit,_respawn] call MAZ_EZM_applyCreateRespawnToUnitAttribs;
+			[_unit,_respawn] call MAZ_EZM_fnc_applyUnitRespawn;
 		};
 
-		MAZ_EZM_applySkillsToUnit = {
+		MAZ_EZM_fnc_applySkillsToUnit = {
 			params ["_unit","_skillsData"];
 			{
 				_unit setSkill [_x,_skillsData select _forEachIndex];
@@ -2709,7 +2709,7 @@ comment "Attributes Dialog Functions";
 			_unit setVariable ["MAZ_EZM_doesHaveCustomSkills",true,true];
 		};
 
-		MAZ_EZM_applyToggleAIToUnit = {
+		MAZ_EZM_fnc_applyToggleAI = {
 			params ["_unit","_aiData"];
 			{
 				private _setting = _aiData select _forEachIndex;
@@ -2737,14 +2737,14 @@ comment "Attributes Dialog Functions";
 			];
 		};
 
-		MAZ_EZM_applyAttributeChangesToPlayer = {
+		MAZ_EZM_fnc_applyAttributeChangesToPlayer = {
 			params ["_unit","_values"];
 			_values params ["_rank","_respawnType"];
 			_unit setRank _rank;
-			[_unit,_respawnType] call MAZ_EZM_applyCreateRespawnToUnitAttribs;
+			[_unit,_respawnType] call MAZ_EZM_fnc_applyUnitRespawn;
 		};
 
-		MAZ_EZM_applyAttributeChangesToGroup = {
+		MAZ_EZM_fnc_applyAttributeChangesToGroup = {
 			params ["_group","_attributes"];
 			_attributes params ["_name","_skill","_form","_beh","_comMode","_sped","_stance"];
 			_group setGroupIdGlobal [_name];
@@ -2758,7 +2758,7 @@ comment "Attributes Dialog Functions";
 			}forEach (units _group);
 		};
 
-		MAZ_EZM_applyDamagesToVehicle = {
+		MAZ_EZM_fnc_applyDamagesToVehicle = {
 			params ["_vehicle","_damagesData"];
 			private _damages = getAllHitPointsDamage _vehicle;
 			_damages params ["_hitPoints","_sections","_damage"];
@@ -2767,7 +2767,7 @@ comment "Attributes Dialog Functions";
 			}forEach _damagesData;
 		};
 
-		MAZ_EZM_createVehicleRespawn = {
+		MAZ_EZM_fnc_createVehicleRespawn = {
 			params ["_vehicle","_values"];
 			_values params ["_respawnDelay","_abandonDelay","_numOfRespawns","_distAbandon"];
 			private _logic = (createGroup [sideLogic,true]) createUnit ["ModuleRespawnVehicle_F",position _vehicle, [], 0, "NONE"];
@@ -2790,7 +2790,7 @@ comment "Attributes Dialog Functions";
 			}] remoteExec ['spawn',2];
 		};
 
-		MAZ_EZM_applyAttributeChangesToLandVehicle = {
+		MAZ_EZM_fnc_applyAttributeChangesToLandVehicle = {
 			params ["_vehicle","_attributes"];
 			_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],"_respawn"];
 			_vehicle setDamage (1-_health);
@@ -2799,10 +2799,10 @@ comment "Attributes Dialog Functions";
 			[_vehicle,_engineState] remoteExec ["engineOn"];
 			[_vehicle,_lightState] remoteExec ["setPilotLight"];
 
-			[_vehicle,_respawn] call MAZ_EZM_applyCreateRespawnToUnitAttribs;
+			[_vehicle,_respawn] call MAZ_EZM_fnc_applyUnitRespawn;
 		};
 
-		MAZ_EZM_applyAttributeChangesToVehicle = {
+		MAZ_EZM_fnc_applyAttributeChangesToVehicle = {
 			params ["_vehicle","_attributes"];
 			_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],["_colLightState",isCollisionLightOn _vehicle],"_respawn"];
 			_vehicle setDamage (1-_health);
@@ -2812,10 +2812,10 @@ comment "Attributes Dialog Functions";
 			[_vehicle,_lightState] remoteExec ["setPilotLight"];
 			[_vehicle,_colLightState] remoteExec ["setCollisionLight"];
 
-			[_vehicle,_respawn] call MAZ_EZM_applyCreateRespawnToUnitAttribs;
+			[_vehicle,_respawn] call MAZ_EZM_fnc_applyUnitRespawn;
 		};
 
-		MAZ_EZM_applyAttributeChangesToMarker = {
+		MAZ_EZM_fnc_applyAttributeChangesToMarker = {
 			params ["_marker","_attribs"];
 			_attribs params ["_text","_markerColor","_markerDir"];
 			_marker setMarkerText _text;
@@ -17870,19 +17870,19 @@ MAZ_EZM_editZeusLogic = {
 				};
 			};
 			if(isPlayer _entity) exitWith {
-				[_entity] spawn MAZ_EZM_createPlayerAttributesDialog;
+				[_entity] spawn MAZ_EZM_fnc_createPlayerAttributesDialog;
 				true
 			};
 			if((typeOf _entity) isKindOf "CAManBase" && !isPlayer _entity && alive _entity) exitWith {
-				[_entity] spawn MAZ_EZM_createManAttributesDialog;
+				[_entity] spawn MAZ_EZM_fnc_createManAttributesDialog;
 				true
 			};
 			if((typeOf _entity) isKindOf "LandVehicle" && alive _entity) exitWith {
-				[_entity] spawn MAZ_EZM_createLandVehicleAttributesDialog;
+				[_entity] spawn MAZ_EZM_fnc_createLandVehicleAttributesDialog;
 				true
 			};
 			if(((typeOf _entity) isKindOf "Air" || (typeOf _entity) isKindOf "Ship") && alive _entity) exitWith {
-				[_entity] spawn MAZ_EZM_createVehicleAttributesDialog;
+				[_entity] spawn MAZ_EZM_fnc_createVehicleAttributesDialog;
 				true
 			};
 			false
@@ -17895,7 +17895,7 @@ MAZ_EZM_editZeusLogic = {
 		"MAZ_zeusEH_groupDblClicked",
 		_zeusLogic addEventhandler ["CuratorGroupDoubleClicked",{
 			params ["_curator", "_group"];
-			[_group] spawn MAZ_EZM_createGroupAttributesDialog;
+			[_group] spawn MAZ_EZM_fnc_createGroupAttributesDialog;
 			true
 		}]
 	];
@@ -17907,7 +17907,7 @@ MAZ_EZM_editZeusLogic = {
 		"MAZ_zeusEH_markerDblClicked",
 		_zeusLogic addEventhandler ["CuratorMarkerDoubleClicked",{
 			params ["_curator", "_marker"];
-			[_marker] spawn MAZ_EZM_createMarkerAttributesDialog;
+			[_marker] spawn MAZ_EZM_fnc_createMarkerAttributesDialog;
 			true
 		}]
 	];
@@ -18196,7 +18196,7 @@ MAZ_EZM_addZeusKeybinds_312 = {
 					if((markerShape _closest == "ELLIPSE") || (markerShape _closest == "RECTANGLE")) then {
 						[_closest] spawn MAZ_EZM_fnc_createEditAreaMarkerDialog;
 					} else {
-						[_closest] spawn MAZ_EZM_createMarkerAttributesDialog;
+						[_closest] spawn MAZ_EZM_fnc_createMarkerAttributesDialog;
 					};
 				};
 			};
