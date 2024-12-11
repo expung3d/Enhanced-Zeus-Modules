@@ -965,7 +965,6 @@ comment "Attributes Dialog Creation";
 		_contentGroup ctrlCommit 0;
 
 		private _okayButton = _display ctrlCreate ["RscButtonMenuOk",104];
-		_okayButton ctrlSetPosition [(["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) + (["W",22] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,["W",5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
 		_okayButton ctrlAddEventhandler ["ButtonClick",{
 			params ["_control"];
 			private _display = ctrlParent _control;
@@ -978,10 +977,8 @@ comment "Attributes Dialog Creation";
 
 			[_display,_values,_args] call (_display getVariable 'MAZ_EZM_onAttribsConfirm');
 		}];
-		_okayButton ctrlCommit 0;
 
 		private _cancelButton = _display ctrlCreate ["RscButtonMenuCancel",105];
-		_cancelButton ctrlSetPosition [["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0,["W",5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
 		_cancelButton ctrlAddEventhandler ["ButtonClick",{
 			params ["_control"];
 			private _display = ctrlParent _control;
@@ -994,7 +991,6 @@ comment "Attributes Dialog Creation";
 
 			[_display,_values,_args] call (_display getVariable 'MAZ_EZM_onAttribsCancel');
 		}];
-		_cancelButton ctrlCommit 0;
 
 		_display displayAddEventHandler ["KeyDown", {
 			params ["_display", "_keyCode"];
@@ -1425,7 +1421,6 @@ comment "Attributes Dialog Creation";
 
 		private _controls = [];
 		private _yOffset = 0;
-		private _dialogInfo = [];
 		{
 			_x params [
 				["_typeData","",[""]],
@@ -1503,11 +1498,17 @@ comment "Attributes Dialog Creation";
 		private _cancelButton = _display displayCtrl 105;
 
 		private _buttonHeight = _topOfDisplay + _totalHeight - (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) + (["Y",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		_okButton ctrlSetPosition [(["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) + (["W",22] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),_buttonHeight,["W",5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
+		_okButton ctrlCommit 0;
+
+		_cancelButton ctrlSetPosition [["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,_buttonHeight,["W",5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
+		_cancelButton ctrlCommit 0;
+
 		private _additionalButtons = _display getVariable ["MAZ_EZM_attribsButtons",[]];
 		{
 			_x ctrlSetPositionY _buttonHeight;
 			_x ctrlCommit 0;
-		}forEach (_additionalButtons + [_okButton,_cancelButton]);
+		}forEach _additionalButtons;
 
 		_display setVariable ["MAZ_EZM_attributesDialogInfo",[_display,_controls,_args]];
 	};
@@ -1812,6 +1813,7 @@ comment "Attributes Dialog Functions";
 				]
 			],{
 				params ["_display","_values","_args"];
+				[_args] spawn MAZ_EZM_createManAttributesDialog;
 				_display closeDisplay 1;
 			},{
 				params ["_display","_values","_args"];
@@ -1946,6 +1948,7 @@ comment "Attributes Dialog Functions";
 				]
 			],{
 				params ["_display","_values","_args"];
+				[_args] spawn MAZ_EZM_createManAttributesDialog;
 				_display closeDisplay 1;
 			},{
 				params ["_display","_values","_args"];
@@ -2440,6 +2443,11 @@ comment "Attributes Dialog Functions";
 			_dialogData,
 			{
 				params ["_display","_values","_args"];
+				if(typeOf _args isKindOf "LandVehicle") then {
+					[_args] spawn MAZ_EZM_createLandVehicleAttributesDialog;
+				} else {
+					[_args] spawn MAZ_EZM_createVehicleAttributesDialog;
+				};
 				_display closeDisplay 1;
 			},{
 				params ["_display","_values","_args"];
@@ -2473,12 +2481,12 @@ comment "Attributes Dialog Functions";
 				]
 			],{
 				params ["_display","_values","_args"];
-				_display closeDisplay 1;
 				if(typeOf _args isKindOf "LandVehicle") then {
 					[_args] spawn MAZ_EZM_createLandVehicleAttributesDialog;
 				} else {
 					[_args] spawn MAZ_EZM_createVehicleAttributesDialog;
 				};
+				_display closeDisplay 1;
 			},{
 				params ["_display","_values","_args"];
 				[_args,_values] call MAZ_EZM_createVehicleRespawn;
