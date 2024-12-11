@@ -145,7 +145,7 @@ comment "Dialog Creation";
 		_controlsGroupRow ctrlSetPosition [0,0,(["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_controlsGroupRow ctrlCommit 0;
 
-		private _rowLabel = _display ctrlCreate ["RscText",211,_controlsGroupRow];
+		private _rowLabel = _display ctrlCreate ["RscStructuredText",211,_controlsGroupRow];
 		_rowLabel ctrlSetPosition [0,0,(["W",10] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_rowLabel ctrlSetBackgroundColor [0,0,0,0.5];
 		_rowLabel ctrlCommit 0;
@@ -310,7 +310,11 @@ comment "Dialog Creation";
 		_rowControlGroup ctrlSetPositionH (["H",_height] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_rowControlGroup ctrlCommit 0;
 
-		private _edit = _display ctrlCreate ["RscEdit",214,_rowControlGroup];
+		private _label = _rowControlGroup controlsGroupCtrl 211; 
+		_label ctrlSetPositionH (["H",_height] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		_label ctrlCommit 0;
+
+		private _edit = _display ctrlCreate ["RscEditMulti",214,_rowControlGroup];
 		_edit ctrlSetPosition [(["W",10.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),pixelH,(["W",15.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",_height] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH];
 		_edit ctrlSetTextColor [1,1,1,1];
 		_edit ctrlSetBackgroundColor [0,0,0,0.2];
@@ -908,7 +912,7 @@ comment "Dialog Creation";
 			};
 
 			private _ctrlLabel = _result controlsGroupCtrl 211;
-			_ctrlLabel ctrlSetText (format ["%1",_label]);
+			_ctrlLabel ctrlSetStructuredText parseText (format ["%1",_label]);
 			_ctrlLabel ctrlSetTooltip _toolTip;
 
 			_controls pushBack [_result,_condition];
