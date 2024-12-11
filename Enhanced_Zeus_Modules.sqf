@@ -3,7 +3,7 @@ if(!isNull (findDisplay 312) && {!isNil "this"} && {!isNull this}) then {
 };
 
 [] spawn {
-MAZ_EZM_Version = "V2.1.4";
+MAZ_EZM_Version = "V2.1.5";
 MAZ_EZM_autoAdd = profileNamespace getVariable ["MAZ_EZM_autoAddVar",true];
 MAZ_EZM_spawnWithCrew = true;
 MAZ_EZM_nvgsOnlyAtNight = true;
@@ -117,10 +117,10 @@ comment "Dialog Creation";
 		}];
 		_cancelButton ctrlCommit 0;
 
-		_display displayAddEventHandler ["KeyDown", {
-			params ["_display", "_keyCode"];
+		_display displayAddEventHandler ["Unload", {
+			params ["_display", "_exitCode"];
 
-			if (_keyCode == 1) then {
+			if (_exitCode == 2) then {
 				(_display getVariable "MAZ_moduleMenuInfo") params ["_controls","_onConfirm","_onCancel","_args"];
 
 				private _values = _controls apply {
@@ -939,55 +939,32 @@ comment "Dialog Creation";
 
 comment "Attributes Dialog Creation";
 
-	MAZ_EZM_attributesIDCDefinitions = {
-		IDC_ATTRIBS_TITLE = 100;
-		IDC_ATTRIBS_BG = 101;
-		IDC_ATTRIBS_CONTENT = 102;
-		IDC_ATTRIBS_CONFIRM = 103;
-		IDC_ATTRIBS_CANCEL = 104;
-
-		IDC_ATTRIBS_LABEL = 150;
-		IDC_ATTRIBS_ROW_GROUP = 151;
-		IDC_ATTRIBS_ROW_BG = 152;
-		IDC_ATTRIBS_EDIT = 160;
-		IDC_ATTRIBS_EDITMULTI = 161;
-		IDC_ATTRIBS_SLIDER = 170;
-		IDC_ATTRIBS_SLIDER_EDIT = 171;
-		IDC_ATTRIBS_COMBO = 180;
-		IDC_ATTRIBS_TOOLBOX = 190;
-
-	};
-	[] call MAZ_EZM_attributesIDCDefinitions;
-
-	MAZ_EZM_createAttributesMenuBase = {
+	MAZ_EZM_fnc_createAttributesMenuBase = {
 		params ["_labelText"];
 		createDialog "RscDisplayEmpty";
 		showchat true;
 		private _display = findDisplay -1;
 
-		private _label = _display ctrlCreate ["RscText",IDC_ATTRIBS_TITLE];
-		_label ctrlSetPositionX (["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-		_label ctrlSetPositionW (["W",27] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-		_label ctrlSetPositionH (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		private _primaryContentGroup = _display ctrlCreate ["RscControlsGroupNoScrollbars",100];
+		_primaryContentGroup ctrlSetPosition [["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0,["W",27] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0];
+		_primaryContentGroup ctrlCommit 0;
+
+		private _label = _display ctrlCreate ["RscText",101,_primaryContentGroup];
+		_label ctrlSetPosition [0,0,1,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
 		_label ctrlSetBackgroundColor EZM_dialogColor;
 		_label ctrlSetText _labelText;
 		_label ctrlCommit 0;
 
-		private _background = _display ctrlCreate ["RscText",IDC_ATTRIBS_BG];
-		_background ctrlSetPositionX (["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-		_background ctrlSetPositionW (["W",27] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		private _background = _display ctrlCreate ["RscText",102,_primaryContentGroup];
+		_background ctrlSetPosition [0,0,1,0];
 		_background ctrlSetBackgroundColor [0,0,0,0.7];
 		_background ctrlCommit 0;
 
-		private _contentGroup = _display ctrlCreate ["RscControlsGroup",IDC_ATTRIBS_CONTENT];
-		_contentGroup ctrlSetPositionX (["X",7] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-		_contentGroup ctrlSetPositionW (["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		private _contentGroup = _display ctrlCreate ["RscControlsGroup",103,_primaryContentGroup];
+		_contentGroup ctrlSetPosition [0.015,["Y",1.6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0];
 		_contentGroup ctrlCommit 0;
 
-		private _okayButton = _display ctrlCreate ["RscButtonMenuOk",IDC_ATTRIBS_CONFIRM];
-		_okayButton ctrlSetPositionX (["X",28.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-		_okayButton ctrlSetPositionW (["W",5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-		_okayButton ctrlSetPositionH (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		private _okayButton = _display ctrlCreate ["RscButtonMenuOk",104];
 		_okayButton ctrlAddEventhandler ["ButtonClick",{
 			params ["_control"];
 			private _display = ctrlParent _control;
@@ -1000,12 +977,8 @@ comment "Attributes Dialog Creation";
 
 			[_display,_values,_args] call (_display getVariable 'MAZ_EZM_onAttribsConfirm');
 		}];
-		_okayButton ctrlCommit 0;
 
-		private _cancelButton = _display ctrlCreate ["RscButtonMenuCancel",IDC_ATTRIBS_CANCEL];
-		_cancelButton ctrlSetPositionX (["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-		_cancelButton ctrlSetPositionW (["W",5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-		_cancelButton ctrlSetPositionH (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		private _cancelButton = _display ctrlCreate ["RscButtonMenuCancel",105];
 		_cancelButton ctrlAddEventhandler ["ButtonClick",{
 			params ["_control"];
 			private _display = ctrlParent _control;
@@ -1018,13 +991,11 @@ comment "Attributes Dialog Creation";
 
 			[_display,_values,_args] call (_display getVariable 'MAZ_EZM_onAttribsCancel');
 		}];
-		_cancelButton ctrlCommit 0;
 
-		_display displayAddEventHandler ["KeyDown", {
-			params ["_display", "_keyCode"];
+		_display displayAddEventHandler ["Unload", {
+			params ["_display", "_exitCode"];
 
-			if (_keyCode == 1) then {
-				private _display = ctrlParent _control;
+			if (_exitCode == 2) then {
 				(_display getVariable "MAZ_EZM_attributesDialogInfo") params ["_display","_controls","_args"];
 				private _values = [];
 				{
@@ -1041,27 +1012,19 @@ comment "Attributes Dialog Creation";
 		_display
 	};
 
-	MAZ_EZM_createAttributesRowBase = {
-		params ["_display","_label"];
-		_text = _label;
-		_tooltip = "";
-		if(_label isEqualType []) then {
-			_text = _label # 0;
-			_tooltip = _label # 1;
-		};
-		private _contentGroup = _display displayCtrl IDC_ATTRIBS_CONTENT;
-		private _controlsGroup = _display ctrlCreate ["RscControlsGroupNoScrollbars",IDC_ATTRIBS_ROW_GROUP,_contentGroup];
+	MAZ_EZM_fnc_createAttributesRowBase = {
+		params ["_display"];
+		private _contentGroup = _display displayCtrl 103;
+		private _controlsGroup = _display ctrlCreate ["RscControlsGroupNoScrollbars",151,_contentGroup];
 		_controlsGroup ctrlSetPosition [0,0,(["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_controlsGroup ctrlCommit 0;
 
-		private _rowLabel = _display ctrlCreate ["RscText",IDC_ATTRIBS_LABEL,_controlsGroup];
+		private _rowLabel = _display ctrlCreate ["RscText",150,_controlsGroup];
 		_rowLabel ctrlSetPosition [0,0,(["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_rowLabel ctrlSetBackgroundColor [0,0,0,0.6];
-		_rowLabel ctrlSetText (format ["%1",_text]);
-		_rowLabel ctrlSetTooltip _tooltip;
 		_rowLabel ctrlCommit 0;
 
-		private _rowBG = _display ctrlCreate ["RscPicture",IDC_ATTRIBS_ROW_BG,_controlsGroup];
+		private _rowBG = _display ctrlCreate ["RscPicture",152,_controlsGroup];
 		_rowBG ctrlSetPosition [(["W",9.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,(["W",16.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_rowBG ctrlSetText "#(argb,8,8,3)color(1,1,1,0.1)";
 		_rowBG ctrlCommit 0;
@@ -1069,11 +1032,12 @@ comment "Attributes Dialog Creation";
 		_controlsGroup
 	};
 
-	MAZ_EZM_createAttribEditRow = {
-		params ["_display","_label","_default","_settings"];
-		private _rowControlsGroup = [_display,_label] call MAZ_EZM_createAttributesRowBase;
+	MAZ_EZM_fnc_createAttribEditRow = {
+		params ["_display","_settings"];
+		_settings params ["_default"];
+		private _rowControlsGroup = [_display] call MAZ_EZM_fnc_createAttributesRowBase;
 
-		private _rowEditBox = _display ctrlCreate ["RscEdit",IDC_ATTRIBS_EDIT,_rowControlsGroup];
+		private _rowEditBox = _display ctrlCreate ["RscEdit",160,_rowControlsGroup];
 		_rowEditBox ctrlSetPosition [["W",9.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,pixelH,["W",16.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,((["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH)];
 		_rowEditBox ctrlSetText _default;
 		_rowEditBox ctrlSetBackgroundColor [0,0,0,0.3];
@@ -1081,26 +1045,26 @@ comment "Attributes Dialog Creation";
 
 		_rowControlsGroup setVariable ["MAZ_EZM_getControlValue",{
 			params ["_controlsGroup"];
-			ctrlText (_controlsGroup controlsGroupCtrl IDC_ATTRIBS_EDIT)
+			ctrlText (_controlsGroup controlsGroupCtrl 160)
 		}];
 
 		_rowControlsGroup
 	};
 
-	MAZ_EZM_createAttribEditMultiRow = {
-		params ["_display","_label","_default","_settings"];
-		_settings params ["_align"];
-		private _rowControlsGroup = [_display,_label] call MAZ_EZM_createAttributesRowBase;
+	MAZ_EZM_fnc_createAttribEditMultiRow = {
+		params ["_display","_settings"];
+		_settings params ["_default","_align"];
+		private _rowControlsGroup = [_display] call MAZ_EZM_fnc_createAttributesRowBase;
 		_rowControlsGroup ctrlSetPositionH (["H",4] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_rowControlsGroup ctrlCommit 0;
 
-		private _rowLabel = _rowControlsGroup controlsGroupCtrl IDC_ATTRIBS_LABEL;
+		private _rowLabel = _rowControlsGroup controlsGroupCtrl 150;
 		private _text = ctrlText _rowLabel;
 		_rowLabel ctrlSetStructuredText parseText (format ["<t align='%1'>%2</t>",_align,_text]);
 		_rowLabel ctrlSetPositionW (["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_rowLabel ctrlCommit 0;
 
-		private _rowEditMultiBox = _display ctrlCreate ["RscEditMulti",IDC_ATTRIBS_EDITMULTI,_rowControlsGroup];
+		private _rowEditMultiBox = _display ctrlCreate ["RscEditMulti",161,_rowControlsGroup];
 		_rowEditMultiBox ctrlSetPosition [["W",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,(["H",1.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) + pixelH,["W",25.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,((["H",2.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH)];
 		_rowEditMultiBox ctrlSetText _default;
 		_rowEditMultiBox ctrlSetBackgroundColor [0,0,0,0.3];
@@ -1108,50 +1072,24 @@ comment "Attributes Dialog Creation";
 
 		_rowControlsGroup setVariable ["MAZ_EZM_getControlValue",{
 			params ["_controlsGroup"];
-			ctrlText (_controlsGroup controlsGroupCtrl IDC_ATTRIBS_EDITMULTI)
+			ctrlText (_controlsGroup controlsGroupCtrl 161)
 		}];
 
 		_rowControlsGroup
 	};
 
-	MAZ_EZM_createAttribSliderRow = {
-		params ["_display","_label","_default","_settings"];
-		_settings params ["_min","_max"];
-		private _rowControlsGroup = [_display,_label] call MAZ_EZM_createAttributesRowBase;
+	MAZ_EZM_fnc_createAttribSliderWithEditRow = {
+		params ["_display","_settings"];
+		_settings params ["_default","_min","_max",["_isPercent",false]];
+		private _rowControlsGroup = [_display] call MAZ_EZM_fnc_createAttributesRowBase;
 
-		private _slider = _display ctrlCreate ["RscXSliderH",IDC_ATTRIBS_SLIDER,_rowControlsGroup];
-		_slider ctrlSetPosition [["W",9.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0,["W",16.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
-		_slider sliderSetRange [_min,_max];
-		_slider sliderSetPosition _default;
-		_slider ctrlAddEventHandler ["sliderPosChanged",{
-			params ["_control","_newValue"];
-			private _ctrlGroup = ctrlParentControlsGroup _control;
-			_ctrlGroup setVariable ["MAZ_EZM_sliderData",[_newValue,2] call BIS_fnc_cutDecimals];
-		}];
-		_slider ctrlCommit 0;
-
-		_rowControlsGroup setVariable ["MAZ_EZM_sliderData",_default];
-
-		_rowControlsGroup setVariable ["MAZ_EZM_getControlValue",{
-			params ["_controlsGroup"];
-			_controlsGroup getVariable "MAZ_EZM_sliderData"
-		}];
-
-		_rowControlsGroup
-	};
-
-	MAZ_EZM_createAttribSliderWithEditRow = {
-		params ["_display","_label","_default","_settings"];
-		_settings params ["_min","_max",["_isPercent",false]];
-		private _rowControlsGroup = [_display,_label] call MAZ_EZM_createAttributesRowBase;
-
-		private _slider = _display ctrlCreate ["RscXSliderH",IDC_ATTRIBS_SLIDER,_rowControlsGroup];
+		private _slider = _display ctrlCreate ["RscXSliderH",170,_rowControlsGroup];
 		_slider ctrlSetPosition [["W",9.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0,["W",13.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_slider sliderSetRange [_min,_max];
 		_slider sliderSetPosition _default;
 		_slider ctrlCommit 0;
 
-		private _sliderEdit = _display ctrlCreate ["RscEdit",IDC_ATTRIBS_SLIDER_EDIT,_rowControlsGroup];
+		private _sliderEdit = _display ctrlCreate ["RscEdit",171,_rowControlsGroup];
 		_sliderEdit ctrlSetPosition [["W",23.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,pixelH,["W",2.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,((["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH)];
 		if(_isPercent) then {
 			_sliderEdit ctrlSetText ((str (round (_default * 100))) + "%");
@@ -1161,15 +1099,13 @@ comment "Attributes Dialog Creation";
 		_sliderEdit ctrlSetBackgroundColor [0,0,0,0.3];
 		_sliderEdit ctrlCommit 0;
 
-		_rowControlsGroup setVariable ["MAZ_EZM_sliderData",_default];
 		_rowControlsGroup setVariable ["MAZ_EZM_isSliderEditPercent",_isPercent];
 
 		_slider ctrlAddEventHandler ["SliderPosChanged",{
 			params ["_control","_newValue"];
 			private _ctrlGroup = ctrlParentControlsGroup _control;
-			_ctrlGroup setVariable ["MAZ_EZM_sliderData",[_newValue,2] call BIS_fnc_cutDecimals];
 			private _isPercent = _ctrlGroup getVariable ["MAZ_EZM_isSliderEditPercent",false];
-			private _editCtrl = _ctrlGroup controlsGroupCtrl IDC_ATTRIBS_SLIDER_EDIT;
+			private _editCtrl = _ctrlGroup controlsGroupCtrl 171;
 			if(_isPercent) then {
 				private _editValue = str (round (_newValue * 100));
 				_editCtrl ctrlSetText (_editValue + "%");
@@ -1183,39 +1119,39 @@ comment "Attributes Dialog Creation";
 			params ["_displayOrControl", "_key", "_shift", "_ctrl", "_alt"];
 			private _num = parseNumber (ctrlText _displayOrControl);
 			private _ctrlGroup = ctrlParentControlsGroup _displayOrControl;
-			private _sliderCtrl = _ctrlGroup controlsGroupCtrl IDC_ATTRIBS_SLIDER;
+			private _sliderCtrl = _ctrlGroup controlsGroupCtrl 170;
 			private _isPercent = _ctrlGroup getVariable ["MAZ_EZM_isSliderEditPercent",false];
 			if(_isPercent) then {
 				_sliderCtrl sliderSetPosition (_num/100);
-				_ctrlGroup setVariable ["MAZ_EZM_sliderData",_num/100];
 			} else {
 				_sliderCtrl sliderSetPosition _num;
-				_ctrlGroup setVariable ["MAZ_EZM_sliderData",_num];
 			};
 		}];
 
 		_rowControlsGroup setVariable ["MAZ_EZM_getControlValue",{
 			params ["_controlsGroup"];
-			_controlsGroup getVariable "MAZ_EZM_sliderData"
+			private _slider = _controlsGroup controlsGroupCtrl 170;
+			private _value = sliderPosition _slider;
+			[_value,2] call BIS_fnc_cutDecimals;
 		}];
 
 		_rowControlsGroup
 	};
 
-	MAZ_EZM_createAttribIconsRow = {
-		params ["_display","_label","_default","_settings"];
-		_settings params ["_values","_icons","_tooltips","_positions","_sizes",["_height",2.5],["_colors",[]]];
-		private _rowControlsGroup = [_display,_label] call MAZ_EZM_createAttributesRowBase;
+	MAZ_EZM_fnc_createAttribIconsRow = {
+		params ["_display","_settings"];
+		_settings params ["_default","_values","_icons","_tooltips","_positions","_sizes",["_height",2.5],["_colors",[]]];
+		private _rowControlsGroup = [_display] call MAZ_EZM_fnc_createAttributesRowBase;
 		_rowControlsGroup ctrlSetPositionH (["H",_height] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_rowControlsGroup ctrlCommit 0;
 
-		private _rowLabel = _rowControlsGroup controlsGroupCtrl IDC_ATTRIBS_LABEL;
+		private _rowLabel = _rowControlsGroup controlsGroupCtrl 150;
 		private _text = ctrlText _rowLabel;
 		_rowLabel ctrlSetStructuredText parseText (format ["<t size='%1'>&#160;</t><br/>%2",_height * 0.35,_text]);
 		_rowLabel ctrlSetPositionH (["H",_height] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_rowLabel ctrlCommit 0;
 
-		private _rowBG = _rowControlsGroup controlsGroupCtrl IDC_ATTRIBS_ROW_BG;
+		private _rowBG = _rowControlsGroup controlsGroupCtrl 152;
 		_rowBG ctrlSetPositionH (["H",_height] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_rowBG ctrlCommit 0;
 
@@ -1284,19 +1220,20 @@ comment "Attributes Dialog Creation";
 		_rowControlsGroup
 	};
 
-	MAZ_EZM_createAttribComboRow = {
-		params ["_display","_label","_default","_settings"];
-		_settings params ["_entries"];
-		private _rowControlsGroup = [_display,_label] call MAZ_EZM_createAttributesRowBase;
-		private _rowBG = _rowControlsGroup controlsGroupCtrl IDC_ATTRIBS_ROW_BG;
+	MAZ_EZM_fnc_createAttribComboRow = {
+		params ["_display","_settings"];
+		_settings params ["_default","_entries"];
+		private _rowControlsGroup = [_display] call MAZ_EZM_fnc_createAttributesRowBase;
+		private _rowBG = _rowControlsGroup controlsGroupCtrl 152;
 		ctrlDelete _rowBG;
 
-		private _combo = _display ctrlCreate ["RscCombo",IDC_ATTRIBS_COMBO,_rowControlsGroup];
+		private _combo = _display ctrlCreate ["RscCombo",180,_rowControlsGroup];
 		_combo ctrlSetPosition [["W",9.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0,["W",16.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_combo ctrlCommit 0;
 
 		{
-			_x params ["_value","_text","_tooltip","_icon","_iconColor"];
+			_x params ["_value","_text","_icon","_iconColor"];
+			_text params ["_text","_tooltip"];
 
 			private _index = _combo lbAdd _text;
 			_combo lbSetData [_index,_value];
@@ -1304,27 +1241,27 @@ comment "Attributes Dialog Creation";
 			_combo lbSetPicture [_index,_icon];
 			_combo lbSetPictureColor [_index,_iconColor];
 
-			if(_value isEqualTo _default) then {
+			if(_index isEqualTo _default) then {
 				_combo lbSetCurSel _index;
 			};
 		}forEach _entries;
 
 		_rowControlsGroup setVariable ["MAZ_EZM_getControlValue",{
 			params ["_controlsGroup"];
-			private _combo = _controlsGroup controlsGroupCtrl IDC_ATTRIBS_COMBO;
+			private _combo = _controlsGroup controlsGroupCtrl 180;
 			_combo lbData (lbCurSel _combo);
 		}];
 
 		_rowControlsGroup
 	};
 
-	MAZ_EZM_createAttribNewButton = {
-		params ["_display","_label","_default","_settings"];
+	MAZ_EZM_fnc_createAttribNewButton = {
+		params ["_display","_settings"];
 		_settings params ["_tooltip","_onButtonClick","_args"];
 		private _existingButtons = _display getVariable ["MAZ_EZM_attribsButtons",[]];
 		private _numOfButtons = count _existingButtons;
 
-		private _newButton = _display ctrlCreate ["RscButtonMenu",IDC_ATTRIBS_CANCEL + (_numOfButtons + 1)];
+		private _newButton = _display ctrlCreate ["RscButtonMenu",105 + (_numOfButtons + 1)];
 		_newButton setVariable ['MAZ_EZM_attribsButtonClick',_onButtonClick];
 		_newButton setVariable ['MAZ_EZM_attribsButtonArgs',_args];
 		_newButton ctrlSetPositionX (["X",(28.5 - (5.1 * (_numOfButtons + 1)))] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
@@ -1343,20 +1280,20 @@ comment "Attributes Dialog Creation";
 		_display setVariable ["MAZ_EZM_attribsButtons",_existingButtons];
 	};
 
-	MAZ_EZM_createAttribNewRespawnRow = {
-		params ["_display","_label","_default","_settings"];
-		_settings params ["_unit"];
-		private _rowControlsGroup = [_display,_label] call MAZ_EZM_createAttributesRowBase;
+	MAZ_EZM_fnc_createAttribNewRespawnRow = {
+		params ["_display","_settings"];
+		_settings params ["_default","_unit"];
+		private _rowControlsGroup = [_display] call MAZ_EZM_fnc_createAttributesRowBase;
 		_rowControlsGroup ctrlSetPositionH (["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_rowControlsGroup ctrlCommit 0;
 
-		private _rowLabel = _rowControlsGroup controlsGroupCtrl IDC_ATTRIBS_LABEL;
+		private _rowLabel = _rowControlsGroup controlsGroupCtrl 150;
 		private _text = ctrlText _rowLabel;
 		_rowLabel ctrlSetStructuredText parseText (format ["<t size='0.75'>&#160;</t><br/>%1",_text]);
 		_rowLabel ctrlSetPositionH (["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_rowLabel ctrlCommit 0;
 
-		private _rowBG = _rowControlsGroup controlsGroupCtrl IDC_ATTRIBS_ROW_BG;
+		private _rowBG = _rowControlsGroup controlsGroupCtrl 152;
 		_rowBG ctrlSetPositionH (["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_rowBG ctrlCommit 0;
 
@@ -1432,12 +1369,12 @@ comment "Attributes Dialog Creation";
 		_rowControlsGroup
 	};
 
-	MAZ_EZM_createAttribToolboxRow = {
-		params ["_display","_label","_default","_settings"];
-		_settings params ["_strings"];
-		private _rowControlsGroup = [_display,_label] call MAZ_EZM_createAttributesRowBase;
+	MAZ_EZM_fnc_createAttribToolboxRow = {
+		params ["_display","_settings"];
+		_settings params ["_default","_strings"];
+		private _rowControlsGroup = [_display] call MAZ_EZM_fnc_createAttributesRowBase;
 
-		private _rowToolbox = _display ctrlCreate ["RscToolbox",IDC_ATTRIBS_TOOLBOX,_rowControlsGroup];
+		private _rowToolbox = _display ctrlCreate ["RscToolbox",190,_rowControlsGroup];
 		_rowToolbox ctrlSetPosition [["W",9.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0,["W",16.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
 		_rowToolbox ctrlSetTextColor [1,1,1,1];
 		_rowToolbox ctrlSetBackgroundColor [0,0,0,0.7];
@@ -1458,7 +1395,7 @@ comment "Attributes Dialog Creation";
 
 		_rowControlsGroup setVariable ["MAZ_EZM_getControlValue", {
 			params ["_controlsGroup"];
-			private _value = lbCurSel (_controlsGroup controlsGroupCtrl IDC_ATTRIBS_TOOLBOX);
+			private _value = lbCurSel (_controlsGroup controlsGroupCtrl 190);
 			_value = _value > 0;
 
 			_value
@@ -1466,64 +1403,23 @@ comment "Attributes Dialog Creation";
 
 		_rowControlsGroup
 	};
-
-	MAZ_EZM_fnc_changeAttribsDisplayHeights = {
-		params ["_display", "_maxHeight"];
-		private _ctrlContent = _display displayCtrl IDC_ATTRIBS_CONTENT;
-		if(_maxHeight == -1) then {
-			_maxHeight = 30;
-		};
-		_maxHeight = ["H",_maxHeight] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
-
-		ctrlPosition _ctrlContent params ["_posX","","_posW","_posH"];
-
-		if(_posH > _maxHeight) then {
-			_posH = _maxHeight;
-			_ctrlContent ctrlSetPositionH _posH;
-
-			_ctrlContent ctrlSetPositionX (_posX - (["W",0.25] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
-			_ctrlContent ctrlSetPositionW (_posW + (["W",0.6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
-		};
-		_ctrlContent ctrlSetPositionY (0.5 - (_posH / 2));
-		_ctrlContent ctrlCommit 0;
-
-		private _ctrlTitle = _display displayCtrl IDC_ATTRIBS_TITLE;
-		_ctrlTitle ctrlSetPositionY (0.5 - (_posH / 2) - (["H",1.6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
-		_ctrlTitle ctrlCommit 0;
-
-		private _ctrlBG = _display displayCtrl IDC_ATTRIBS_BG;
-		_ctrlBG ctrlSetPositionY (0.5 - (_posH / 2) - (["H",0.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
-		_ctrlBG ctrlSetPositionH (_posH + (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
-		_ctrlBG ctrlCommit 0;
-
-		private _buttonHeight = (0.5 + (_posH / 2) + (["H",0.6] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
-
-		private _ctrlOkBtn = _display displayCtrl IDC_ATTRIBS_CONFIRM;
-		_ctrlOkBtn ctrlSetPositionY _buttonHeight;
-		_ctrlOkBtn ctrlCommit 0;
-
-		private _ctrlCancelBtn = _display displayCtrl IDC_ATTRIBS_CANCEL;
-		_ctrlCancelBtn ctrlSetPositionY _buttonHeight;
-		_ctrlCancelBtn ctrlCommit 0;
-
-		private _additionalButtons = _display getVariable ["MAZ_EZM_attribsButtons",[]];
-		{
-			_x ctrlSetPositionY _buttonHeight;
-			_x ctrlCommit 0;
-		}forEach _additionalButtons;
-	};
 	
-	MAZ_EZM_createAttributesDialog = {
+	MAZ_EZM_fnc_createAttributesDialog = {
 		params [
 			["_title","Edit Attributes",[""]],
-			["_dialogData",[],[[]]],
+			["_content",[],[[]]],
 			["_onCancel",{},[{}]],
 			["_onConfirm",{},[{}]],
 			["_args",[]],
-			["_maxHeight",-1,[-1]]
+			["_maxHeight",30,[30]]
 		];
 
-		private _dialogInfo = [];
+		private _display = [_title] call MAZ_EZM_fnc_createAttributesMenuBase;
+		_display setVariable ['MAZ_EZM_onAttribsCancel',_onCancel];
+		_display setVariable ['MAZ_EZM_onAttribsConfirm',_onConfirm];
+
+		private _controls = [];
+		private _yOffset = 0;
 		{
 			_x params [
 				["_typeData","",[""]],
@@ -1532,1448 +1428,1400 @@ comment "Attributes Dialog Creation";
 			];
 
 			(toUpper _typeData) splitString ":" params ["_type","_subType"];
-			private ["_defaultVal","_dialogCreator","_dialogSettings","_isButton"];
-			switch (_type) do {
+			private _controlsGroup = switch (_type) do {
+				case "COMBO": {
+					[_display,_settings] call MAZ_EZM_fnc_createAttribComboRow;
+				};
 				case "EDIT": {
-					_settings params ["_default"];
-					_defaultVal = _default;
-					_dialogCreator = MAZ_EZM_createAttribEditRow;
-					_dialogSettings = [];
-					_isButton = false;
+					[_display,_settings] call MAZ_EZM_fnc_createAttribEditRow;
 				};
 				case "EDITMULTI": {
-					_settings params ["_default","_align"];
-					_defaultVal = _default;
-					_dialogCreator = MAZ_EZM_createAttribEditMultiRow;
-					_dialogSettings = [_align];
-					_isButton = false;
-				};
-				case "SLIDER": {
-					_settings params ["_default","_min","_max"];
-					_defaultVal = _default;
-					_dialogSettings = [_min,_max];
-					_dialogCreator = MAZ_EZM_createAttribSliderRow;
-					_isButton = false;
-				};
-				case "SLIDEREDIT": {
-					_settings params ["_default","_min","_max",["_isPercent",true]];
-					_defaultVal = _default;
-					_dialogSettings = [_min,_max,_isPercent];
-					_dialogCreator = MAZ_EZM_createAttribSliderWithEditRow;
-					_isButton = false;
+					[_display,_settings] call MAZ_EZM_fnc_createAttribEditMultiRow;
 				};
 				case "ICONS": {
-					_settings params ["_default","_values","_icons","_tooltips","_positions","_sizes",["_height",2.5],["_colors",[]]];
-					_defaultVal = _default;
-					_dialogSettings = [_values,_icons,_tooltips,_positions,_sizes,_height,_colors];
-					_dialogCreator = MAZ_EZM_createAttribIconsRow;
-					_isButton = false;
-				};
-				case "COMBO": {
-					_settings params ["_default","_values","_labels","_tooltips","_icons","_iconsColors"];
-					_defaultVal = _default;
-					_entries = [];
-					for "_i" from 0 to (count _labels - 1) do {
-						private _value = str _i;
-						if((count _values -1) >= _i) then {
-							_value = _values select _i;
-						};
-						private _text = _labels select _i;
-						private _tooltip = "";
-						if((count _tooltips -1) >= _i) then {
-							_tooltip = _tooltips select _i;
-						};
-						private _icon = "";
-						if((count _icons -1) >= _i) then {
-							_icon = _icons select _i;
-						};
-						private _iconColor = [1,1,1,1];
-						if((count _iconsColors -1) >= _i) then {
-							_iconColor = _iconsColors select _i;
-							{
-								if(_x isEqualType "") then {
-									private _color = call (compile _x);
-									_iconColor set [_forEachIndex,_color];
-								};
-							}forEach _iconColor;
-						};
-
-						_entries pushBack [_value,_text,_tooltip,_icon,_iconColor];
-					};
-					_dialogSettings = [_entries];
-					_dialogCreator = MAZ_EZM_createAttribComboRow;
-					_isButton = false;
-				};
-				case "RESPAWN": {
-					_settings params ["_default","_unit"];
-					_defaultVal = _default;
-					_dialogSettings = [_unit];
-					_dialogCreator = MAZ_EZM_createAttribNewRespawnRow;
-					_isButton = false;
+					[_display,_settings] call MAZ_EZM_fnc_createAttribIconsRow;
 				};
 				case "NEWBUTTON": {
-					_settings params ["_tooltip","_onButtonClick","_args"];
-					_dialogSettings = [_tooltip,_onButtonClick,_args];
-					_defaultVal = 0;
-					_dialogCreator = MAZ_EZM_createAttribNewButton;
-					_isButton = true;
+					[_display,_settings] call MAZ_EZM_fnc_createAttribNewButton;
+				};
+				case "RESPAWN": {
+					[_display,_settings] call MAZ_EZM_fnc_createAttribNewRespawnRow;
+				};
+				case "SLIDER": {
+					[_display,_settings] call MAZ_EZM_fnc_createAttribSliderWithEditRow;
 				};
 				case "TOOLBOX": {
-					_settings params ["_default","_strings"];
-					_defaultVal = _default;
-					_dialogSettings = [_strings];
-					_dialogCreator = MAZ_EZM_createAttribToolboxRow;
-					_isButton = false;
+					[_display,_settings] call MAZ_EZM_fnc_createAttribToolboxRow;
 				};
 			};
-			_dialogInfo pushBack [_dialogCreator,_label,_defaultVal,_dialogSettings,_isButton];
-		}forEach _dialogData;
 
-		private _display = [_title] call MAZ_EZM_createAttributesMenuBase;
-		_display setVariable ['MAZ_EZM_onAttribsCancel',_onCancel];
-		_display setVariable ['MAZ_EZM_onAttribsConfirm',_onConfirm];
+			if(_type != "NEWBUTTON") then {
+				_label params ["_label",["_tooltip",""]];
+				private _labelCtrl = _controlsGroup controlsGroupCtrl 150;
+				_labelCtrl ctrlSetText _label;
+				_labelCtrl ctrlSetTooltip _tooltip;
 
-		private _controls = [];
-		private _yOffset = 0;
-		{
-			_x params ["_dialogFunction","_label","_default","_settings",["_isButton",false]];
-			if(_isButton) then {
-				private _dialogControlGroup = [_display,_label,nil,_settings] call _dialogFunction;
-			} else {
-				private _dialogControlGroup = [_display,_label,_default,_settings] call _dialogFunction;
-				_dialogControlGroup ctrlSetPositionY _yOffset;
-				_dialogControlGroup ctrlCommit 0;
+				_controlsGroup ctrlSetPositionY _yOffset;
+				_controlsGroup ctrlCommit 0;
 
-				_yOffset = _yOffset + (ctrlPosition _dialogControlGroup select 3) + (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+				_yOffset = _yOffset + (ctrlPosition _controlsGroup select 3) + (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 
-				_controls pushBack _dialogControlGroup;
+				_controls pushBack _controlsGroup;
 			};
-		}forEach _dialogInfo;
+		}forEach _content;
 		
-		private _displayContent = _display displayCtrl IDC_ATTRIBS_CONTENT;
-		_displayContent ctrlSetPositionH (_yOffset - (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
+		private _maxHeight = ["H",_maxHeight] call MAZ_EZM_fnc_convertToGUI_GRIDFormat;
+		if(_yOffset > _maxHeight) then {
+			_yOffset = _maxHeight;
+		};
+
+		private _contentHeight = (_yOffset - (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
+		private _mainDisplayGroup = _display displayCtrl 100;
+		private _displayContent = _mainDisplayGroup controlsGroupCtrl 103;
+		_displayContent ctrlSetPositionH _contentHeight;
 		_displayContent ctrlCommit 0;
 
-		[_display,_maxHeight] call MAZ_EZM_fnc_changeAttribsDisplayHeights;
+		private _totalHeight = _yOffset + (["H",2.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		private _topOfDisplay = (0.5 - (_totalHeight / 2));
+
+		_mainDisplayGroup ctrlSetPositionY _topOfDisplay;
+		_mainDisplayGroup ctrlSetPositionH _totalHeight;
+		_mainDisplayGroup ctrlCommit 0;
+
+		private _contentBG = _mainDisplayGroup controlsGroupCtrl 102;
+		_contentBG ctrlSetPositionY (["Y",1.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		_contentBG ctrlSetPositionH (_contentHeight + (["Y",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
+		_contentBG ctrlCommit 0;
+
+		private _okButton = _display displayCtrl 104;
+		private _cancelButton = _display displayCtrl 105;
+
+		private _buttonHeight = _topOfDisplay + _totalHeight - (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) + (["Y",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		_okButton ctrlSetPosition [(["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) + (["W",22] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),_buttonHeight,["W",5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
+		_okButton ctrlCommit 0;
+
+		_cancelButton ctrlSetPosition [["X",6.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,_buttonHeight,["W",5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
+		_cancelButton ctrlCommit 0;
+
+		private _additionalButtons = _display getVariable ["MAZ_EZM_attribsButtons",[]];
+		{
+			_x ctrlSetPositionY _buttonHeight;
+			_x ctrlCommit 0;
+		}forEach _additionalButtons;
 
 		_display setVariable ["MAZ_EZM_attributesDialogInfo",[_display,_controls,_args]];
 	};
 
-	MAZ_EZM_applyCreateRespawnToUnitAttribs = {
-		params ["_unit","_respawn"];
-		private _currentRespawn = _unit getVariable ["MAZ_EZM_respawnType",4];
-		if(_currentRespawn == _respawn) exitWith {};
-		private _respawnInfo = _unit getVariable "MAZ_EZM_respawnPosition";
-		if(!isNil "_respawnInfo") then {
-			_respawnInfo call BIS_fnc_removeRespawnPosition;
-		};
-		if(_respawn == 4) exitWith {
-			_unit setVariable ["MAZ_EZM_respawnPosition",nil,true];
-			_unit setVariable ["MAZ_EZM_respawnType",4,true];
-		};
-		private _respawnSide = [_respawn] call BIS_fnc_sideType;
-		private _respawnName = "";
-		if(typeOf _unit isKindOf "CAManBase") then {
-			_respawnName = name _unit;
-		} else {
-			_respawnName = getText (configFile >> "CfgVehicles" >> typeOf _unit >> "displayName")
-		};
-		private _respawnData = [_respawnSide,_unit,_respawnName] call BIS_fnc_addRespawnPosition;
-		_unit setVariable ["MAZ_EZM_respawnPosition",_respawnData,true];
-		_unit setVariable ["MAZ_EZM_respawnType",_respawn,true];
-	};
+comment "Attributes Dialog Functions";
+	comment "Dialog Creation";
 
-	MAZ_EZM_applyAttributeChangesToMan = {
-		params ["_unit","_attributes"];
-		_attributes params ["_name","_rank","_stance","_health","_skill","_respawn"];
-		[_unit,_name] remoteExec ['setName'];
-		[_unit,_rank] remoteExec ["setRank"];
-		[_unit,_stance] remoteExec ["setUnitPos"];
-		MAZ_EZM_stanceForAI = _stance;
-		_unit setDamage (1 - _health);
-		if(!(_unit getVariable ["MAZ_EZM_doesHaveCustomSkills",false])) then {
-			[_unit, _skill] remoteExec ["setSkill"];
-		};
-
-		[_unit,_respawn] call MAZ_EZM_applyCreateRespawnToUnitAttribs;
-	};
-
-	MAZ_EZM_applySkillsToUnit = {
-		params ["_unit","_skillsData"];
-		{
-			_unit setSkill [_x,_skillsData select _forEachIndex];
-		}forEach ["aimingAccuracy","aimingShake","aimingSpeed","endurance","spotDistance","spotTime","courage","reloadSpeed","commanding","general"];
-		_unit setVariable ["MAZ_EZM_doesHaveCustomSkills",true,true];
-	};
-
-	MAZ_EZM_createSkillsDialog = {
-		params ["_unit"];
-		sleep 0.1;
-		[format ["EDIT SKILLS %1",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _unit >> "displayName"))],[
-			[
-				"SLIDEREDIT",
-				"Accuracy:",
-				[[(_unit skill "aimingAccuracy"),2] call BIS_fnc_cutDecimals,0,1,true]
-			],
-			[
-				"SLIDEREDIT",
-				"Aim Shake:",
-				[[(_unit skill "aimingShake"),2] call BIS_fnc_cutDecimals,0,1,true]
-			],
-			[
-				"SLIDEREDIT",
-				"Aiming Speed:",
-				[[(_unit skill "aimingSpeed"),2] call BIS_fnc_cutDecimals,0,1,true]
-			],
-			[
-				"SLIDEREDIT",
-				"Endurance:",
-				[[(_unit skill "endurance"),2] call BIS_fnc_cutDecimals,0,1,true]
-			],
-			[
-				"SLIDEREDIT",
-				"Spotting Distance:",
-				[[(_unit skill "spotDistance"),2] call BIS_fnc_cutDecimals,0,1,true]
-			],
-			[
-				"SLIDEREDIT",
-				"Spotting Time:",
-				[[(_unit skill "spotTime"),2] call BIS_fnc_cutDecimals,0,1,true]
-			],
-			[
-				"SLIDEREDIT",
-				"Courage:",
-				[[(_unit skill "courage"),2] call BIS_fnc_cutDecimals,0,1,true]
-			],
-			[
-				"SLIDEREDIT",
-				"Reload Speed:",
-				[[(_unit skill "reloadSpeed"),2] call BIS_fnc_cutDecimals,0,1,true]
-			],
-			[
-				"SLIDEREDIT",
-				"Commanding:",
-				[[(_unit skill "commanding"),2] call BIS_fnc_cutDecimals,0,1,true]
-			],
-			[
-				"SLIDEREDIT",
-				"General Skill:",
-				[[(_unit skill "general"),2] call BIS_fnc_cutDecimals,0,1,true]
-			]
-		],{
-			params ["_display","_values","_args"];
-			_display closeDisplay 1;
-		},{
-			params ["_display","_values","_args"];
-			_display closeDisplay 0;
-			[_args,_values] call MAZ_EZM_applySkillsToUnit;
-		},_unit] call MAZ_EZM_createAttributesDialog;
-	};
-
-	MAZ_EZM_applyToggleAIToUnit = {
-		params ["_unit","_aiData"];
-		{
-			private _setting = _aiData select _forEachIndex;
-			if(_setting) then {
-				_unit enableAI _x;
-			} else {
-				_unit disableAI _x;
+		MAZ_EZM_fnc_createManAttributesDialog = {
+			params ["_entity"];
+			if(dialog) then {
+				closeDialog 2;
 			};
-		}forEach [
-			"AIMINGERROR",
-			"ANIM",
-			"AUTOCOMBAT",
-			"AUTOTARGET",
-			"COVER",
-			"FSM",
-			"LIGHTS",
-			"MINEDETECTION",
-			"MOVE",
-			"NVG",
-			"PATH",
-			"RADIOPROTOCOL",
-			"SUPPRESSION",
-			"TARGET",
-			"WEAPONAIM"
-		];
-	};
-
-	MAZ_EZM_createToggleAIDialog = {
-		params ["_unit"];
-		sleep 0.1;
-		[format ["TOGGLE %1 AI",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _unit >> "displayName"))],[
-			[
-				"TOOLBOX",
-				["AIMING ERROR:","Prevents AI's aiming from being distracted by its shooting, moving, turning, reloading, hit, injury, fatigue, suppression or concealed / lost target."],
-				[
-					_unit checkAIFeature "AIMINGERROR",
-					["DISABLE","ENABLE"]
-				]
-			],
-			[
-				"TOOLBOX",
-				["ANIMATION:","Disables all animations of the unit. Completely freezes the unit, including breathing and blinking. No move command works until the unit is unfrozen."],
-				[
-					_unit checkAIFeature "ANIM",
-					["DISABLE","ENABLE"]
-				]
-			],
-			[
-				"TOOLBOX",
-				["AUTO-COMBAT:","Disables autonomous switching to 'COMBAT' AI Behaviour when in danger."],
-				[
-					_unit checkAIFeature "AUTOCOMBAT",
-					["DISABLE","ENABLE"]
-				]
-			],
-			[
-				"TOOLBOX",
-				["AUTO-TARGET:","Essentially makes single units without a group 'deaf'. The unit still goes prone and combat ready if it hears gunfire. \nIt will not turn around when gunfire comes from behind, but if an enemy walks in front of it it will target the enemy and fire as normal."],
-				[
-					_unit checkAIFeature "AUTOTARGET",
-					["DISABLE","ENABLE"]
-				]
-			],
-			[
-				"TOOLBOX",
-				["COVER:","Disables usage of cover positions by the AI."],
-				[
-					_unit checkAIFeature "COVER",
-					["DISABLE","ENABLE"]
-				]
-			],
-			[
-				"TOOLBOX",
-				["FSM:","Disables the attached FSM scripts which are responsible for the AI behaviour. \nEnemies react slower to enemy fire and the enemy stops using hand signals."],
-				[
-					_unit checkAIFeature "FSM",
-					["DISABLE","ENABLE"]
-				]
-			],
-			[
-				"TOOLBOX",
-				["LIGHTS:","Stops AI from operating vehicle headlights and collision lights."],
-				[
-					_unit checkAIFeature "LIGHTS",
-					["DISABLE","ENABLE"]
-				]
-			],
-			[
-				"TOOLBOX",
-				["MINE DETECTION:","Disable AI's mine detection."],
-				[
-					_unit checkAIFeature "MINEDETECTION",
-					["DISABLE","ENABLE"]
-				]
-			],
-			[
-				"TOOLBOX",
-				["MOVE:","This will stop units from turning and moving, including vehicles. \nUnits will still change stance and fire at the enemy if the enemy happens to walk right in front of the barrel."],
-				[
-					_unit checkAIFeature "MOVE",
-					["DISABLE","ENABLE"]
-				]
-			],
-			[
-				"TOOLBOX",
-				["NVG:","Stops AI from putting on NVGs (but not from taking them off)."],
-				[
-					_unit checkAIFeature "NVG",
-					["DISABLE","ENABLE"]
-				]
-			],
-			[
-				"TOOLBOX",
-				["PATH:","Stops the AI's movement but not the target alignment."],
-				[
-					_unit checkAIFeature "PATH",
-					["DISABLE","ENABLE"]
-				]
-			],
-			[
-				"TOOLBOX",
-				["RADIO:","Stops AI from talking and texting while still being able to issue orders."],
-				[
-					_unit checkAIFeature "RADIOPROTOCOL",
-					["DISABLE","ENABLE"]
-				]
-			],
-			[
-				"TOOLBOX",
-				["SUPPRESSION:","Prevents AI from being suppressed."],
-				[
-					_unit checkAIFeature "SUPPRESSION",
-					["DISABLE","ENABLE"]
-				]
-			],
-			[
-				"TOOLBOX",
-				["TARGET:","Prevents units from engaging targets. Units still move around for cover, but will not hunt down enemies. \nWorks in groups as well."],
-				[
-					_unit checkAIFeature "TARGET",
-					["DISABLE","ENABLE"]
-				]
-			],
-			[
-				"TOOLBOX",
-				["WEAPON AIM:","Disables weapon aiming."],
-				[
-					_unit checkAIFeature "WEAPONAIM",
-					["DISABLE","ENABLE"]
-				]
-			]
-		],{
-			params ["_display","_values","_args"];
-			_display closeDisplay 1;
-		},{
-			params ["_display","_values","_args"];
-			_display closeDisplay 0;
-			[_args,_values] call MAZ_EZM_applyToggleAIToUnit;
-		},_unit] call MAZ_EZM_createAttributesDialog;
-	};
-
-	MAZ_EZM_createManAttributesDialog = {
-		params ["_entity"];
-		if(dialog) then {
-			closeDialog 2;
-		};
-		[_entity] spawn {
-			params ["_entity"];
-			sleep 0.1;
-
-			[format ["EDIT %1",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _entity >> "displayName"))],[
-				[
-					"EDIT",
-					"Name:",
-					[name _entity]
-				],
-				[
-					"ICONS",
-					"Rank:",
-					[
-						rank _entity,
-						[
-							"PRIVATE",
-							"CORPORAL",
-							"SERGEANT",
-							"LIEUTENANT",
-							"CAPTAIN",
-							"MAJOR",
-							"COLONEL"
-						],[
-							"A3\ui_f\data\GUI\cfg\Ranks\private_gs.paa",
-							"A3\ui_f\data\GUI\cfg\Ranks\corporal_gs.paa",
-							"A3\ui_f\data\GUI\cfg\Ranks\sergeant_gs.paa",
-							"A3\ui_f\data\GUI\cfg\Ranks\lieutenant_gs.paa",
-							"A3\ui_f\data\GUI\cfg\Ranks\captain_gs.paa",
-							"A3\ui_f\data\GUI\cfg\Ranks\major_gs.paa",
-							"A3\ui_f\data\GUI\cfg\Ranks\colonel_gs.paa"
-						],[
-							"",
-							"",
-							"",
-							"",
-							"",
-							"",
-							""
-						],[
-							[11,0.5],
-							[13,0.5],
-							[15,0.5],
-							[17,0.5],
-							[19,0.5],
-							[21,0.5],
-							[23,0.5]
-						],[
-							1.5,1.5,1.5,1.5,1.5,1.5,1.5
-						]
-					]
-				],
-				[
-					"ICONS",
-					"Stance:",
-					[
-						unitPos _entity,
-						[
-							"DOWN",
-							"MIDDLE",
-							"UP",
-							"AUTO"
-						],[
-							"A3\3den\Data\Attributes\Stance\down_ca.paa",
-							"A3\3den\Data\Attributes\Stance\middle_ca.paa",
-							"A3\3den\Data\Attributes\Stance\up_ca.paa",
-							"A3\3den\Data\Attributes\default_ca.paa"
-						],[
-							"",
-							"",
-							"",
-							""
-						],[
-							[13,0],
-							[16,0],
-							[19,0],
-							[24,0.4]
-						],[
-							2.5,2.5,2.5,1.5
-						]
-					]
-				],
-				[
-					"SLIDEREDIT",
-					"Health/Armor:",
-					[[(1 - damage _entity),2] call BIS_fnc_cutDecimals,0,1,true]
-				],
-				[
-					"SLIDEREDIT",
-					"Skill:",
-					[skill _entity,0,1,true]
-				],
-				[
-					"RESPAWN",
-					"Respawn on Unit For:",
-					[
-						_entity getVariable ["MAZ_EZM_respawnType",4],
-						_entity
-					]
-				],
-				[ 
-					"NEWBUTTON", 
-					"ARSENAL", 
-					[ 
-						"Edit Unit's arsenal loadout.", 
-						{
-							params ["_display","_args"];
-							_display closeDisplay 0;
-							["Preload"] call BIS_fnc_arsenal;
-							["Open",[true,nil,_args]] call BIS_fnc_arsenal;
-						}, 
-						_entity
-					] 
-				],
-				[ 
-					"NEWBUTTON", 
-					"SKILLS", 
-					[ 
-						"Edit Unit's skills.", 
-						{
-							params ["_display","_args"];
-							_display closeDisplay 0;
-							[_args] spawn MAZ_EZM_createSkillsDialog;
-						}, 
-						_entity
-					] 
-				],
-				[
-					"NEWBUTTON", 
-					"EDIT AI", 
-					[ 
-						"Toggle AI.", 
-						{
-							params ["_display","_args"];
-							_display closeDisplay 0;
-							[_args] spawn MAZ_EZM_createToggleAIDialog;
-						}, 
-						_entity
-					] 
-				]
-			],{
-				params ["_display","_values","_args"];
-				_display closeDisplay 1;
-			},{
-				params ["_display","_values","_args"];
-				[_args,_values] call MAZ_EZM_applyAttributeChangesToMan;
-				_display closeDisplay 0;
-			},_entity] call MAZ_EZM_createAttributesDialog;
-		};
-	};
-
-	MAZ_EZM_applyAttributeChangesToPlayer = {
-		params ["_unit","_values"];
-		_values params ["_rank","_respawnType"];
-		_unit setRank _rank;
-		[_unit,_respawnType] call MAZ_EZM_applyCreateRespawnToUnitAttribs;
-	};
-
-	MAZ_EZM_createPlayerAttributesDialog = {
-		params ["_entity"];
-		if(dialog) then {
-			closeDialog 2;
-		};
-		[_entity] spawn {
-			params ["_entity"];
-			sleep 0.1;
-			
-			[format ["EDIT %1",toUpper (name _entity)],[
-				[
-					"ICONS",
-					"Rank:",
-					[
-						rank _entity,
-						[
-							"PRIVATE",
-							"CORPORAL",
-							"SERGEANT",
-							"LIEUTENANT",
-							"CAPTAIN",
-							"MAJOR",
-							"COLONEL"
-						],[
-							"A3\ui_f\data\GUI\cfg\Ranks\private_gs.paa",
-							"A3\ui_f\data\GUI\cfg\Ranks\corporal_gs.paa",
-							"A3\ui_f\data\GUI\cfg\Ranks\sergeant_gs.paa",
-							"A3\ui_f\data\GUI\cfg\Ranks\lieutenant_gs.paa",
-							"A3\ui_f\data\GUI\cfg\Ranks\captain_gs.paa",
-							"A3\ui_f\data\GUI\cfg\Ranks\major_gs.paa",
-							"A3\ui_f\data\GUI\cfg\Ranks\colonel_gs.paa"
-						],[
-							"",
-							"",
-							"",
-							"",
-							"",
-							"",
-							""
-						],[
-							[11,0.5],
-							[13,0.5],
-							[15,0.5],
-							[17,0.5],
-							[19,0.5],
-							[21,0.5],
-							[23,0.5]
-						],[
-							1.5,1.5,1.5,1.5,1.5,1.5,1.5
-						]
-					]
-				],
-				[
-					"RESPAWN",
-					"Respawn on Player For:",
-					[
-						_entity getVariable ["MAZ_EZM_respawnType",4],
-						_entity
-					]
-				],
-				[ 
-					"NEWBUTTON", 
-					"HEAL", 
-					[ 
-						"Heals the player and revives them if possible.", 
-						{
-							params ["_display","_args"];
-							_display closeDisplay 0;
-							[_args] spawn MAZ_EZM_fnc_healAndReviveModule;
-						}, 
-						_entity
-					] 
-				]
-			],{
-				params ["_display","_values","_args"];
-				_display closeDisplay 1;
-			},{
-				params ["_display","_values","_args"];
-				[_args,_values] call MAZ_EZM_applyAttributeChangesToPlayer;
-				_display closeDisplay 0;
-			},_entity] call MAZ_EZM_createAttributesDialog;
-		};
-	};
-
-	MAZ_EZM_applyAttributeChangesToGroup = {
-		params ["_group","_attributes"];
-		_attributes params ["_name","_skill","_form","_beh","_comMode","_sped","_stance"];
-		_group setGroupIdGlobal [_name];
-		_group setFormation _form;
-		_group setBehaviour _beh;
-		_group setCombatMode _comMode;
-		_group setSpeedMode _sped;
-		{
-			_x setSkill _skill;
-			_x setUnitPos _stance;
-		}forEach (units _group);
-	};
-
-	MAZ_EZM_createGroupAttributesDialog = {
-		params ["_group"];
-		if(dialog) then {
-			closeDialog 2;
-		};
-		[_group] spawn {
-			params ["_group"];
-			sleep 0.1;
-			[format ["EDIT %1",toUpper (groupID _group)],[
-				[ 
-					"EDIT", 
-					"Edit Callsign:", 
-					[groupID _group] 
-				], 
-				[
-					"SLIDEREDIT",
-					"Set Skill:",
-					[skill (leader _group),0,1,true]
-				],
-				[
-					"ICONS",
-					"Set Formation:",
-					[
-						formation _group,
-						[
-							"WEDGE",
-							"VEE",
-							"LINE",
-							"COLUMN",
-							"FILE",
-							"STAG COLUMN",
-							"ECH LEFT",
-							"ECH RIGHT",
-							"DIAMOND"
-						],[
-							"A3\ui_f_curator\data\RscCommon\RscAttributeFormation\wedge_ca.paa",
-							"A3\ui_f_curator\data\RscCommon\RscAttributeFormation\vee_ca.paa",
-							"A3\ui_f_curator\data\RscCommon\RscAttributeFormation\line_ca.paa",
-							"A3\ui_f_curator\data\RscCommon\RscAttributeFormation\column_ca.paa",
-							"A3\ui_f_curator\data\RscCommon\RscAttributeFormation\file_ca.paa",
-							"A3\ui_f_curator\data\RscCommon\RscAttributeFormation\stag_column_ca.paa",
-							"A3\ui_f_curator\data\RscCommon\RscAttributeFormation\ech_left_ca.paa",
-							"A3\ui_f_curator\data\RscCommon\RscAttributeFormation\ech_right_ca.paa",
-							"A3\ui_f_curator\data\RscCommon\RscAttributeFormation\diamond_ca.paa"
-						],[
-							"WEDGE",
-							"VEE",
-							"LINE",
-							"COLUMN",
-							"FILE",
-							"STAGGERED COLUMN",
-							"ECHELON LEFT",
-							"ECHELON RIGHT",
-							"DIAMOND"
-						],[
-							[10,0],
-							[13,0],
-							[16,0],
-							[19,0],
-							[22,0],
-							[12,2],
-							[15,2],
-							[18,2],
-							[21,2]
-						],[
-							2.5,
-							2.5,
-							2.5,
-							2.5,
-							2.5,
-							2.5,
-							2.5,
-							2.5,
-							2.5
-						],
-						4.5
-					]
-				],
-				[
-					"ICONS",
-					"Set Behaviour:",
-					[
-						behaviour (leader _group),
-						[
-							"CARELESS",
-							"SAFE",
-							"AWARE",
-							"COMBAT",
-							"STEALTH"
-						],[
-							"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\safe_ca.paa",
-							"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\safe_ca.paa",
-							"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\aware_ca.paa",
-							"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\combat_ca.paa",
-							"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\stealth_ca.paa"
-						],[
-							"CARELESS",
-							"SAFE",
-							"AWARE",
-							"COMBAT",
-							"STEALTH"
-						],[
-							[11,0.3],
-							[14,0.3],
-							[17,0.3],
-							[20,0.3],
-							[23,0.3]
-						],[
-							1.75,1.75,1.75,1.75,1.75
-						],
-						2.5,
-						[
-							[[0,1,0,1],[0,0.5,0,0.7]],
-							[[0,1,0,1],[0,0.5,0,0.7]],
-							[[1,1,0,1],[0.5,0.5,0,0.7]],
-							[[1,0,0,1],[0.5,0,0,0.7]],
-							[[0,1,1,1],[0,0.5,0.5,0.7]]
-						]
-					]
-				],
-				[
-					"ICONS",
-					"Set Combat Mode:",
-					[
-						combatMode _group,
-						[
-							"BLUE",
-							"GREEN",
-							"WHITE",
-							"YELLOW",
-							"RED"
-						],[
-							"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\safe_ca.paa",
-							"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\aware_ca.paa",
-							"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\aware_ca.paa",
-							"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\combat_ca.paa",
-							"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\combat_ca.paa"
-						],[
-							"Forced Hold Fire",
-							"Do Not Fire Unless Fired Upon, Keep Formation",
-							"Do Not Fire Unless Fired Upon",
-							"Open Fire, Keep Formation",
-							"Open Fire"
-						],[
-							[11,0.3],
-							[14,0.3],
-							[17,0.3],
-							[20,0.3],
-							[23,0.3]
-						],[
-							1.75,1.75,1.75,1.75,1.75
-						],
-						2.5,
-						[
-							[[0,1,0,1],[0,0.5,0,0.7]],
-							[[1,1,0,1],[0.5,0.5,0,0.7]],
-							[[1,1,0,1],[0.5,0.5,0,0.7]],
-							[[1,0,0,1],[0.5,0,0,0.7]],
-							[[1,0,0,1],[0.5,0,0,0.7]]
-						]
-					]
-				],
-				[
-					"ICONS",
-					"Set Speed:",
-					[
-						speedMode _group,
-						[
-							"LIMITED",
-							"NORMAL",
-							"FULL"
-						],[
-							"A3\ui_f_curator\data\RscCommon\RscAttributeSpeedMode\limited_ca.paa",
-							"A3\ui_f_curator\data\RscCommon\RscAttributeSpeedMode\normal_ca.paa",
-							"A3\ui_f_curator\data\RscCommon\RscAttributeSpeedMode\full_ca.paa"
-						],[
-							"",
-							"",
-							""
-						],[
-							[13,0],
-							[16,0],
-							[19,0]
-						],[
-							2.5,2.5,2.5
-						],
-						2.5
-					]
-				],
-				[
-					"ICONS",
-					"Set Stance:",
-					[
-						unitPos (leader _group),
-						[
-							"DOWN",
-							"MIDDLE",
-							"UP",
-							"AUTO"
-						],[
-							"A3\3den\Data\Attributes\Stance\down_ca.paa",
-							"A3\3den\Data\Attributes\Stance\middle_ca.paa",
-							"A3\3den\Data\Attributes\Stance\up_ca.paa",
-							"A3\3den\Data\Attributes\default_ca.paa"
-						],[
-							"",
-							"",
-							"",
-							"AUTO"
-						],[
-							[13,0],
-							[16,0],
-							[19,0],
-							[24,0.4]
-						],[
-							2.5,2.5,2.5,1.5
-						]
-					]
-				]
-			],{
-				params ["_display","_values","_args"];
-				_display closeDisplay 1;
-			},{
-				params ["_display","_values","_args"];
-				[_args,_values] call MAZ_EZM_applyAttributeChangesToGroup;
-				_display closeDisplay 0;
-			},_group] call MAZ_EZM_createAttributesDialog;
-		};
-	};
-
-	MAZ_EZM_applyDamagesToVehicle = {
-		params ["_vehicle","_damagesData"];
-		private _damages = getAllHitPointsDamage _vehicle;
-		_damages params ["_hitPoints","_sections","_damage"];
-		{
-			_vehicle setHitPointDamage [(_hitpoints select _forEachIndex),_x];
-		}forEach _damagesData;
-	};
-
-	MAZ_EZM_createDamageDialog = {
-		params ["_vehicle"];
-		private _damages = getAllHitPointsDamage _vehicle;
-		_damages params ["_hitPoints","_sections","_damage"];
-		private _dialogData = [];
-		{
-			_dialogData pushBack [
-				"SLIDEREDIT",
-				_x,
-				[[_damage select _forEachIndex,2] call BIS_fnc_cutDecimals,0,1,true]
-			];
-		}forEach _hitPoints;
-
-		[format ["EDIT DAMAGE %1",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _vehicle >> "displayName"))],
-		_dialogData,
-		{
-			params ["_display","_values","_args"];
-			_display closeDisplay 1;
-		},{
-			params ["_display","_values","_args"];
-			_display closeDisplay 0;
-			[_args,_values] call MAZ_EZM_applyDamagesToVehicle;
-		},_vehicle,25] call MAZ_EZM_createAttributesDialog;
-	};
-
-	MAZ_EZM_createVehicleRespawn = {
-		params ["_vehicle","_values"];
-		_values params ["_respawnDelay","_abandonDelay","_numOfRespawns","_distAbandon"];
-		private _logic = (createGroup [sideLogic,true]) createUnit ["ModuleRespawnVehicle_F",position _vehicle, [], 0, "NONE"];
-		_logic setVariable ["Delay",str (round _respawnDelay),true];
-		_logic setVariable ["DesertedDelay",str (round _abandonDelay),true];
-		_logic setVariable ["DesertedDistance",str (round _distAbandon),true];
-		_logic setVariable ["RespawnCount",str (round _numOfRespawns),true];
-		_logic setVariable ["Position","0",true];
-		_logic setVariable ["PositionType","0",true];
-		_logic setVariable ["Wreck","1",true];
-		_logic setVariable ["ShowNotification","1",true];
-		_logic setVariable ["ForcedRespawn","0",true];
-		_logic setVariable ["RespawnWhenDisabled",true,true];
-		_logic synchronizeObjectsAdd [_vehicle];
-		[[_logic],{
-				params ["_logic"];
+			[_entity] spawn {
+				params ["_entity"];
 				sleep 0.1;
-				[_logic,[],true] call BIS_fnc_moduleRespawnVehicle;
-		[_vehicle,round _respawnDelay,round _abandonDelay,round _numOfRespawns,{},0,2,1,true,true,round _distAbandon,true] call BIS_fnc_moduleRespawnVehicle;
-		}] remoteExec ['spawn',2];
-	};
 
-	MAZ_EZM_createVehicleRespawnDialog = {
-		params ["_vehicle"];
-		[format ["CREATE RESPAWNING %1",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _vehicle >> "displayName"))],[
-			[
-				"SLIDEREDIT",
-				"Respawn Delay:",
-				[15,10,60,false]
-			],
-			[
-				"SLIDEREDIT",
-				["Deserted Delay:","How long it takes to respawn when abandoned (no crew)."],
-				[600,600,1800,false]
-			],
-			[
-				"SLIDEREDIT",
-				["Number of Respawns:","How many times the vehicle can respawn (-1 is infinite)."],
-				[-1,-1,30,false]
-			],
-			[
-				"SLIDEREDIT",
-				["Dist from Players Deserted:","How far players must be before the vehicle can be considered abandonded."],
-				[3000,3000,12000,false]
-			]
-		],{
-			params ["_display","_values","_args"];
-			_display closeDisplay 1;
-		},{
-			params ["_display","_values","_args"];
-			[_args,_values] call MAZ_EZM_createVehicleRespawn;
-			_display closeDisplay 0;
-		},_vehicle] call MAZ_EZM_createAttributesDialog;
-	};
-
-	MAZ_EZM_applyAttributeChangesToLandVehicle = {
-		params ["_vehicle","_attributes"];
-		_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],"_respawn"];
-		_vehicle setDamage (1-_health);
-		[_vehicle,_fuel] remoteExec ["setFuel"];
-		[_vehicle,_lockState] remoteExec ["lock"];
-		[_vehicle,_engineState] remoteExec ["engineOn"];
-		[_vehicle,_lightState] remoteExec ["setPilotLight"];
-
-		[_vehicle,_respawn] call MAZ_EZM_applyCreateRespawnToUnitAttribs;
-	};
-
-	MAZ_EZM_createLandVehicleAttributesDialog = {
-		params ["_vehicle"];
-		if(dialog) then {
-			closeDialog 2;
+				[format ["EDIT %1",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _entity >> "displayName"))],[
+					[
+						"EDIT",
+						"Name:",
+						[name _entity]
+					],
+					[
+						"ICONS",
+						"Rank:",
+						[
+							rank _entity,
+							[
+								"PRIVATE",
+								"CORPORAL",
+								"SERGEANT",
+								"LIEUTENANT",
+								"CAPTAIN",
+								"MAJOR",
+								"COLONEL"
+							],[
+								"A3\ui_f\data\GUI\cfg\Ranks\private_gs.paa",
+								"A3\ui_f\data\GUI\cfg\Ranks\corporal_gs.paa",
+								"A3\ui_f\data\GUI\cfg\Ranks\sergeant_gs.paa",
+								"A3\ui_f\data\GUI\cfg\Ranks\lieutenant_gs.paa",
+								"A3\ui_f\data\GUI\cfg\Ranks\captain_gs.paa",
+								"A3\ui_f\data\GUI\cfg\Ranks\major_gs.paa",
+								"A3\ui_f\data\GUI\cfg\Ranks\colonel_gs.paa"
+							],[
+								"",
+								"",
+								"",
+								"",
+								"",
+								"",
+								""
+							],[
+								[11,0.5],
+								[13,0.5],
+								[15,0.5],
+								[17,0.5],
+								[19,0.5],
+								[21,0.5],
+								[23,0.5]
+							],[
+								1.5,1.5,1.5,1.5,1.5,1.5,1.5
+							]
+						]
+					],
+					[
+						"ICONS",
+						"Stance:",
+						[
+							unitPos _entity,
+							[
+								"DOWN",
+								"MIDDLE",
+								"UP",
+								"AUTO"
+							],[
+								"A3\3den\Data\Attributes\Stance\down_ca.paa",
+								"A3\3den\Data\Attributes\Stance\middle_ca.paa",
+								"A3\3den\Data\Attributes\Stance\up_ca.paa",
+								"A3\3den\Data\Attributes\default_ca.paa"
+							],[
+								"",
+								"",
+								"",
+								""
+							],[
+								[13,0],
+								[16,0],
+								[19,0],
+								[24,0.4]
+							],[
+								2.5,2.5,2.5,1.5
+							]
+						]
+					],
+					[
+						"SLIDER",
+						"Health/Armor:",
+						[[(1 - damage _entity),2] call BIS_fnc_cutDecimals,0,1,true]
+					],
+					[
+						"SLIDER",
+						"Skill:",
+						[skill _entity,0,1,true]
+					],
+					[
+						"RESPAWN",
+						"Respawn on Unit For:",
+						[
+							_entity getVariable ["MAZ_EZM_respawnType",4],
+							_entity
+						]
+					],
+					[ 
+						"NEWBUTTON", 
+						"ARSENAL", 
+						[ 
+							"Edit Unit's arsenal loadout.", 
+							{
+								params ["_display","_args"];
+								_display closeDisplay 0;
+								["Preload"] call BIS_fnc_arsenal;
+								["Open",[true,nil,_args]] call BIS_fnc_arsenal;
+							}, 
+							_entity
+						] 
+					],
+					[ 
+						"NEWBUTTON", 
+						"SKILLS", 
+						[ 
+							"Edit Unit's skills.", 
+							{
+								params ["_display","_args"];
+								_display closeDisplay 0;
+								[_args] spawn MAZ_EZM_fnc_createSkillsDialog;
+							}, 
+							_entity
+						] 
+					],
+					[
+						"NEWBUTTON", 
+						"EDIT AI", 
+						[ 
+							"Toggle AI.", 
+							{
+								params ["_display","_args"];
+								_display closeDisplay 0;
+								[_args] spawn MAZ_EZM_fnc_createToggleAIDialog;
+							}, 
+							_entity
+						] 
+					]
+				],{
+					params ["_display","_values","_args"];
+					_display closeDisplay 1;
+				},{
+					params ["_display","_values","_args"];
+					[_args,_values] call MAZ_EZM_applyAttributeChangesToMan;
+					_display closeDisplay 0;
+				},_entity] call MAZ_EZM_fnc_createAttributesDialog;
+			};
 		};
-		[_vehicle] spawn {
-			params ["_vehicle"];
+
+		MAZ_EZM_fnc_createPlayerAttributesDialog = {
+			params ["_entity"];
+			if(dialog) then {
+				closeDialog 2;
+			};
+			[_entity] spawn {
+				params ["_entity"];
+				sleep 0.1;
+				
+				[format ["EDIT %1",toUpper (name _entity)],[
+					[
+						"ICONS",
+						"Rank:",
+						[
+							rank _entity,
+							[
+								"PRIVATE",
+								"CORPORAL",
+								"SERGEANT",
+								"LIEUTENANT",
+								"CAPTAIN",
+								"MAJOR",
+								"COLONEL"
+							],[
+								"A3\ui_f\data\GUI\cfg\Ranks\private_gs.paa",
+								"A3\ui_f\data\GUI\cfg\Ranks\corporal_gs.paa",
+								"A3\ui_f\data\GUI\cfg\Ranks\sergeant_gs.paa",
+								"A3\ui_f\data\GUI\cfg\Ranks\lieutenant_gs.paa",
+								"A3\ui_f\data\GUI\cfg\Ranks\captain_gs.paa",
+								"A3\ui_f\data\GUI\cfg\Ranks\major_gs.paa",
+								"A3\ui_f\data\GUI\cfg\Ranks\colonel_gs.paa"
+							],[
+								"",
+								"",
+								"",
+								"",
+								"",
+								"",
+								""
+							],[
+								[11,0.5],
+								[13,0.5],
+								[15,0.5],
+								[17,0.5],
+								[19,0.5],
+								[21,0.5],
+								[23,0.5]
+							],[
+								1.5,1.5,1.5,1.5,1.5,1.5,1.5
+							]
+						]
+					],
+					[
+						"RESPAWN",
+						"Respawn on Player For:",
+						[
+							_entity getVariable ["MAZ_EZM_respawnType",4],
+							_entity
+						]
+					],
+					[ 
+						"NEWBUTTON", 
+						"HEAL", 
+						[ 
+							"Heals the player and revives them if possible.", 
+							{
+								params ["_display","_args"];
+								_display closeDisplay 0;
+								[_args] spawn MAZ_EZM_fnc_healAndReviveModule;
+							}, 
+							_entity
+						] 
+					]
+				],{
+					params ["_display","_values","_args"];
+					_display closeDisplay 1;
+				},{
+					params ["_display","_values","_args"];
+					[_args,_values] call MAZ_EZM_fnc_applyAttributeChangesToPlayer;
+					_display closeDisplay 0;
+				},_entity] call MAZ_EZM_fnc_createAttributesDialog;
+			};
+		};
+
+		MAZ_EZM_fnc_createSkillsDialog = {
+			params ["_unit"];
 			sleep 0.1;
-			[format ["EDIT %1",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _vehicle >> "displayName"))],[ 
+			[format ["EDIT SKILLS %1",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _unit >> "displayName"))],[
 				[
-					"SLIDEREDIT",
-					"Health/Armor:",
-					[[(1 - damage _vehicle),2] call BIS_fnc_cutDecimals,0,1,true]
-				],
-				[
-					"SLIDEREDIT",
-					"Fuel:",
-					[[fuel _vehicle,3] call BIS_fnc_cutDecimals,0,1,true]
+					"SLIDER",
+					"Accuracy:",
+					[[(_unit skill "aimingAccuracy"),2] call BIS_fnc_cutDecimals,0,1,true]
 				],
 				[
-					"ICONS",
-					"Vehicle Lock:",
-					[
-						locked _vehicle,
-						[0,1,2,3],
-						[
-							"a3\modules_f\data\iconunlock_ca.paa",
-							"a3\modules_f\data\iconunlock_ca.paa",
-							"a3\modules_f\data\iconlock_ca.paa",
-							"a3\modules_f\data\iconlock_ca.paa"
-						],
-						[
-							"UNLOCKED",
-							"DEFAULT",
-							"LOCKED",
-							"LOCKED FOR PLAYERS"
-						],
-						[[11,0.5],[15,0.5],[19,0.5],[23,0.5]],
-						[1.75,1.75,1.75,1.75],
-						2.5
-					]
+					"SLIDER",
+					"Aim Shake:",
+					[[(_unit skill "aimingShake"),2] call BIS_fnc_cutDecimals,0,1,true]
 				],
 				[
-					"ICONS",
-					"Engine State:",
-					[
-						isEngineOn _vehicle,
-						[false,true],
-						["A3\ui_f\data\igui\cfg\actions\engine_off_ca.paa","A3\ui_f\data\igui\cfg\actions\engine_on_ca.paa"],
-						["Turn engine off","Turn engine on"],
-						[[15,0.4],[19,0.4]],
-						[1.75,1.75],
-						2.5
-					]
+					"SLIDER",
+					"Aiming Speed:",
+					[[(_unit skill "aimingSpeed"),2] call BIS_fnc_cutDecimals,0,1,true]
 				],
 				[
-					"ICONS",
-					"Lights State:",
-					[
-						isLightOn _vehicle,
-						[false,true],
-						["A3\ui_f\data\igui\cfg\actions\ico_cpt_land_off_ca.paa","A3\ui_f\data\igui\cfg\actions\ico_cpt_land_on_ca.paa"],
-						["Turn lights off","Turn lights on"],
-						[[15,0.4],[19,0.4]],
-						[1.75,1.75],
-						2.5
-					]
+					"SLIDER",
+					"Endurance:",
+					[[(_unit skill "endurance"),2] call BIS_fnc_cutDecimals,0,1,true]
 				],
 				[
-					"RESPAWN",
-					"Respawn on Object For:",
-					[
-						_vehicle getVariable ["MAZ_EZM_respawnType",4],
-						_vehicle
-					]
+					"SLIDER",
+					"Spotting Distance:",
+					[[(_unit skill "spotDistance"),2] call BIS_fnc_cutDecimals,0,1,true]
 				],
-				[ 
-					"NEWBUTTON", 
-					"DAMAGE", 
-					[ 
-						"Edit the vehicle's damage in specific hit points.", 
-						{
-							params ["_display","_args"];
-							_display closeDisplay 0;
-							[_args] spawn MAZ_EZM_createDamageDialog;
-						}, 
-						_vehicle
-					] 
+				[
+					"SLIDER",
+					"Spotting Time:",
+					[[(_unit skill "spotTime"),2] call BIS_fnc_cutDecimals,0,1,true]
 				],
-				[ 
-					"NEWBUTTON", 
-					"RESPAWN", 
-					[ 
-						"Set the vehicle to respawn at it's position.", 
-						{
-							params ["_display","_args"];
-							_display closeDisplay 0;
-							[_args] spawn MAZ_EZM_createVehicleRespawnDialog;
-						}, 
-						_vehicle
-					] 
+				[
+					"SLIDER",
+					"Courage:",
+					[[(_unit skill "courage"),2] call BIS_fnc_cutDecimals,0,1,true]
 				],
-				[ 
-					"NEWBUTTON", 
-					"GARAGE", 
-					[ 
-						"WIP : Edit vehicle in the Virtual Garage.", 
-						{
-							params ["_display","_args"];
-						}, 
-						_vehicle
-					] 
+				[
+					"SLIDER",
+					"Reload Speed:",
+					[[(_unit skill "reloadSpeed"),2] call BIS_fnc_cutDecimals,0,1,true]
+				],
+				[
+					"SLIDER",
+					"Commanding:",
+					[[(_unit skill "commanding"),2] call BIS_fnc_cutDecimals,0,1,true]
+				],
+				[
+					"SLIDER",
+					"General Skill:",
+					[[(_unit skill "general"),2] call BIS_fnc_cutDecimals,0,1,true]
 				]
 			],{
 				params ["_display","_values","_args"];
+				[_args] spawn MAZ_EZM_fnc_createManAttributesDialog;
 				_display closeDisplay 1;
 			},{
 				params ["_display","_values","_args"];
-				[_args,_values] call MAZ_EZM_applyAttributeChangesToLandVehicle;
 				_display closeDisplay 0;
-			},_vehicle] call MAZ_EZM_createAttributesDialog;
+				[_args,_values] call MAZ_EZM_fnc_applySkillsToUnit;
+			},_unit] call MAZ_EZM_fnc_createAttributesDialog;
 		};
-	};
 
-	MAZ_EZM_applyAttributeChangesToVehicle = {
-		params ["_vehicle","_attributes"];
-		_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],["_colLightState",isCollisionLightOn _vehicle],"_respawn"];
-		_vehicle setDamage (1-_health);
-		[_vehicle,_fuel] remoteExec ["setFuel"];
-		[_vehicle,_lockState] remoteExec ["lock"];
-		[_vehicle,_engineState] remoteExec ["engineOn"];
-		[_vehicle,_lightState] remoteExec ["setPilotLight"];
-		[_vehicle,_colLightState] remoteExec ["setCollisionLight"];
-
-		[_vehicle,_respawn] call MAZ_EZM_applyCreateRespawnToUnitAttribs;
-	};
-
-	MAZ_EZM_createVehicleAttributesDialog = {
-		params ["_vehicle"];
-		if(dialog) then {
-			closeDialog 2;
-		};
-		[_vehicle] spawn {
-			params ["_vehicle"];
+		MAZ_EZM_fnc_createToggleAIDialog = {
+			params ["_unit"];
 			sleep 0.1;
-			[format ["EDIT %1",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _vehicle >> "displayName"))],[
+			[format ["TOGGLE %1 AI",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _unit >> "displayName"))],[
 				[
-					"SLIDEREDIT",
-					"Health/Armor:",
-					[[(1 - damage _vehicle),2] call BIS_fnc_cutDecimals,0,1,true]
-				],
-				[
-					"SLIDEREDIT",
-					"Fuel:",
-					[[fuel _vehicle,3] call BIS_fnc_cutDecimals,0,1,true]
-				],
-				[
-					"ICONS",
-					"Vehicle Lock:",
+					"TOOLBOX",
+					["AIMING ERROR:","Prevents AI's aiming from being distracted by its shooting, moving, turning, reloading, hit, injury, fatigue, suppression or concealed / lost target."],
 					[
-						locked _vehicle,
-						[0,1,2,3],
-						[
-							"a3\modules_f\data\iconunlock_ca.paa",
-							"a3\modules_f\data\iconunlock_ca.paa",
-							"a3\modules_f\data\iconlock_ca.paa",
-							"a3\modules_f\data\iconlock_ca.paa"
-						],
-						[
-							"UNLOCKED",
-							"DEFAULT",
-							"LOCKED",
-							"LOCKED FOR PLAYERS"
-						],
-						[[11,0.5],[15,0.5],[19,0.5],[23,0.5]],
-						[1.75,1.75,1.75,1.75],
-						2.5
+						_unit checkAIFeature "AIMINGERROR",
+						["DISABLE","ENABLE"]
 					]
 				],
 				[
-					"ICONS",
-					"Engine State:",
+					"TOOLBOX",
+					["ANIMATION:","Disables all animations of the unit. Completely freezes the unit, including breathing and blinking. No move command works until the unit is unfrozen."],
 					[
-						isEngineOn _vehicle,
-						[false,true],
-						["A3\ui_f\data\igui\cfg\actions\engine_off_ca.paa","A3\ui_f\data\igui\cfg\actions\engine_on_ca.paa"],
-						["Turn engine off","Turn engine on"],
-						[[15,0.4],[19,0.4]],
-						[1.75,1.75],
-						2.5
+						_unit checkAIFeature "ANIM",
+						["DISABLE","ENABLE"]
 					]
 				],
 				[
-					"ICONS",
-					"Lights State:",
+					"TOOLBOX",
+					["AUTO-COMBAT:","Disables autonomous switching to 'COMBAT' AI Behaviour when in danger."],
 					[
-						isLightOn _vehicle,
-						[false,true],
-						["A3\ui_f\data\igui\cfg\actions\ico_cpt_land_off_ca.paa","A3\ui_f\data\igui\cfg\actions\ico_cpt_land_on_ca.paa"],
-						["Turn lights off","Turn lights on"],
-						[[15,0.4],[19,0.4]],
-						[1.75,1.75],
-						2.5
+						_unit checkAIFeature "AUTOCOMBAT",
+						["DISABLE","ENABLE"]
 					]
 				],
 				[
-					"ICONS",
-					"Anti-Collision Lights:",
+					"TOOLBOX",
+					["AUTO-TARGET:","Essentially makes single units without a group 'deaf'. The unit still goes prone and combat ready if it hears gunfire. \nIt will not turn around when gunfire comes from behind, but if an enemy walks in front of it it will target the enemy and fire as normal."],
 					[
-						isCollisionLightOn _vehicle,
-						[false,true],
-						["A3\ui_f\data\igui\cfg\actions\ico_cpt_col_off_ca.paa","A3\ui_f\data\igui\cfg\actions\ico_cpt_col_on_ca.paa"],
-						["Turn anti-collision lights off","Turn anti-collision lights on"],
-						[[15,0.4],[19,0.4]],
-						[1.75,1.75],
-						2.5
+						_unit checkAIFeature "AUTOTARGET",
+						["DISABLE","ENABLE"]
 					]
 				],
 				[
-					"RESPAWN",
-					"Respawn on Object For:",
+					"TOOLBOX",
+					["COVER:","Disables usage of cover positions by the AI."],
 					[
-						_vehicle getVariable ["MAZ_EZM_respawnType",4],
-						_vehicle
+						_unit checkAIFeature "COVER",
+						["DISABLE","ENABLE"]
 					]
 				],
-				[ 
-					"NEWBUTTON", 
-					"DAMAGE", 
-					[ 
-						"Edit the vehicle's damage in specific hit points.", 
-						{
-							params ["_display","_args"];
-							_display closeDisplay 0;
-							[_args] spawn MAZ_EZM_createDamageDialog;
-						}, 
-						_vehicle
-					] 
+				[
+					"TOOLBOX",
+					["FSM:","Disables the attached FSM scripts which are responsible for the AI behaviour. \nEnemies react slower to enemy fire and the enemy stops using hand signals."],
+					[
+						_unit checkAIFeature "FSM",
+						["DISABLE","ENABLE"]
+					]
 				],
-				[ 
-					"NEWBUTTON", 
-					"RESPAWN", 
-					[ 
-						"Set the vehicle to respawn at it's position.", 
-						{
-							params ["_display","_args"];
-							_display closeDisplay 0;
-							[_args] spawn MAZ_EZM_createVehicleRespawnDialog;
-						}, 
-						_vehicle
-					] 
+				[
+					"TOOLBOX",
+					["LIGHTS:","Stops AI from operating vehicle headlights and collision lights."],
+					[
+						_unit checkAIFeature "LIGHTS",
+						["DISABLE","ENABLE"]
+					]
 				],
-				[ 
-					"NEWBUTTON", 
-					"GARAGE", 
-					[ 
-						"WIP : Edit vehicle in the Virtual Garage.", 
-						{
-							params ["_display","_args"];
-						}, 
-						_vehicle
-					] 
+				[
+					"TOOLBOX",
+					["MINE DETECTION:","Disable AI's mine detection."],
+					[
+						_unit checkAIFeature "MINEDETECTION",
+						["DISABLE","ENABLE"]
+					]
+				],
+				[
+					"TOOLBOX",
+					["MOVE:","This will stop units from turning and moving, including vehicles. \nUnits will still change stance and fire at the enemy if the enemy happens to walk right in front of the barrel."],
+					[
+						_unit checkAIFeature "MOVE",
+						["DISABLE","ENABLE"]
+					]
+				],
+				[
+					"TOOLBOX",
+					["NVG:","Stops AI from putting on NVGs (but not from taking them off)."],
+					[
+						_unit checkAIFeature "NVG",
+						["DISABLE","ENABLE"]
+					]
+				],
+				[
+					"TOOLBOX",
+					["PATH:","Stops the AI's movement but not the target alignment."],
+					[
+						_unit checkAIFeature "PATH",
+						["DISABLE","ENABLE"]
+					]
+				],
+				[
+					"TOOLBOX",
+					["RADIO:","Stops AI from talking and texting while still being able to issue orders."],
+					[
+						_unit checkAIFeature "RADIOPROTOCOL",
+						["DISABLE","ENABLE"]
+					]
+				],
+				[
+					"TOOLBOX",
+					["SUPPRESSION:","Prevents AI from being suppressed."],
+					[
+						_unit checkAIFeature "SUPPRESSION",
+						["DISABLE","ENABLE"]
+					]
+				],
+				[
+					"TOOLBOX",
+					["TARGET:","Prevents units from engaging targets. Units still move around for cover, but will not hunt down enemies. \nWorks in groups as well."],
+					[
+						_unit checkAIFeature "TARGET",
+						["DISABLE","ENABLE"]
+					]
+				],
+				[
+					"TOOLBOX",
+					["WEAPON AIM:","Disables weapon aiming."],
+					[
+						_unit checkAIFeature "WEAPONAIM",
+						["DISABLE","ENABLE"]
+					]
 				]
 			],{
 				params ["_display","_values","_args"];
+				[_args] spawn MAZ_EZM_fnc_createManAttributesDialog;
 				_display closeDisplay 1;
 			},{
 				params ["_display","_values","_args"];
-				[_args,_values] call MAZ_EZM_applyAttributeChangesToVehicle;
 				_display closeDisplay 0;
-			},_vehicle] call MAZ_EZM_createAttributesDialog;
+				[_args,_values] call MAZ_EZM_fnc_applyToggleAI;
+			},_unit] call MAZ_EZM_fnc_createAttributesDialog;
 		};
-	};
 
-	MAZ_EZM_applyAttributeChangesToMarker = {
-		params ["_marker","_attribs"];
-		_attribs params ["_text","_markerColor","_markerDir"];
-		_marker setMarkerText _text;
-		_marker setMarkerColor _markerColor;
-		MAZ_EZM_markerColorDefault = _markerColor;
-		_marker setMarkerDir _markerDir;
-	};
-
-	MAZ_EZM_createMarkerAttributesDialog = {
-		params ["_marker"];
-		if(dialog) then {
-			closeDialog 2;
+		MAZ_EZM_fnc_createGroupAttributesDialog = {
+			params ["_group"];
+			if(dialog) then {
+				closeDialog 2;
+			};
+			[_group] spawn {
+				params ["_group"];
+				sleep 0.1;
+				[format ["EDIT %1",toUpper (groupID _group)],[
+					[ 
+						"EDIT", 
+						"Edit Callsign:", 
+						[groupID _group] 
+					], 
+					[
+						"SLIDER",
+						"Set Skill:",
+						[skill (leader _group),0,1,true]
+					],
+					[
+						"ICONS",
+						"Set Formation:",
+						[
+							formation _group,
+							[
+								"WEDGE",
+								"VEE",
+								"LINE",
+								"COLUMN",
+								"FILE",
+								"STAG COLUMN",
+								"ECH LEFT",
+								"ECH RIGHT",
+								"DIAMOND"
+							],[
+								"A3\ui_f_curator\data\RscCommon\RscAttributeFormation\wedge_ca.paa",
+								"A3\ui_f_curator\data\RscCommon\RscAttributeFormation\vee_ca.paa",
+								"A3\ui_f_curator\data\RscCommon\RscAttributeFormation\line_ca.paa",
+								"A3\ui_f_curator\data\RscCommon\RscAttributeFormation\column_ca.paa",
+								"A3\ui_f_curator\data\RscCommon\RscAttributeFormation\file_ca.paa",
+								"A3\ui_f_curator\data\RscCommon\RscAttributeFormation\stag_column_ca.paa",
+								"A3\ui_f_curator\data\RscCommon\RscAttributeFormation\ech_left_ca.paa",
+								"A3\ui_f_curator\data\RscCommon\RscAttributeFormation\ech_right_ca.paa",
+								"A3\ui_f_curator\data\RscCommon\RscAttributeFormation\diamond_ca.paa"
+							],[
+								"WEDGE",
+								"VEE",
+								"LINE",
+								"COLUMN",
+								"FILE",
+								"STAGGERED COLUMN",
+								"ECHELON LEFT",
+								"ECHELON RIGHT",
+								"DIAMOND"
+							],[
+								[10,0],
+								[13,0],
+								[16,0],
+								[19,0],
+								[22,0],
+								[12,2],
+								[15,2],
+								[18,2],
+								[21,2]
+							],[
+								2.5,
+								2.5,
+								2.5,
+								2.5,
+								2.5,
+								2.5,
+								2.5,
+								2.5,
+								2.5
+							],
+							4.5
+						]
+					],
+					[
+						"ICONS",
+						"Set Behaviour:",
+						[
+							behaviour (leader _group),
+							[
+								"CARELESS",
+								"SAFE",
+								"AWARE",
+								"COMBAT",
+								"STEALTH"
+							],[
+								"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\safe_ca.paa",
+								"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\safe_ca.paa",
+								"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\aware_ca.paa",
+								"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\combat_ca.paa",
+								"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\stealth_ca.paa"
+							],[
+								"CARELESS",
+								"SAFE",
+								"AWARE",
+								"COMBAT",
+								"STEALTH"
+							],[
+								[11,0.3],
+								[14,0.3],
+								[17,0.3],
+								[20,0.3],
+								[23,0.3]
+							],[
+								1.75,1.75,1.75,1.75,1.75
+							],
+							2.5,
+							[
+								[[0,1,0,1],[0,0.5,0,0.7]],
+								[[0,1,0,1],[0,0.5,0,0.7]],
+								[[1,1,0,1],[0.5,0.5,0,0.7]],
+								[[1,0,0,1],[0.5,0,0,0.7]],
+								[[0,1,1,1],[0,0.5,0.5,0.7]]
+							]
+						]
+					],
+					[
+						"ICONS",
+						"Set Combat Mode:",
+						[
+							combatMode _group,
+							[
+								"BLUE",
+								"GREEN",
+								"WHITE",
+								"YELLOW",
+								"RED"
+							],[
+								"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\safe_ca.paa",
+								"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\aware_ca.paa",
+								"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\aware_ca.paa",
+								"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\combat_ca.paa",
+								"A3\ui_f_curator\data\RscCommon\RscAttributeBehaviour\combat_ca.paa"
+							],[
+								"Forced Hold Fire",
+								"Do Not Fire Unless Fired Upon, Keep Formation",
+								"Do Not Fire Unless Fired Upon",
+								"Open Fire, Keep Formation",
+								"Open Fire"
+							],[
+								[11,0.3],
+								[14,0.3],
+								[17,0.3],
+								[20,0.3],
+								[23,0.3]
+							],[
+								1.75,1.75,1.75,1.75,1.75
+							],
+							2.5,
+							[
+								[[0,1,0,1],[0,0.5,0,0.7]],
+								[[1,1,0,1],[0.5,0.5,0,0.7]],
+								[[1,1,0,1],[0.5,0.5,0,0.7]],
+								[[1,0,0,1],[0.5,0,0,0.7]],
+								[[1,0,0,1],[0.5,0,0,0.7]]
+							]
+						]
+					],
+					[
+						"ICONS",
+						"Set Speed:",
+						[
+							speedMode _group,
+							[
+								"LIMITED",
+								"NORMAL",
+								"FULL"
+							],[
+								"A3\ui_f_curator\data\RscCommon\RscAttributeSpeedMode\limited_ca.paa",
+								"A3\ui_f_curator\data\RscCommon\RscAttributeSpeedMode\normal_ca.paa",
+								"A3\ui_f_curator\data\RscCommon\RscAttributeSpeedMode\full_ca.paa"
+							],[
+								"",
+								"",
+								""
+							],[
+								[13,0],
+								[16,0],
+								[19,0]
+							],[
+								2.5,2.5,2.5
+							],
+							2.5
+						]
+					],
+					[
+						"ICONS",
+						"Set Stance:",
+						[
+							unitPos (leader _group),
+							[
+								"DOWN",
+								"MIDDLE",
+								"UP",
+								"AUTO"
+							],[
+								"A3\3den\Data\Attributes\Stance\down_ca.paa",
+								"A3\3den\Data\Attributes\Stance\middle_ca.paa",
+								"A3\3den\Data\Attributes\Stance\up_ca.paa",
+								"A3\3den\Data\Attributes\default_ca.paa"
+							],[
+								"",
+								"",
+								"",
+								"AUTO"
+							],[
+								[13,0],
+								[16,0],
+								[19,0],
+								[24,0.4]
+							],[
+								2.5,2.5,2.5,1.5
+							]
+						]
+					]
+				],{
+					params ["_display","_values","_args"];
+					_display closeDisplay 1;
+				},{
+					params ["_display","_values","_args"];
+					[_args,_values] call MAZ_EZM_fnc_applyAttributeChangesToGroup;
+					_display closeDisplay 0;
+				},_group] call MAZ_EZM_fnc_createAttributesDialog;
+			};
 		};
-		[_marker] spawn {
-			params ["_marker"];
-			openMap false;
-			private _markerType = getText (configfile >> "CfgMarkers" >> (markerType _marker) >> "icon");
-			private _colorData = [];
+
+		MAZ_EZM_fnc_createLandVehicleAttributesDialog = {
+			params ["_vehicle"];
+			if(dialog) then {
+				closeDialog 2;
+			};
+			[_vehicle] spawn {
+				params ["_vehicle"];
+				sleep 0.1;
+				[format ["EDIT %1",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _vehicle >> "displayName"))],[ 
+					[
+						"SLIDER",
+						"Health/Armor:",
+						[[(1 - damage _vehicle),2] call BIS_fnc_cutDecimals,0,1,true]
+					],
+					[
+						"SLIDER",
+						"Fuel:",
+						[[fuel _vehicle,3] call BIS_fnc_cutDecimals,0,1,true]
+					],
+					[
+						"ICONS",
+						"Vehicle Lock:",
+						[
+							locked _vehicle,
+							[0,1,2,3],
+							[
+								"a3\modules_f\data\iconunlock_ca.paa",
+								"a3\modules_f\data\iconunlock_ca.paa",
+								"a3\modules_f\data\iconlock_ca.paa",
+								"a3\modules_f\data\iconlock_ca.paa"
+							],
+							[
+								"UNLOCKED",
+								"DEFAULT",
+								"LOCKED",
+								"LOCKED FOR PLAYERS"
+							],
+							[[11,0.5],[15,0.5],[19,0.5],[23,0.5]],
+							[1.75,1.75,1.75,1.75],
+							2.5
+						]
+					],
+					[
+						"ICONS",
+						"Engine State:",
+						[
+							isEngineOn _vehicle,
+							[false,true],
+							["A3\ui_f\data\igui\cfg\actions\engine_off_ca.paa","A3\ui_f\data\igui\cfg\actions\engine_on_ca.paa"],
+							["Turn engine off","Turn engine on"],
+							[[15,0.4],[19,0.4]],
+							[1.75,1.75],
+							2.5
+						]
+					],
+					[
+						"ICONS",
+						"Lights State:",
+						[
+							isLightOn _vehicle,
+							[false,true],
+							["A3\ui_f\data\igui\cfg\actions\ico_cpt_land_off_ca.paa","A3\ui_f\data\igui\cfg\actions\ico_cpt_land_on_ca.paa"],
+							["Turn lights off","Turn lights on"],
+							[[15,0.4],[19,0.4]],
+							[1.75,1.75],
+							2.5
+						]
+					],
+					[
+						"RESPAWN",
+						["Respawn on Vehicle For:","Makes this vehicle a respawn for the specified side."],
+						[
+							_vehicle getVariable ["MAZ_EZM_respawnType",4],
+							_vehicle
+						]
+					],
+					[ 
+						"NEWBUTTON", 
+						"DAMAGE", 
+						[ 
+							"Edit the vehicle's damage in specific hit points.", 
+							{
+								params ["_display","_args"];
+								_display closeDisplay 0;
+								[_args] spawn MAZ_EZM_fnc_createDamageDialog;
+							}, 
+							_vehicle
+						] 
+					],
+					[ 
+						"NEWBUTTON", 
+						"RESPAWN", 
+						[ 
+							"Set the vehicle to respawn at it's position.", 
+							{
+								params ["_display","_args"];
+								_display closeDisplay 0;
+								[_args] spawn MAZ_EZM_fnc_createVehicleRespawnDialog;
+							}, 
+							_vehicle
+						] 
+					]
+				],{
+					params ["_display","_values","_args"];
+					_display closeDisplay 1;
+				},{
+					params ["_display","_values","_args"];
+					[_args,_values] call MAZ_EZM_fnc_applyAttributeChangesToLandVehicle;
+					_display closeDisplay 0;
+				},_vehicle] call MAZ_EZM_fnc_createAttributesDialog;
+			};
+		};
+		
+		MAZ_EZM_fnc_createVehicleAttributesDialog = {
+			params ["_vehicle"];
+			if(dialog) then {
+				closeDialog 2;
+			};
+			[_vehicle] spawn {
+				params ["_vehicle"];
+				sleep 0.1;
+				[format ["EDIT %1",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _vehicle >> "displayName"))],[
+					[
+						"SLIDER",
+						"Health/Armor:",
+						[[(1 - damage _vehicle),2] call BIS_fnc_cutDecimals,0,1,true]
+					],
+					[
+						"SLIDER",
+						"Fuel:",
+						[[fuel _vehicle,3] call BIS_fnc_cutDecimals,0,1,true]
+					],
+					[
+						"ICONS",
+						"Vehicle Lock:",
+						[
+							locked _vehicle,
+							[0,1,2,3],
+							[
+								"a3\modules_f\data\iconunlock_ca.paa",
+								"a3\modules_f\data\iconunlock_ca.paa",
+								"a3\modules_f\data\iconlock_ca.paa",
+								"a3\modules_f\data\iconlock_ca.paa"
+							],
+							[
+								"UNLOCKED",
+								"DEFAULT",
+								"LOCKED",
+								"LOCKED FOR PLAYERS"
+							],
+							[[11,0.5],[15,0.5],[19,0.5],[23,0.5]],
+							[1.75,1.75,1.75,1.75],
+							2.5
+						]
+					],
+					[
+						"ICONS",
+						"Engine State:",
+						[
+							isEngineOn _vehicle,
+							[false,true],
+							["A3\ui_f\data\igui\cfg\actions\engine_off_ca.paa","A3\ui_f\data\igui\cfg\actions\engine_on_ca.paa"],
+							["Turn engine off","Turn engine on"],
+							[[15,0.4],[19,0.4]],
+							[1.75,1.75],
+							2.5
+						]
+					],
+					[
+						"ICONS",
+						"Lights State:",
+						[
+							isLightOn _vehicle,
+							[false,true],
+							["A3\ui_f\data\igui\cfg\actions\ico_cpt_land_off_ca.paa","A3\ui_f\data\igui\cfg\actions\ico_cpt_land_on_ca.paa"],
+							["Turn lights off","Turn lights on"],
+							[[15,0.4],[19,0.4]],
+							[1.75,1.75],
+							2.5
+						]
+					],
+					[
+						"ICONS",
+						"Anti-Collision Lights:",
+						[
+							isCollisionLightOn _vehicle,
+							[false,true],
+							["A3\ui_f\data\igui\cfg\actions\ico_cpt_col_off_ca.paa","A3\ui_f\data\igui\cfg\actions\ico_cpt_col_on_ca.paa"],
+							["Turn anti-collision lights off","Turn anti-collision lights on"],
+							[[15,0.4],[19,0.4]],
+							[1.75,1.75],
+							2.5
+						]
+					],
+					[
+						"RESPAWN",
+						["Respawn on Vehicle For:","Makes this vehicle a respawn for the specified side."],
+						[
+							_vehicle getVariable ["MAZ_EZM_respawnType",4],
+							_vehicle
+						]
+					],
+					[ 
+						"NEWBUTTON", 
+						"DAMAGE", 
+						[ 
+							"Edit the vehicle's damage in specific hit points.", 
+							{
+								params ["_display","_args"];
+								_display closeDisplay 0;
+								[_args] spawn MAZ_EZM_fnc_createDamageDialog;
+							}, 
+							_vehicle
+						] 
+					],
+					[ 
+						"NEWBUTTON", 
+						"RESPAWN", 
+						[ 
+							"Set the vehicle to respawn at it's position.", 
+							{
+								params ["_display","_args"];
+								_display closeDisplay 0;
+								[_args] spawn MAZ_EZM_fnc_createVehicleRespawnDialog;
+							}, 
+							_vehicle
+						] 
+					]
+				],{
+					params ["_display","_values","_args"];
+					_display closeDisplay 1;
+				},{
+					params ["_display","_values","_args"];
+					[_args,_values] call MAZ_EZM_fnc_applyAttributeChangesToVehicle;
+					_display closeDisplay 0;
+				},_vehicle] call MAZ_EZM_fnc_createAttributesDialog;
+			};
+		};
+
+		MAZ_EZM_fnc_createDamageDialog = {
+			params ["_vehicle"];
+			private _damages = getAllHitPointsDamage _vehicle;
+			_damages params ["_hitPoints","_sections","_damage"];
+			private _dialogData = [];
 			{
-				private _colorActive = _x;
-				private _colorNormal = [_x # 0,_x # 1,_x # 2,0.5];
-				_colorData pushBack [_colorActive,_colorNormal];
-			}forEach [
-				[0,0,0,1],
-				[0,0,0,1],
-				[0.5,0.5,0.5,1],
-				[0.9,0,0,1],
-				[0.5,0.25,0,1],
-				[0.85,0.4,0,1],
-				[0.85,0.85,0,1],
-				[0.5,0.6,0.4,1],
-				[0,0.8,0,1],
-				[0,0,1,1],
-				[1,1,1,1],
-				[profileNamespace getVariable ['Map_BLUFOR_R',0],profileNamespace getVariable ['Map_BLUFOR_G',1],profileNamespace getVariable ['Map_BLUFOR_B',1],profileNamespace getVariable ['Map_BLUFOR_A',1]],
-				[profileNamespace getVariable ['Map_OPFOR_R',0],profileNamespace getVariable ['Map_OPFOR_G',1],profileNamespace getVariable ['Map_OPFOR_B',1],profileNamespace getVariable ['Map_OPFOR_A',1]],
-				[profileNamespace getVariable ['Map_Independent_R',0],profileNamespace getVariable ['Map_Independent_G',1],profileNamespace getVariable ['Map_Independent_B',1],profileNamespace getVariable ['Map_Independent_A',1]],
-				[profileNamespace getVariable ['Map_Civilian_R',0],profileNamespace getVariable ['Map_Civilian_G',1],profileNamespace getVariable ['Map_Civilian_B',1],profileNamespace getVariable ['Map_Civilian_A',1]],
-				[profileNamespace getVariable ['Map_Unknown_R',0],profileNamespace getVariable ['Map_Unknown_G',1],profileNamespace getVariable ['Map_Unknown_B',1],profileNamespace getVariable ['Map_Unknown_A',1]]
-			];
-			sleep 0.1;
-			["EDIT MARKER",[ 
-				[
-					"EDIT",
-					"Text:",
-					[markerText _marker]
-				],
-				[
-					"ICONS",
-					"Color:",
-					[
-						markerColor _marker,
-						[
-							"Default",
-							"ColorBlack",
-							"ColorGrey",
-							"ColorRed",
-							"ColorBrown",
-							"ColorOrange",
-							"ColorYellow",
-							"ColorKhaki",
-							"ColorGreen",
-							"ColorBlue",
-							"ColorWhite",
-							"ColorBLUFOR",
-							"ColorOPFOR",
-							"ColorGUER",
-							"ColorCIV",
-							"ColorUNKNOWN"
-						],
-						[
-							_markerType,
-							_markerType,
-							_markerType,
-							_markerType,
-							_markerType,
-							_markerType,
-							_markerType,
-							_markerType,
-							_markerType,
-							_markerType,
-							_markerType,
-							_markerType,
-							_markerType,
-							_markerType,
-							_markerType,
-							_markerType
-						],
-						[
-							"Default",
-							"Black",
-							"Grey",
-							"Red",
-							"Brown",
-							"Orange",
-							"Yellow",
-							"Khaki",
-							"Green",
-							"Blue",
-							"White",
-							"BLUFOR",
-							"OPFOR",
-							"Independent",
-							"Civilian",
-							"UNKNOWN"
-						],
-						[
-							[9.5,0.2],
-							[11.5,0.2],
-							[13.5,0.2],
-							[15.5,0.2],
-							[17.5,0.2],
-							[19.5,0.2],
-							[21.5,0.2],
-							[23.5,0.2],
-							[9.5,2.2],
-							[11.5,2.2],
-							[13.5,2.2],
-							[15.5,2.2],
-							[17.5,2.2],
-							[19.5,2.2],
-							[21.5,2.2],
-							[23.5,2.2]
-						],
-						[
-							1.5,
-							1.5,
-							1.5,
-							1.5,
-							1.5,
-							1.5,
-							1.5,
-							1.5,
-							1.5,
-							1.5,
-							1.5,
-							1.5,
-							1.5,
-							1.5,
-							1.5,
-							1.5
-						],
-						4,
-						_colorData
-					]
-				],
-				[
-					"SLIDEREDIT",
-					"Marker Direction:",
-					[markerDir _marker,0,360,false]
-				],
-				[ 
-					"NEWBUTTON", 
-					"DELETE", 
-					[ 
-						"Deletes the Selected Marker.", 
-						{
-							params ["_display","_args"];
-							deleteMarker _args;
-							_display closeDisplay 0;
-						}, 
-						_marker
-					] 
-				]
-			],{
+				_dialogData pushBack [
+					"SLIDER",
+					_x,
+					[[_damage select _forEachIndex,2] call BIS_fnc_cutDecimals,0,1,true]
+				];
+			}forEach _hitPoints;
+
+			[format ["EDIT DAMAGE %1",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _vehicle >> "displayName"))],
+			_dialogData,
+			{
 				params ["_display","_values","_args"];
+				if(typeOf _args isKindOf "LandVehicle") then {
+					[_args] spawn MAZ_EZM_fnc_createLandVehicleAttributesDialog;
+				} else {
+					[_args] spawn MAZ_EZM_fnc_createVehicleAttributesDialog;
+				};
 				_display closeDisplay 1;
 			},{
 				params ["_display","_values","_args"];
-				[_args,_values] call MAZ_EZM_applyAttributeChangesToMarker;
 				_display closeDisplay 0;
-			},_marker] call MAZ_EZM_createAttributesDialog;
+				[_args,_values] call MAZ_EZM_fnc_applyDamagesToVehicle;
+			},_vehicle,25] call MAZ_EZM_fnc_createAttributesDialog;
 		};
-	};
+
+		MAZ_EZM_fnc_createVehicleRespawnDialog = {
+			params ["_vehicle"];
+			[format ["CREATE RESPAWNING %1",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _vehicle >> "displayName"))],[
+				[
+					"SLIDER",
+					"Respawn Delay:",
+					[15,10,60,false]
+				],
+				[
+					"SLIDER",
+					["Deserted Delay:","How long it takes to respawn when abandoned (no crew)."],
+					[600,600,1800,false]
+				],
+				[
+					"SLIDER",
+					["Number of Respawns:","How many times the vehicle can respawn (-1 is infinite)."],
+					[-1,-1,30,false]
+				],
+				[
+					"SLIDER",
+					["Dist from Players Deserted:","How far players must be before the vehicle can be considered abandonded."],
+					[3000,3000,12000,false]
+				]
+			],{
+				params ["_display","_values","_args"];
+				if(typeOf _args isKindOf "LandVehicle") then {
+					[_args] spawn MAZ_EZM_fnc_createLandVehicleAttributesDialog;
+				} else {
+					[_args] spawn MAZ_EZM_fnc_createVehicleAttributesDialog;
+				};
+				_display closeDisplay 1;
+			},{
+				params ["_display","_values","_args"];
+				[_args,_values] call MAZ_EZM_fnc_createVehicleRespawn;
+				_display closeDisplay 0;
+			},_vehicle] call MAZ_EZM_fnc_createAttributesDialog;
+		};
+
+		MAZ_EZM_fnc_createMarkerAttributesDialog = {
+			params ["_marker"];
+			if(dialog) then {
+				closeDialog 2;
+			};
+			[_marker] spawn {
+				params ["_marker"];
+				openMap false;
+				private _markerType = getText (configfile >> "CfgMarkers" >> (markerType _marker) >> "icon");
+				private _colorData = [];
+				{
+					private _colorActive = _x;
+					private _colorNormal = [_x # 0,_x # 1,_x # 2,0.5];
+					_colorData pushBack [_colorActive,_colorNormal];
+				}forEach [
+					[0,0,0,1],
+					[0,0,0,1],
+					[0.5,0.5,0.5,1],
+					[0.9,0,0,1],
+					[0.5,0.25,0,1],
+					[0.85,0.4,0,1],
+					[0.85,0.85,0,1],
+					[0.5,0.6,0.4,1],
+					[0,0.8,0,1],
+					[0,0,1,1],
+					[1,1,1,1],
+					[profileNamespace getVariable ['Map_BLUFOR_R',0],profileNamespace getVariable ['Map_BLUFOR_G',1],profileNamespace getVariable ['Map_BLUFOR_B',1],profileNamespace getVariable ['Map_BLUFOR_A',1]],
+					[profileNamespace getVariable ['Map_OPFOR_R',0],profileNamespace getVariable ['Map_OPFOR_G',1],profileNamespace getVariable ['Map_OPFOR_B',1],profileNamespace getVariable ['Map_OPFOR_A',1]],
+					[profileNamespace getVariable ['Map_Independent_R',0],profileNamespace getVariable ['Map_Independent_G',1],profileNamespace getVariable ['Map_Independent_B',1],profileNamespace getVariable ['Map_Independent_A',1]],
+					[profileNamespace getVariable ['Map_Civilian_R',0],profileNamespace getVariable ['Map_Civilian_G',1],profileNamespace getVariable ['Map_Civilian_B',1],profileNamespace getVariable ['Map_Civilian_A',1]],
+					[profileNamespace getVariable ['Map_Unknown_R',0],profileNamespace getVariable ['Map_Unknown_G',1],profileNamespace getVariable ['Map_Unknown_B',1],profileNamespace getVariable ['Map_Unknown_A',1]]
+				];
+				sleep 0.1;
+				["EDIT MARKER",[ 
+					[
+						"EDIT",
+						"Text:",
+						[markerText _marker]
+					],
+					[
+						"ICONS",
+						"Color:",
+						[
+							markerColor _marker,
+							[
+								"Default",
+								"ColorBlack",
+								"ColorGrey",
+								"ColorRed",
+								"ColorBrown",
+								"ColorOrange",
+								"ColorYellow",
+								"ColorKhaki",
+								"ColorGreen",
+								"ColorBlue",
+								"ColorWhite",
+								"ColorBLUFOR",
+								"ColorOPFOR",
+								"ColorGUER",
+								"ColorCIV",
+								"ColorUNKNOWN"
+							],
+							[
+								_markerType,
+								_markerType,
+								_markerType,
+								_markerType,
+								_markerType,
+								_markerType,
+								_markerType,
+								_markerType,
+								_markerType,
+								_markerType,
+								_markerType,
+								_markerType,
+								_markerType,
+								_markerType,
+								_markerType,
+								_markerType
+							],
+							[
+								"Default",
+								"Black",
+								"Grey",
+								"Red",
+								"Brown",
+								"Orange",
+								"Yellow",
+								"Khaki",
+								"Green",
+								"Blue",
+								"White",
+								"BLUFOR",
+								"OPFOR",
+								"Independent",
+								"Civilian",
+								"UNKNOWN"
+							],
+							[
+								[9.5,0.2],
+								[11.5,0.2],
+								[13.5,0.2],
+								[15.5,0.2],
+								[17.5,0.2],
+								[19.5,0.2],
+								[21.5,0.2],
+								[23.5,0.2],
+								[9.5,2.2],
+								[11.5,2.2],
+								[13.5,2.2],
+								[15.5,2.2],
+								[17.5,2.2],
+								[19.5,2.2],
+								[21.5,2.2],
+								[23.5,2.2]
+							],
+							[
+								1.5,
+								1.5,
+								1.5,
+								1.5,
+								1.5,
+								1.5,
+								1.5,
+								1.5,
+								1.5,
+								1.5,
+								1.5,
+								1.5,
+								1.5,
+								1.5,
+								1.5,
+								1.5
+							],
+							4,
+							_colorData
+						]
+					],
+					[
+						"SLIDER",
+						"Marker Direction:",
+						[markerDir _marker,0,360,false]
+					],
+					[ 
+						"NEWBUTTON", 
+						"DELETE", 
+						[ 
+							"Deletes the Selected Marker.", 
+							{
+								params ["_display","_args"];
+								deleteMarker _args;
+								_display closeDisplay 0;
+							}, 
+							_marker
+						] 
+					]
+				],{
+					params ["_display","_values","_args"];
+					_display closeDisplay 1;
+				},{
+					params ["_display","_values","_args"];
+					[_args,_values] call MAZ_EZM_fnc_applyAttributeChangesToMarker;
+					_display closeDisplay 0;
+				},_marker] call MAZ_EZM_fnc_createAttributesDialog;
+			};
+		};
+
+	comment "Dialog Apply";
+
+		MAZ_EZM_fnc_applyUnitRespawn = {
+			params ["_unit","_respawn"];
+			private _currentRespawn = _unit getVariable ["MAZ_EZM_respawnType",4];
+			if(_currentRespawn == _respawn) exitWith {};
+			private _respawnInfo = _unit getVariable "MAZ_EZM_respawnPosition";
+			if(!isNil "_respawnInfo") then {
+				_respawnInfo call BIS_fnc_removeRespawnPosition;
+			};
+			if(_respawn == 4) exitWith {
+				_unit setVariable ["MAZ_EZM_respawnPosition",nil,true];
+				_unit setVariable ["MAZ_EZM_respawnType",4,true];
+			};
+			private _respawnSide = [_respawn] call BIS_fnc_sideType;
+			private _respawnName = "";
+			if(typeOf _unit isKindOf "CAManBase") then {
+				_respawnName = name _unit;
+			} else {
+				_respawnName = getText (configFile >> "CfgVehicles" >> typeOf _unit >> "displayName")
+			};
+			private _respawnData = [_respawnSide,_unit,_respawnName] call BIS_fnc_addRespawnPosition;
+			_unit setVariable ["MAZ_EZM_respawnPosition",_respawnData,true];
+			_unit setVariable ["MAZ_EZM_respawnType",_respawn,true];
+		};
+
+		MAZ_EZM_applyAttributeChangesToMan = {
+			params ["_unit","_attributes"];
+			_attributes params ["_name","_rank","_stance","_health","_skill","_respawn"];
+			[_unit,_name] remoteExec ['setName'];
+			[_unit,_rank] remoteExec ["setRank"];
+			[_unit,_stance] remoteExec ["setUnitPos"];
+			MAZ_EZM_stanceForAI = _stance;
+			_unit setDamage (1 - _health);
+			if(!(_unit getVariable ["MAZ_EZM_doesHaveCustomSkills",false])) then {
+				[_unit, _skill] remoteExec ["setSkill"];
+			};
+
+			[_unit,_respawn] call MAZ_EZM_fnc_applyUnitRespawn;
+		};
+
+		MAZ_EZM_fnc_applySkillsToUnit = {
+			params ["_unit","_skillsData"];
+			{
+				_unit setSkill [_x,_skillsData select _forEachIndex];
+			}forEach ["aimingAccuracy","aimingShake","aimingSpeed","endurance","spotDistance","spotTime","courage","reloadSpeed","commanding","general"];
+			_unit setVariable ["MAZ_EZM_doesHaveCustomSkills",true,true];
+		};
+
+		MAZ_EZM_fnc_applyToggleAI = {
+			params ["_unit","_aiData"];
+			{
+				private _setting = _aiData select _forEachIndex;
+				if(_setting) then {
+					_unit enableAI _x;
+				} else {
+					_unit disableAI _x;
+				};
+			}forEach [
+				"AIMINGERROR",
+				"ANIM",
+				"AUTOCOMBAT",
+				"AUTOTARGET",
+				"COVER",
+				"FSM",
+				"LIGHTS",
+				"MINEDETECTION",
+				"MOVE",
+				"NVG",
+				"PATH",
+				"RADIOPROTOCOL",
+				"SUPPRESSION",
+				"TARGET",
+				"WEAPONAIM"
+			];
+		};
+
+		MAZ_EZM_fnc_applyAttributeChangesToPlayer = {
+			params ["_unit","_values"];
+			_values params ["_rank","_respawnType"];
+			_unit setRank _rank;
+			[_unit,_respawnType] call MAZ_EZM_fnc_applyUnitRespawn;
+		};
+
+		MAZ_EZM_fnc_applyAttributeChangesToGroup = {
+			params ["_group","_attributes"];
+			_attributes params ["_name","_skill","_form","_beh","_comMode","_sped","_stance"];
+			_group setGroupIdGlobal [_name];
+			_group setFormation _form;
+			_group setBehaviour _beh;
+			_group setCombatMode _comMode;
+			_group setSpeedMode _sped;
+			{
+				_x setSkill _skill;
+				_x setUnitPos _stance;
+			}forEach (units _group);
+		};
+
+		MAZ_EZM_fnc_applyDamagesToVehicle = {
+			params ["_vehicle","_damagesData"];
+			private _damages = getAllHitPointsDamage _vehicle;
+			_damages params ["_hitPoints","_sections","_damage"];
+			{
+				_vehicle setHitPointDamage [(_hitpoints select _forEachIndex),_x];
+			}forEach _damagesData;
+		};
+
+		MAZ_EZM_fnc_createVehicleRespawn = {
+			params ["_vehicle","_values"];
+			_values params ["_respawnDelay","_abandonDelay","_numOfRespawns","_distAbandon"];
+			private _logic = (createGroup [sideLogic,true]) createUnit ["ModuleRespawnVehicle_F",position _vehicle, [], 0, "NONE"];
+			_logic setVariable ["Delay",str (round _respawnDelay),true];
+			_logic setVariable ["DesertedDelay",str (round _abandonDelay),true];
+			_logic setVariable ["DesertedDistance",str (round _distAbandon),true];
+			_logic setVariable ["RespawnCount",str (round _numOfRespawns),true];
+			_logic setVariable ["Position","0",true];
+			_logic setVariable ["PositionType","0",true];
+			_logic setVariable ["Wreck","1",true];
+			_logic setVariable ["ShowNotification","1",true];
+			_logic setVariable ["ForcedRespawn","0",true];
+			_logic setVariable ["RespawnWhenDisabled",true,true];
+			_logic synchronizeObjectsAdd [_vehicle];
+			[[_logic],{
+					params ["_logic"];
+					sleep 0.1;
+					[_logic,[],true] call BIS_fnc_moduleRespawnVehicle;
+			[_vehicle,round _respawnDelay,round _abandonDelay,round _numOfRespawns,{},0,2,1,true,true,round _distAbandon,true] call BIS_fnc_moduleRespawnVehicle;
+			}] remoteExec ['spawn',2];
+		};
+
+		MAZ_EZM_fnc_applyAttributeChangesToLandVehicle = {
+			params ["_vehicle","_attributes"];
+			_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],"_respawn"];
+			_vehicle setDamage (1-_health);
+			[_vehicle,_fuel] remoteExec ["setFuel"];
+			[_vehicle,_lockState] remoteExec ["lock"];
+			[_vehicle,_engineState] remoteExec ["engineOn"];
+			[_vehicle,_lightState] remoteExec ["setPilotLight"];
+
+			[_vehicle,_respawn] call MAZ_EZM_fnc_applyUnitRespawn;
+		};
+
+		MAZ_EZM_fnc_applyAttributeChangesToVehicle = {
+			params ["_vehicle","_attributes"];
+			_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],["_colLightState",isCollisionLightOn _vehicle],"_respawn"];
+			_vehicle setDamage (1-_health);
+			[_vehicle,_fuel] remoteExec ["setFuel"];
+			[_vehicle,_lockState] remoteExec ["lock"];
+			[_vehicle,_engineState] remoteExec ["engineOn"];
+			[_vehicle,_lightState] remoteExec ["setPilotLight"];
+			[_vehicle,_colLightState] remoteExec ["setCollisionLight"];
+
+			[_vehicle,_respawn] call MAZ_EZM_fnc_applyUnitRespawn;
+		};
+
+		MAZ_EZM_fnc_applyAttributeChangesToMarker = {
+			params ["_marker","_attribs"];
+			_attribs params ["_text","_markerColor","_markerDir"];
+			_marker setMarkerText _text;
+			_marker setMarkerColor _markerColor;
+			MAZ_EZM_markerColorDefault = _markerColor;
+			_marker setMarkerDir _markerDir;
+		};
 
 comment "Context Menu";
 
@@ -17313,7 +17161,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_GameplayTree,
 					"Create Intel",
-					"Creates an intel object to be picked up by the players (by bijx).",
+					"Creates an intel object to be picked up by the players.\nCreated by: Bijx",
 					"HYPER_EZM_fnc_createIntel",
 					"a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -18021,19 +17869,19 @@ MAZ_EZM_editZeusLogic = {
 				};
 			};
 			if(isPlayer _entity) exitWith {
-				[_entity] spawn MAZ_EZM_createPlayerAttributesDialog;
+				[_entity] spawn MAZ_EZM_fnc_createPlayerAttributesDialog;
 				true
 			};
 			if((typeOf _entity) isKindOf "CAManBase" && !isPlayer _entity && alive _entity) exitWith {
-				[_entity] spawn MAZ_EZM_createManAttributesDialog;
+				[_entity] spawn MAZ_EZM_fnc_createManAttributesDialog;
 				true
 			};
 			if((typeOf _entity) isKindOf "LandVehicle" && alive _entity) exitWith {
-				[_entity] spawn MAZ_EZM_createLandVehicleAttributesDialog;
+				[_entity] spawn MAZ_EZM_fnc_createLandVehicleAttributesDialog;
 				true
 			};
 			if(((typeOf _entity) isKindOf "Air" || (typeOf _entity) isKindOf "Ship") && alive _entity) exitWith {
-				[_entity] spawn MAZ_EZM_createVehicleAttributesDialog;
+				[_entity] spawn MAZ_EZM_fnc_createVehicleAttributesDialog;
 				true
 			};
 			false
@@ -18046,7 +17894,7 @@ MAZ_EZM_editZeusLogic = {
 		"MAZ_zeusEH_groupDblClicked",
 		_zeusLogic addEventhandler ["CuratorGroupDoubleClicked",{
 			params ["_curator", "_group"];
-			[_group] spawn MAZ_EZM_createGroupAttributesDialog;
+			[_group] spawn MAZ_EZM_fnc_createGroupAttributesDialog;
 			true
 		}]
 	];
@@ -18058,7 +17906,7 @@ MAZ_EZM_editZeusLogic = {
 		"MAZ_zeusEH_markerDblClicked",
 		_zeusLogic addEventhandler ["CuratorMarkerDoubleClicked",{
 			params ["_curator", "_marker"];
-			[_marker] spawn MAZ_EZM_createMarkerAttributesDialog;
+			[_marker] spawn MAZ_EZM_fnc_createMarkerAttributesDialog;
 			true
 		}]
 	];
@@ -18347,7 +18195,7 @@ MAZ_EZM_addZeusKeybinds_312 = {
 					if((markerShape _closest == "ELLIPSE") || (markerShape _closest == "RECTANGLE")) then {
 						[_closest] spawn MAZ_EZM_fnc_createEditAreaMarkerDialog;
 					} else {
-						[_closest] spawn MAZ_EZM_createMarkerAttributesDialog;
+						[_closest] spawn MAZ_EZM_fnc_createMarkerAttributesDialog;
 					};
 				};
 			};
@@ -18682,9 +18530,8 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 };
 
 private _changelog = [
-	"Changed Change Difficulty module to have an advanced settings menu",
-	"Fixed issue where the Teleport One Player module was not working",
-	"Fixed Circle Cinematic text and script error"
+	"Added Create Intel module to Gameplay",
+	"Overhauled the Attributes Dialog system. Should run in half the time"
 ];
 
 private _changelogString = "";
