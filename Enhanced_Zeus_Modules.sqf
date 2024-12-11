@@ -145,7 +145,7 @@ comment "Dialog Creation";
 		_controlsGroupRow ctrlSetPosition [0,0,(["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_controlsGroupRow ctrlCommit 0;
 
-		private _rowLabel = _display ctrlCreate ["RscStructuredText",211,_controlsGroupRow];
+		private _rowLabel = _display ctrlCreate ["RscText",211,_controlsGroupRow];
 		_rowLabel ctrlSetPosition [0,0,(["W",10] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_rowLabel ctrlSetBackgroundColor [0,0,0,0.5];
 		_rowLabel ctrlCommit 0;
@@ -875,6 +875,9 @@ comment "Dialog Creation";
 					};
 					[_display,_data,_onChange] call _fnc;
 				};
+				case "ICON": {
+					[_display,_data,_onChange] call MAZ_EZM_fnc_createIconsRow;
+				};
 				case "LIST": {
 					[_display,_data,_onChange] call MAZ_EZM_fnc_createListRow;
 				};
@@ -912,7 +915,7 @@ comment "Dialog Creation";
 			};
 
 			private _ctrlLabel = _result controlsGroupCtrl 211;
-			_ctrlLabel ctrlSetStructuredText parseText (format ["%1",_label]);
+			_ctrlLabel ctrlSetText (format ["%1",_label]);
 			_ctrlLabel ctrlSetTooltip _toolTip;
 
 			_controls pushBack [_result,_condition];
