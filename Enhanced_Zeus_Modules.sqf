@@ -1042,13 +1042,7 @@ comment "Attributes Dialog Creation";
 	};
 
 	MAZ_EZM_createAttributesRowBase = {
-		params ["_display","_label"];
-		_text = _label;
-		_tooltip = "";
-		if(_label isEqualType []) then {
-			_text = _label # 0;
-			_tooltip = _label # 1;
-		};
+		params ["_display"];
 		private _contentGroup = _display displayCtrl IDC_ATTRIBS_CONTENT;
 		private _controlsGroup = _display ctrlCreate ["RscControlsGroupNoScrollbars",IDC_ATTRIBS_ROW_GROUP,_contentGroup];
 		_controlsGroup ctrlSetPosition [0,0,(["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
@@ -1057,8 +1051,6 @@ comment "Attributes Dialog Creation";
 		private _rowLabel = _display ctrlCreate ["RscText",IDC_ATTRIBS_LABEL,_controlsGroup];
 		_rowLabel ctrlSetPosition [0,0,(["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_rowLabel ctrlSetBackgroundColor [0,0,0,0.6];
-		_rowLabel ctrlSetText (format ["%1",_text]);
-		_rowLabel ctrlSetTooltip _tooltip;
 		_rowLabel ctrlCommit 0;
 
 		private _rowBG = _display ctrlCreate ["RscPicture",IDC_ATTRIBS_ROW_BG,_controlsGroup];
@@ -1070,8 +1062,9 @@ comment "Attributes Dialog Creation";
 	};
 
 	MAZ_EZM_createAttribEditRow = {
-		params ["_display","_label","_default","_settings"];
-		private _rowControlsGroup = [_display,_label] call MAZ_EZM_createAttributesRowBase;
+		params ["_display","_settings"];
+		_settings params ["_default"];
+		private _rowControlsGroup = [_display] call MAZ_EZM_createAttributesRowBase;
 
 		private _rowEditBox = _display ctrlCreate ["RscEdit",IDC_ATTRIBS_EDIT,_rowControlsGroup];
 		_rowEditBox ctrlSetPosition [["W",9.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,pixelH,["W",16.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,((["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH)];
@@ -1088,9 +1081,9 @@ comment "Attributes Dialog Creation";
 	};
 
 	MAZ_EZM_createAttribEditMultiRow = {
-		params ["_display","_label","_default","_settings"];
-		_settings params ["_align"];
-		private _rowControlsGroup = [_display,_label] call MAZ_EZM_createAttributesRowBase;
+		params ["_display","_settings"];
+		_settings params ["_default","_align"];
+		private _rowControlsGroup = [_display] call MAZ_EZM_createAttributesRowBase;
 		_rowControlsGroup ctrlSetPositionH (["H",4] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_rowControlsGroup ctrlCommit 0;
 
@@ -1114,36 +1107,10 @@ comment "Attributes Dialog Creation";
 		_rowControlsGroup
 	};
 
-	MAZ_EZM_createAttribSliderRow = {
-		params ["_display","_label","_default","_settings"];
-		_settings params ["_min","_max"];
-		private _rowControlsGroup = [_display,_label] call MAZ_EZM_createAttributesRowBase;
-
-		private _slider = _display ctrlCreate ["RscXSliderH",IDC_ATTRIBS_SLIDER,_rowControlsGroup];
-		_slider ctrlSetPosition [["W",9.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0,["W",16.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
-		_slider sliderSetRange [_min,_max];
-		_slider sliderSetPosition _default;
-		_slider ctrlAddEventHandler ["sliderPosChanged",{
-			params ["_control","_newValue"];
-			private _ctrlGroup = ctrlParentControlsGroup _control;
-			_ctrlGroup setVariable ["MAZ_EZM_sliderData",[_newValue,2] call BIS_fnc_cutDecimals];
-		}];
-		_slider ctrlCommit 0;
-
-		_rowControlsGroup setVariable ["MAZ_EZM_sliderData",_default];
-
-		_rowControlsGroup setVariable ["MAZ_EZM_getControlValue",{
-			params ["_controlsGroup"];
-			_controlsGroup getVariable "MAZ_EZM_sliderData"
-		}];
-
-		_rowControlsGroup
-	};
-
 	MAZ_EZM_createAttribSliderWithEditRow = {
-		params ["_display","_label","_default","_settings"];
-		_settings params ["_min","_max",["_isPercent",false]];
-		private _rowControlsGroup = [_display,_label] call MAZ_EZM_createAttributesRowBase;
+		params ["_display","_settings"];
+		_settings params ["_default","_min","_max",["_isPercent",false]];
+		private _rowControlsGroup = [_display] call MAZ_EZM_createAttributesRowBase;
 
 		private _slider = _display ctrlCreate ["RscXSliderH",IDC_ATTRIBS_SLIDER,_rowControlsGroup];
 		_slider ctrlSetPosition [["W",9.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0,["W",13.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
@@ -1161,13 +1128,11 @@ comment "Attributes Dialog Creation";
 		_sliderEdit ctrlSetBackgroundColor [0,0,0,0.3];
 		_sliderEdit ctrlCommit 0;
 
-		_rowControlsGroup setVariable ["MAZ_EZM_sliderData",_default];
 		_rowControlsGroup setVariable ["MAZ_EZM_isSliderEditPercent",_isPercent];
 
 		_slider ctrlAddEventHandler ["SliderPosChanged",{
 			params ["_control","_newValue"];
 			private _ctrlGroup = ctrlParentControlsGroup _control;
-			_ctrlGroup setVariable ["MAZ_EZM_sliderData",[_newValue,2] call BIS_fnc_cutDecimals];
 			private _isPercent = _ctrlGroup getVariable ["MAZ_EZM_isSliderEditPercent",false];
 			private _editCtrl = _ctrlGroup controlsGroupCtrl IDC_ATTRIBS_SLIDER_EDIT;
 			if(_isPercent) then {
@@ -1187,25 +1152,25 @@ comment "Attributes Dialog Creation";
 			private _isPercent = _ctrlGroup getVariable ["MAZ_EZM_isSliderEditPercent",false];
 			if(_isPercent) then {
 				_sliderCtrl sliderSetPosition (_num/100);
-				_ctrlGroup setVariable ["MAZ_EZM_sliderData",_num/100];
 			} else {
 				_sliderCtrl sliderSetPosition _num;
-				_ctrlGroup setVariable ["MAZ_EZM_sliderData",_num];
 			};
 		}];
 
 		_rowControlsGroup setVariable ["MAZ_EZM_getControlValue",{
 			params ["_controlsGroup"];
-			_controlsGroup getVariable "MAZ_EZM_sliderData"
+			private _slider = _controlsGroup controlsGroupCtrl 170;
+			private _value = sliderPosition _slider;
+			[_value,2] call BIS_fnc_cutDecimals;
 		}];
 
 		_rowControlsGroup
 	};
 
 	MAZ_EZM_createAttribIconsRow = {
-		params ["_display","_label","_default","_settings"];
-		_settings params ["_values","_icons","_tooltips","_positions","_sizes",["_height",2.5],["_colors",[]]];
-		private _rowControlsGroup = [_display,_label] call MAZ_EZM_createAttributesRowBase;
+		params ["_display","_settings"];
+		_settings params ["_default","_values","_icons","_tooltips","_positions","_sizes",["_height",2.5],["_colors",[]]];
+		private _rowControlsGroup = [_display] call MAZ_EZM_createAttributesRowBase;
 		_rowControlsGroup ctrlSetPositionH (["H",_height] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_rowControlsGroup ctrlCommit 0;
 
@@ -1285,9 +1250,9 @@ comment "Attributes Dialog Creation";
 	};
 
 	MAZ_EZM_createAttribComboRow = {
-		params ["_display","_label","_default","_settings"];
-		_settings params ["_entries"];
-		private _rowControlsGroup = [_display,_label] call MAZ_EZM_createAttributesRowBase;
+		params ["_display","_settings"];
+		_settings params ["_default","_entries"];
+		private _rowControlsGroup = [_display] call MAZ_EZM_createAttributesRowBase;
 		private _rowBG = _rowControlsGroup controlsGroupCtrl IDC_ATTRIBS_ROW_BG;
 		ctrlDelete _rowBG;
 
@@ -1296,7 +1261,8 @@ comment "Attributes Dialog Creation";
 		_combo ctrlCommit 0;
 
 		{
-			_x params ["_value","_text","_tooltip","_icon","_iconColor"];
+			_x params ["_value","_text","_icon","_iconColor"];
+			_text params ["_text","_tooltip"];
 
 			private _index = _combo lbAdd _text;
 			_combo lbSetData [_index,_value];
@@ -1304,7 +1270,7 @@ comment "Attributes Dialog Creation";
 			_combo lbSetPicture [_index,_icon];
 			_combo lbSetPictureColor [_index,_iconColor];
 
-			if(_value isEqualTo _default) then {
+			if(_index isEqualTo _default) then {
 				_combo lbSetCurSel _index;
 			};
 		}forEach _entries;
@@ -1319,7 +1285,7 @@ comment "Attributes Dialog Creation";
 	};
 
 	MAZ_EZM_createAttribNewButton = {
-		params ["_display","_label","_default","_settings"];
+		params ["_display","_settings"];
 		_settings params ["_tooltip","_onButtonClick","_args"];
 		private _existingButtons = _display getVariable ["MAZ_EZM_attribsButtons",[]];
 		private _numOfButtons = count _existingButtons;
@@ -1344,9 +1310,9 @@ comment "Attributes Dialog Creation";
 	};
 
 	MAZ_EZM_createAttribNewRespawnRow = {
-		params ["_display","_label","_default","_settings"];
-		_settings params ["_unit"];
-		private _rowControlsGroup = [_display,_label] call MAZ_EZM_createAttributesRowBase;
+		params ["_display","_settings"];
+		_settings params ["_default","_unit"];
+		private _rowControlsGroup = [_display] call MAZ_EZM_createAttributesRowBase;
 		_rowControlsGroup ctrlSetPositionH (["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_rowControlsGroup ctrlCommit 0;
 
@@ -1433,9 +1399,9 @@ comment "Attributes Dialog Creation";
 	};
 
 	MAZ_EZM_createAttribToolboxRow = {
-		params ["_display","_label","_default","_settings"];
-		_settings params ["_strings"];
-		private _rowControlsGroup = [_display,_label] call MAZ_EZM_createAttributesRowBase;
+		params ["_display","_settings"];
+		_settings params ["_default","_strings"];
+		private _rowControlsGroup = [_display] call MAZ_EZM_createAttributesRowBase;
 
 		private _rowToolbox = _display ctrlCreate ["RscToolbox",IDC_ATTRIBS_TOOLBOX,_rowControlsGroup];
 		_rowToolbox ctrlSetPosition [["W",9.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0,["W",16.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
@@ -1516,13 +1482,19 @@ comment "Attributes Dialog Creation";
 	MAZ_EZM_createAttributesDialog = {
 		params [
 			["_title","Edit Attributes",[""]],
-			["_dialogData",[],[[]]],
+			["_content",[],[[]]],
 			["_onCancel",{},[{}]],
 			["_onConfirm",{},[{}]],
 			["_args",[]],
 			["_maxHeight",-1,[-1]]
 		];
 
+		private _display = [_title] call MAZ_EZM_createAttributesMenuBase;
+		_display setVariable ['MAZ_EZM_onAttribsCancel',_onCancel];
+		_display setVariable ['MAZ_EZM_onAttribsConfirm',_onConfirm];
+
+		private _controls = [];
+		private _yOffset = 0;
 		private _dialogInfo = [];
 		{
 			_x params [
@@ -1532,123 +1504,47 @@ comment "Attributes Dialog Creation";
 			];
 
 			(toUpper _typeData) splitString ":" params ["_type","_subType"];
-			private ["_defaultVal","_dialogCreator","_dialogSettings","_isButton"];
-			switch (_type) do {
+			private _controlsGroup = switch (_type) do {
+				case "COMBO": {
+					[_display,_settings] call MAZ_EZM_createAttribComboRow;
+				};
 				case "EDIT": {
-					_settings params ["_default"];
-					_defaultVal = _default;
-					_dialogCreator = MAZ_EZM_createAttribEditRow;
-					_dialogSettings = [];
-					_isButton = false;
+					[_display,_settings] call MAZ_EZM_createAttribEditRow;
 				};
 				case "EDITMULTI": {
-					_settings params ["_default","_align"];
-					_defaultVal = _default;
-					_dialogCreator = MAZ_EZM_createAttribEditMultiRow;
-					_dialogSettings = [_align];
-					_isButton = false;
-				};
-				case "SLIDER": {
-					_settings params ["_default","_min","_max"];
-					_defaultVal = _default;
-					_dialogSettings = [_min,_max];
-					_dialogCreator = MAZ_EZM_createAttribSliderRow;
-					_isButton = false;
-				};
-				case "SLIDEREDIT": {
-					_settings params ["_default","_min","_max",["_isPercent",true]];
-					_defaultVal = _default;
-					_dialogSettings = [_min,_max,_isPercent];
-					_dialogCreator = MAZ_EZM_createAttribSliderWithEditRow;
-					_isButton = false;
+					[_display,_settings] call MAZ_EZM_createAttribEditMultiRow;
 				};
 				case "ICONS": {
-					_settings params ["_default","_values","_icons","_tooltips","_positions","_sizes",["_height",2.5],["_colors",[]]];
-					_defaultVal = _default;
-					_dialogSettings = [_values,_icons,_tooltips,_positions,_sizes,_height,_colors];
-					_dialogCreator = MAZ_EZM_createAttribIconsRow;
-					_isButton = false;
-				};
-				case "COMBO": {
-					_settings params ["_default","_values","_labels","_tooltips","_icons","_iconsColors"];
-					_defaultVal = _default;
-					_entries = [];
-					for "_i" from 0 to (count _labels - 1) do {
-						private _value = str _i;
-						if((count _values -1) >= _i) then {
-							_value = _values select _i;
-						};
-						private _text = _labels select _i;
-						private _tooltip = "";
-						if((count _tooltips -1) >= _i) then {
-							_tooltip = _tooltips select _i;
-						};
-						private _icon = "";
-						if((count _icons -1) >= _i) then {
-							_icon = _icons select _i;
-						};
-						private _iconColor = [1,1,1,1];
-						if((count _iconsColors -1) >= _i) then {
-							_iconColor = _iconsColors select _i;
-							{
-								if(_x isEqualType "") then {
-									private _color = call (compile _x);
-									_iconColor set [_forEachIndex,_color];
-								};
-							}forEach _iconColor;
-						};
-
-						_entries pushBack [_value,_text,_tooltip,_icon,_iconColor];
-					};
-					_dialogSettings = [_entries];
-					_dialogCreator = MAZ_EZM_createAttribComboRow;
-					_isButton = false;
-				};
-				case "RESPAWN": {
-					_settings params ["_default","_unit"];
-					_defaultVal = _default;
-					_dialogSettings = [_unit];
-					_dialogCreator = MAZ_EZM_createAttribNewRespawnRow;
-					_isButton = false;
+					[_display,_settings] call MAZ_EZM_createAttribIconsRow;
 				};
 				case "NEWBUTTON": {
-					_settings params ["_tooltip","_onButtonClick","_args"];
-					_dialogSettings = [_tooltip,_onButtonClick,_args];
-					_defaultVal = 0;
-					_dialogCreator = MAZ_EZM_createAttribNewButton;
-					_isButton = true;
+					[_display,_settings] call MAZ_EZM_createAttribNewButton;
+				};
+				case "RESPAWN": {
+					[_display,_settings] call MAZ_EZM_createAttribNewRespawnRow;
+				};
+				case "SLIDER": {
+					[_display,_settings] call MAZ_EZM_createAttribSliderWithEditRow;
 				};
 				case "TOOLBOX": {
-					_settings params ["_default","_strings"];
-					_defaultVal = _default;
-					_dialogSettings = [_strings];
-					_dialogCreator = MAZ_EZM_createAttribToolboxRow;
-					_isButton = false;
+					[_display,_settings] call MAZ_EZM_createAttribToolboxRow;
 				};
 			};
-			_dialogInfo pushBack [_dialogCreator,_label,_defaultVal,_dialogSettings,_isButton];
-		}forEach _dialogData;
 
-		private _display = [_title] call MAZ_EZM_createAttributesMenuBase;
-		_display setVariable ['MAZ_EZM_onAttribsCancel',_onCancel];
-		_display setVariable ['MAZ_EZM_onAttribsConfirm',_onConfirm];
+			if(_type != "NEWBUTTON") then {
+				_label params ["_label",["_tooltip",""]];
+				private _label = _controlsGroup controlsGroupCtrl 150;
+				_label ctrlSetText _label;
+				_label ctrlSetTooltip _tooltip;
 
-		private _controls = [];
-		private _yOffset = 0;
-		{
-			_x params ["_dialogFunction","_label","_default","_settings",["_isButton",false]];
-			if(_isButton) then {
-				private _dialogControlGroup = [_display,_label,nil,_settings] call _dialogFunction;
-			} else {
-				private _dialogControlGroup = [_display,_label,_default,_settings] call _dialogFunction;
-				_dialogControlGroup ctrlSetPositionY _yOffset;
-				_dialogControlGroup ctrlCommit 0;
+				_controlsGroup ctrlSetPositionY _yOffset;
+				_controlsGroup ctrlCommit 0;
 
-				_yOffset = _yOffset + (ctrlPosition _dialogControlGroup select 3) + (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-
-				_controls pushBack _dialogControlGroup;
+				_yOffset = _yOffset + (ctrlPosition _controlsGroup select 3) + (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 			};
-		}forEach _dialogInfo;
+
+			_controls pushBack _controlsGroup;
+		}forEach _content;
 		
 		private _displayContent = _display displayCtrl IDC_ATTRIBS_CONTENT;
 		_displayContent ctrlSetPositionH (_yOffset - (["H",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
@@ -1711,52 +1607,52 @@ comment "Attributes Dialog Creation";
 		sleep 0.1;
 		[format ["EDIT SKILLS %1",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _unit >> "displayName"))],[
 			[
-				"SLIDEREDIT",
+				"SLIDER",
 				"Accuracy:",
 				[[(_unit skill "aimingAccuracy"),2] call BIS_fnc_cutDecimals,0,1,true]
 			],
 			[
-				"SLIDEREDIT",
+				"SLIDER",
 				"Aim Shake:",
 				[[(_unit skill "aimingShake"),2] call BIS_fnc_cutDecimals,0,1,true]
 			],
 			[
-				"SLIDEREDIT",
+				"SLIDER",
 				"Aiming Speed:",
 				[[(_unit skill "aimingSpeed"),2] call BIS_fnc_cutDecimals,0,1,true]
 			],
 			[
-				"SLIDEREDIT",
+				"SLIDER",
 				"Endurance:",
 				[[(_unit skill "endurance"),2] call BIS_fnc_cutDecimals,0,1,true]
 			],
 			[
-				"SLIDEREDIT",
+				"SLIDER",
 				"Spotting Distance:",
 				[[(_unit skill "spotDistance"),2] call BIS_fnc_cutDecimals,0,1,true]
 			],
 			[
-				"SLIDEREDIT",
+				"SLIDER",
 				"Spotting Time:",
 				[[(_unit skill "spotTime"),2] call BIS_fnc_cutDecimals,0,1,true]
 			],
 			[
-				"SLIDEREDIT",
+				"SLIDER",
 				"Courage:",
 				[[(_unit skill "courage"),2] call BIS_fnc_cutDecimals,0,1,true]
 			],
 			[
-				"SLIDEREDIT",
+				"SLIDER",
 				"Reload Speed:",
 				[[(_unit skill "reloadSpeed"),2] call BIS_fnc_cutDecimals,0,1,true]
 			],
 			[
-				"SLIDEREDIT",
+				"SLIDER",
 				"Commanding:",
 				[[(_unit skill "commanding"),2] call BIS_fnc_cutDecimals,0,1,true]
 			],
 			[
-				"SLIDEREDIT",
+				"SLIDER",
 				"General Skill:",
 				[[(_unit skill "general"),2] call BIS_fnc_cutDecimals,0,1,true]
 			]
@@ -2020,12 +1916,12 @@ comment "Attributes Dialog Creation";
 					]
 				],
 				[
-					"SLIDEREDIT",
+					"SLIDER",
 					"Health/Armor:",
 					[[(1 - damage _entity),2] call BIS_fnc_cutDecimals,0,1,true]
 				],
 				[
-					"SLIDEREDIT",
+					"SLIDER",
 					"Skill:",
 					[skill _entity,0,1,true]
 				],
@@ -2208,7 +2104,7 @@ comment "Attributes Dialog Creation";
 					[groupID _group] 
 				], 
 				[
-					"SLIDEREDIT",
+					"SLIDER",
 					"Set Skill:",
 					[skill (leader _group),0,1,true]
 				],
@@ -2439,7 +2335,7 @@ comment "Attributes Dialog Creation";
 		private _dialogData = [];
 		{
 			_dialogData pushBack [
-				"SLIDEREDIT",
+				"SLIDER",
 				_x,
 				[[_damage select _forEachIndex,2] call BIS_fnc_cutDecimals,0,1,true]
 			];
@@ -2484,22 +2380,22 @@ comment "Attributes Dialog Creation";
 		params ["_vehicle"];
 		[format ["CREATE RESPAWNING %1",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _vehicle >> "displayName"))],[
 			[
-				"SLIDEREDIT",
+				"SLIDER",
 				"Respawn Delay:",
 				[15,10,60,false]
 			],
 			[
-				"SLIDEREDIT",
+				"SLIDER",
 				["Deserted Delay:","How long it takes to respawn when abandoned (no crew)."],
 				[600,600,1800,false]
 			],
 			[
-				"SLIDEREDIT",
+				"SLIDER",
 				["Number of Respawns:","How many times the vehicle can respawn (-1 is infinite)."],
 				[-1,-1,30,false]
 			],
 			[
-				"SLIDEREDIT",
+				"SLIDER",
 				["Dist from Players Deserted:","How far players must be before the vehicle can be considered abandonded."],
 				[3000,3000,12000,false]
 			]
@@ -2535,12 +2431,12 @@ comment "Attributes Dialog Creation";
 			sleep 0.1;
 			[format ["EDIT %1",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _vehicle >> "displayName"))],[ 
 				[
-					"SLIDEREDIT",
+					"SLIDER",
 					"Health/Armor:",
 					[[(1 - damage _vehicle),2] call BIS_fnc_cutDecimals,0,1,true]
 				],
 				[
-					"SLIDEREDIT",
+					"SLIDER",
 					"Fuel:",
 					[[fuel _vehicle,3] call BIS_fnc_cutDecimals,0,1,true]
 				],
@@ -2672,12 +2568,12 @@ comment "Attributes Dialog Creation";
 			sleep 0.1;
 			[format ["EDIT %1",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _vehicle >> "displayName"))],[
 				[
-					"SLIDEREDIT",
+					"SLIDER",
 					"Health/Armor:",
 					[[(1 - damage _vehicle),2] call BIS_fnc_cutDecimals,0,1,true]
 				],
 				[
-					"SLIDEREDIT",
+					"SLIDER",
 					"Fuel:",
 					[[fuel _vehicle,3] call BIS_fnc_cutDecimals,0,1,true]
 				],
@@ -2947,7 +2843,7 @@ comment "Attributes Dialog Creation";
 					]
 				],
 				[
-					"SLIDEREDIT",
+					"SLIDER",
 					"Marker Direction:",
 					[markerDir _marker,0,360,false]
 				],
