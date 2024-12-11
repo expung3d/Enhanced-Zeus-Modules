@@ -1513,7 +1513,6 @@ comment "Attributes Dialog Creation";
 	};
 
 comment "Attributes Dialog Functions";
-
 	comment "Dialog Creation";
 
 		MAZ_EZM_fnc_createManAttributesDialog = {
