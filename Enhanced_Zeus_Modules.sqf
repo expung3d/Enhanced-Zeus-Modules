@@ -3,7 +3,7 @@ if(!isNull (findDisplay 312) && {!isNil "this"} && {!isNull this}) then {
 };
 
 [] spawn {
-MAZ_EZM_Version = "V2.1.4";
+MAZ_EZM_Version = "V2.1.5";
 MAZ_EZM_autoAdd = profileNamespace getVariable ["MAZ_EZM_autoAddVar",true];
 MAZ_EZM_spawnWithCrew = true;
 MAZ_EZM_nvgsOnlyAtNight = true;
@@ -17162,7 +17162,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_GameplayTree,
 					"Create Intel",
-					"Creates an intel object to be picked up by the players (by bijx).",
+					"Creates an intel object to be picked up by the players.\nCreated by: Bijx",
 					"HYPER_EZM_fnc_createIntel",
 					"a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -18531,9 +18531,8 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 };
 
 private _changelog = [
-	"Changed Change Difficulty module to have an advanced settings menu",
-	"Fixed issue where the Teleport One Player module was not working",
-	"Fixed Circle Cinematic text and script error"
+	"Added Create Intel module to Gameplay",
+	"Overhauled the Attributes Dialog system. Should run in half the time"
 ];
 
 private _changelogString = "";
