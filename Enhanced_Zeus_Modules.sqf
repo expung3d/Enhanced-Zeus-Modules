@@ -937,7 +937,7 @@ comment "Dialog Creation";
 		true;
 	};
 
-comment "Attributes Dialog Creation";
+comment "Attributes Dialog System";
 
 	MAZ_EZM_fnc_createAttributesMenuBase = {
 		params ["_labelText"];
@@ -17508,7 +17508,16 @@ MAZ_EZM_editZeusLogic = {
 				};
 			};
 			if(isPlayer _entity) exitWith {
-				[_entity] spawn MAZ_EZM_fnc_createPlayerAttributesDialog;
+				if(_entity isKindOf "CAManBase") then {
+					[_entity] spawn MAZ_EZM_fnc_createPlayerAttributesDialog;
+				} else {
+					private _veh = vehicle _entity;
+					if((typeOf _veh) isKindOf "LandVehicle" && alive _veh) then {
+						[_veh] spawn MAZ_EZM_fnc_createLandVehicleAttributesDialog;
+					} else {
+						[_veh] spawn MAZ_EZM_fnc_createVehicleAttributesDialog;
+					};
+				};
 				true
 			};
 			if((typeOf _entity) isKindOf "CAManBase" && !isPlayer _entity && alive _entity) exitWith {
