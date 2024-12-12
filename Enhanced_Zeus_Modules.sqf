@@ -18180,6 +18180,7 @@ private _changelog = [
 	"Added Create Intel module to Gameplay",
 	"Changed original EZM functions to have less code repetition",
 	"Fixed the Remove Teamkillers module",
+	"Fixed attributes menu opening incorrectly with players in vehicles",
 	"Overhauled the Attributes Dialog system. Should run in half the time"
 ];
 
