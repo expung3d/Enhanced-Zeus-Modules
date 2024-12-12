@@ -17,8 +17,9 @@ Adding the function is very simple. Simply define the function you want to call 
 Make sure that when you're creating a function that you use a unique prefix! The format to follow would be `TAG_MAZ_EZM_fnc_`. TAG is replaced with your own function tag, our function will simply be called `MAZ_EZM_fnc_helloWorld`.
 ```sqf
 MAZ_EZM_fnc_helloWorld = {
-	params ["_entity"]; //This entity will always be passed into a function called via EZM.
+	params ["_entity","_position"]; //This entity will always be passed into a function called via EZM.
 	//The _entity represents whatever the module is placed onto, a vehicle, a player, etc.
+	//The _position represents the mouse position. It includes intersects so the position is AGL and where you clicked on a building.
 	
 	systemChat format ["Hello World! %1", typeOf _entity];
 	//This will systemChat "Hello World!" and the type of the entity we placed the module onto.
