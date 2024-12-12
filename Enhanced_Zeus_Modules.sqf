@@ -4308,15 +4308,15 @@ MAZ_EZM_fnc_runZeusModule = {
 		waitUntil {(findDisplay -1) isEqualTo displayNull};
 		deleteVehicle _this;
 	};
-	if ((uiNamespace getVariable ["MAZ_EZMLite_SelectionPath", []]) isEqualTo []) exitWith {hint "No selection path"};
-	private _tvModulePath = uiNamespace getVariable ["MAZ_EZMLite_SelectionPath", []];
+	if ((uiNamespace getVariable ["MAZ_EZM_SelectionPath", []]) isEqualTo []) exitWith {hint "No selection path"};
+	private _tvModulePath = uiNamespace getVariable ["MAZ_EZM_SelectionPath", []];
 	private _parentDisplay = findDisplay 312;
 	private _parentTree = switch (_entityType) do {
 		case "ModuleEmpty_F": {
-			uiNamespace getVariable ["MAZ_EZMLite_ModulesTree", _parentDisplay displayCtrl 280];
+			uiNamespace getVariable ["MAZ_zeusModulesTree", _parentDisplay displayCtrl 280];
 		};
 		case "B_Soldier_VR_F": {
-			uiNamespace getVariable ["MAZ_UnitsTree_BLUFOR", _parentDisplay displayCtrl 271];
+			uiNamespace getVariable ["MAZ_UnitsTree_BLUFOR", _parentDisplay displayCtrl 270];
 		};
 		case "O_Soldier_VR_F": {
 			uiNamespace getVariable ["MAZ_UnitsTree_OPFOR", _parentDisplay displayCtrl 271];
@@ -4325,7 +4325,7 @@ MAZ_EZM_fnc_runZeusModule = {
 			uiNamespace getVariable ["MAZ_UnitsTree_INDEP", _parentDisplay displayCtrl 272];
 		};
 		case "C_Soldier_VR_F": {
-			uiNamespace getVariable ["MAZ_UnitsTree_CIVILIAN", _parentDisplay displayCtrl 272];
+			uiNamespace getVariable ["MAZ_UnitsTree_CIVILIAN", _parentDisplay displayCtrl 273];
 		};
 	};
 	[_parentTree, _tvModulePath] call MAZ_EZM_fnc_runZeusFunction;
@@ -4363,14 +4363,6 @@ MAZ_EZM_fnc_runZeusFunction = {
 		[objNull,_position] call _function;
 	} else {
 		[_targetObjArray # 1,_position] call _function;
-	};
-};
-
-MAZ_EZM_fnc_updateModuleSelection = {
-	params ["_selectionPath"];
-	with uiNamespace do {
-		if (_selectionPath isEqualTo []) exitWith {};
-		MAZ_EZMLite_SelectionPath = _selectionPath;
 	};
 };
 
@@ -16228,11 +16220,14 @@ MAZ_EZM_fnc_editZeusInterface = {
 				MAZ_UnitsTree_INDEP		 = (_display displayCtrl 272);
 				MAZ_UnitsTree_CIVILIAN	 = (_display displayCtrl 273);
 				MAZ_UnitsTree_EMPTY      = (_display displayCtrl 274);
-				MAZ_zeusModulesTree 	 = (_display displayCtrl 280);
+				MAZ_GroupsTree_BLUFOR	 = (_display displayCtrl 275);
+				MAZ_GroupsTree_OPFOR	 = (_display displayCtrl 276);
+				MAZ_GroupsTree_INDEP	 = (_display displayCtrl 277);
+				MAZ_GroupsTree_CIVILIAN	 = (_display displayCtrl 278);
 				MAZ_GroupsTree_EMPTY	 = (_display displayCtrl 279);
+				MAZ_zeusModulesTree 	 = (_display displayCtrl 280);
 				
-				for '_n' from 0 to 32 do 
-				{
+				for '_n' from 0 to 32 do {
 					uiNamespace getVariable "MAZ_UnitsTree_BLUFOR" tvCollapse [_n];
 					uiNamespace getVariable "MAZ_UnitsTree_OPFOR" tvCollapse [_n];
 					uiNamespace getVariable "MAZ_UnitsTree_INDEP" tvCollapse [_n];
@@ -16251,7 +16246,13 @@ MAZ_EZM_fnc_editZeusInterface = {
 				MAZ_zeusModulesTree ctrlSetTooltipColorShade [0.1,0.1,0.1,0.9];
 				
 				{
-					_x ctrlAddEventhandler ["TreeSelChanged","[(_this select 1)] call MAZ_EZM_fnc_updateModuleSelection"];
+					_x ctrlAddEventhandler ["TreeSelChanged",{
+						params ["_control","_path"];
+						with uiNamespace do {
+							if (_path isEqualTo []) exitWith {};
+							MAZ_EZM_SelectionPath = _path;
+						};
+					}];
 				} forEach [MAZ_UnitsTree_BLUFOR,MAZ_UnitsTree_OPFOR,MAZ_UnitsTree_INDEP,MAZ_UnitsTree_CIVILIAN,MAZ_UnitsTree_EMPTY,MAZ_zeusModulesTree];
 
 			comment "Add Divider";
@@ -18195,6 +18196,7 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 
 private _changelog = [
 	"Added Create Intel module to Gameplay",
+	"Changed original EZM functions to have less code repetition",
 	"Overhauled the Attributes Dialog system. Should run in half the time"
 ];
 
