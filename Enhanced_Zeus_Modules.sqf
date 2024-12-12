@@ -2691,7 +2691,6 @@ comment "Attributes Dialog Functions";
 			[_unit,_name] remoteExec ['setName'];
 			[_unit,_rank] remoteExec ["setRank"];
 			[_unit,_stance] remoteExec ["setUnitPos"];
-			MAZ_EZM_stanceForAI = _stance;
 			_unit setDamage (1 - _health);
 			if(!(_unit getVariable ["MAZ_EZM_doesHaveCustomSkills",false])) then {
 				[_unit, _skill] remoteExec ["setSkill"];
