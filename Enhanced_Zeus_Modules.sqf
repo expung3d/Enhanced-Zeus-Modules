@@ -4309,28 +4309,28 @@ MAZ_EZM_fnc_runZeusModule = {
 		deleteVehicle _this;
 	};
 	if ((uiNamespace getVariable ["MAZ_EZMLite_SelectionPath", []]) isEqualTo []) exitWith {hint "No selection path"};
-	private _tvModulePath = uiNamespace getVariable ['MAZ_EZMLite_SelectionPath', []];
+	private _tvModulePath = uiNamespace getVariable ["MAZ_EZMLite_SelectionPath", []];
 	private _parentDisplay = findDisplay 312;
 	private _parentTree = switch (_entityType) do {
-		case 'ModuleEmpty_F': {
-			uiNamespace getVariable ['MAZ_EZMLite_ModulesTree', _parentDisplay displayCtrl 280];
+		case "ModuleEmpty_F": {
+			uiNamespace getVariable ["MAZ_EZMLite_ModulesTree", _parentDisplay displayCtrl 280];
 		};
-		case 'B_Soldier_VR_F': {
-			uiNamespace getVariable ['MAZ_UnitsTree_BLUFOR', _parentDisplay displayCtrl 271];
+		case "B_Soldier_VR_F": {
+			uiNamespace getVariable ["MAZ_UnitsTree_BLUFOR", _parentDisplay displayCtrl 271];
 		};
-		case 'O_Soldier_VR_F': {
-			uiNamespace getVariable ['MAZ_UnitsTree_OPFOR', _parentDisplay displayCtrl 271];
+		case "O_Soldier_VR_F": {
+			uiNamespace getVariable ["MAZ_UnitsTree_OPFOR", _parentDisplay displayCtrl 271];
 		};
-		case 'I_Soldier_VR_F': {
-			uiNamespace getVariable ['MAZ_UnitsTree_INDEP', _parentDisplay displayCtrl 272];
+		case "I_Soldier_VR_F": {
+			uiNamespace getVariable ["MAZ_UnitsTree_INDEP", _parentDisplay displayCtrl 272];
 		};
-		case 'C_Soldier_VR_F': {
-			uiNamespace getVariable ['MAZ_UnitsTree_CIVILIAN', _parentDisplay displayCtrl 272];
+		case "C_Soldier_VR_F": {
+			uiNamespace getVariable ["MAZ_UnitsTree_CIVILIAN", _parentDisplay displayCtrl 272];
 		};
 	};
 	[_parentTree, _tvModulePath] call MAZ_EZM_fnc_runZeusFunction;
 	[_parentTree, _tvModulePath] spawn {
-		params ['_parentTree', '_tvModulePath'];
+		params ["_parentTree", "_tvModulePath"];
 		_parentTree tvSetPictureColor [_tvModulePath, EZM_themeColor];
 		uiSleep 0.5;
 		_parentTree tvSetPictureColor [_tvModulePath, [1,1,1,1]];
@@ -4354,7 +4354,7 @@ MAZ_EZM_fnc_runZeusFunction = {
 	} forEach _functionArray;
 	if (_functionName == "") exitWith {};
 	private _function = missionNamespace getVariable [_functionName, {
-		private _message = format ["<t font='puristaBold' align='center' color='#f96302' size='2'>MODULE ERROR<br/><t size='0.6' color='#FFFFFF' font='puristaLight'>( MODULE DID NOT RUN )<br/><t size='1.5' align='center' color='#f96302' font='puristaSemiBold'>Function Not Found:<br/><t size='1' color='#FFFFFF' font='puristaMedium'>“%1”<t size='0.7'><br/> <t/>", _functionName]; 
+		private _message = format ["<t font='puristaBold' align='center' color='#f96302' size='2'>MODULE ERROR<br/><t size='0.6' color='#FFFFFF' font='puristaLight'>( UNDEFINED FUNCTION - MODULE DID NOT RUN )<br/><t size='1.5' align='center' color='#f96302' font='puristaSemiBold'>Function Name:<br/><t size='1' color='#FFFFFF' font='puristaMedium'>“%1”<t size='0.7'><br/> <t/>", _functionName]; 
 		[_message, "Enhanced Zeus Modules", true, false, (findDisplay 312)] spawn BIS_fnc_guiMessage;
 	}];
 	private _targetObjArray = curatorMouseOver;
