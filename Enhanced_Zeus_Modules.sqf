@@ -15642,9 +15642,8 @@ MAZ_EZM_fnc_editZeusInterface = {
 
 			comment "Transparency & Function Defines";
 
-				missionNamespace setVariable ['MAZ_zeusModulesWithFunction', []];
-				private _transparency = profilenamespace getVariable ['MAZ_EZM_Transparency', 1];
-				[_transparency] call (missionNamespace getvariable ['MAZ_EZM_fnc_setZeusTransparency', {}]);
+				missionNamespace setVariable ["MAZ_zeusModulesWithFunction", []];
+				[missionNamespace getVariable "EZM_zeusTransparency"] call (missionNamespace getvariable ["MAZ_EZM_fnc_setZeusTransparency", {}]);
 
 				MAZ_EZM_fnc_zeusAddCategory = {
 					params [
