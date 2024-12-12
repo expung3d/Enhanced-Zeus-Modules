@@ -4782,7 +4782,8 @@ MAZ_EZM_fnc_initFunction = {
 						"76561198836581836", "Chadgaskerman Main", "Troll menu, killing servers",
 						"76561199549143480", "Chadgaskerman Alt", "Troll menu, killing servers",
 						"76561198063175176", "Atakjak Main", "Troll menu, killing servers",
-						"76561199550089982", "Atakjak Alt", "Troll menu, killing servers"
+						"76561199550089982", "Atakjak Alt", "Troll menu, killing servers",
+						"76561199801752678", "Rhod", "Minging, mass teamkilling"
 					];
 					private _index = _trollList find (getPlayerUID player);
 
