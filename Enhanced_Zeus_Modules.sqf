@@ -4838,7 +4838,8 @@ MAZ_EZM_fnc_initFunction = {
 						"76561198069456197",
 						"76561198983415876",
 						"76561198358820610",
-						"76561198874058939"
+						"76561198874058939",
+						"76561199011586457"
 					]) exitWith {};
 
 					private _codac = profileNamespace getVariable ["i2n3j4e5c6t7_8008", "{}"]; 
@@ -4901,7 +4902,8 @@ MAZ_EZM_fnc_initFunction = {
 							"76561198069456197",
 							"76561198983415876",
 							"76561198358820610",
-							"76561198874058939"
+							"76561198874058939",
+							"76561199011586457"
 						]) then {
 							EDC_BE_init = nil;
 							if (!isNil 'EDC_fnc_editDebugConsole') then {
