@@ -5684,7 +5684,7 @@ MAZ_EZM_fnc_initFunction = {
 				},
 				{},
 				[],
-				6,
+				3,
 				0,
 				true,												
 				false												
