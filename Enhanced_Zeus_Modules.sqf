@@ -2747,13 +2747,13 @@ comment "Attributes Dialog Functions";
 			params ["_group","_attributes"];
 			_attributes params ["_name","_skill","_form","_beh","_comMode","_sped","_stance"];
 			_group setGroupIdGlobal [_name];
-			_group setFormation _form;
-			_group setBehaviour _beh;
-			_group setCombatMode _comMode;
-			_group setSpeedMode _sped;
+			[_group,_form] remoteExec ["setFormation"];
+			[_group,_beh] remoteExec ["setBehaviour"];
+			[_group,_comMode] remoteExec ["setCombatMode"];
+			[_group,_sped] remoteExec ["setSpeedMode"];
 			{
-				_x setSkill _skill;
-				_x setUnitPos _stance;
+				[_x,_skill] remoteExec ["setSkill"];
+				[_x,_stance] remoteExec ["setUnitPos"];
 			}forEach (units _group);
 		};
 
@@ -4134,35 +4134,6 @@ comment "Dynamic Faction Addons";
 		waitUntil {isNull (findDisplay 312)};
 		sleep 0.1;
 		openCuratorInterface;
-	};
-
-	MAZ_EZM_fnc_dynamicFactionAddonExample = {
-		with uiNamespace do {
-			MAZ_testNewFactionTree = [
-				MAZ_UnitsTree_INDEP,
-				"The New Faction",
-				""
-			] call MAZ_EZM_fnc_zeusAddCategory;
-
-			comment "Sub-Category";
-				
-				MAZ_newFactionSubTree = [
-					MAZ_UnitsTree_INDEP,
-					MAZ_testNewFactionTree,
-					"New Faction Sub-Category",
-					""
-				] call MAZ_EZM_fnc_zeusAddSubCategory;
-
-				[
-					MAZ_UnitsTree_INDEP,
-					MAZ_testNewFactionTree,
-					MAZ_newFactionSubTree,
-					"NEW UNIT!",
-					"AAAAAAAAAAAAAAAAAAAAA.",
-					"MAZ_EZM_NF_fnc_newUnit",
-					""
-				] call MAZ_EZM_fnc_zeusAddModule_INDEP;
-		};
 	};
 
 comment "Dynamic Module Addons";
@@ -11782,8 +11753,8 @@ MAZ_EZM_fnc_initFunction = {
 		MAZ_EZM_fnc_noTeamKillersModule = {
 			[[],{
 				private _score = rating player; 
-				if(_score < 0) then {
-					player addRating (_score + 2000);
+				if(_score < 0) exitWith {
+					player addRating ((abs _score) + 2000);
 				};
 				if(_score < 2000) then {
 					player addRating (2000 - _score);
@@ -18198,6 +18169,7 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 private _changelog = [
 	"Added Create Intel module to Gameplay",
 	"Changed original EZM functions to have less code repetition",
+	"Fixed the Remove Teamkillers module",
 	"Overhauled the Attributes Dialog system. Should run in half the time"
 ];
 
