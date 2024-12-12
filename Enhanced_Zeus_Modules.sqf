@@ -15702,16 +15702,10 @@ MAZ_EZM_fnc_editZeusInterface = {
 						missionNamespace setVariable ['MAZ_zeusModulesWithFunction', _functionArray];
 					
 					comment "Add modules";
-						private _cindex = if(isNil "_parentSubCategory") then {
-							_parentTree tvAdd [[_parentCategory], _moduleName];
-						} else {
-							_parentTree tvAdd [[_parentCategory,_parentSubCategory], _moduleName];
-						};
-						private _path = if(isNil "_parentSubCategory") then {
-							[_parentCategory,_cindex];
-						} else {
-							[_parentCategory,_parentSubCategory,_cindex]
-						};
+						private _path = [_parentCategory] pushBack _parentSubCategory;
+						private _cindex = _parentTree tvAdd [_path, _moduleName];
+						_path pushBack _cindex;
+						
 						_parentTree tvSetTooltip [_path,_moduleTip];
 						_parentTree tvSetPicture [_path, _iconPath];
 						_parentTree tvSetData [_path, _data];
