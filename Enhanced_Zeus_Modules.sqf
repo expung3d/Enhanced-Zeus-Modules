@@ -4249,7 +4249,6 @@ MAZ_EZM_fnc_createUnitForZeus = {
 MAZ_EZM_fnc_runZeusModule = {
 	params ["_curator", "_entity"];
 	private _entityType = typeOf _entity;
-	
 	private _objectiveModules = [
 		"ModuleObjectiveAttackDefend_F",
 		"ModuleObjectiveSector_F",
@@ -4296,277 +4295,74 @@ MAZ_EZM_fnc_runZeusModule = {
 		[missionNamespace, "EZM_onVehicleCreated", [_entity]] call BIS_fnc_callScriptedEventHandler;
 	};
 	
-
 	if(_entityType isKindOf "CAManBase") then {
 		[_entity] call MAZ_EZM_fnc_autoResupplyAI; 
 		[_entity] spawn MAZ_EZM_fnc_cleanerWaitTilNoPlayers;
 		[_entity] call MAZ_EZM_fnc_addNVGs;
 		[missionNamespace, "EZM_onManCreated", [_entity]] call BIS_fnc_callScriptedEventHandler;
 	};
+
+	if !(_entityType in ["ModuleEmpty_F","B_Soldier_VR_F","O_Soldier_VR_F","I_Soldier_VR_F","C_Soldier_VR_F"]) exitWith {};
 	
-	switch (_entityType) do {
+	_entity spawn {
+		waitUntil {(findDisplay -1) isEqualTo displayNull};
+		deleteVehicle _this;
+	};
+	if ((uiNamespace getVariable ["MAZ_EZMLite_SelectionPath", []]) isEqualTo []) exitWith {hint "No selection path"};
+	private _tvModulePath = uiNamespace getVariable ['MAZ_EZMLite_SelectionPath', []];
+	private _parentDisplay = findDisplay 312;
+	private _parentTree = switch (_entityType) do {
 		case 'ModuleEmpty_F': {
-			_entity spawn {
-				sleep 0.1;
-				waitUntil {(findDisplay -1) isEqualTo displayNull};
-				sleep 0.25;
-				deleteVehicle _this;
-			};
-			if ((uiNamespace getVariable ['MAZ_EZMLite_SelectionPath', []]) isEqualTo []) exitWith {hint "No selection path"};
-			private _parentDisplay = findDisplay 312;
-			private _parentTree = uiNamespace getVariable ['MAZ_EZMLite_ModulesTree', _parentDisplay displayCtrl 280];
-			private _tvModulePath = uiNamespace getVariable ['MAZ_EZMLite_SelectionPath', []];
-			[_parentTree, _tvModulePath] call MAZ_EZM_fnc_runZeusFunction;
-			[_parentTree, _tvModulePath] spawn {
-				params ['_parentTree', '_tvModulePath'];
-				_parentTree tvSetPictureColor [_tvModulePath, EZM_themeColor];
-				uiSleep 0.5;
-				_parentTree tvSetPictureColor [_tvModulePath, [1,1,1,1]];
-			};
+			uiNamespace getVariable ['MAZ_EZMLite_ModulesTree', _parentDisplay displayCtrl 280];
 		};
 		case 'B_Soldier_VR_F': {
-			_entity spawn {
-				waitUntil {(findDisplay -1) isEqualTo displayNull};
-				deleteVehicle _this;
-			};
-			if ((uiNamespace getVariable ['MAZ_EZMLite_SelectionPath', []]) isEqualTo []) exitWith {hint "No selection path"};
-			private _parentDisplay = findDisplay 312;
-			private _parentTree = uiNamespace getVariable ['MAZ_UnitsTree_BLUFOR', _parentDisplay displayCtrl 271];
-			private _tvModulePath = uiNamespace getVariable ['MAZ_EZMLite_SelectionPath', []];
-			[_parentTree, _tvModulePath] call MAZ_EZM_fnc_runZeusFunction;
+			uiNamespace getVariable ['MAZ_UnitsTree_BLUFOR', _parentDisplay displayCtrl 271];
 		};
 		case 'O_Soldier_VR_F': {
-			_entity spawn {
-				waitUntil {(findDisplay -1) isEqualTo displayNull};
-				deleteVehicle _this;
-			};
-			if ((uiNamespace getVariable ['MAZ_EZMLite_SelectionPath', []]) isEqualTo []) exitWith {hint "No selection path"};
-			private _parentDisplay = findDisplay 312;
-			private _parentTree = uiNamespace getVariable ['MAZ_UnitsTree_OPFOR', _parentDisplay displayCtrl 271];
-			private _tvModulePath = uiNamespace getVariable ['MAZ_EZMLite_SelectionPath', []];
-			[_parentTree, _tvModulePath] call MAZ_EZM_fnc_runZeusFunction;
+			uiNamespace getVariable ['MAZ_UnitsTree_OPFOR', _parentDisplay displayCtrl 271];
 		};
 		case 'I_Soldier_VR_F': {
-			_entity spawn {
-				waitUntil {(findDisplay -1) isEqualTo displayNull};
-				deleteVehicle _this;
-			};
-			if ((uiNamespace getVariable ['MAZ_EZMLite_SelectionPath', []]) isEqualTo []) exitWith {hint "No selection path"};
-			private _parentDisplay = findDisplay 312;
-			private _parentTree = uiNamespace getVariable ['MAZ_UnitsTree_INDEP', _parentDisplay displayCtrl 272];
-			private _tvModulePath = uiNamespace getVariable ['MAZ_EZMLite_SelectionPath', []];
-			[_parentTree, _tvModulePath] call MAZ_EZM_fnc_runZeusFunction;
+			uiNamespace getVariable ['MAZ_UnitsTree_INDEP', _parentDisplay displayCtrl 272];
 		};
 		case 'C_Soldier_VR_F': {
-			_entity spawn {
-				waitUntil {(findDisplay -1) isEqualTo displayNull};
-				deleteVehicle _this;
-			};
-			if ((uiNamespace getVariable ['MAZ_EZMLite_SelectionPath', []]) isEqualTo []) exitWith {hint "No selection path"};
-			private _parentDisplay = findDisplay 312;
-			private _parentTree = uiNamespace getVariable ['MAZ_UnitsTree_CIVILIAN', _parentDisplay displayCtrl 272];
-			private _tvModulePath = uiNamespace getVariable ['MAZ_EZMLite_SelectionPath', []];
-			[_parentTree, _tvModulePath] call MAZ_EZM_fnc_runZeusFunction;
+			uiNamespace getVariable ['MAZ_UnitsTree_CIVILIAN', _parentDisplay displayCtrl 272];
 		};
-		default {};
+	};
+	[_parentTree, _tvModulePath] call MAZ_EZM_fnc_runZeusFunction;
+	[_parentTree, _tvModulePath] spawn {
+		params ['_parentTree', '_tvModulePath'];
+		_parentTree tvSetPictureColor [_tvModulePath, EZM_themeColor];
+		uiSleep 0.5;
+		_parentTree tvSetPictureColor [_tvModulePath, [1,1,1,1]];
 	};
 };
 
 MAZ_EZM_fnc_runZeusFunction = {
 	params ["_control", "_selectionPath"];
-	_val = _control tvData _selectionPath;
-	switch (_val) do 
+	private _tooltip = _control tvTooltip _selectionPath;
+	private _tooltipArray = _tooltip splitString "\n";
+	private _tooltipArrayIndex = parseNumber (_tooltipArray select (count _tooltipArray - 1));
+	if (_tooltipArrayIndex in [-1,0]) exitWith {};
+
+	private _functionName = "";
+	_functionArray = missionNamespace getVariable ["MAZ_zeusModulesWithFunction", []];
 	{
-		case 'ModuleEmpty_F': 
-		{
-			private _tooltip = _control tvTooltip _selectionPath;
-			private _tooltipArray = _tooltip splitString "\n";
-			private _tooltipArrayCount = count _tooltipArray;
-			private _tooltipArrayIndex = parseNumber (_tooltipArray select (count _tooltipArray - 1));
-			if (_tooltipArrayIndex == 0) exitWith 
-			{
-				systemchat format ['(_tooltipArrayIndex == 0)'];
-			};
-			private _functionIndex = _tooltipArrayIndex;
-			if (_functionIndex == -1) exitWith {systemChat 'Error: tvValue -1';};
-			private _functionName = '';
-			_functionArray = missionNamespace getVariable ['MAZ_zeusModulesWithFunction', []];
-			{
-				private _fIdx = _x # 0;
-				private _fName = _x # 1;
-				if (_fIdx == _functionIndex) exitWith 
-				{
-					_functionName = _fName;
-				};
-			} forEach _functionArray;
-			if (_functionName == '') exitWith {hint 'No Function Name';};
-			private _function = missionNamespace getVariable [_functionName, 
-			{
-				private _message = format ["<t font='puristaBold' align='center' color='#f96302' size='2'>MODULE ERROR<br/><t size='0.6' color='#FFFFFF' font='puristaLight'>( MODULE DID NOT RUN )<br/><t size='1.5' align='center' color='#f96302' font='puristaSemiBold'>Function Not Found:<br/><t size='1' color='#FFFFFF' font='puristaMedium'>“%1”<t size='0.7'><br/> <t/>", _functionName]; 
-				[_message, "Enhanced Zeus Modules", true, false, (findDisplay 312)] spawn BIS_fnc_guiMessage;
-			}];
-			private _targetObjArray = curatorMouseOver;
-			if ((_targetObjArray isEqualTo []) or (_targetObjArray isEqualTo [''])) then {
-				[objNull] call _function;
-			} else {
-				_targetObj = _targetObjArray select 1;
-				[_targetObj] call _function;
-			};
-			comment "_control tvSetCurSel [-1];";
+		_x params ["_functionID","_functionVar"];
+		if (_functionID == _tooltipArrayIndex) exitWith {
+			_functionName = _functionVar;
 		};
-		case 'B_Soldier_VR_F': 
-		{
-			private _tooltip = _control tvTooltip _selectionPath;
-			private _tooltipArray = _tooltip splitString "\n";
-			private _tooltipArrayCount = count _tooltipArray;
-			private _tooltipArrayIndex = parseNumber (_tooltipArray select (count _tooltipArray - 1));
-			if (_tooltipArrayIndex == 0) exitWith 
-			{
-				systemchat format ['(_tooltipArrayIndex == 0)'];
-			};
-			private _functionIndex = _tooltipArrayIndex;
-			if (_functionIndex == -1) exitWith {systemChat 'Error: tvValue -1';};
-			private _functionName = '';
-			_functionArray = missionNamespace getVariable ['MAZ_zeusModulesWithFunction', []];
-			{
-				private _fIdx = _x # 0;
-				private _fName = _x # 1;
-				if (_fIdx == _functionIndex) exitWith 
-				{
-					_functionName = _fName;
-				};
-			} forEach _functionArray;
-			if (_functionName == '') exitWith {hint 'No Function Name';};
-			private _function = missionNamespace getVariable [_functionName, 
-			{
-				private _message = format ["<t font='puristaBold' align='center' color='#f96302' size='2'>MODULE ERROR<br/><t size='0.6' color='#FFFFFF' font='puristaLight'>( MODULE DID NOT RUN )<br/><t size='1.5' align='center' color='#f96302' font='puristaSemiBold'>Function Not Found:<br/><t size='1' color='#FFFFFF' font='puristaMedium'>“%1”<t size='0.7'><br/> <t/>", _functionName]; 
-				[_message, "Enhanced Zeus Modules", true, false, (findDisplay 312)] spawn BIS_fnc_guiMessage;
-			}];
-			private _targetObjArray = curatorMouseOver;
-			if ((_targetObjArray isEqualTo []) or (_targetObjArray isEqualTo [''])) then 
-			{
-				[objNull, screenToWorld getMousePosition] call _function;
-			} else {
-				_targetObj = _targetObjArray select 1;
-				[_targetObj, screenToWorld getMousePosition] call _function;
-			};
-			comment "_control tvSetCurSel [-1];";	
-		};
-		case 'O_Soldier_VR_F': 
-		{
-			private _tooltip = _control tvTooltip _selectionPath;
-			private _tooltipArray = _tooltip splitString "\n";
-			private _tooltipArrayCount = count _tooltipArray;
-			private _tooltipArrayIndex = parseNumber (_tooltipArray select (count _tooltipArray - 1));
-			if (_tooltipArrayIndex == 0) exitWith 
-			{
-				systemchat format ['(_tooltipArrayIndex == 0)'];
-			};
-			private _functionIndex = _tooltipArrayIndex;
-			if (_functionIndex == -1) exitWith {systemChat 'Error: tvValue -1';};
-			private _functionName = '';
-			_functionArray = missionNamespace getVariable ['MAZ_zeusModulesWithFunction', []];
-			{
-				private _fIdx = _x # 0;
-				private _fName = _x # 1;
-				if (_fIdx == _functionIndex) exitWith 
-				{
-					_functionName = _fName;
-				};
-			} forEach _functionArray;
-			if (_functionName == '') exitWith {hint 'No Function Name';};
-			private _function = missionNamespace getVariable [_functionName, 
-			{
-				private _message = format ["<t font='puristaBold' align='center' color='#f96302' size='2'>MODULE ERROR<br/><t size='0.6' color='#FFFFFF' font='puristaLight'>( MODULE DID NOT RUN )<br/><t size='1.5' align='center' color='#f96302' font='puristaSemiBold'>Function Not Found:<br/><t size='1' color='#FFFFFF' font='puristaMedium'>“%1”<t size='0.7'><br/> <t/>", _functionName]; 
-				[_message, "Enhanced Zeus Modules", true, false, (findDisplay 312)] spawn BIS_fnc_guiMessage;
-			}];
-			private _targetObjArray = curatorMouseOver;
-			if ((_targetObjArray isEqualTo []) or (_targetObjArray isEqualTo [''])) then 
-			{
-				[objNull, screenToWorld getMousePosition] call _function;
-			} else {
-				_targetObj = _targetObjArray select 1;
-				[_targetObj, screenToWorld getMousePosition] call _function;
-			};
-			comment "_control tvSetCurSel [-1];";
-			
-		};
-		case 'I_Soldier_VR_F': 
-		{
-			private _tooltip = _control tvTooltip _selectionPath;
-			private _tooltipArray = _tooltip splitString "\n";
-			private _tooltipArrayCount = count _tooltipArray;
-			private _tooltipArrayIndex = parseNumber (_tooltipArray select (count _tooltipArray - 1));
-			if (_tooltipArrayIndex == 0) exitWith 
-			{
-				systemchat format ['(_tooltipArrayIndex == 0)'];
-			};
-			private _functionIndex = _tooltipArrayIndex;
-			if (_functionIndex == -1) exitWith {systemChat 'Error: tvValue -1';};
-			private _functionName = '';
-			_functionArray = missionNamespace getVariable ['MAZ_zeusModulesWithFunction', []];
-			{
-				private _fIdx = _x # 0;
-				private _fName = _x # 1;
-				if (_fIdx == _functionIndex) exitWith 
-				{
-					_functionName = _fName;
-				};
-			} forEach _functionArray;
-			if (_functionName == '') exitWith {hint 'No Function Name';};
-			private _function = missionNamespace getVariable [_functionName, 
-			{
-				private _message = format ["<t font='puristaBold' align='center' color='#f96302' size='2'>MODULE ERROR<br/><t size='0.6' color='#FFFFFF' font='puristaLight'>( MODULE DID NOT RUN )<br/><t size='1.5' align='center' color='#f96302' font='puristaSemiBold'>Function Not Found:<br/><t size='1' color='#FFFFFF' font='puristaMedium'>“%1”<t size='0.7'><br/> <t/>", _functionName]; 
-				[_message, "Enhanced Zeus Modules", true, false, (findDisplay 312)] spawn BIS_fnc_guiMessage;
-			}];
-			private _targetObjArray = curatorMouseOver;
-			if ((_targetObjArray isEqualTo []) or (_targetObjArray isEqualTo [''])) then 
-			{
-				[objNull, screenToWorld getMousePosition] call _function;
-			} else {
-				_targetObj = _targetObjArray select 1;
-				[_targetObj, screenToWorld getMousePosition] call _function;
-			};
-			comment "_control tvSetCurSel [-1];";	
-		};
-		case 'C_Soldier_VR_F': {
-			private _tooltip = _control tvTooltip _selectionPath;
-			private _tooltipArray = _tooltip splitString "\n";
-			private _tooltipArrayCount = count _tooltipArray;
-			private _tooltipArrayIndex = parseNumber (_tooltipArray select (count _tooltipArray - 1));
-			if (_tooltipArrayIndex == 0) exitWith 
-			{
-				systemchat format ['(_tooltipArrayIndex == 0)'];
-			};
-			private _functionIndex = _tooltipArrayIndex;
-			if (_functionIndex == -1) exitWith {systemChat 'Error: tvValue -1';};
-			private _functionName = '';
-			_functionArray = missionNamespace getVariable ['MAZ_zeusModulesWithFunction', []];
-			{
-				private _fIdx = _x # 0;
-				private _fName = _x # 1;
-				if (_fIdx == _functionIndex) exitWith 
-				{
-					_functionName = _fName;
-				};
-			} forEach _functionArray;
-			if (_functionName == '') exitWith {hint 'No Function Name';};
-			private _function = missionNamespace getVariable [_functionName, 
-			{
-				private _message = format ["<t font='puristaBold' align='center' color='#f96302' size='2'>MODULE ERROR<br/><t size='0.6' color='#FFFFFF' font='puristaLight'>( MODULE DID NOT RUN )<br/><t size='1.5' align='center' color='#f96302' font='puristaSemiBold'>Function Not Found:<br/><t size='1' color='#FFFFFF' font='puristaMedium'>“%1”<t size='0.7'><br/> <t/>", _functionName]; 
-				[_message, "Enhanced Zeus Modules", true, false, (findDisplay 312)] spawn BIS_fnc_guiMessage;
-			}];
-			private _targetObjArray = curatorMouseOver;
-			if ((_targetObjArray isEqualTo []) or (_targetObjArray isEqualTo [''])) then 
-			{
-				[objNull, screenToWorld getMousePosition] call _function;
-			} else {
-				_targetObj = _targetObjArray select 1;
-				[_targetObj, screenToWorld getMousePosition] call _function;
-			};
-			comment "_control tvSetCurSel [-1];";	
-		};
-		default {};
+	} forEach _functionArray;
+	if (_functionName == "") exitWith {};
+	private _function = missionNamespace getVariable [_functionName, {
+		private _message = format ["<t font='puristaBold' align='center' color='#f96302' size='2'>MODULE ERROR<br/><t size='0.6' color='#FFFFFF' font='puristaLight'>( MODULE DID NOT RUN )<br/><t size='1.5' align='center' color='#f96302' font='puristaSemiBold'>Function Not Found:<br/><t size='1' color='#FFFFFF' font='puristaMedium'>“%1”<t size='0.7'><br/> <t/>", _functionName]; 
+		[_message, "Enhanced Zeus Modules", true, false, (findDisplay 312)] spawn BIS_fnc_guiMessage;
+	}];
+	private _targetObjArray = curatorMouseOver;
+	private _position = [true] call MAZ_EZM_fnc_getScreenPosition;
+	if ((_targetObjArray isEqualTo []) or (_targetObjArray isEqualTo [""])) then {
+		[objNull,_position] call _function;
+	} else {
+		[_targetObjArray # 1,_position] call _function;
 	};
 };
 
@@ -4582,27 +4378,12 @@ MAZ_EZM_fnc_setZeusTransparency = {
 	params [['_alpha', 1]];
 	with uiNamespace do {
 		private _display = findDisplay 312;
-			
-		_display setVariable ['trimColor', EZM_themeColor];
-	
-		(_display displayCtrl 16304) ctrlSetBackgroundColor [0.18, 0.19, 0.21, _alpha]; 
-		(_display displayCtrl 16304) ctrlCommit 0;
-
-		(_display displayCtrl 15505) ctrlSetBackgroundColor [0.18, 0.19, 0.21, _alpha]; 
-		(_display displayCtrl 15505) ctrlCommit 0;
-
-		(_display displayCtrl 16105) ctrlSetBackgroundColor [0.13, 0.13, 0.15, _alpha];  
+ 
 		(_display displayCtrl 16105) ctrlSetText format ['EZM %1',missionNamespace getVariable ['MAZ_EZM_Version','']];
 
 		(_display displayCtrl 16105) ctrlSetTextColor EZM_themeColor;
-		(_display displayCtrl 16105) ctrlCommit 0; 
 
-		(_display displayCtrl 16104) ctrlSetBackgroundColor [0.13, 0.13, 0.15, _alpha];  
 		(_display displayCtrl 16104) ctrlSetTextColor EZM_themeColor;
-		(_display displayCtrl 16104) ctrlCommit 0; 
-
-		(_display displayCtrl 15513) ctrlSetBackgroundColor [0.13, 0.13, 0.15, _alpha];  
-		(_display displayCtrl 15513) ctrlCommit 0; 
 
 		(_display displayCtrl 16306) ctrlSetTextColor [0,0,0,1]; 
 		(_display displayCtrl 16306) ctrlCommit 0; 
@@ -4610,31 +4391,28 @@ MAZ_EZM_fnc_setZeusTransparency = {
 		(_display displayCtrl 15715) ctrlSetTextColor EZM_themeColor;
 		(_display displayCtrl 15715) ctrlCommit 0; 
 
-		(_display displayCtrl 15508) ctrlSetBackgroundColor [0.18, 0.19, 0.21, _alpha];  
-		(_display displayCtrl 15508) ctrlCommit 0;
-
 		(_display displayCtrl 15506) ctrlSetBackgroundColor [0.21, 0.22, 0.25, _alpha];  
 		(_display displayCtrl 15506) ctrlCommit 0;
-
-		(_display displayCtrl 15518) ctrlSetBackgroundColor [0.18, 0.19, 0.21, _alpha]; 
-		(_display displayCtrl 15518) ctrlCommit 0;
 
 		(_display displayCtrl 280) ctrlSetBackgroundColor [0.25, 0.27, 0.29, _alpha * 0.5]; 
 		(_display displayCtrl 280) ctrlCommit 0;
 
-		(_display displayCtrl 283) ctrlSetBackgroundColor [0.13, 0.13, 0.15, _alpha]; 
-		(_display displayCtrl 283) ctrlCommit 0; 
+		{
+			(_display displayCtrl _x) ctrlSetBackgroundColor [0.18, 0.19, 0.21, _alpha]; 
+			(_display displayCtrl _x) ctrlCommit 0;
+		}forEach [15508,15518,15505,16304];
 
-		(_display displayCtrl 646) ctrlSetBackgroundColor [0.13, 0.13, 0.15, _alpha]; 
-		(_display displayCtrl 646) ctrlCommit 0; 
+		{
+			(_display displayCtrl _x) ctrlSetBackgroundColor [0.13, 0.13, 0.15, _alpha]; 
+			(_display displayCtrl _x) ctrlCommit 0; 
+		}forEach [646,283,15513,16104,16105];
 
 		(_display displayCtrl 152) ctrlSetTextColor EZM_themeColor; 
 		(_display displayCtrl 152) ctrlAddEventHandler ["MouseButtonClick", {
 			params ["_control"];
-			_control spawn 
-			{
+			_control spawn {
 				uiSleep 0.07;
-				_this ctrlSetTextColor ((ctrlParent _this) getvariable ['trimColor', [1,1,1,1]]); 
+				_this ctrlSetTextColor EZM_themeColor; 
 				_this ctrlCommit 0; 
 			};
 		}];
@@ -10840,7 +10618,6 @@ MAZ_EZM_fnc_initFunction = {
 			],{
 				params ["_values","_pos","_display"];
 				_values params ["_iedType","_radius","_sides"];
-				systemChat (str _values);
 				private _trashCanTypes = ["Land_GarbageBin_01_F","TrashBagHolder_01_F"];
 				private _cardboardBox = ["Land_PaperBox_01_small_destroyed_brown_F"];
 				private _luggageTypes = ["Land_LuggageHeap_01_F","Land_LuggageHeap_03_F"];
@@ -15904,188 +15681,73 @@ MAZ_EZM_fnc_editZeusInterface = {
 					_cindex;
 				};
 
-				MAZ_EZM_fnc_zeusAddModule = {
+				MAZ_EZM_fnc_zeusNewAddModule = {
 					params [
-						['_parentTree', findDisplay 312 displayCtrl 280],
-						['_parentCategory', 1],
-						['_moduleName', '[ Module ]'],
-						['_moduleTip', '[ Placeholder ]'],
-						['_moduleFunction', 'MAZ_EZM_fnc_nullFunction'],
-						['_iconPath', '\a3\ui_f_curator\Data\Displays\RscDisplayCurator\modeModules_ca.paa'],
-						['_textColor', [1,1,1,1]],
-						['_iconColor', [1,1,1,1]],
-						['_iconColorSelected', [0,0,0,1]],
-						['_iconColorDisabled', [0.8,0,0,0.8]]
+						["_side", sideLogic, [west]],
+						["_parentTree", findDisplay 312 displayCtrl 280],
+						["_parentCategory", 1],
+						["_moduleName", "[ Module ]"],
+						["_moduleTip", "[ Placeholder ]"],
+						["_moduleFunction", "MAZ_EZM_fnc_nullFunction"],
+						["_iconPath", "\a3\ui_f_curator\Data\Displays\RscDisplayCurator\modeModules_ca.paa"],
+						["_textColor", [1,1,1,1]],
+						["_iconColor", [1,1,1,1]],
+						["_iconColorSelected", [0,0,0,1]],
+						["_iconColorDisabled", [0.8,0,0,0.8]]
 					];
-					
+
+					private _data = switch (_side) do {
+						case west: {"B_Soldier_VR_F"};
+						case east: {"O_Soldier_VR_F"};
+						case independent: {"I_Soldier_VR_F"};
+						case civilian: {"C_Soldier_VR_F"};
+						default {"ModuleEmpty_F"};
+					};
+
 					comment "Setup functions";
-					private _functionArray = missionNamespace getVariable ['MAZ_zeusModulesWithFunction', []];
-					private _functionCount = count _functionArray; 
-					private _functionIndex = 7000 + (_functionCount + 1);
-					private _moduleTip = format ['%1\n\nFunction ID:\n%2', _moduleTip, str _functionIndex];
-					_functionArray pushBack [_functionIndex, _moduleFunction];
-					missionNamespace setVariable ['MAZ_zeusModulesWithFunction', _functionArray];
+						private _functionArray = missionNamespace getVariable ['MAZ_zeusModulesWithFunction', []];
+						private _functionCount = count _functionArray; 
+						private _functionIndex = 7000 + (_functionCount + 1);
+						private _moduleTip = format ['%1\n\nFunction ID:\n%2', _moduleTip, str _functionIndex];
+						_functionArray pushBack [_functionIndex, _moduleFunction];
+						missionNamespace setVariable ['MAZ_zeusModulesWithFunction', _functionArray];
 					
 					comment "Add modules";
-					private _cindex = _parentTree tvAdd [[_parentCategory], _moduleName];
-					private _path = [_parentCategory,_cindex];
-					_parentTree tvSetTooltip [_path,_moduleTip];
-					_parentTree tvSetPicture [_path, _iconPath];
-					_parentTree tvSetData [_path, 'ModuleEmpty_F'];
-					_parentTree tvSetPictureColor [_path, _iconColor];
-					_parentTree tvSetColor [_path, _textColor];
-					comment "_parentTree tvSetPictureColorSelected [_path, _iconColorSelected];";
-					comment "_parentTree tvSetPictureColorDisabled [_path, _iconColorDisabled];";
-					_parentTree ctrlCommit 0;
+						private _cindex = _parentTree tvAdd [[_parentCategory], _moduleName];
+						private _path = [_parentCategory,_cindex];
+						_parentTree tvSetTooltip [_path,_moduleTip];
+						_parentTree tvSetPicture [_path, _iconPath];
+						_parentTree tvSetData [_path, _data];
+						_parentTree tvSetPictureColor [_path, _iconColor];
+						_parentTree tvSetColor [_path, _textColor];
+						_parentTree ctrlCommit 0;
+
 					_path;
+				};
+
+				MAZ_EZM_fnc_zeusAddModule = {
+					_this insert [0,[sideLogic]];
+					_this call MAZ_EZM_fnc_zeusNewAddModule;
 				};
 
 				MAZ_EZM_fnc_zeusAddModule_BLUFOR = {
-					params [
-						['_parentTree', findDisplay 312 displayCtrl 280],
-						['_parentCategory', 1],
-						['_parentSubcategory',1],
-						['_moduleName', '[ Module ]'],
-						['_moduleTip', '[ Placeholder ]'],
-						['_moduleFunction', 'MAZ_EZM_fnc_nullFunction'],
-						['_iconPath', '\a3\ui_f_curator\Data\Displays\RscDisplayCurator\modeModules_ca.paa'],
-						['_textColor', [1,1,1,1]],
-						['_iconColor', [1,1,1,1]],
-						['_iconColorSelected', [0,0,0,1]],
-						['_iconColorDisabled', [0.8,0,0,0.8]]
-					];
-					
-					comment "Setup functions";
-					_functionArray = missionNamespace getVariable ['MAZ_zeusModulesWithFunction', []];
-					private _functionCount = count _functionArray; 
-					private _functionIndex = 7000 + (_functionCount + 1);
-					private _moduleTip = format ['%1\n\nFunction ID:\n%2', _moduleTip, str _functionIndex];
-					_functionArray pushBack [_functionIndex, _moduleFunction];
-					missionNamespace setVariable ['MAZ_zeusModulesWithFunction', _functionArray];
-					
-					comment "Add modules";
-					private _cindex = _parentTree tvAdd [[_parentCategory,_parentSubcategory], _moduleName];
-					private _path = [_parentCategory,_parentSubcategory,_cindex];
-					_parentTree tvSetTooltip [_path,_moduleTip];
-					_parentTree tvSetPicture [_path, _iconPath];
-					_parentTree tvSetData [_path, 'B_Soldier_VR_F'];
-					_parentTree tvSetPictureColor [_path, _iconColor];
-					_parentTree tvSetColor [_path, _textColor];
-					comment "_parentTree tvSetPictureColorSelected [_path, _iconColorSelected];";
-					comment "_parentTree tvSetPictureColorDisabled [_path, _iconColorDisabled];";
-					_parentTree ctrlCommit 0;
-					_path;
+					_this insert [0,[west]];
+					_this call MAZ_EZM_fnc_zeusNewAddModule;
 				};
 
 				MAZ_EZM_fnc_zeusAddModule_OPFOR = {
-					params [
-						['_parentTree', findDisplay 312 displayCtrl 280],
-						['_parentCategory', 1],
-						['_parentSubcategory',1],
-						['_moduleName', '[ Module ]'],
-						['_moduleTip', '[ Placeholder ]'],
-						['_moduleFunction', 'MAZ_EZM_fnc_nullFunction'],
-						['_iconPath', '\a3\ui_f_curator\Data\Displays\RscDisplayCurator\modeModules_ca.paa'],
-						['_textColor', [1,1,1,1]],
-						['_iconColor', [1,1,1,1]],
-						['_iconColorSelected', [0,0,0,1]],
-						['_iconColorDisabled', [0.8,0,0,0.8]]
-					];
-					
-					comment "Setup functions";
-					_functionArray = missionNamespace getVariable ['MAZ_zeusModulesWithFunction', []];
-					private _functionCount = count _functionArray; 
-					private _functionIndex = 7000 + (_functionCount + 1);
-					private _moduleTip = format ['%1\n\nFunction ID:\n%2', _moduleTip, str _functionIndex];
-					_functionArray pushBack [_functionIndex, _moduleFunction];
-					missionNamespace setVariable ['MAZ_zeusModulesWithFunction', _functionArray];
-					
-					comment "Add modules";
-					private _cindex = _parentTree tvAdd [[_parentCategory,_parentSubcategory], _moduleName];
-					private _path = [_parentCategory,_parentSubcategory,_cindex];
-					_parentTree tvSetTooltip [_path,_moduleTip];
-					_parentTree tvSetPicture [_path, _iconPath];
-					_parentTree tvSetData [_path, 'O_Soldier_VR_F'];
-					_parentTree tvSetPictureColor [_path, _iconColor];
-					_parentTree tvSetColor [_path, _textColor];
-					comment "_parentTree tvSetPictureColorSelected [_path, _iconColorSelected];";
-					comment "_parentTree tvSetPictureColorDisabled [_path, _iconColorDisabled];";
-					_parentTree ctrlCommit 0;
-					_path;
+					_this insert [0,[east]];
+					_this call MAZ_EZM_fnc_zeusNewAddModule;
 				};
 
 				MAZ_EZM_fnc_zeusAddModule_INDEP = {
-					params [
-						['_parentTree', findDisplay 312 displayCtrl 280],
-						['_parentCategory', 1],
-						['_parentSubcategory',1],
-						['_moduleName', '[ Module ]'],
-						['_moduleTip', '[ Placeholder ]'],
-						['_moduleFunction', 'MAZ_EZM_fnc_nullFunction'],
-						['_iconPath', '\a3\ui_f_curator\Data\Displays\RscDisplayCurator\modeModules_ca.paa'],
-						['_textColor', [1,1,1,1]],
-						['_iconColor', [1,1,1,1]],
-						['_iconColorSelected', [0,0,0,1]],
-						['_iconColorDisabled', [0.8,0,0,0.8]]
-					];
-					
-					comment "Setup functions";
-					_functionArray = missionNamespace getVariable ['MAZ_zeusModulesWithFunction', []];
-					private _functionCount = count _functionArray; 
-					private _functionIndex = 7000 + (_functionCount + 1);
-					private _moduleTip = format ['%1\n\nFunction ID:\n%2', _moduleTip, str _functionIndex];
-					_functionArray pushBack [_functionIndex, _moduleFunction];
-					missionNamespace setVariable ['MAZ_zeusModulesWithFunction', _functionArray];
-					
-					comment "Add modules";
-					private _cindex = _parentTree tvAdd [[_parentCategory,_parentSubcategory], _moduleName];
-					private _path = [_parentCategory,_parentSubcategory,_cindex];
-					_parentTree tvSetTooltip [_path,_moduleTip];
-					_parentTree tvSetPicture [_path, _iconPath];
-					_parentTree tvSetData [_path, 'I_Soldier_VR_F'];
-					_parentTree tvSetPictureColor [_path, _iconColor];
-					_parentTree tvSetColor [_path, _textColor];
-					comment "_parentTree tvSetPictureColorSelected [_path, _iconColorSelected];";
-					comment "_parentTree tvSetPictureColorDisabled [_path, _iconColorDisabled];";
-					_parentTree ctrlCommit 0;
-					_path;
+					_this insert [0,[independent]];
+					_this call MAZ_EZM_fnc_zeusNewAddModule;
 				};
 
 				MAZ_EZM_fnc_zeusAddModule_CIVILIAN = {
-					params [
-						['_parentTree', findDisplay 312 displayCtrl 280],
-						['_parentCategory', 1],
-						['_parentSubcategory',1],
-						['_moduleName', '[ Module ]'],
-						['_moduleTip', '[ Placeholder ]'],
-						['_moduleFunction', 'MAZ_EZM_fnc_nullFunction'],
-						['_iconPath', '\a3\ui_f_curator\Data\Displays\RscDisplayCurator\modeModules_ca.paa'],
-						['_textColor', [1,1,1,1]],
-						['_iconColor', [1,1,1,1]],
-						['_iconColorSelected', [0,0,0,1]],
-						['_iconColorDisabled', [0.8,0,0,0.8]]
-					];
-					
-					comment "Setup functions";
-					_functionArray = missionNamespace getVariable ['MAZ_zeusModulesWithFunction', []];
-					private _functionCount = count _functionArray; 
-					private _functionIndex = 7000 + (_functionCount + 1);
-					private _moduleTip = format ['%1\n\nFunction ID:\n%2', _moduleTip, str _functionIndex];
-					_functionArray pushBack [_functionIndex, _moduleFunction];
-					missionNamespace setVariable ['MAZ_zeusModulesWithFunction', _functionArray];
-					
-					comment "Add modules";
-					private _cindex = _parentTree tvAdd [[_parentCategory,_parentSubcategory], _moduleName];
-					private _path = [_parentCategory,_parentSubcategory,_cindex];
-					_parentTree tvSetTooltip [_path,_moduleTip];
-					_parentTree tvSetPicture [_path, _iconPath];
-					_parentTree tvSetData [_path, 'C_Soldier_VR_F'];
-					_parentTree tvSetPictureColor [_path, _iconColor];
-					_parentTree tvSetColor [_path, _textColor];
-					comment "_parentTree tvSetPictureColorSelected [_path, _iconColorSelected];";
-					comment "_parentTree tvSetPictureColorDisabled [_path, _iconColorDisabled];";
-					_parentTree ctrlCommit 0;
-					_path;
+					_this insert [0,[civilian]];
+					_this call MAZ_EZM_fnc_zeusNewAddModule;
 				};
 
 				MAZ_EZM_fnc_addZeusPreviewEvents = {
@@ -17815,7 +17477,9 @@ MAZ_EZM_editZeusLogic = {
 		"MAZ_zeusEH_modulePlaced",
 		_zeusLogic addEventHandler [
 			'CuratorObjectPlaced',
-			MAZ_EZM_fnc_runZeusModule
+			{
+				_this call MAZ_EZM_fnc_runZeusModule
+			}
 		]
 	];
 
