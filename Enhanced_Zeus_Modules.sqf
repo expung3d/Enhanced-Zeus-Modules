@@ -15676,14 +15676,13 @@ MAZ_EZM_fnc_editZeusInterface = {
 						["_side", sideLogic, [west]],
 						["_parentTree", findDisplay 312 displayCtrl 280],
 						["_parentCategory", 1],
+						["_parentSubCategory", nil],
 						["_moduleName", "[ Module ]"],
 						["_moduleTip", "[ Placeholder ]"],
 						["_moduleFunction", "MAZ_EZM_fnc_nullFunction"],
 						["_iconPath", "\a3\ui_f_curator\Data\Displays\RscDisplayCurator\modeModules_ca.paa"],
 						["_textColor", [1,1,1,1]],
-						["_iconColor", [1,1,1,1]],
-						["_iconColorSelected", [0,0,0,1]],
-						["_iconColorDisabled", [0.8,0,0,0.8]]
+						["_iconColor", [1,1,1,1]]
 					];
 
 					private _data = switch (_side) do {
@@ -15703,8 +15702,16 @@ MAZ_EZM_fnc_editZeusInterface = {
 						missionNamespace setVariable ['MAZ_zeusModulesWithFunction', _functionArray];
 					
 					comment "Add modules";
-						private _cindex = _parentTree tvAdd [[_parentCategory], _moduleName];
-						private _path = [_parentCategory,_cindex];
+						private _cindex = if(isNil "_parentSubCategory") then {
+							_parentTree tvAdd [[_parentCategory], _moduleName];
+						} else {
+							_parentTree tvAdd [[_parentCategory,_parentSubCategory], _moduleName];
+						};
+						private _path = if(isNil "_parentSubCategory") then {
+							[_parentCategory,_cindex];
+						} else {
+							[_parentCategory,_parentSubCategory,_cindex]
+						};
 						_parentTree tvSetTooltip [_path,_moduleTip];
 						_parentTree tvSetPicture [_path, _iconPath];
 						_parentTree tvSetData [_path, _data];
@@ -15717,6 +15724,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 
 				MAZ_EZM_fnc_zeusAddModule = {
 					_this insert [0,[sideLogic]];
+					_this insert [3,[nil]];
 					_this call MAZ_EZM_fnc_zeusNewAddModule;
 				};
 
