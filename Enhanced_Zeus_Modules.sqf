@@ -15616,8 +15616,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 	private _fnc_editInterface = {
 		disableSerialization;
 		with uiNamespace do {
-			private _display = displayNull;
-			_display = findDisplay 312;
+			private _display = findDisplay 312;
 			if(isNull _display) exitWith {};
 			
 			comment "Re-Color Zeus Watermark";
