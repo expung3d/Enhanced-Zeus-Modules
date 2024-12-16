@@ -11527,38 +11527,16 @@ MAZ_EZM_fnc_initFunction = {
 			["Object replaced with simple object.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
 
-		HYPER_EZM_fnc_setColor = {
+		HYPER_EZM_fnc_setColorBlack = {
 			params ["_entity"];
 			if(_entity isEqualTo objNull) exitWith {["No object selected.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
-			[
-				"Set Object Color",
-				[
-					[
-						"COLOR",
-						"Pick a Color",
-						[ 
-							[0, 0, 0, 1],
-							false
-						]
-					]
-				], 
-				{
-					params ["_values", "_args", "_display"];
-					private _color = _values select 0;
-					private _entity = _args;
-					private _newColor = format ["#(argb,8,8,3)color(%1,%2,%3,%4)", (_color select 0), (_color select 1), (_color select 2), (_color select 3)];
-					{
-						_entity setObjectTextureGlobal [_forEachIndex, _newColor];
-					} forEach (getObjectTextures _entity);
 
-					["Changed object color.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
-					_display closeDisplay 1; 
-				}, 
-				{ 
-					_display closeDisplay 2; 
-				}, 
-				_entity 
-			] call MAZ_EZM_fnc_createDialog;
+			private _colorBlack = "#(argb,8,8,3)color(0,0,0,1)";
+			{
+				_entity setObjectTextureGlobal [_forEachIndex, _colorBlack];
+			} forEach (getObjectTextures _entity);
+
+			["Changed object color.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 
 		};
 
@@ -16990,9 +16968,9 @@ MAZ_EZM_fnc_editZeusInterface = {
 				[
 					MAZ_zeusModulesTree,
 					MAZ_ObjectModTree,
-					"Set Color",
-					"Changes textures of an object / unit to a color if possible.",
-					"HYPER_EZM_fnc_setColor",
+					"Set Color to Black",
+					"Changes textures of an object / unit to black if possible.",
+					"HYPER_EZM_fnc_setColorBlack",
 					"a3\ui_f\data\gui\rsc\rscdisplaygarage\texturesources_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
