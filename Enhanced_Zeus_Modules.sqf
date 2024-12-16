@@ -11551,7 +11551,7 @@ MAZ_EZM_fnc_initFunction = {
 						_entity setObjectTextureGlobal [_forEachIndex, _newColor];
 					} forEach (getObjectTextures _entity);
 
-					["Object replaced with simple object.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+					["Changed object color.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 					_display closeDisplay 1; 
 				}, 
 				{ 
