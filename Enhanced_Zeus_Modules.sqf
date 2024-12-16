@@ -11527,6 +11527,41 @@ MAZ_EZM_fnc_initFunction = {
 			["Object replaced with simple object.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
 
+		HYPER_EZM_fnc_setColor = {
+			params ["_entity"];
+			if(_entity isEqualTo objNull) exitWith {["No object selected.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			[
+				"Set Object Color",
+				[
+					[
+						"COLOR",
+						"Pick a Color",
+						[ 
+							[0, 0, 0, 1],
+							false
+						]
+					]
+				], 
+				{
+					params ["_values", "_args", "_display"];
+					private _color = _values select 0;
+					private _entity = _args;
+					private _newColor = format ["#(argb,8,8,3)color(%1,%2,%3,%4)", (_color select 0), (_color select 1), (_color select 2), (_color select 3)];
+					{
+						_entity setObjectTextureGlobal [_forEachIndex, _newColor];
+					} forEach (getObjectTextures _entity);
+
+					["Object replaced with simple object.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+					_display closeDisplay 1; 
+				}, 
+				{ 
+					_display closeDisplay 2; 
+				}, 
+				_entity 
+			] call MAZ_EZM_fnc_createDialog;
+
+		};
+
 	comment "Player Modifiers";
 
 		MAZ_EZM_fnc_disarmModule = {
@@ -16914,6 +16949,15 @@ MAZ_EZM_fnc_editZeusInterface = {
 					"Replaces the object it's placed on with a simple object to improve performance.",
 					"MAZ_EZM_fnc_replaceWithSimpleObject",
 					"a3\3den\data\cfgwaypoints\scripted_ca.paa"
+				] call MAZ_EZM_fnc_zeusAddModule;
+				
+				[
+					MAZ_zeusModulesTree,
+					MAZ_ObjectModTree,
+					"Set Color",
+					"Changes textures of an object / unit to a color if possible.",
+					"HYPER_EZM_fnc_setColor",
+					"a3\ui_f\data\gui\rsc\rscdisplaygarage\texturesources_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
 				[
