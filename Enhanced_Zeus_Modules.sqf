@@ -14111,6 +14111,42 @@ MAZ_EZM_fnc_initFunction = {
 			["Vehicle repaired.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
 
+		HYPER_EZM_fnc_setPlateNumber = {
+			params ["_entity"];
+			if (!(_entity isKindOf "Car_F")) exitWith {
+				["This is not a vehicle!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;
+			};
+			[
+				"Set License Plate Number",
+				[ 
+					[
+						"EDIT",
+						"Plate Number (12 chars max)",
+						[ 
+							"", 
+							1 
+						]
+					]
+				], 
+				{
+					params ["_values", "_args", "_display"];
+					private _entity = _args;
+					private _inputText = _values select 0;
+					if (count _inputText > 12) then {
+						_inputText = _inputText select [0, 12];
+					};
+					_entity setPlateNumber _inputText;
+					["License Plate Number set.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+					_display closeDisplay 1; 
+				}, 
+				{ 
+					_display closeDisplay 2; 
+				}, 
+				_entity
+			] call MAZ_EZM_fnc_createDialog;
+
+		};
+
 	comment "Zeus";
 
 		MAZ_EZM_fnc_toggleGameModerator = {
@@ -17377,6 +17413,15 @@ MAZ_EZM_fnc_editZeusInterface = {
 					"Repair the vehicle.",
 					"MAZ_EZM_fnc_repairVehicleModule",
 					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\repair_ca.paa'
+				] call MAZ_EZM_fnc_zeusAddModule;
+				
+				[
+					MAZ_zeusModulesTree,
+					MAZ_VehicleModTree,
+					"Set Plate Number",
+					"Set the license plate number of a car.",
+					"HYPER_EZM_fnc_setPlateNumber",
+					"a3\ui_f\data\igui\cfg\simpletasks\types\car_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
 			comment "Zeus";
