@@ -14099,9 +14099,9 @@ MAZ_EZM_fnc_initFunction = {
 				[ 
 					[
 						"EDIT",
-						"Plate Number (12 chars max)",
+						["Plate Number", "The maximum length of a plate number is 12 characters"],
 						[ 
-							"", 
+							getPlateNumber _entity, 
 							1 
 						]
 					]
@@ -14113,7 +14113,7 @@ MAZ_EZM_fnc_initFunction = {
 					if (count _inputText > 12) then {
 						_inputText = _inputText select [0, 12];
 					};
-					_entity setPlateNumber _inputText;
+					[_entity,_inputText] remoteExec ["setPlateNumber"];
 					["License Plate Number set.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 					_display closeDisplay 1; 
 				}, 
