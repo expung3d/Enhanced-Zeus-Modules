@@ -9702,7 +9702,7 @@ MAZ_EZM_fnc_initFunction = {
 		};
 
 		MAZ_EZM_fnc_deleteClutterModule = {
-			params ["_entity",["_deleteBuildings",true]];
+			params ["_entity","_pos",["_deleteBuildings",true]];
 			private _clutterNames = [
 				'Ground', 
 				'Canopy', 
@@ -9747,7 +9747,7 @@ MAZ_EZM_fnc_initFunction = {
 		};
 
 		MAZ_EZM_fnc_deleteBodies = {
-			[objNull,false] call MAZ_EZM_fnc_deleteClutterModule;
+			[objNull,nil,false] call MAZ_EZM_fnc_deleteClutterModule;
 		};
 
 		MAZ_EZM_fnc_deleteMinesModule = {
@@ -18263,6 +18263,7 @@ comment "
  - Airstrike Helicopter
  - Cinematics
  - Play video module
+ - Fix IR Strobes not deleting https://forums.bohemia.net/forums/topic/160424-ir-strobe-deletevehicle-issues/
 ";
 
 };
