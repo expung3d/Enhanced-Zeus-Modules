@@ -9480,6 +9480,103 @@ MAZ_EZM_fnc_initFunction = {
 			
 		};
 
+		HYPER_EZM_fnc_handleCreateIntelDetails = {
+			params ["_values"];
+			_values params ["_title","_authorName","_timestamp","_timezone","_subtitle","_image","_bodyText","_bodyTextLocked"];
+
+
+		};
+
+		HYPER_EZM_fnc_introCinematicAAN = {
+			private _dialogTitle = "Create Intel";
+			private _content = [
+				[
+					"EDIT",
+					["Title", "The headline title of the article."],
+					[
+						"My Title",
+						1
+					]
+				],
+				[
+					"EDIT",
+					["Author Name", "The name of the author."],
+					[
+						name player,
+						1
+					]
+				],
+				[
+					"EDIT",
+					["Timestamp", "The date and time of the article, which MUST follow the format YYYY/MM/DD HH:MM."],
+					[
+						"2035/01/31 10:00",
+						1
+					]
+				],
+				[
+					"EDIT",
+					["Timezone", "The timezone of the article."],
+					[
+						"CET",
+						1
+					]
+				],
+				[
+					"EDIT",
+					["Subtitle", "A brief description of the article under the main title."],
+					[
+						"",
+						1
+					]
+				],
+				[
+					"COMBO",
+					["Image", "The image to be displayed with the article headline."],
+					[
+						["image1", "image2", "image3"],
+						["Image 1", "Image 2", "Image 3"],
+						0
+					]
+				],
+				[
+					"EDIT:MULTI",
+					["Body Text", "The main body of the article."],
+					[
+						"",
+						5
+					]
+				],
+				[
+					"EDIT:MULTI",
+					["Body Text Locked", "A paragraph that is cut off by a subscription paywall."],
+					[
+						"",
+						3
+					]
+				]
+			];
+			private _onConfirm = {
+				params ["_values", "_args", "_display"];
+				_values params ["_title","_authorName","_timestamp","_timezone","_subtitle","_image","_bodyText","_bodyTextLocked"];
+
+				[ _values ] call HYPER_EZM_fnc_handleCreateIntelDetails;
+				_display closeDisplay 1;
+			};
+			private _onCancel = {
+				params ["_values", "_args", "_display"];
+				systemChat "Create Intel dialog canceled.";
+				_display closeDisplay 2;
+			};
+			[
+				_dialogTitle,
+				_content,
+				_onConfirm,
+				_onCancel,
+				[]
+			] call MAZ_EZM_fnc_createDialog;
+		};
+
 		if(isNil "MAZ_EZM_fnc_createCinematicCam") then {
 			MAZ_EZM_fnc_createCinematicCam = {
 				call MAZ_EZM_fnc_destroyCinematicCamera;
@@ -16848,6 +16945,15 @@ MAZ_EZM_fnc_editZeusInterface = {
 					"Create Intel",
 					"Creates an intel object to be picked up by the players.\nCreated by: Bijx",
 					"HYPER_EZM_fnc_createIntel",
+					"a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa"
+				] call MAZ_EZM_fnc_zeusAddModule;
+
+				[
+					MAZ_zeusModulesTree,
+					MAZ_GameplayTree,
+					"Create AAN News Article",
+					"Creates a laptop which shows an AAN News Article when interacted on.\nCreated by: Bijx",
+					"HYPER_EZM_fnc_introCinematicAAN",
 					"a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
