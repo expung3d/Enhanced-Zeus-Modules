@@ -10683,6 +10683,7 @@ MAZ_EZM_fnc_initFunction = {
 			private _intelObj = "Item_Laptop_Unfolded" createVehicle _target;
 			_intelObj setDamage 1;
 			_intelObj setPosATL _target;
+			_intelObj setObjectTextureGlobal "a3\missions_f_orange\data\img\orange_compositions\c8\aan_co.paa";
 
 			private _actionParams = [
 				_intelObj,
