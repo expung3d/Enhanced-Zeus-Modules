@@ -10747,7 +10747,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		HYPER_EZM_fnc_createAANIntel = {
 			private _target = [true] call MAZ_EZM_fnc_getScreenPosition;
-			private _dialogTitle = "Create Intel";
+			private _dialogTitle = "Create AAN News Article";
 			private _content = [
 				[
 					"EDIT",
