@@ -10696,17 +10696,17 @@ MAZ_EZM_fnc_initFunction = {
 				case "drones": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_30_co.paa"};
 				default {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_64_co.paa"};
 			};
-			_intelOptions pushBack ["image",_imageTexture];
 			
 			comment "Metadata group validation";
 			private _timestampParts = _timestamp call HYPER_fnc_parseTimestamp;
 			if (_authorName == "") then {_authorName = "Anonymous";};
 			if (_timezone == "") then {_timezone = "UTC";};
-			_intelOptions pushBack ["meta",[_authorName,_timestampParts,_timezone]];
 
 			comment "Other field validation";
 			if (_title != "") then {_intelOptions pushBack ["title",_title];};
+			_intelOptions pushBack ["meta",[_authorName,_timestampParts,_timezone]];
 			if (_subtitle != "") then {_intelOptions pushBack ["textbold",_subtitle];};
+			_intelOptions pushBack ["image",_imageTexture];
 			if (_bodyText != "") then {_intelOptions pushBack ["text",_bodyText];};
 			if (_bodyTextLocked != "") then {_intelOptions pushBack ["textlocked",[_bodyTextLocked,"Please Subscribe"]];};
 
