@@ -10637,8 +10637,6 @@ MAZ_EZM_fnc_initFunction = {
 			params ["_values", "_target"];
 			_values params ["_title","_authorName","_timestamp","_timezone","_subtitle","_image","_bodyText","_bodyTextLocked"];
 
-			systemChat format ["Creating Intel: %1",_title];
-
 			HYPER_safeParse = {
 				params ["_str"];
 				private _num = parseNumber _str;
@@ -10672,18 +10670,24 @@ MAZ_EZM_fnc_initFunction = {
 				[_year, _month, _day, _hour, _minute]
 			};
 			private _intelOptions = [];
-
+			
+			comment "Metadata group validation";
 			private _timestampParts = _timestamp call HYPER_fnc_parseTimestamp;
+			if (_authorName == "") then {_authorName = "Anonymous";};
+			if (_timezone == "") then {_timezone = "UTC";};
+			_intelOptions pushBack ["meta",[_authorName,_timestampParts,_timezone]];
+
+			comment "Other field validation";
 			if (_title != "") then {_intelOptions pushBack ["title",_title];};
-			if (_authorName != "") then {_intelOptions pushBack ["meta",[_authorName,_timestampParts,_timezone]];};
 			if (_subtitle != "") then {_intelOptions pushBack ["textbold",_subtitle];};
 			if (_bodyText != "") then {_intelOptions pushBack ["text",_bodyText];};
 			if (_bodyTextLocked != "") then {_intelOptions pushBack ["textlocked",[_bodyTextLocked,"Please Subscribe"]];};
 
-			private _intelObj = "Item_Laptop_Unfolded" createVehicle _target;
+			comment "Create intel object and action";
+			private _intelObj = "Land_Laptop_unfolded_F" createVehicle _target;
 			_intelObj setDamage 1;
 			_intelObj setPosATL _target;
-			_intelObj setObjectTextureGlobal "a3\missions_f_orange\data\img\orange_compositions\c8\aan_co.paa";
+			_intelObj setObjectTextureGlobal [0, "a3\missions_f_orange\data\img\orange_compositions\c8\aan_co.paa"];
 
 			private _actionParams = [
 				_intelObj,
@@ -10809,7 +10813,7 @@ MAZ_EZM_fnc_initFunction = {
 			params ["_title","_description","_intelObject","_deleteOnPickup", "_target", "_holdDuration", "_visibility"];
 
 			private _intelObjModel = switch (_intelObject) do {
-				case "laptop": {"Item_Laptop_Unfolded"};
+				case "laptop": {"Land_Laptop_unfolded_F"};
 				case "ruggedtablet": {"Land_Tablet_02_black_F"};
 				case "tablet": {"Land_Tablet_01_F"};
 				case "documents": {"LanD_File1_f"};
