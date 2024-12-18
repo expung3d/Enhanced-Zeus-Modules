@@ -10634,7 +10634,7 @@ MAZ_EZM_fnc_initFunction = {
 
 	
 		HYPER_EZM_fnc_handleCreateIntelDetails = {
-			params ["_values"];
+			params ["_values", "_target"];
 			_values params ["_title","_authorName","_timestamp","_timezone","_subtitle","_image","_bodyText","_bodyTextLocked"];
 
 			systemChat format ["Creating Intel: %1",_title];
@@ -10680,11 +10680,41 @@ MAZ_EZM_fnc_initFunction = {
 			if (_bodyText != "") then {_intelOptions pushBack ["text",_bodyText];};
 			if (_bodyTextLocked != "") then {_intelOptions pushBack ["textlocked",[_bodyTextLocked,"Please Subscribe"]];};
 
-			[ _intelOptions ] call BIS_fnc_showAANArticle;
+			private _intelObj = "Item_Laptop_Unfolded" createVehicle _target;
+			_intelObj setDamage 1;
+			_intelObj setPosATL _target;
 
+			private _actionParams = [
+				_intelObj,
+				"<t color='#ff9b00'>View News Article</t>", 
+				"a3\ui_f\data\igui\cfg\holdactions\holdaction_search_ca.paa", 
+				"a3\ui_f\data\igui\cfg\holdactions\holdaction_search_ca.paa", 
+				"_this distance _target < 3",
+				"_caller distance _target < 3",  
+				{},
+				{},
+				{
+					private _args = _this select 3;
+					_args params ["_intelOptions"];
+
+					[ _intelOptions ] call BIS_fnc_showAANArticle;
+
+				},
+				{},
+				[_intelOptions],
+				2, 
+				10, 
+				false,
+				false 
+			];
+			_actionParams remoteExec ["BIS_fnc_holdActionAdd", 0, _intelObj];
+
+			[_intelObj] call MAZ_EZM_fnc_addObjectToInterface;
+			["AAN article laptop created.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
 
 		HYPER_EZM_fnc_createAANIntel = {
+			private _target = [true] call MAZ_EZM_fnc_getScreenPosition;
 			private _dialogTitle = "Create Intel";
 			private _content = [
 				[
@@ -10756,13 +10786,13 @@ MAZ_EZM_fnc_initFunction = {
 			private _onConfirm = {
 				params ["_values", "_args", "_display"];
 				_values params ["_title","_authorName","_timestamp","_timezone","_subtitle","_image","_bodyText","_bodyTextLocked"];
+				private _target = _args;
 
-				[ _values ] call HYPER_EZM_fnc_handleCreateIntelDetails;
+				[ _values, _target ] call HYPER_EZM_fnc_handleCreateIntelDetails;
 				_display closeDisplay 1;
 			};
 			private _onCancel = {
 				params ["_values", "_args", "_display"];
-				systemChat "Create Intel dialog canceled.";
 				_display closeDisplay 2;
 			};
 			[
@@ -10770,7 +10800,7 @@ MAZ_EZM_fnc_initFunction = {
 				_content,
 				_onConfirm,
 				_onCancel,
-				[]
+				_target
 			] call MAZ_EZM_fnc_createDialog;
 		};
 
