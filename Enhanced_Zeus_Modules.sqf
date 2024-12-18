@@ -10670,6 +10670,33 @@ MAZ_EZM_fnc_initFunction = {
 				[_year, _month, _day, _hour, _minute]
 			};
 			private _intelOptions = [];
+
+			comment "Image banner validation";
+			private _imageTexture = switch (_image) do {
+				case "warthog": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_64_co.paa"};
+				case "divers": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_65_co.paa"};
+				case "breach": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_04_co.paa"};
+				case "ww2medical": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_14_co.paa"};
+				case "exfil": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_106_co.paa"};
+				case "soldiers": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_59_co.paa"};
+				case "schematic": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_63_co.paa"};
+				case "riot": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_22_co.paa"};
+				case "ambulance": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_62_co.paa"};
+				case "ww2attack": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_92_co.paa"};
+				case "ghosts": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_18_co.paa"};
+				case "town": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_68_co.paa"};
+				case "decon": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_31_co.paa"};
+				case "tank": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_98_co.paa"};
+				case "launcher": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_122_co.paa"};
+				case "cargotrain": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_27_co.paa"};
+				case "convoy": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_87_co.paa"};
+				case "fallen": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_118_co.paa"};
+				case "firefight": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_76_co.paa"};
+				case "fleet": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_46_co.paa"};
+				case "drones": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_30_co.paa"};
+				default {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_64_co.paa"};
+			};
+			_intelOptions pushBack ["image",_imageTexture];
 			
 			comment "Metadata group validation";
 			private _timestampParts = _timestamp call HYPER_fnc_parseTimestamp;
@@ -10766,8 +10793,8 @@ MAZ_EZM_fnc_initFunction = {
 					"COMBO",
 					["Image", "The image to be displayed with the article headline."],
 					[
-						["image1", "image2", "image3"],
-						["Image 1", "Image 2", "Image 3"],
+						["warthog", "divers", "breach", "ww2medical", "exfil", "soldiers", "schematic", "riot", "ambulance", "ww2attack", "ghosts", "town", "decon", "tank", "launcher", "cargotrain", "convoy", "fallen", "firefight", "fleet", "drones"],
+						["A-10 Warthog", "Divers", "Breach and Clear", "WW2 Medical", "Helo Exfil", "Two Soldiers", "Plane Schematic", "Riot", "Ambulance", "WW2 Assault", "Ghosts of War", "Town Liberated", "Decon Showers", "Tank", "Launcher", "Cargo Train", "Convoy", "Coffin Salute", "Firefight", "Carrier Fleet", "Small Drones"],
 						0
 					]
 				],
