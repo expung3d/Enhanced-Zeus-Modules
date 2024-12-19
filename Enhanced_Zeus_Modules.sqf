@@ -9204,14 +9204,6 @@ MAZ_EZM_fnc_initFunction = {
 
 	comment "Cinematics";
 
-		HYPER_EZM_fnc_showIntertitles = {
-			params ["_line1", "_line2"];
-			sleep 3;
-			_line1 spawn BIS_fnc_infoText;
-			sleep 5;
-			_line2 spawn BIS_fnc_infoText;
-		};
-
 		HYPER_EZM_fnc_splitMaxLine = {
 			params ["_inputString"];
 			private _maxLength = 22;
@@ -9294,13 +9286,6 @@ MAZ_EZM_fnc_initFunction = {
 			};
 			if (_author != "") then {_author = format [localize "STR_FORMAT_AUTHOR_SCRIPTED",_author];};
 
-			comment "Disable simulation on any vehicles to avoid crashing mid cutscene";
-			{
-				if (_x != vehicle _x) then {
-					[vehicle _x, false] remoteExec ["enableSimulationGlobal", 2];
-				};
-			} forEach allPlayers;
-
 			comment "Show intro titles";
 			private _track = switch (_backgroundSong) do {
 				case "epic": {"Music_Arrival"};
@@ -9335,8 +9320,6 @@ MAZ_EZM_fnc_initFunction = {
 			private _line1 = [_intertitles # 0] call HYPER_EZM_fnc_splitMaxLine;
 			private _line2 = [_intertitles # 1] call HYPER_EZM_fnc_splitMaxLine;
 			
-			[[_line1, _line2], HYPER_EZM_fnc_showIntertitles] remoteExec ["spawn", _allPlayers];
-
 			comment "Post processing";
 			switch (_postProcess) do {
 				case "none": {
@@ -9359,48 +9342,101 @@ MAZ_EZM_fnc_initFunction = {
 				};
 			};
 
-			if (_cinematicType == "Flyby") then {
-				comment "in flyby mode, we select the module location as our target, and the camera paths are automatically designated at 0 and 90 degrees";
-				HYPER_fnc_remoteCamera = {
-					params ["_target"];
-					private _zeus = !isNull (getAssignedCuratorLogic player);
-					private _camTarget = "Land_HelipadEmpty_F" createVehicleLocal _target;
-					private _circleRadius = 200;
-					private _camHeight = 200;
-					private _camSrc0 = [_target select 0, (_target select 1) + _circleRadius, (_target select 2) + _camHeight];
-					private _camSrc90 = [(_target select 0) + _circleRadius, _target select 1, (_target select 2) + _camHeight];
-					
-					private _camera = "camera" camCreate _camSrc0;
-					_camera cameraEffect ["internal", "back"];
-					_camera camPrepareTarget _camTarget;
-					_camera camSetFov 1;
-					_camera camCommitPrepared 0;
+			switch (_cinematicType) do {
+				case "Flyby": {
+					comment "in flyby mode, we select the module location as our target, and the camera paths are automatically designated at 0 and 90 degrees";
+					HYPER_fnc_remoteCamera = {
+						params ["_target", "_line1", "_line2"];
+						HYPER_EZM_fnc_showIntertitles = {
+							params ["_line1", "_line2"];
+							sleep 3;
+							_line1 spawn BIS_fnc_infoText;
+							sleep 5;
+							_line2 spawn BIS_fnc_infoText;
+						};
+						[_line1, _line2] spawn HYPER_EZM_fnc_showIntertitles;
+						private _zeus = !isNull (getAssignedCuratorLogic player);
+						private _camTarget = "Land_HelipadEmpty_F" createVehicleLocal _target;
+						private _circleRadius = 200;
+						private _camHeight = 200;
+						private _camSrc0 = [_target select 0, (_target select 1) + _circleRadius, (_target select 2) + _camHeight];
+						private _camSrc90 = [(_target select 0) + _circleRadius, _target select 1, (_target select 2) + _camHeight];
+						
+						private _camera = call MAZ_EZM_fnc_createCinematicCam;
+						[] spawn MAZ_EZM_fnc_enterCinematicCamera;
 
-					_camera camPreparePos _camSrc90;
-					_camera camCommitPrepared 15;
-					waitUntil { camCommitted _camera };
-					cutRsc ["RscStatic", "PLAIN"];
-					sleep 0.4;
+						_camera camPreparePos _camSrc0;
+						_camera camPrepareTarget _camTarget;
+						_camera camCommitPrepared 0;
 
-					_camera cameraEffect ["terminate", "back"];
-					camDestroy _camera;
+						_camera camPreparePos _camSrc90;
+						_camera camCommitPrepared 15;
+						waitUntil { camCommitted _camera };
+						cutRsc ["RscStatic", "PLAIN"];
+						sleep 0.4;
 
-					comment "Remove color correction right after cutscene is done so we don't have to remoteExec it";
-					ppEffectDestroy HYPER_PP_CC_Cinematic;
+						ppEffectDestroy HYPER_PP_CC_Cinematic;
+						
+						cutText ["", "BLACK IN", 2];
+						[1, 2, true, true] call BIS_fnc_cinemaBorder;
 
-					comment "Re-enable simulation on player vehicles";
-					if(player != vehicle player) then {
-						[vehicle player, true] remoteExec ["enableSimulationGlobal", 2];
+						call MAZ_EZM_fnc_destroyCinematicCamera;
 					};
-					
-					cutText ["", "BLACK IN", 2];
-					[1, 2, true, true] call BIS_fnc_cinemaBorder;
-					if(_zeus) then {
-						sleep 0.2;
-						openCuratorInterface;
-					};
+					[[_target, _line1, _line2],HYPER_fnc_remoteCamera] remoteExec ["spawn", _allPlayers];
 				};
-				[[_target],HYPER_fnc_remoteCamera] remoteExec ["spawn", _allPlayers];
+				case "News": {
+					HYPER_fnc_remoteCamera = {
+						params ["_target", "_briefingName", "_line1", "_line2"];
+						[] spawn {
+							playSoundUI ["a3\sounds_f\vehicles\air\heli_attack_01\heli_attack_01_ext_rotor.wss", 0.2];
+							sleep 7.5;
+							playSoundUI ["a3\sounds_f\vehicles\air\heli_attack_01\heli_attack_01_ext_rotor.wss", 0.2];
+						};
+						[
+							parseText format ["<t size='2'>%1</t>",_briefingName],
+							parseText format["// %1 - %2 // REPORTING LIVE FROM %3", _line1, _line2, worldName]
+						] spawn BIS_fnc_AAN;
+
+						private _cam = call MAZ_EZM_fnc_createCinematicCam;
+						[] spawn MAZ_EZM_fnc_enterCinematicCamera;
+
+						private _pos = _target;
+						private _posASL = AGLToASL _pos;
+						private _height = (_posASL # 2) + 200;
+						_cam camPrepareTarget _pos;
+						_cam camCommitPrepared 0;
+
+						private _posStart = _pos getPos [200,0];
+						_posStart set [2,_height];
+						_cam setPosASL _posStart;
+
+						private _angle = 0;
+						private _zoom = 0.75;
+						while {_angle <= 155} do {
+							private _posMove = _pos getPos [200,_angle];
+							_posMove set [2,_height];
+
+							if (_angle > 45 && _angle < 135) then {
+								_cam camSetFov (_zoom - 0.01);
+							};
+
+							_cam camPreparePos (ASLtoAGL _posMove);
+							_cam camCommitPrepared 0.5;
+							waitUntil { camCommitted _cam };
+
+							_angle = _angle + 5;
+						};
+						call MAZ_EZM_fnc_destroyCinematicCamera;
+						(uiNamespace getVariable "BIS_AAN") closeDisplay 1;
+						
+						comment "Remove color correction right after cutscene is done so we don't have to remoteExec it";
+						ppEffectDestroy HYPER_PP_CC_Cinematic;
+						
+						cutText ["", "BLACK IN", 2];
+						[1, 2, true, true] call BIS_fnc_cinemaBorder;
+					};
+					[[_target, _briefingName, _intertitles # 0, _intertitles # 1],HYPER_fnc_remoteCamera] remoteExec ["spawn", _allPlayers];
+				};
 			};
 		};
 
@@ -9413,8 +9449,8 @@ MAZ_EZM_fnc_initFunction = {
 					"COMBO",
 					"Cinematic Type",
 					[
-						["Flyby"],
-						["Flyby"],
+						["Flyby", "News"],
+						["Flyby", "News Helicopter"],
 						0
 					]
 				],
@@ -9446,7 +9482,7 @@ MAZ_EZM_fnc_initFunction = {
 				[
 					"TOOLBOX:YESNO",
 					["Zeus Can See Cutscene?","Zeus player may experience a small lag spike when cutscene ends."],
-					[false]
+					[true]
 				],
 				[
 					"COMBO",
@@ -10716,6 +10752,8 @@ MAZ_EZM_fnc_initFunction = {
 			_intelObj setPosATL _target;
 			_intelObj setObjectTextureGlobal [0, "a3\missions_f_orange\data\img\orange_compositions\c8\aan_co.paa"];
 
+			[_intelObj] call MAZ_EZM_fnc_ignoreWhenCleaning;
+
 			private _actionParams = [
 				_intelObj,
 				"<t color='#ff9b00'>View News Article</t>", 
@@ -10850,6 +10888,7 @@ MAZ_EZM_fnc_initFunction = {
 			private _intelObj = _intelObjModel createVehicle _target;
 			_intelObj setDamage 1;
 			_intelObj setPosATL _target;
+			[_intelObj] call MAZ_EZM_fnc_ignoreWhenCleaning;
 
 			private _actionParams = [
 				_intelObj,
