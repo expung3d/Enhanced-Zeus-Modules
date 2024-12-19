@@ -9419,7 +9419,7 @@ MAZ_EZM_fnc_initFunction = {
 
 					private _pos = _target;
 					private _posASL = _pos;
-					private _height = 200;
+					private _height = (_posASL # 2) + 200;
 					_cam camPrepareTarget _pos;
 					_cam camCommitPrepared 0;
 
