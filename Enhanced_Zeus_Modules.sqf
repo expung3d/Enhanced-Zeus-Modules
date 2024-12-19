@@ -9404,56 +9404,57 @@ MAZ_EZM_fnc_initFunction = {
 					[[_target],HYPER_fnc_remoteCamera] remoteExec ["spawn", _allPlayers];
 				};
 				case "News": {
-					[[],{
-						playSoundUI ["a3\sounds_f\vehicles\air\heli_attack_01\heli_attack_01_ext_rotor.wss", 0.2];
-						sleep 7.5;
-						playSoundUI ["a3\sounds_f\vehicles\air\heli_attack_01\heli_attack_01_ext_rotor.wss", 0.2];
-					}] remoteExec ["spawn", _allPlayers];
-					private _AANParams = [
-						parseText _briefingName,
-						parseText format["BREAKING NEWS - REPORTING LIVE FROM %1", worldName]
-					];
-					_AANParams remoteExec ["BIS_fnc_AAN", _allPlayers];
-					private _cam = call MAZ_EZM_fnc_createCinematicCam;
-					[] spawn MAZ_EZM_fnc_enterCinematicCamera;
-
-					private _pos = _target;
-					private _posASL = AGLToASL _pos;
-					private _height = (_posASL # 2) + 200;
-					_cam camPrepareTarget _pos;
-					_cam camCommitPrepared 0;
-
-					private _posStart = _pos getPos [200,0];
-					_posStart set [2,_height];
-					_cam setPosASL _posStart;
-
-					private _angle = 0;
-					private _zoom = 0.75;
-					while {_angle <= 155} do {
-						private _posMove = _pos getPos [200,_angle];
-						_posMove set [2,_height];
-
-						if (_angle > 45 && _angle < 135) then {
-							_cam camSetFov (_zoom - 0.01);
+					HYPER_fnc_remoteCamera = {
+						params ["_target", "_briefingName"];
+						[] spawn {
+							playSoundUI ["a3\sounds_f\vehicles\air\heli_attack_01\heli_attack_01_ext_rotor.wss", 0.2];
+							sleep 7.5;
+							playSoundUI ["a3\sounds_f\vehicles\air\heli_attack_01\heli_attack_01_ext_rotor.wss", 0.2];
 						};
+						[
+							parseText _briefingName,
+							parseText format["BREAKING NEWS - REPORTING LIVE FROM %1", worldName]
+						] spawn BIS_fnc_AAN;
 
-						_cam camPreparePos (ASLtoAGL _posMove);
-						_cam camCommitPrepared 0.5;
-						waitUntil { camCommitted _cam };
+						private _cam = call MAZ_EZM_fnc_createCinematicCam;
+						[] spawn MAZ_EZM_fnc_enterCinematicCamera;
 
-						_angle = _angle + 5;
-					};
-					call MAZ_EZM_fnc_destroyCinematicCamera;
-					[(uiNamespace getVariable "BIS_AAN"), 1] remoteExec ["closeDisplay", _allPlayers];
-					
-					HYPER_fnc_resetCutsceneUI = {
+						private _pos = _target;
+						private _posASL = AGLToASL _pos;
+						private _height = (_posASL # 2) + 200;
+						_cam camPrepareTarget _pos;
+						_cam camCommitPrepared 0;
+
+						private _posStart = _pos getPos [200,0];
+						_posStart set [2,_height];
+						_cam setPosASL _posStart;
+
+						private _angle = 0;
+						private _zoom = 0.75;
+						while {_angle <= 155} do {
+							private _posMove = _pos getPos [200,_angle];
+							_posMove set [2,_height];
+
+							if (_angle > 45 && _angle < 135) then {
+								_cam camSetFov (_zoom - 0.01);
+							};
+
+							_cam camPreparePos (ASLtoAGL _posMove);
+							_cam camCommitPrepared 0.5;
+							waitUntil { camCommitted _cam };
+
+							_angle = _angle + 5;
+						};
+						call MAZ_EZM_fnc_destroyCinematicCamera;
+						(uiNamespace getVariable "BIS_AAN") closeDisplay 1;
+						
 						comment "Remove color correction right after cutscene is done so we don't have to remoteExec it";
 						ppEffectDestroy HYPER_PP_CC_Cinematic;
 						
 						cutText ["", "BLACK IN", 2];
 						[1, 2, true, true] call BIS_fnc_cinemaBorder;
 					};
-					[[], HYPER_fnc_resetCutsceneUI] remoteExec ["spawn", _allPlayers];
+					[[_target, _briefingName],HYPER_fnc_remoteCamera] remoteExec ["spawn", _allPlayers];
 				};
 			};
 		};
