@@ -9404,6 +9404,11 @@ MAZ_EZM_fnc_initFunction = {
 					[[_target],HYPER_fnc_remoteCamera] remoteExec ["spawn", _allPlayers];
 				};
 				case "News": {
+					[[],{
+						playSoundUI ["a3\sounds_f\vehicles\air\heli_attack_01\heli_attack_01_ext_rotor.wss", 0.2];
+						sleep 7.5;
+						playSoundUI ["a3\sounds_f\vehicles\air\heli_attack_01\heli_attack_01_ext_rotor.wss", 0.2];
+					}] remoteExec ["spawn", _allPlayers];
 					private _AANParams = [
 						parseText _briefingName,
 						parseText format["BREAKING NEWS - REPORTING LIVE FROM %1", worldName]
@@ -9424,7 +9429,7 @@ MAZ_EZM_fnc_initFunction = {
 
 					private _angle = 0;
 					private _zoom = 0.75;
-					while {_angle <= 180} do {
+					while {_angle <= 155} do {
 						private _posMove = _pos getPos [200,_angle];
 						_posMove set [2,_height];
 
@@ -9495,7 +9500,7 @@ MAZ_EZM_fnc_initFunction = {
 				[
 					"TOOLBOX:YESNO",
 					["Zeus Can See Cutscene?","Zeus player may experience a small lag spike when cutscene ends."],
-					[false]
+					[true]
 				],
 				[
 					"COMBO",
