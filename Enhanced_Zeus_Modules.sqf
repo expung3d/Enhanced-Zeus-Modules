@@ -9286,13 +9286,6 @@ MAZ_EZM_fnc_initFunction = {
 			};
 			if (_author != "") then {_author = format [localize "STR_FORMAT_AUTHOR_SCRIPTED",_author];};
 
-			comment "Disable simulation on any vehicles to avoid crashing mid cutscene";
-			{
-				if (_x != vehicle _x) then {
-					[vehicle _x, false] remoteExec ["enableSimulationGlobal", 2];
-				};
-			} forEach allPlayers;
-
 			comment "Show intro titles";
 			private _track = switch (_backgroundSong) do {
 				case "epic": {"Music_Arrival"};
