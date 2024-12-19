@@ -9386,16 +9386,16 @@ MAZ_EZM_fnc_initFunction = {
 						_camera cameraEffect ["terminate", "back"];
 						camDestroy _camera;
 
-						comment "Remove color correction right after cutscene is done so we don't have to remoteExec it";
 						ppEffectDestroy HYPER_PP_CC_Cinematic;
+						
+						cutText ["", "BLACK IN", 2];
+						[1, 2, true, true] call BIS_fnc_cinemaBorder;
 
 						comment "Re-enable simulation on player vehicles";
 						if(player != vehicle player) then {
 							[vehicle player, true] remoteExec ["enableSimulationGlobal", 2];
 						};
-						
-						cutText ["", "BLACK IN", 2];
-						[1, 2, true, true] call BIS_fnc_cinemaBorder;
+
 						if(_zeus) then {
 							sleep 0.2;
 							openCuratorInterface;
@@ -9406,7 +9406,7 @@ MAZ_EZM_fnc_initFunction = {
 				case "News": {
 					private _AANParams = [
 						parseText _briefingName,
-						parseText "BREAKING NEWS - LIVE"
+						parseText format["BREAKING NEWS - REPORTING LIVE FROM %1", worldName]
 					];
 					_AANParams remoteExec ["BIS_fnc_AAN", _allPlayers];
 					private _cam = call MAZ_EZM_fnc_createCinematicCam;
@@ -9423,9 +9423,14 @@ MAZ_EZM_fnc_initFunction = {
 					_cam setPosASL _posStart;
 
 					private _angle = 0;
+					private _zoom = 0.75;
 					while {_angle <= 180} do {
 						private _posMove = _pos getPos [200,_angle];
 						_posMove set [2,_height];
+
+						if (_angle > 45 && _angle < 135) then {
+							_cam camSetFov (_zoom - 0.01);
+						};
 
 						_cam camPreparePos (ASLtoAGL _posMove);
 						_cam camCommitPrepared 0.5;
@@ -9434,6 +9439,16 @@ MAZ_EZM_fnc_initFunction = {
 						_angle = _angle + 5;
 					};
 					call MAZ_EZM_fnc_destroyCinematicCamera;
+					[(uiNamespace getVariable "BIS_AAN"), 1] remoteExec ["closeDisplay", _allPlayers];
+					
+					HYPER_fnc_resetCutsceneUI = {
+						comment "Remove color correction right after cutscene is done so we don't have to remoteExec it";
+						ppEffectDestroy HYPER_PP_CC_Cinematic;
+						
+						cutText ["", "BLACK IN", 2];
+						[1, 2, true, true] call BIS_fnc_cinemaBorder;
+					};
+					[[], HYPER_fnc_resetCutsceneUI] remoteExec ["spawn", _allPlayers];
 				};
 			};
 		};
