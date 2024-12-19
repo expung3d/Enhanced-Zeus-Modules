@@ -9402,7 +9402,7 @@ MAZ_EZM_fnc_initFunction = {
 							playSoundUI ["a3\sounds_f\vehicles\air\heli_attack_01\heli_attack_01_ext_rotor.wss", 0.2];
 						};
 						[
-							parseText _briefingName,
+							parseText format ["<t size='2'>%1</t>",_briefingName],
 							parseText format["BREAKING NEWS - REPORTING LIVE FROM %1", worldName]
 						] spawn BIS_fnc_AAN;
 
