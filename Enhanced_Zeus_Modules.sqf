@@ -9371,10 +9371,11 @@ MAZ_EZM_fnc_initFunction = {
 						private _camSrc0 = [_target select 0, (_target select 1) + _circleRadius, (_target select 2) + _camHeight];
 						private _camSrc90 = [(_target select 0) + _circleRadius, _target select 1, (_target select 2) + _camHeight];
 						
-						private _camera = "camera" camCreate _camSrc0;
-						_camera cameraEffect ["internal", "back"];
+						private _camera = call MAZ_EZM_fnc_createCinematicCam;
+						[] spawn MAZ_EZM_fnc_enterCinematicCamera;
+
+						_camera camPreparePos _camSrc0;
 						_camera camPrepareTarget _camTarget;
-						_camera camSetFov 1;
 						_camera camCommitPrepared 0;
 
 						_camera camPreparePos _camSrc90;
@@ -9383,23 +9384,12 @@ MAZ_EZM_fnc_initFunction = {
 						cutRsc ["RscStatic", "PLAIN"];
 						sleep 0.4;
 
-						_camera cameraEffect ["terminate", "back"];
-						camDestroy _camera;
-
 						ppEffectDestroy HYPER_PP_CC_Cinematic;
 						
 						cutText ["", "BLACK IN", 2];
 						[1, 2, true, true] call BIS_fnc_cinemaBorder;
 
-						comment "Re-enable simulation on player vehicles";
-						if(player != vehicle player) then {
-							[vehicle player, true] remoteExec ["enableSimulationGlobal", 2];
-						};
-
-						if(_zeus) then {
-							sleep 0.2;
-							openCuratorInterface;
-						};
+						call MAZ_EZM_fnc_destroyCinematicCamera;
 					};
 					[[_target],HYPER_fnc_remoteCamera] remoteExec ["spawn", _allPlayers];
 				};
