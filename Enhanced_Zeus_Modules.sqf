@@ -10770,6 +10770,8 @@ MAZ_EZM_fnc_initFunction = {
 			_intelObj setPosATL _target;
 			_intelObj setObjectTextureGlobal [0, "a3\missions_f_orange\data\img\orange_compositions\c8\aan_co.paa"];
 
+			[_intelObj] call MAZ_EZM_fnc_ignoreWhenCleaning;
+
 			private _actionParams = [
 				_intelObj,
 				"<t color='#ff9b00'>View News Article</t>", 
@@ -10904,6 +10906,7 @@ MAZ_EZM_fnc_initFunction = {
 			private _intelObj = _intelObjModel createVehicle _target;
 			_intelObj setDamage 1;
 			_intelObj setPosATL _target;
+			[_intelObj] call MAZ_EZM_fnc_ignoreWhenCleaning;
 
 			private _actionParams = [
 				_intelObj,
