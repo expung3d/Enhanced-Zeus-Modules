@@ -9418,7 +9418,7 @@ MAZ_EZM_fnc_initFunction = {
 					[] spawn MAZ_EZM_fnc_enterCinematicCamera;
 
 					private _pos = _target;
-					private _posASL = _pos;
+					private _posASL = AGLToASL _pos;
 					private _height = (_posASL # 2) + 200;
 					_cam camPrepareTarget _pos;
 					_cam camCommitPrepared 0;
