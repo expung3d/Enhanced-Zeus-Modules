@@ -18913,12 +18913,12 @@ call MAZ_EZM_fnc_askAboutZeusUnit;
 	if (!isNull findDisplay 49) then {
 		comment "Likely ran EZM from debug before adding respawns... ";
 		comment "... adding manually to avoid module overwrite bug.";
-		private _respawns = [
+		[
 			createAgent ['ModuleRespawnPositionWest_F', [0,0,0], [], 0, 'CAN_COLLIDE'],
 			createAgent ['ModuleRespawnPositionEast_F', [0,0,0], [], 0, 'CAN_COLLIDE'],
 			createAgent ['ModuleRespawnPositionGuer_F', [0,0,0], [], 0, 'CAN_COLLIDE'],
 			createAgent ['ModuleRespawnPositionCiv_F', [0,0,0], [], 0, 'CAN_COLLIDE']
-		]; _respawns spawn {sleep 2; {deleteVehicle _x} forEach _this};
+		] spawn {sleep 2; {deleteVehicle _x} forEach _this};
 		if (!isNull findDisplay 312) then {
 			findDisplay 49 closeDisplay 0;
 			waitUntil {isNull findDisplay 312};
