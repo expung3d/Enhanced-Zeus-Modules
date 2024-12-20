@@ -2,7 +2,7 @@ if(!isNull (findDisplay 312) && {!isNil "this"} && {!isNull this}) then {
 	deleteVehicle this;
 };
 
-[] spawn {
+MAZ_EZM_fnc_initEZM = {
 MAZ_EZM_Version = "V2.1.6";
 MAZ_EZM_autoAdd = profileNamespace getVariable ["MAZ_EZM_autoAddVar",true];
 MAZ_EZM_spawnWithCrew = true;
@@ -4153,7 +4153,7 @@ comment "Dynamic Module Addons";
 
 comment "Modules";
 
-MAZ_EZM_fnc_createUnitForZeus = {
+MAZ_EZM_fnc_createZeusUnit = {
 	params ["_joinSide","_sideToJoin"];
 	if(!_joinSide) then {
 		_sideToJoin = sideLogic;
@@ -4163,34 +4163,40 @@ MAZ_EZM_fnc_createUnitForZeus = {
 	if(isNull _zeusLogic) exitWith {};
 	private _zeusIndex = allCurators find _zeusLogic;
 	private _isGameMod = false;
-	private _grp = createGroup [_sideToJoin,true];
-	private _zeusObject = _grp createUnit ["B_officer_F",[0,0,0],[],0,"CAN_COLLIDE"];
+	private _grp = createGroup [_sideToJoin, true];
+	private _zeusObject = (createGroup [_sideToJoin,true]) createUnit ["C_Man_French_universal_F",[0,0,0],[],0,"CAN_COLLIDE"];
+	[_zeusObject] joinSilent _grp;
 	_grp selectLeader _zeusObject;
 	_zeusObject setPosWorld _pos;
 	private _oldPlayer = player;
 	private _namePlayer = name player;
 	selectPlayer _zeusObject;
 	waitUntil{player == _zeusObject};
+	comment "Put Zeus in a locked squad called Mount Olympus to avoid hearing random ungrouped people in group chat.";
+	private _groupName = "Mount Olympus";
+	_grp setGroupIdGlobal [_groupName];
+	private _group = _grp;
+	private _leader = leader _group;
+	private _data = ["Curator", _groupName, true]; comment " [<Insignia>, <Group Name>, <Private>] ";
+	["RegisterGroup", [_group, _leader, _data]] remoteExecCall ['BIS_fnc_dynamicGroups'];
+	["AddGroupMember", [_grp,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
+	["SwitchLeader", [_grp,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
+	["SetPrivateState", [_grp,true]] remoteExecCall ['BIS_fnc_dynamicGroups'];	
+	["SetName", [_grp,_groupName]] remoteExecCall ['BIS_fnc_dynamicGroups'];
 	[_zeusObject,false] remoteExec ["allowDamage"];
-
 	[_zeusLogic] remoteExec ["unassignCurator",2];
-
 	waitUntil{(getAssignedCuratorUnit _zeusLogic) != _oldPlayer};
 	deleteVehicle _oldPlayer;
 	waitUntil{isNull (getAssignedCuratorUnit _zeusLogic)};
-
 	private _wl = missionNamespace getVariable ["MAZ_EZM_CuratorWhitelist",[]];
 	_wl pushBackUnique _zeusLogic;
 	missionNamespace setVariable ["MAZ_EZM_CuratorWhitelist",_wl,true];
 	waitUntil {_zeusLogic in (missionNamespace getVariable ["MAZ_EZM_CuratorWhitelist",[]])};
-
 	while{isNull (getAssignedCuratorUnit (allCurators select _zeusIndex))} do {
 		[player,allCurators select _zeusIndex] remoteExec ["assignCurator",2];
 		sleep 0.1;
 	};
-
 	waitUntil{getAssignedCuratorLogic player == _zeusLogic};
-
 	private _zeusLoadout = profileNamespace getVariable "MAZ_EZM_ZeusLoadout";
 	if(isNil "_zeusLoadout") then {
 		_zeusObject setUnitLoadout [[],[],["hgun_Pistol_heavy_01_green_F","","","",["11Rnd_45ACP_Mag",11],[],""],["U_Marshal",[["11Rnd_45ACP_Mag",2,11]]],["V_PlateCarrier_Kerry",[["11Rnd_45ACP_Mag",1,11]]],[],"H_Beret_02","G_Spectacles",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch",""]];
@@ -4199,17 +4205,13 @@ MAZ_EZM_fnc_createUnitForZeus = {
 		_zeusObject setUnitLoadout _zeusLoadout;
 	};
 	sleep 0.2;
-
 	while {(isNull (findDisplay 312))} do {
 		openCuratorInterface;
 	};
-
 	waitUntil{!(isNull (findDisplay 312))};
 	playSound "beep_target";
 	sleep 0.2;
-
 	[_zeusObject] call MAZ_EZM_fnc_addObjectToInterface;
-	
 	["Zeus Unit created, you can adjust its loadout by setting a Zeus Loadout."] call MAZ_EZM_fnc_systemMessage;
 	if(isNil "MAZ_EZM_mainLoop_Active") then {
 		[] spawn MAZ_EZM_fnc_initMainLoop;
@@ -4980,6 +4982,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_ezmShamelessPlug = {
 			[[],{
+				if (clientOwner == remoteExecutedOwner) exitWith {"Don't plug EZM to EZM user"};
 				waitUntil {alive player};
 				[
 					[
@@ -12596,13 +12599,14 @@ MAZ_EZM_fnc_initFunction = {
 			[] spawn M9_open_jukebox;
 		};
 
-		M9sd_fnc_moduleSoundBoard = {
+		M9sd_fnc_moduleSoundBoard2 = {[] spawn {
 			startLoadingScreen ["Loading Sound Board..."];
+			comment "Determine if execution context is composition and delete the helipad.";
+
 			playSound 'click';
 			playSound ['border_In', true];
 			missionNamespace setVariable ['m9_sndbrdprog', 0];
 			progressLoadingScreen 0.1;
-
 			m9sd_fnc_populateSoundboardWithSearch = {
 				params ['_treeCtrl', ['_searchStr', ''], ['_onLoad', false]];
 				tvClear _treeCtrl;
@@ -12614,6 +12618,8 @@ MAZ_EZM_fnc_initFunction = {
 				private _color_category = JAM_zeus_uiColor3;
 				private _icon_config = "a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa";
 				private _icon_addon = "a3\3den\data\displays\display3den\toolbar\open_ca.paa";
+				'private _progInc = (50/204297) * 0.7777;';
+				'0.000190336';'0.0002';
 				private _progInc = 0.000440535;
 				private _lastSelectedPath = [];
 				private _lastSelectedName = profileNamespace getVariable ['JAM_zeus_selectedSoundDisplayName', ''];
@@ -12722,14 +12728,14 @@ MAZ_EZM_fnc_initFunction = {
 				uiNamespace setVariable ['JAM_zeus_uiColor', [(profilenamespace getvariable ['GUI_BCG_RGB_R',0.13]),(profilenamespace getvariable ['GUI_BCG_RGB_G',0.54]),(profilenamespace getvariable ['GUI_BCG_RGB_B',0.21]),(profilenamespace getvariable ['GUI_BCG_RGB_A',0.8])]];
 				missionNameSpace setVariable ['JAM_zeus_uiColor', [(profilenamespace getvariable ['GUI_BCG_RGB_R',0.13]),(profilenamespace getvariable ['GUI_BCG_RGB_G',0.54]),(profilenamespace getvariable ['GUI_BCG_RGB_B',0.21]),(profilenamespace getvariable ['GUI_BCG_RGB_A',0.8])]];
 			};
-			private _newcoloa =  (uiNamespace getVariable 'JAM_zeus_uiColor') vectorMultiply 1.5;
+			_newcoloa=  (uiNamespace getVariable 'JAM_zeus_uiColor') vectorMultiply 1.5;
 			{
 				_x setVariable ['JAM_zeus_uiColor2', _newcoloa];
 			} forEach [missionNamespace, uiNamespace];
-			private _olcola =  (uiNamespace getVariable 'JAM_zeus_uiColor');
-			_newcoloa = [(_olcola # 0) * 2,(_olcola # 1),(_olcola # 2) * 0.5,(_olcola # 3) * 1.33];
+			_olcola=  (uiNamespace getVariable 'JAM_zeus_uiColor');
+			_newcola2 = [(_olcola # 0) * 2,(_olcola # 1),(_olcola # 2) * 0.5,(_olcola # 3) * 1.33];
 			{
-				_x setVariable ['JAM_zeus_uiColor3', _newcoloa];
+				_x setVariable ['JAM_zeus_uiColor3', _newcola2];
 			} forEach [missionNamespace, uiNamespace];
 			uiNamespace setVariable ['m9_soundboardSearching', false];
 			if (isNil 'M9_soundboard_tree') then {
@@ -13523,7 +13529,7 @@ MAZ_EZM_fnc_initFunction = {
 				playSound ['border_Out', true];
 				_treeCtrl ctrlEnable true;
 			};
-		};
+		};};
 
 	comment "Special Effects";
 
@@ -17767,9 +17773,9 @@ MAZ_EZM_fnc_editZeusInterface = {
 				[
 					MAZ_zeusModulesTree,
 					MAZ_SoundsTree,
-					'Sound Board',
+					'Sound Board 2.0',
 					'Open the Sound Board GUI and play any sound from the game files.\nYou can preview sounds to play them only on your client,\nor you can play them on all clients.',
-					'M9sd_fnc_moduleSoundBoard',
+					'M9sd_fnc_moduleSoundBoard2',
 					'a3\modules_f_curator\data\portraitSound_ca.paa'
 				] call MAZ_EZM_fnc_zeusAddModule;
 			
@@ -18841,61 +18847,90 @@ private _changelogString = "";
 	_changelogString = _changelogString + "- " + _x + (toString [13,10]);
 }forEach _changelog;
 
-["Create Zeus Unit?",[
-	[
-		"TOOLBOX:YESNO",
-		["Create Zeus Unit?","Whether to create a new controllable unit for your player."],
-		[true]
-	],
-	[
-		"TOOLBOX:YESNO",
-		["Join a Side Channel?","Whether you will be set as a certain side and be able to hear their side chat."],
-		[true],
-		{true},
-		{
-			params ["_display","_value"];
-			_display setVariable ["MAZ_EZM_showSides",_value];
-		}
-	],
-	[
-		"SIDES",
-		"Side to Join",
-		west,
-		{
-			params ["_display"];
-			_display getVariable ["MAZ_EZM_showSides",true];
-		}
-	],
-	[
-		"EDIT:MULTI",
-		"Change Log",
+MAZ_EZM_fnc_askAboutZeusUnit = {
+	["Create Zeus Unit?",[
 		[
-			_changelogString,
-			5
+			"TOOLBOX:YESNO",
+			["Create Zeus Unit?","Whether to create a new controllable unit for your player."],
+			[true]
+		],
+		[
+			"TOOLBOX:YESNO",
+			["Join a Side Channel?","Whether you will be set as a certain side and be able to hear their side chat."],
+			[true],
+			{true},
+			{
+				params ["_display","_value"];
+				_display setVariable ["MAZ_EZM_showSides",_value];
+			}
+		],
+		[
+			"SIDES",
+			"Side to Join",
+			west,
+			{
+				params ["_display"];
+				_display getVariable ["MAZ_EZM_showSides",true];
+			}
+		],
+		[
+			"EDIT:MULTI",
+			"Change Log",
+			[
+				_changelogString,
+				5
+			]
 		]
-	]
-],{
-	params ["_values","_args","_display"];
-	_values params ["_createZeusUnit","_joinSide","_sideToJoin"];
-	
-	if(_createZeusUnit) then {
-		[_joinSide,_sideToJoin] spawn MAZ_EZM_fnc_createUnitForZeus;
-	} else {
-		if(_joinSide) then {
-			[player] joinSilent (createGroup [_sideToJoin,true]);
+	],{
+		params ["_values","_args","_display"];
+		_values params ["_createZeusUnit","_joinSide","_sideToJoin"];
+		
+		if(_createZeusUnit) then {
+			[_joinSide,_sideToJoin] spawn MAZ_EZM_fnc_createZeusUnit;
+		} else {
+			if(_joinSide) then {
+				[player] joinSilent (createGroup [_sideToJoin,true]);
+			};
+			if (isNil "MAZ_EZM_mainLoop_Active") then {
+				[] spawn MAZ_EZM_fnc_initMainLoop;
+			};
 		};
-		if (isNil "MAZ_EZM_mainLoop_Active") then {
-			[] spawn MAZ_EZM_fnc_initMainLoop;
+		_display closeDisplay 1;
+	},{
+		params ["_values","_args","_display"];
+		_display closeDisplay 2;
+	},[],{
+		params ["_display"];
+		_display setVariable ["MAZ_EZM_showSides",true];
+	}] call MAZ_EZM_fnc_createDialog;
+};
+
+call MAZ_EZM_fnc_askAboutZeusUnit;
+
+};
+
+0 = [] spawn {
+	if (!isNull findDisplay 49) then {
+		comment "Likely ran EZM from debug before adding respawns... ";
+		comment "... adding manually to avoid module overwrite bug.";
+		private _respawns = [
+			createAgent ['ModuleRespawnPositionWest_F', [0,0,0], [], 0, 'CAN_COLLIDE'],
+			createAgent ['ModuleRespawnPositionEast_F', [0,0,0], [], 0, 'CAN_COLLIDE'],
+			createAgent ['ModuleRespawnPositionGuer_F', [0,0,0], [], 0, 'CAN_COLLIDE'],
+			createAgent ['ModuleRespawnPositionCiv_F', [0,0,0], [], 0, 'CAN_COLLIDE']
+		]; _respawns spawn {sleep 2; {deleteVehicle _x} forEach _this};
+		if (!isNull findDisplay 312) then {
+			findDisplay 49 closeDisplay 0;
+			waitUntil {isNull findDisplay 312};
+			openCuratorInterface;
+			waitUntil {!isNull findDisplay 312}
+		} else {
+			findDisplay 49 closeDisplay 0;
 		};
 	};
-	_display closeDisplay 1;
-},{
-	params ["_values","_args","_display"];
-	_display closeDisplay 2;
-},[],{
-	params ["_display"];
-	_display setVariable ["MAZ_EZM_showSides",true];
-}] call MAZ_EZM_fnc_createDialog;
+
+	0 = [] spawn MAZ_EZM_fnc_initEZM; '🕺'
+};
 
 comment "
 	TODO Expung3d:
@@ -18917,5 +18952,3 @@ comment "
  - Play video module
  - Fix IR Strobes not deleting https://forums.bohemia.net/forums/topic/160424-ir-strobe-deletevehicle-issues/
 ";
-
-};
