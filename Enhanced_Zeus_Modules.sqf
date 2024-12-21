@@ -12601,14 +12601,17 @@ MAZ_EZM_fnc_initFunction = {
 
 		M9sd_fnc_moduleSoundBoard2 = {[] spawn {
 			startLoadingScreen ["Loading Sound Board..."];
-			comment "Determine if execution context is composition and delete the helipad.";
-
 			playSound 'click';
 			playSound ['border_In', true];
 			missionNamespace setVariable ['m9_sndbrdprog', 0];
 			progressLoadingScreen 0.1;
 			m9sd_fnc_populateSoundboardWithSearch = {
+				private _bootyCount = 0;
 				params ['_treeCtrl', ['_searchStr', ''], ['_onLoad', false]];
+				private _showRadioDubsOnly = false;
+				if (_searchStr == 'dubbing_radio') then {
+					_showRadioDubsOnly = true;
+				};
 				tvClear _treeCtrl;
 				private _addEverything = (_searchStr == '');
 				private _favorites = profilenamespace getvariable ['JAM_zeus_favoriteSounds', []];
@@ -12620,17 +12623,28 @@ MAZ_EZM_fnc_initFunction = {
 				private _icon_addon = "a3\3den\data\displays\display3den\toolbar\open_ca.paa";
 				'private _progInc = (50/204297) * 0.7777;';
 				'0.000190336';'0.0002';
-				private _progInc = 0.000440535;
+				'100/34508';
+				private _progInc = 0.0028978;
 				private _lastSelectedPath = [];
 				private _lastSelectedName = profileNamespace getVariable ['JAM_zeus_selectedSoundDisplayName', ''];
 				{
+					if (_showRadioDubsOnly && (_forEachIndex == 0)) then {continue};
 					private _categoryName = _x # 0;
+					if (!_showRadioDubsOnly && ('dubbing_radio' in _categoryName)) then {continue};
 					private _categoryName2 = _categoryName trim ['\', 2];
 					private _categoryNameLength = count (_categoryName splitString '');
 					private _snds = _x # 1;
 					private _addCategory = false;
 					private _addWholeCategory = false;
-					if (_searchStr in [ _categoryName, '']) then {_addCategory = true;_addWholeCategory = true};
+					if (_searchStr in [ _categoryName, '']) then {
+						_addCategory = true;
+						_addWholeCategory = true
+					} else {
+						if (_showRadioDubsOnly) then {
+							_addCategory = false;
+							_addWholeCategory = false;
+						};
+					};
 					private _matchedSndIdxs = [];
 					{
 						if (_addEverything) then {
@@ -12666,6 +12680,7 @@ MAZ_EZM_fnc_initFunction = {
 							private _sound = _snd # 3;
 							private _titles = _snd # 4;
 							private _indexC = _treeCtrl tvAdd [[_indexA], _class];
+							_bootyCount = _bootyCount + 1;
 							private _pathC = [_indexA, _indexC];
 							if (_class == _lastSelectedName) then {
 								_lastSelectedPath = _pathC;
@@ -12689,6 +12704,7 @@ MAZ_EZM_fnc_initFunction = {
 						} else {
 							private _sndName = _snd select [_categoryNameLength-1, count (_snd splitString '')];
 							private _indexC = _treeCtrl tvAdd [[_indexA], _sndName];
+							_bootyCount = _bootyCount + 1;
 							private _pathC = [_indexA, _indexC];
 							if (_sndName == _lastSelectedName) then {
 								_lastSelectedPath = _pathC;
@@ -12721,6 +12737,7 @@ MAZ_EZM_fnc_initFunction = {
 				} else {
 					'tvCollapseall _treectrl;'
 				};
+				'systemChat str _bootyCount;';
 			};
 			uiNamespace setVariable ['m9sd_fnc_populateSoundboardWithSearch', m9sd_fnc_populateSoundboardWithSearch];
 			if (isNil 'JAM_zeus_uiColor') then 
