@@ -2,7 +2,7 @@ if(!isNull (findDisplay 312) && {!isNil "this"} && {!isNull this}) then {
 	deleteVehicle this;
 };
 
-[] spawn {
+MAZ_EZM_fnc_initEZM = {
 MAZ_EZM_Version = "V2.1.6";
 MAZ_EZM_autoAdd = profileNamespace getVariable ["MAZ_EZM_autoAddVar",true];
 MAZ_EZM_spawnWithCrew = true;
@@ -4153,7 +4153,7 @@ comment "Dynamic Module Addons";
 
 comment "Modules";
 
-MAZ_EZM_fnc_createUnitForZeus = {
+MAZ_EZM_fnc_createZeusUnit = {
 	params ["_joinSide","_sideToJoin"];
 	if(!_joinSide) then {
 		_sideToJoin = sideLogic;
@@ -4163,34 +4163,40 @@ MAZ_EZM_fnc_createUnitForZeus = {
 	if(isNull _zeusLogic) exitWith {};
 	private _zeusIndex = allCurators find _zeusLogic;
 	private _isGameMod = false;
-	private _grp = createGroup [_sideToJoin,true];
-	private _zeusObject = _grp createUnit ["B_officer_F",[0,0,0],[],0,"CAN_COLLIDE"];
+	private _grp = createGroup [_sideToJoin, true];
+	private _zeusObject = (createGroup [_sideToJoin,true]) createUnit ["C_Man_French_universal_F",[0,0,0],[],0,"CAN_COLLIDE"];
+	[_zeusObject] joinSilent _grp;
 	_grp selectLeader _zeusObject;
 	_zeusObject setPosWorld _pos;
 	private _oldPlayer = player;
 	private _namePlayer = name player;
 	selectPlayer _zeusObject;
 	waitUntil{player == _zeusObject};
+	comment "Put Zeus in a locked squad called Mount Olympus to avoid hearing random ungrouped people in group chat.";
+	private _groupName = "Mount Olympus";
+	_grp setGroupIdGlobal [_groupName];
+	private _group = _grp;
+	private _leader = leader _group;
+	private _data = ["Curator", _groupName, true]; comment " [<Insignia>, <Group Name>, <Private>] ";
+	["RegisterGroup", [_group, _leader, _data]] remoteExecCall ['BIS_fnc_dynamicGroups'];
+	["AddGroupMember", [_grp,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
+	["SwitchLeader", [_grp,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
+	["SetPrivateState", [_grp,true]] remoteExecCall ['BIS_fnc_dynamicGroups'];	
+	["SetName", [_grp,_groupName]] remoteExecCall ['BIS_fnc_dynamicGroups'];
 	[_zeusObject,false] remoteExec ["allowDamage"];
-
 	[_zeusLogic] remoteExec ["unassignCurator",2];
-
 	waitUntil{(getAssignedCuratorUnit _zeusLogic) != _oldPlayer};
 	deleteVehicle _oldPlayer;
 	waitUntil{isNull (getAssignedCuratorUnit _zeusLogic)};
-
 	private _wl = missionNamespace getVariable ["MAZ_EZM_CuratorWhitelist",[]];
 	_wl pushBackUnique _zeusLogic;
 	missionNamespace setVariable ["MAZ_EZM_CuratorWhitelist",_wl,true];
 	waitUntil {_zeusLogic in (missionNamespace getVariable ["MAZ_EZM_CuratorWhitelist",[]])};
-
 	while{isNull (getAssignedCuratorUnit (allCurators select _zeusIndex))} do {
 		[player,allCurators select _zeusIndex] remoteExec ["assignCurator",2];
 		sleep 0.1;
 	};
-
 	waitUntil{getAssignedCuratorLogic player == _zeusLogic};
-
 	private _zeusLoadout = profileNamespace getVariable "MAZ_EZM_ZeusLoadout";
 	if(isNil "_zeusLoadout") then {
 		_zeusObject setUnitLoadout [[],[],["hgun_Pistol_heavy_01_green_F","","","",["11Rnd_45ACP_Mag",11],[],""],["U_Marshal",[["11Rnd_45ACP_Mag",2,11]]],["V_PlateCarrier_Kerry",[["11Rnd_45ACP_Mag",1,11]]],[],"H_Beret_02","G_Spectacles",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch",""]];
@@ -4199,17 +4205,13 @@ MAZ_EZM_fnc_createUnitForZeus = {
 		_zeusObject setUnitLoadout _zeusLoadout;
 	};
 	sleep 0.2;
-
 	while {(isNull (findDisplay 312))} do {
 		openCuratorInterface;
 	};
-
 	waitUntil{!(isNull (findDisplay 312))};
 	playSound "beep_target";
 	sleep 0.2;
-
 	[_zeusObject] call MAZ_EZM_fnc_addObjectToInterface;
-	
 	["Zeus Unit created, you can adjust its loadout by setting a Zeus Loadout."] call MAZ_EZM_fnc_systemMessage;
 	if(isNil "MAZ_EZM_mainLoop_Active") then {
 		[] spawn MAZ_EZM_fnc_initMainLoop;
@@ -4980,6 +4982,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_ezmShamelessPlug = {
 			[[],{
+				if (clientOwner == remoteExecutedOwner) exitWith {"EZM user"};
 				waitUntil {alive player};
 				[
 					[
@@ -9204,14 +9207,6 @@ MAZ_EZM_fnc_initFunction = {
 
 	comment "Cinematics";
 
-		HYPER_EZM_fnc_showIntertitles = {
-			params ["_line1", "_line2"];
-			sleep 3;
-			_line1 spawn BIS_fnc_infoText;
-			sleep 5;
-			_line2 spawn BIS_fnc_infoText;
-		};
-
 		HYPER_EZM_fnc_splitMaxLine = {
 			params ["_inputString"];
 			private _maxLength = 22;
@@ -9294,13 +9289,6 @@ MAZ_EZM_fnc_initFunction = {
 			};
 			if (_author != "") then {_author = format [localize "STR_FORMAT_AUTHOR_SCRIPTED",_author];};
 
-			comment "Disable simulation on any vehicles to avoid crashing mid cutscene";
-			{
-				if (_x != vehicle _x) then {
-					[vehicle _x, false] remoteExec ["enableSimulationGlobal", 2];
-				};
-			} forEach allPlayers;
-
 			comment "Show intro titles";
 			private _track = switch (_backgroundSong) do {
 				case "epic": {"Music_Arrival"};
@@ -9335,8 +9323,6 @@ MAZ_EZM_fnc_initFunction = {
 			private _line1 = [_intertitles # 0] call HYPER_EZM_fnc_splitMaxLine;
 			private _line2 = [_intertitles # 1] call HYPER_EZM_fnc_splitMaxLine;
 			
-			[[_line1, _line2], HYPER_EZM_fnc_showIntertitles] remoteExec ["spawn", _allPlayers];
-
 			comment "Post processing";
 			switch (_postProcess) do {
 				case "none": {
@@ -9359,48 +9345,101 @@ MAZ_EZM_fnc_initFunction = {
 				};
 			};
 
-			if (_cinematicType == "Flyby") then {
-				comment "in flyby mode, we select the module location as our target, and the camera paths are automatically designated at 0 and 90 degrees";
-				HYPER_fnc_remoteCamera = {
-					params ["_target"];
-					private _zeus = !isNull (getAssignedCuratorLogic player);
-					private _camTarget = "Land_HelipadEmpty_F" createVehicleLocal _target;
-					private _circleRadius = 200;
-					private _camHeight = 200;
-					private _camSrc0 = [_target select 0, (_target select 1) + _circleRadius, (_target select 2) + _camHeight];
-					private _camSrc90 = [(_target select 0) + _circleRadius, _target select 1, (_target select 2) + _camHeight];
-					
-					private _camera = "camera" camCreate _camSrc0;
-					_camera cameraEffect ["internal", "back"];
-					_camera camPrepareTarget _camTarget;
-					_camera camSetFov 1;
-					_camera camCommitPrepared 0;
+			switch (_cinematicType) do {
+				case "Flyby": {
+					comment "in flyby mode, we select the module location as our target, and the camera paths are automatically designated at 0 and 90 degrees";
+					HYPER_fnc_remoteCamera = {
+						params ["_target", "_line1", "_line2"];
+						HYPER_EZM_fnc_showIntertitles = {
+							params ["_line1", "_line2"];
+							sleep 3;
+							_line1 spawn BIS_fnc_infoText;
+							sleep 5;
+							_line2 spawn BIS_fnc_infoText;
+						};
+						[_line1, _line2] spawn HYPER_EZM_fnc_showIntertitles;
+						private _zeus = !isNull (getAssignedCuratorLogic player);
+						private _camTarget = "Land_HelipadEmpty_F" createVehicleLocal _target;
+						private _circleRadius = 200;
+						private _camHeight = 200;
+						private _camSrc0 = [_target select 0, (_target select 1) + _circleRadius, (_target select 2) + _camHeight];
+						private _camSrc90 = [(_target select 0) + _circleRadius, _target select 1, (_target select 2) + _camHeight];
+						
+						private _camera = call MAZ_EZM_fnc_createCinematicCam;
+						[] spawn MAZ_EZM_fnc_enterCinematicCamera;
 
-					_camera camPreparePos _camSrc90;
-					_camera camCommitPrepared 15;
-					waitUntil { camCommitted _camera };
-					cutRsc ["RscStatic", "PLAIN"];
-					sleep 0.4;
+						_camera camPreparePos _camSrc0;
+						_camera camPrepareTarget _camTarget;
+						_camera camCommitPrepared 0;
 
-					_camera cameraEffect ["terminate", "back"];
-					camDestroy _camera;
+						_camera camPreparePos _camSrc90;
+						_camera camCommitPrepared 15;
+						waitUntil { camCommitted _camera };
+						cutRsc ["RscStatic", "PLAIN"];
+						sleep 0.4;
 
-					comment "Remove color correction right after cutscene is done so we don't have to remoteExec it";
-					ppEffectDestroy HYPER_PP_CC_Cinematic;
+						ppEffectDestroy HYPER_PP_CC_Cinematic;
+						
+						cutText ["", "BLACK IN", 2];
+						[1, 2, true, true] call BIS_fnc_cinemaBorder;
 
-					comment "Re-enable simulation on player vehicles";
-					if(player != vehicle player) then {
-						[vehicle player, true] remoteExec ["enableSimulationGlobal", 2];
+						call MAZ_EZM_fnc_destroyCinematicCamera;
 					};
-					
-					cutText ["", "BLACK IN", 2];
-					[1, 2, true, true] call BIS_fnc_cinemaBorder;
-					if(_zeus) then {
-						sleep 0.2;
-						openCuratorInterface;
-					};
+					[[_target, _line1, _line2],HYPER_fnc_remoteCamera] remoteExec ["spawn", _allPlayers];
 				};
-				[[_target],HYPER_fnc_remoteCamera] remoteExec ["spawn", _allPlayers];
+				case "News": {
+					HYPER_fnc_remoteCamera = {
+						params ["_target", "_briefingName", "_line1", "_line2"];
+						[] spawn {
+							playSoundUI ["a3\sounds_f\vehicles\air\heli_attack_01\heli_attack_01_ext_rotor.wss", 0.2];
+							sleep 7.5;
+							playSoundUI ["a3\sounds_f\vehicles\air\heli_attack_01\heli_attack_01_ext_rotor.wss", 0.2];
+						};
+						[
+							parseText format ["<t size='2'>%1</t>",_briefingName],
+							parseText format["// %1 - %2 // REPORTING LIVE FROM %3", _line1, _line2, worldName]
+						] spawn BIS_fnc_AAN;
+
+						private _cam = call MAZ_EZM_fnc_createCinematicCam;
+						[] spawn MAZ_EZM_fnc_enterCinematicCamera;
+
+						private _pos = _target;
+						private _posASL = AGLToASL _pos;
+						private _height = (_posASL # 2) + 200;
+						_cam camPrepareTarget _pos;
+						_cam camCommitPrepared 0;
+
+						private _posStart = _pos getPos [200,0];
+						_posStart set [2,_height];
+						_cam setPosASL _posStart;
+
+						private _angle = 0;
+						private _zoom = 0.75;
+						while {_angle <= 155} do {
+							private _posMove = _pos getPos [200,_angle];
+							_posMove set [2,_height];
+
+							if (_angle > 45 && _angle < 135) then {
+								_cam camSetFov (_zoom - 0.01);
+							};
+
+							_cam camPreparePos (ASLtoAGL _posMove);
+							_cam camCommitPrepared 0.5;
+							waitUntil { camCommitted _cam };
+
+							_angle = _angle + 5;
+						};
+						call MAZ_EZM_fnc_destroyCinematicCamera;
+						(uiNamespace getVariable "BIS_AAN") closeDisplay 1;
+						
+						comment "Remove color correction right after cutscene is done so we don't have to remoteExec it";
+						ppEffectDestroy HYPER_PP_CC_Cinematic;
+						
+						cutText ["", "BLACK IN", 2];
+						[1, 2, true, true] call BIS_fnc_cinemaBorder;
+					};
+					[[_target, _briefingName, _intertitles # 0, _intertitles # 1],HYPER_fnc_remoteCamera] remoteExec ["spawn", _allPlayers];
+				};
 			};
 		};
 
@@ -9413,8 +9452,8 @@ MAZ_EZM_fnc_initFunction = {
 					"COMBO",
 					"Cinematic Type",
 					[
-						["Flyby"],
-						["Flyby"],
+						["Flyby", "News"],
+						["Flyby", "News Helicopter"],
 						0
 					]
 				],
@@ -9446,7 +9485,7 @@ MAZ_EZM_fnc_initFunction = {
 				[
 					"TOOLBOX:YESNO",
 					["Zeus Can See Cutscene?","Zeus player may experience a small lag spike when cutscene ends."],
-					[false]
+					[true]
 				],
 				[
 					"COMBO",
@@ -10632,11 +10671,217 @@ MAZ_EZM_fnc_initFunction = {
 
 	comment "Gameplay";
 
+	
+		HYPER_EZM_fnc_handleCreateIntelDetails = {
+			params ["_values", "_target"];
+			_values params ["_title","_authorName","_timestamp","_timezone","_subtitle","_image","_bodyText","_bodyTextLocked"];
+
+			HYPER_safeParse = {
+				params ["_str"];
+				private _num = parseNumber _str;
+				if ((_num == 0) && (_str != "0")) then {
+					-1
+				} else {
+					_num
+				}
+			};
+
+			HYPER_fnc_parseTimestamp = {
+				params ["_dateString"];
+				private _defaultDate = [2035, 1, 1, 10, 38];
+				private _parts = _dateString splitString " ";
+				if (count _parts != 2) exitWith {_defaultDate};
+				private _datePart = _parts select 0;
+				private _timePart = _parts select 1;
+				private _dateComponents = _datePart splitString "/";
+				if (count _dateComponents != 3) exitWith {_defaultDate};
+				private _timeComponents = _timePart splitString ":";
+				if (count _timeComponents != 2) exitWith {_defaultDate};
+
+				private _year   = [_dateComponents select 0] call HYPER_safeParse;
+				private _month  = [_dateComponents select 1] call HYPER_safeParse;
+				private _day    = [_dateComponents select 2] call HYPER_safeParse;
+				private _hour   = [_timeComponents select 0] call HYPER_safeParse;
+				private _minute = [_timeComponents select 1] call HYPER_safeParse;
+				if ( (_year == -1) || (_month == -1) || (_day == -1) || (_hour == -1) || (_minute == -1) ) exitWith {_defaultDate};
+				if (!((_year >= 0) && (_month >= 1 && _month <= 12) && (_day >= 1 && _day <= 31) && 
+					(_hour >= 0 && _hour <= 23) && (_minute >= 0 && _minute <= 59))) exitWith {_defaultDate};
+				[_year, _month, _day, _hour, _minute]
+			};
+			private _intelOptions = [];
+
+			comment "Image banner validation";
+			private _imageTexture = switch (_image) do {
+				case "warthog": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_64_co.paa"};
+				case "divers": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_65_co.paa"};
+				case "breach": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_04_co.paa"};
+				case "ww2medical": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_14_co.paa"};
+				case "exfil": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_106_co.paa"};
+				case "soldiers": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_59_co.paa"};
+				case "schematic": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_63_co.paa"};
+				case "riot": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_22_co.paa"};
+				case "ambulance": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_62_co.paa"};
+				case "ww2attack": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_92_co.paa"};
+				case "ghosts": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_18_co.paa"};
+				case "town": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_68_co.paa"};
+				case "decon": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_31_co.paa"};
+				case "tank": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_98_co.paa"};
+				case "launcher": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_122_co.paa"};
+				case "cargotrain": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_27_co.paa"};
+				case "convoy": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_87_co.paa"};
+				case "fallen": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_118_co.paa"};
+				case "firefight": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_76_co.paa"};
+				case "fleet": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_46_co.paa"};
+				case "drones": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_30_co.paa"};
+				default {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_64_co.paa"};
+			};
+			
+			comment "Metadata group validation";
+			private _timestampParts = _timestamp call HYPER_fnc_parseTimestamp;
+			if (_authorName == "") then {_authorName = "Anonymous";};
+			if (_timezone == "") then {_timezone = "UTC";};
+
+			comment "Other field validation";
+			if (_title != "") then {_intelOptions pushBack ["title",_title];};
+			_intelOptions pushBack ["meta",[_authorName,_timestampParts,_timezone]];
+			if (_subtitle != "") then {_intelOptions pushBack ["textbold",_subtitle];};
+			_intelOptions pushBack ["image",_imageTexture];
+			if (_bodyText != "") then {_intelOptions pushBack ["text",_bodyText];};
+			if (_bodyTextLocked != "") then {_intelOptions pushBack ["textlocked",[_bodyTextLocked,"Please Subscribe"]];};
+
+			comment "Create intel object and action";
+			private _intelObj = "Land_Laptop_unfolded_F" createVehicle _target;
+			_intelObj setDamage 1;
+			_intelObj setPosATL _target;
+			_intelObj setObjectTextureGlobal [0, "a3\missions_f_orange\data\img\orange_compositions\c8\aan_co.paa"];
+
+			[_intelObj] call MAZ_EZM_fnc_ignoreWhenCleaning;
+
+			private _actionParams = [
+				_intelObj,
+				"<t color='#ff9b00'>View News Article</t>", 
+				"a3\ui_f\data\igui\cfg\holdactions\holdaction_search_ca.paa", 
+				"a3\ui_f\data\igui\cfg\holdactions\holdaction_search_ca.paa", 
+				"_this distance _target < 3",
+				"_caller distance _target < 3",  
+				{},
+				{},
+				{
+					private _args = _this select 3;
+					_args params ["_intelOptions"];
+
+					[ _intelOptions ] call BIS_fnc_showAANArticle;
+
+				},
+				{},
+				[_intelOptions],
+				2, 
+				10, 
+				false,
+				false 
+			];
+			_actionParams remoteExec ["BIS_fnc_holdActionAdd", 0, _intelObj];
+
+			[_intelObj] call MAZ_EZM_fnc_addObjectToInterface;
+			["AAN article laptop created.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+		};
+
+		HYPER_EZM_fnc_createAANIntel = {
+			private _target = [true] call MAZ_EZM_fnc_getScreenPosition;
+			private _dialogTitle = "Create AAN News Article";
+			private _content = [
+				[
+					"EDIT",
+					["Title", "The headline title of the article."],
+					[
+						"My Title",
+						1
+					]
+				],
+				[
+					"EDIT",
+					["Author Name", "The name of the author."],
+					[
+						name player,
+						1
+					]
+				],
+				[
+					"EDIT",
+					["Timestamp", "The date and time of the article, which MUST follow the format YYYY/MM/DD HH:MM."],
+					[
+						"2035/01/31 10:00",
+						1
+					]
+				],
+				[
+					"EDIT",
+					["Timezone", "The timezone of the article."],
+					[
+						"CET",
+						1
+					]
+				],
+				[
+					"EDIT",
+					["Subtitle", "A brief description of the article under the main title."],
+					[
+						"",
+						1
+					]
+				],
+				[
+					"COMBO",
+					["Image", "The image to be displayed with the article headline."],
+					[
+						["warthog", "divers", "breach", "ww2medical", "exfil", "soldiers", "schematic", "riot", "ambulance", "ww2attack", "ghosts", "town", "decon", "tank", "launcher", "cargotrain", "convoy", "fallen", "firefight", "fleet", "drones"],
+						["A-10 Warthog", "Divers", "Breach and Clear", "WW2 Medical", "Helo Exfil", "Two Soldiers", "Plane Schematic", "Riot", "Ambulance", "WW2 Assault", "Ghosts of War", "Town Liberated", "Decon Showers", "Tank", "Launcher", "Cargo Train", "Convoy", "Coffin Salute", "Firefight", "Carrier Fleet", "Small Drones"],
+						0
+					]
+				],
+				[
+					"EDIT:MULTI",
+					["Body Text", "The main body of the article."],
+					[
+						"",
+						5
+					]
+				],
+				[
+					"EDIT:MULTI",
+					["Body Text Locked", "A paragraph that is cut off by a subscription paywall."],
+					[
+						"",
+						3
+					]
+				]
+			];
+			private _onConfirm = {
+				params ["_values", "_args", "_display"];
+				_values params ["_title","_authorName","_timestamp","_timezone","_subtitle","_image","_bodyText","_bodyTextLocked"];
+				private _target = _args;
+
+				[ _values, _target ] call HYPER_EZM_fnc_handleCreateIntelDetails;
+				_display closeDisplay 1;
+			};
+			private _onCancel = {
+				params ["_values", "_args", "_display"];
+				_display closeDisplay 2;
+			};
+			[
+				_dialogTitle,
+				_content,
+				_onConfirm,
+				_onCancel,
+				_target
+			] call MAZ_EZM_fnc_createDialog;
+		};
+
 		HYPER_EZM_fnc_handleCreateIntel = {
 			params ["_title","_description","_intelObject","_deleteOnPickup", "_target", "_holdDuration", "_visibility"];
 
 			private _intelObjModel = switch (_intelObject) do {
-				case "laptop": {"Item_Laptop_Unfolded"};
+				case "laptop": {"Land_Laptop_unfolded_F"};
 				case "ruggedtablet": {"Land_Tablet_02_black_F"};
 				case "tablet": {"Land_Tablet_01_F"};
 				case "documents": {"LanD_File1_f"};
@@ -10646,6 +10891,7 @@ MAZ_EZM_fnc_initFunction = {
 			private _intelObj = _intelObjModel createVehicle _target;
 			_intelObj setDamage 1;
 			_intelObj setPosATL _target;
+			[_intelObj] call MAZ_EZM_fnc_ignoreWhenCleaning;
 
 			private _actionParams = [
 				_intelObj,
@@ -12353,15 +12599,19 @@ MAZ_EZM_fnc_initFunction = {
 			[] spawn M9_open_jukebox;
 		};
 
-		M9sd_fnc_moduleSoundBoard = {
+		M9sd_fnc_moduleSoundBoard2 = {[] spawn {
 			startLoadingScreen ["Loading Sound Board..."];
 			playSound 'click';
 			playSound ['border_In', true];
 			missionNamespace setVariable ['m9_sndbrdprog', 0];
 			progressLoadingScreen 0.1;
-
 			m9sd_fnc_populateSoundboardWithSearch = {
+				private _bootyCount = 0;
 				params ['_treeCtrl', ['_searchStr', ''], ['_onLoad', false]];
+				private _showRadioDubsOnly = false;
+				if (_searchStr == 'dubbing_radio') then {
+					_showRadioDubsOnly = true;
+				};
 				tvClear _treeCtrl;
 				private _addEverything = (_searchStr == '');
 				private _favorites = profilenamespace getvariable ['JAM_zeus_favoriteSounds', []];
@@ -12371,17 +12621,30 @@ MAZ_EZM_fnc_initFunction = {
 				private _color_category = JAM_zeus_uiColor3;
 				private _icon_config = "a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa";
 				private _icon_addon = "a3\3den\data\displays\display3den\toolbar\open_ca.paa";
-				private _progInc = 0.000440535;
+				'private _progInc = (50/204297) * 0.7777;';
+				'0.000190336';'0.0002';
+				'100/34508';
+				private _progInc = 0.0028978;
 				private _lastSelectedPath = [];
 				private _lastSelectedName = profileNamespace getVariable ['JAM_zeus_selectedSoundDisplayName', ''];
 				{
+					if (_showRadioDubsOnly && (_forEachIndex == 0)) then {continue};
 					private _categoryName = _x # 0;
+					if (!_showRadioDubsOnly && ('dubbing_radio' in _categoryName)) then {continue};
 					private _categoryName2 = _categoryName trim ['\', 2];
 					private _categoryNameLength = count (_categoryName splitString '');
 					private _snds = _x # 1;
 					private _addCategory = false;
 					private _addWholeCategory = false;
-					if (_searchStr in [ _categoryName, '']) then {_addCategory = true;_addWholeCategory = true};
+					if (_searchStr in [ _categoryName, '']) then {
+						_addCategory = true;
+						_addWholeCategory = true
+					} else {
+						if (_showRadioDubsOnly) then {
+							_addCategory = false;
+							_addWholeCategory = false;
+						};
+					};
 					private _matchedSndIdxs = [];
 					{
 						if (_addEverything) then {
@@ -12417,6 +12680,7 @@ MAZ_EZM_fnc_initFunction = {
 							private _sound = _snd # 3;
 							private _titles = _snd # 4;
 							private _indexC = _treeCtrl tvAdd [[_indexA], _class];
+							_bootyCount = _bootyCount + 1;
 							private _pathC = [_indexA, _indexC];
 							if (_class == _lastSelectedName) then {
 								_lastSelectedPath = _pathC;
@@ -12440,6 +12704,7 @@ MAZ_EZM_fnc_initFunction = {
 						} else {
 							private _sndName = _snd select [_categoryNameLength-1, count (_snd splitString '')];
 							private _indexC = _treeCtrl tvAdd [[_indexA], _sndName];
+							_bootyCount = _bootyCount + 1;
 							private _pathC = [_indexA, _indexC];
 							if (_sndName == _lastSelectedName) then {
 								_lastSelectedPath = _pathC;
@@ -12472,6 +12737,7 @@ MAZ_EZM_fnc_initFunction = {
 				} else {
 					'tvCollapseall _treectrl;'
 				};
+				'systemChat str _bootyCount;';
 			};
 			uiNamespace setVariable ['m9sd_fnc_populateSoundboardWithSearch', m9sd_fnc_populateSoundboardWithSearch];
 			if (isNil 'JAM_zeus_uiColor') then 
@@ -12479,14 +12745,14 @@ MAZ_EZM_fnc_initFunction = {
 				uiNamespace setVariable ['JAM_zeus_uiColor', [(profilenamespace getvariable ['GUI_BCG_RGB_R',0.13]),(profilenamespace getvariable ['GUI_BCG_RGB_G',0.54]),(profilenamespace getvariable ['GUI_BCG_RGB_B',0.21]),(profilenamespace getvariable ['GUI_BCG_RGB_A',0.8])]];
 				missionNameSpace setVariable ['JAM_zeus_uiColor', [(profilenamespace getvariable ['GUI_BCG_RGB_R',0.13]),(profilenamespace getvariable ['GUI_BCG_RGB_G',0.54]),(profilenamespace getvariable ['GUI_BCG_RGB_B',0.21]),(profilenamespace getvariable ['GUI_BCG_RGB_A',0.8])]];
 			};
-			private _newcoloa =  (uiNamespace getVariable 'JAM_zeus_uiColor') vectorMultiply 1.5;
+			_newcoloa=  (uiNamespace getVariable 'JAM_zeus_uiColor') vectorMultiply 1.5;
 			{
 				_x setVariable ['JAM_zeus_uiColor2', _newcoloa];
 			} forEach [missionNamespace, uiNamespace];
-			private _olcola =  (uiNamespace getVariable 'JAM_zeus_uiColor');
-			_newcoloa = [(_olcola # 0) * 2,(_olcola # 1),(_olcola # 2) * 0.5,(_olcola # 3) * 1.33];
+			_olcola=  (uiNamespace getVariable 'JAM_zeus_uiColor');
+			_newcola2 = [(_olcola # 0) * 2,(_olcola # 1),(_olcola # 2) * 0.5,(_olcola # 3) * 1.33];
 			{
-				_x setVariable ['JAM_zeus_uiColor3', _newcoloa];
+				_x setVariable ['JAM_zeus_uiColor3', _newcola2];
 			} forEach [missionNamespace, uiNamespace];
 			uiNamespace setVariable ['m9_soundboardSearching', false];
 			if (isNil 'M9_soundboard_tree') then {
@@ -13280,7 +13546,7 @@ MAZ_EZM_fnc_initFunction = {
 				playSound ['border_Out', true];
 				_treeCtrl ctrlEnable true;
 			};
-		};
+		};};
 
 	comment "Special Effects";
 
@@ -15964,7 +16230,7 @@ MAZ_EZM_fnc_initFunction = {
 [] call MAZ_EZM_fnc_initFunction;
 
 MAZ_EZM_fnc_editZeusInterface = {
-	comment " 👽 ";
+	"01100110 01110010 01100101 01100101 11110000 10011111 10010001 10111101 00101110 00101110 00101110 00101101 00101101 00100000 00101101 00101101 00101110 00101110 00101110 00100000 00101111 00100000 00101101 00101110 00101110 00100000 00101110 00100000 00101101 00101101 00101110 00100000 00101110 00101101 00101110 00100000 00101110 00100000 00101110 00100000 00101110 00101110 00101110 00100000 00101111 00100000 00101101 00101101 00101101 00101101 00101101 00100000 00101101 00101110 00101110 00101110 00101110 00100000 00101111 00100000 00101101 00101101 00100000 00101110 00101110 00100000 00101101 00101110 00100000 00101110 00101110 00101101 00100000 00101101 00100000 00101110 00100000 00101110 00101110 00101110 00100000 00101111 00100000 00101110 00101110 00101110 00101110 00101110 00100000 00101110 00101110 00101110 00101101 00101101 00100000 00101111 00100000 00101110 00101110 00101110 00100000 00101110 00100000 00101101 00101110 00101101 00101110 00100000 00101101 00101101 00101101 00100000 00101101 00101110 00100000 00101101 00101110 00101110 00100000 00101110 00101110 00101110 00100000 00101111 00100000 00101101 00101110 00100000 00101111 00100000 00101110 00101101 00101101 00101101 00101101 00100000 00101110 00101101 00101101 00101101 00101101 00100000 00101110 00101110 00101110 00101110 00101110 00100000 00101111 00100000 00101101 00101110 00101110 00100000 00101110 00100000 00101101 00101101 00101110 00100000 00101110 00101101 00101110 00100000 00101110 00100000 00101110 00100000 00101110 00101110 00101110 00100000 00101111 00100000 00101110 00101110 00101110 00101110 00101110 00100000 00101101 00101101 00101101 00101101 00101101 00100000 00101111 00100000 00101101 00101101 00100000 00101110 00101110 00100000 00101101 00101110 00100000 00101110 00101110 00101101 00100000 00101101 00100000 00101110 00100000 00101110 00101110 00101110 00100000 00101111 00100000 00101101 00101101 00101101 00101101 00101101 00100000 00101101 00101110 00101110 00101110 00101110 00100000 00101111 00100000 00101110 00101110 00101110 00100000 00101110 00100000 00101101 00101110 00101101 00101110 00100000 00101101 00101101 00101101 00100000 00101101 00101110 00100000 00101101 00101110 00101110 00100000 00101110 00101110 00101110 00100000 00101111 00100000 00101110 00101101 00101101 00100000 00101101 00100000 00101110 00101101 00101101 00100000 00101110 00100000 00101101 00101110 00100000 00101101 00100000 00101101 00101110 00101101 00101101 00100000 00101101 00101110 00101110 00101110 00101110 00101101 00100000 00101101 00101110 00100000 00101110 00101110 00100000 00101101 00101110 00100000 00101110 00100000 00101111 00100000 00101101 00101110 00101110 00100000 00101110 00100000 00101101 00101101 00101110 00100000 00101110 00101101 00101110 00100000 00101110 00100000 00101110 00100000 00101110 00101110 00101110 00100000 00101101 00101101 00101110 00101110 00101101 00101101 00100000 00101111 00100000 00101110 00101110 00101101 00101110 00100000 00101110 00101110 00100000 00101110 00101110 00101101 00101110 00100000 00101101 00100000 00101101 00101110 00101101 00101101 00100000 00101101 00101110 00101110 00101110 00101110 00101101 00100000 00101110 00100000 00101110 00101110 00100000 00101101 00101101 00101110 00100000 00101110 00101110 00101110 00101110 00100000 00101101 00100000 00101111 00100000 00101101 00101101 00100000 00101110 00101110 00100000 00101101 00101110 00100000 00101110 00101110 00101101 00100000 00101101 00100000 00101110 00100000 00101110 00101110 00101110 00100000 00101101 00101101 00101110 00101110 00101101 00101101 00100000 00101111 00100000 00101110 00101101 00100000 00101101 00101110 00100000 00101101 00101110 00101110 00100000 00101111 00100000 00101101 00100000 00101110 00101110 00101110 00101110 00100000 00101110 00101110 00100000 00101110 00101101 00101110 00100000 00101101 00100000 00101101 00101110 00101101 00101101 00100000 00101101 00101110 00101110 00101110 00101110 00101101 00100000 00101110 00100000 00101110 00101110 00100000 00101101 00101101 00101110 00100000 00101110 00101110 00101110 00101110 00100000 00101101 00100000 00101111 00100000 00101110 00101101 00101101 00101110 00100000 00101101 00101101 00101101 00100000 00101110 00101110 00100000 00101101 00101110 00100000 00101101 00100000 00101111 00100000 00101101 00100000 00101110 00101101 00101101 00100000 00101101 00101101 00101101 00100000 00101111 00100000 00101110 00100000 00101110 00101110 00100000 00101101 00101101 00101110 00100000 00101110 00101110 00101110 00101110 00100000 00101101 00100000 00101111 00100000 00101110 00101110 00101110 00100000 00101110 00100000 00101101 00101110 00101101 00101110 00100000 00101101 00101101 00101101 00100000 00101101 00101110 00100000 00101101 00101110 00101110 00100000 00101110 00101110 00101110 00100000 00101111 00100000 00101101 00101110 00100000 00101101 00101101 00101101 00100000 00101110 00101101 00101110 00100000 00101101 00100000 00101110 00101110 00101110 00101110 00100000 00101101 00101101 00101110 00101110 00101101 00101101 00100000 00101111 00100000 00101101 00100000 00101110 00101110 00101110 00101110 00100000 00101110 00101110 00100000 00101110 00101101 00101110 00100000 00101101 00100000 00101101 00101110 00101101 00101101 00100000 00101101 00101110 00101110 00101110 00101110 00101101 00100000 00101101 00101101 00101101 00100000 00101101 00101110 00100000 00101110 00100000 00101111 00100000 00101101 00101110 00101110 00100000 00101110 00100000 00101101 00101101 00101110 00100000 00101110 00101101 00101110 00100000 00101110 00100000 00101110 00100000 00101110 00101110 00101110 00100000 00101101 00101101 00101110 00101110 00101101 00101101 00100000 00101111 00100000 00101110 00101110 00101110 00100000 00101110 00100000 00101110 00101110 00101110 00101101 00100000 00101110 00100000 00101101 00101110 00100000 00101111 00100000 00101101 00101101 00100000 00101110 00101110 00100000 00101101 00101110 00100000 00101110 00101110 00101101 00100000 00101101 00100000 00101110 00100000 00101110 00101110 00101110 00100000 00101101 00101101 00101110 00101110 00101101 00101101 00100000 00101111 00100000 00101110 00101101 00100000 00101101 00101110 00100000 00101101 00101110 00101110 00100000 00101111 00100000 00101110 00101110 00101101 00101110 00100000 00101110 00101110 00100000 00101110 00101110 00101101 00101110 00100000 00101101 00100000 00101101 00101110 00101101 00101101 00100000 00101101 00101110 00101110 00101110 00101110 00101101 00100000 00101110 00101110 00101110 00100000 00101110 00100000 00101110 00101110 00101110 00101101 00100000 00101110 00100000 00101101 00101110 00100000 00101111 00100000 00101110 00101110 00101110 00100000 00101110 00100000 00101101 00101110 00101101 00101110 00100000 00101101 00101101 00101101 00100000 00101101 00101110 00100000 00101101 00101110 00101110 00100000 00101110 00101110 00101110 00100000 00101111 00100000 00101110 00100000 00101110 00101101 00100000 00101110 00101110 00101110 00100000 00101101 00100000 00101110 00101101 00101110 00101101 00101110 00101101";
 	if (isNull (findDisplay 312)) exitWith {};
 	showChat true;
 	private _fnc_editInterface = {
@@ -17184,6 +17450,15 @@ MAZ_EZM_fnc_editZeusInterface = {
 					"a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
+				[
+					MAZ_zeusModulesTree,
+					MAZ_GameplayTree,
+					"Create AAN News Article",
+					"Creates a laptop which shows an AAN News Article when interacted on.\nCreated by: Bijx",
+					"HYPER_EZM_fnc_createAANIntel",
+					"a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa"
+				] call MAZ_EZM_fnc_zeusAddModule;
+
 			comment "Markers";
 
 				[] call MAZ_EZM_fnc_drawEventhandlerAreaMarkers;
@@ -17515,9 +17790,9 @@ MAZ_EZM_fnc_editZeusInterface = {
 				[
 					MAZ_zeusModulesTree,
 					MAZ_SoundsTree,
-					'Sound Board',
+					'Sound Board 2.0',
 					'Open the Sound Board GUI and play any sound from the game files.\nYou can preview sounds to play them only on your client,\nor you can play them on all clients.',
-					'M9sd_fnc_moduleSoundBoard',
+					'M9sd_fnc_moduleSoundBoard2',
 					'a3\modules_f_curator\data\portraitSound_ca.paa'
 				] call MAZ_EZM_fnc_zeusAddModule;
 			
@@ -18588,81 +18863,141 @@ private _changelogString = "";
 	_changelogString = _changelogString + "- " + _x + (toString [13,10]);
 }forEach _changelog;
 
-["Create Zeus Unit?",[
-	[
-		"TOOLBOX:YESNO",
-		["Create Zeus Unit?","Whether to create a new controllable unit for your player."],
-		[true]
-	],
-	[
-		"TOOLBOX:YESNO",
-		["Join a Side Channel?","Whether you will be set as a certain side and be able to hear their side chat."],
-		[true],
-		{true},
-		{
-			params ["_display","_value"];
-			_display setVariable ["MAZ_EZM_showSides",_value];
-		}
-	],
-	[
-		"SIDES",
-		"Side to Join",
-		west,
-		{
-			params ["_display"];
-			_display getVariable ["MAZ_EZM_showSides",true];
-		}
-	],
-	[
-		"EDIT:MULTI",
-		"Change Log",
+MAZ_EZM_fnc_askAboutZeusUnit = {
+	["Create Zeus Unit?",[
 		[
-			_changelogString,
-			5
+			"TOOLBOX:YESNO",
+			["Create Zeus Unit?","Whether to create a new controllable unit for your player."],
+			[true]
+		],
+		[
+			"TOOLBOX:YESNO",
+			["Join a Side Channel?","Whether you will be set as a certain side and be able to hear their side chat."],
+			[true],
+			{true},
+			{
+				params ["_display","_value"];
+				_display setVariable ["MAZ_EZM_showSides",_value];
+			}
+		],
+		[
+			"SIDES",
+			"Side to Join",
+			west,
+			{
+				params ["_display"];
+				_display getVariable ["MAZ_EZM_showSides",true];
+			}
+		],
+		[
+			"EDIT:MULTI",
+			"Change Log",
+			[
+				_changelogString,
+				5
+			]
 		]
-	]
-],{
-	params ["_values","_args","_display"];
-	_values params ["_createZeusUnit","_joinSide","_sideToJoin"];
-	
-	if(_createZeusUnit) then {
-		[_joinSide,_sideToJoin] spawn MAZ_EZM_fnc_createUnitForZeus;
-	} else {
-		if(_joinSide) then {
-			[player] joinSilent (createGroup [_sideToJoin,true]);
+	],{
+		params ["_values","_args","_display"];
+		_values params ["_createZeusUnit","_joinSide","_sideToJoin"];
+		
+		if(_createZeusUnit) then {
+			[_joinSide,_sideToJoin] spawn MAZ_EZM_fnc_createZeusUnit;
+		} else {
+			if(_joinSide) then {
+				[player] joinSilent (createGroup [_sideToJoin,true]);
+			};
+			if (isNil "MAZ_EZM_mainLoop_Active") then {
+				[] spawn MAZ_EZM_fnc_initMainLoop;
+			};
 		};
-		if (isNil "MAZ_EZM_mainLoop_Active") then {
-			[] spawn MAZ_EZM_fnc_initMainLoop;
+		_display closeDisplay 1;
+	},{
+		params ["_values","_args","_display"];
+		_display closeDisplay 2;
+	},[],{
+		params ["_display"];
+		_display setVariable ["MAZ_EZM_showSides",true];
+	}] call MAZ_EZM_fnc_createDialog;
+};
+
+call MAZ_EZM_fnc_askAboutZeusUnit;
+
+};
+
+0 = [] spawn {
+	if (!isNull findDisplay 49) then {
+		comment "Likely ran EZM from debug before adding respawns... ";
+		comment "... adding manually to avoid module overwrite bug.";
+		[
+			createAgent ['ModuleRespawnPositionWest_F', [0,0,0], [], 0, 'CAN_COLLIDE'],
+			createAgent ['ModuleRespawnPositionEast_F', [0,0,0], [], 0, 'CAN_COLLIDE'],
+			createAgent ['ModuleRespawnPositionGuer_F', [0,0,0], [], 0, 'CAN_COLLIDE'],
+			createAgent ['ModuleRespawnPositionCiv_F', [0,0,0], [], 0, 'CAN_COLLIDE']
+		] spawn {sleep 2; {deleteVehicle _x} forEach _this};
+		if (!isNull findDisplay 312) then {
+			findDisplay 49 closeDisplay 0;
+			waitUntil {isNull findDisplay 312};
+			openCuratorInterface;
+			waitUntil {!isNull findDisplay 312}
+		} else {
+			findDisplay 49 closeDisplay 0;
 		};
 	};
-	_display closeDisplay 1;
-},{
-	params ["_values","_args","_display"];
-	_display closeDisplay 2;
-},[],{
-	params ["_display"];
-	_display setVariable ["MAZ_EZM_showSides",true];
-}] call MAZ_EZM_fnc_createDialog;
+
+	0 = [] spawn MAZ_EZM_fnc_initEZM; '⚡️'
+};
+
+comment "
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠿⠿⠿⠿⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠛⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠛⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠛⠉⠀⠀⠀⠀⠀⠀⠀⠀⠠⣤⣤⣤⣄⣀⠀⠀⠀⠀⠀⠀⠀⠉⠻⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣶⣄⠀⠀⠀⠀⠀⠀⠀⠉⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠁⠀⠀⠀⠀⠀⠀⠀⣠⣄⠀⠀⠀⠀⠀⠀⠈⢻⣿⣿⣿⣿⣿⣷⡄⠀⠀⠀⠀⠀⠀⠀⠈⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⢰⣿⣿⣷⣤⡀⠀⠀⠀⠀⠀⠹⣿⣿⣿⣿⣿⣿⡆⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⡿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣶⣄⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⡛⠉⠀⠀⠀⠀⠀⠀⣈⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣿⣿⣿⣿⣿⣿⣦⣄⠀⠀⠀⢾⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣾⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣿⣿⣿⣿⣿⣿⣿⣷⣤⡀⠀⠻⣿⣿⣿⣿⣿⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣷⣄⠀⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⣄⠙⣿⣿⣿⠏⠀⠀⠀⠀⠀⠀⠀⠀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣄⡀⠀⠀⠀⠀⠀⠀⠈⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣬⠟⠁⠀⠀⠀⠀⠀⠀⢀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⣄⠀⠀⠀⠀⠀⠀⠀⠉⠛⠛⠿⠿⠿⠛⠛⠉⠀⠀⠀⠀⠀⠀⠀⣠⣴⣿⣿⣿⣿⠉⢹⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣤⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣤⣶⣿⣿⣿⣿⣿⣿⣿⠀⢸⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣶⣦⣤⣤⣤⣤⣤⣴⣶⣶⣿⣿⣿⣿⣿⣿⣿⣿⣀⣀⣀⠀⢀⣀⣀⣸⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⢸⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣾⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⡟⢛⣛⣿⣿⣿⣿⠛⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢻⣿⣿⣛⡛⢛⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⡇⢨⣭⣿⢰⡆⢹⠀⣶⢸⡗⣒⠈⡇⢰⡆⢹⠠⣶⡏⢐⣂⢹⠠⡦⢸⣿⣿⠟⣠⣿⡇⣒⣀⡇⢸⠇⣿⣐⡒⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣷⣶⣶⣿⣾⣷⣾⣶⣿⣾⣷⣶⣶⣷⣾⣷⣾⣷⣶⣿⣶⣶⣾⣶⣾⣾⣿⣿⣶⣶⣶⣿⣶⣶⣿⣶⣶⣿⣶⣶⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡏⠙⣿⠋⢹⡿⠿⢿⣿⠿⠉⣿⢿⡿⢿⠉⣿⡿⠿⣿⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⢰⣀⡆⢸⡀⠷⢈⡇⠾⠀⣿⠸⠇⢸⠀⣏⠨⠥⢼⠬⠙⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣿⣿⣾⣿⣿⣷⣿⣿⣿⣿⣷⣶⣿⣷⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+";
 
 comment "
 	TODO Expung3d:
- - EZM Eventhandlers
- - Add Dead Soldier compositions to all factions 
- - NATO+ 
- - Better Looters 
- - Paradrop Reinforcements 
- - Airdrop selected object 
- - Disable/Enable Thermals 
- - More waypoints 
- - Composition wrecks do not attach objects correctly 
- - Other seasonal modules 
- - Add more building interiors (Malden)
- - Advanced Difficulty Settings
+		- EZM Eventhandlers
+		- Add Dead Soldier compositions to all factions 
+		- NATO+ 
+		- Better Looters 
+		- Paradrop Reinforcements 
+		- Airdrop selected object 
+		- Disable/Enable Thermals 
+		- More waypoints 
+		- Composition wrecks do not attach objects correctly 
+		- Other seasonal modules 
+		- Add more building interiors (Malden)
+		- Advanced Difficulty Settings
+		- Airstrike Helicopter
+		- Cinematics
+		- Play video module
+		- Fix IR Strobes not deleting https://forums.bohemia.net/forums/topic/160424-ir-strobe-deletevehicle-issues/
 
- - Airstrike Helicopter
- - Cinematics
- - Play video module
- - Fix IR Strobes not deleting https://forums.bohemia.net/forums/topic/160424-ir-strobe-deletevehicle-issues/
+	TODO M9-SD:
+		- skip time transition module
+		- wildfire module 
+		- buddha module 
 ";
-
-};
