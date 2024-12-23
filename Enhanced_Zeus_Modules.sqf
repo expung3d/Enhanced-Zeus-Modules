@@ -12116,7 +12116,7 @@ MAZ_EZM_fnc_initFunction = {
 					["a3\data_f\flags\flag_us_co.paa","United States"],
 					["a3\data_f\flags\flag_uk_co.paa","United Kingdom"],
 					["a3\data_f\flags\flag_ion_co.paa","ION"]
-				] select _flagIndex) params ["_flag","_name"];
+				] select (parseNumber _flagIndex)) params ["_flag","_name"];
 				if(_nameOverride != "" && _nameOverride != "Override") then {
 					_name = _nameOverride;
 				};
@@ -18890,7 +18890,8 @@ private _changelog = [
 	"Changed EZM to close the pause menu if ran from the pause menu",
 	"Changed EZM plug to not run for Zeus",
 	"Fixed an issue where using the delete clutter module would do nothing",
-	"Fixed SIDES element not having spacing"
+	"Fixed SIDES element not having spacing",
+	"Fixed 48+2 Side Switcher wasn't working"
 ];
 
 private _changelogString = "";
