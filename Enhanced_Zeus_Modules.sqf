@@ -18804,11 +18804,11 @@ MAZ_EZM_fnc_initMainLoop = {
 
 	comment "Put Zeus in a locked squad called Mount Olympus to avoid hearing random ungrouped people in group chat.";
 	private _groupName = "Mount Olympus";
+	private _grp = group player;
 	_grp setGroupIdGlobal [_groupName];
-	private _group = _grp;
-	private _leader = leader _group;
+	private _leader = leader _grp;
 	private _data = ["Curator", _groupName, true]; comment " [<Insignia>, <Group Name>, <Private>] ";
-	["RegisterGroup", [_group, _leader, _data]] remoteExecCall ['BIS_fnc_dynamicGroups'];
+	["RegisterGroup", [_grp, _leader, _data]] remoteExecCall ['BIS_fnc_dynamicGroups'];
 	["AddGroupMember", [_grp,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
 	["SwitchLeader", [_grp,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
 	["SetPrivateState", [_grp,true]] remoteExecCall ['BIS_fnc_dynamicGroups'];	
