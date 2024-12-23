@@ -9500,7 +9500,7 @@ MAZ_EZM_fnc_initFunction = {
 
 				"Close arsenal";
 				if (!isNull ((findDisplay -1) displayCtrl 44046)) then {  
-					(findDisplay -1) closeDisplay 0;  
+					(findDisplay -1) closeDisplay 0;
 					waitUntil {(isNull ((findDisplay -1) displayCtrl 44046))};
 				};
 
@@ -18577,11 +18577,10 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 };
 
 private _changelog = [
-	"Added Create Intel module to Gameplay",
-	"Changed original EZM functions to have less code repetition",
-	"Fixed the Remove Teamkillers module",
-	"Fixed attributes menu opening incorrectly with players in vehicles",
-	"Overhauled the Attributes Dialog system. Should run in half the time"
+	"Added Set Color to Black module to Object Modifiers",
+	"Added Set Plate Number module to Vehicle Modifiers",
+	"Changed the Soundboard module to the newest version from M9-SD",
+	"Fixed an issue where using the delete clutter module would do nothing"
 ];
 
 private _changelogString = "";
