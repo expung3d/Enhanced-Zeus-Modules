@@ -360,7 +360,7 @@ The basic structure of a row in the content array will look like this:
 		"TYPE", //The type of the content
 		"Label", //The label shown to the left
 		[], //Values that go into the type
-		{true}, //Condition for the element to be shown. (Optional) PARAMS: 0 - DIALOG DISPLAY
+		{true}, //Condition for the element to be shown. (Optional) PARAMS: 0 - DIALOG DISPLAY | 1 - CONTROL GROUP FOR ELEMENT
 		{} //onChange event. (Optional) Code in this executes when the element's value changes. PARAMS: 0 - DIALOG DISPLAY | 1 - NEW VALUE
 	]
 ]
