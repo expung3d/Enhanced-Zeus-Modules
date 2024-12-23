@@ -467,7 +467,7 @@ comment "Dialog Creation";
 
 			private _background = _display ctrlCreate ["RscText",-1,_rowControlGroup];
 			_background ctrlSetBackgroundColor [0,0,0,0.6];
-			_background ctrlSetPosition [(["W",10] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,(["W",16] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+			_background ctrlSetPosition [(["W",10.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,(["W",16] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 			_background ctrlSetTextColor [1,1,1,0.5];
 			_background ctrlCommit 0;
 
@@ -825,7 +825,7 @@ comment "Dialog Creation";
 				if(typeName _condition == "STRING") then {
 					_condition = compile _condition;
 				};
-				if([_display] call _condition) then {
+				if([_display,_ctrlGroup] call _condition) then {
 					_ctrlGroup ctrlShow true;
 					_ctrlGroup ctrlSetPositionY _height;
 					_ctrlGroup ctrlCommit 0;
@@ -18889,7 +18889,8 @@ private _changelog = [
 	"Changed the Soundboard module to the newest version from M9-SD",
 	"Changed EZM to close the pause menu if ran from the pause menu",
 	"Changed EZM plug to not run for Zeus",
-	"Fixed an issue where using the delete clutter module would do nothing"
+	"Fixed an issue where using the delete clutter module would do nothing",
+	"Fixed SIDES element not having spacing"
 ];
 
 private _changelogString = "";
@@ -18929,7 +18930,12 @@ MAZ_EZM_fnc_askAboutZeusUnit = {
 			[
 				_changelogString,
 				5
-			]
+			],
+			{
+				params ["_display","_controlGroup"];
+				private _textCtrl = _controlGroup controlsGroupCtrl 214;
+				((ctrlText _textCtrl) != "");
+			}
 		]
 	],{
 		params ["_values","_args","_display"];
