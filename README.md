@@ -5,48 +5,42 @@
 
 <p align="center">
     <a href="https://github.com/expung3d/Enhanced-Zeus-Modules/releases">
-        <img src="https://img.shields.io/github/v/release/expung3d/Enhanced-Zeus-Modules?label=Version" alt="EZM Version" />
+        <img src="https://img.shields.io/github/v/release/expung3d/Enhanced-Zeus-Modules?label=Version" alt="EZM Version badge" />
     </a>
-    <a href="https://github.com/expung3d/Enhanced-Zeus-Modules/issues">
-        <img src="https://img.shields.io/github/issues-raw/expung3d/Enhanced-Zeus-Modules?label=Issues" alt="EZM Issues" />
+    <a href="https://github.com/expung3d/Enhanced-Zeus-Modules/tree/dev">
+        <img src="https://img.shields.io/github/commits-since/expung3d/enhanced-zeus-modules/latest/dev?label=New%20Commits%20on%20Dev" alt="Commits badge"/>
+    </a>
+    <a href="https://github.com/expung3d/Enhanced-Zeus-Modules/issues?q=is%3Aopen+is%3Aissue+label%3Abug">
+        <img src="https://img.shields.io/github/issues-raw/expung3d/enhanced-zeus-modules/bug?label=Known%20Bugs" alt="EZM Bugs badge" />
+    </a>
+    <a href="https://github.com/expung3d/Enhanced-Zeus-Modules/issues?q=is%3Aopen+is%3Aissue+label%3Asuggestion">
+        <img src="https://img.shields.io/github/issues-raw/expung3d/enhanced-zeus-modules/suggestion?label=Feature%20Requests" alt="EZM Feature Requests badge" />
     </a>
     <a href="https://discord.gg/W4ew5HP">
-        <img src="https://img.shields.io/discord/700228330959536190?color=7683D5&label=Discord&logo=What" alt="EZM Discord" />
-    </a>
-    <a href="https://github.com/expung3d/Enhanced-Zeus-Modules/network/members">
-        <img src="https://img.shields.io/github/forks/expung3d/Enhanced-Zeus-Modules?color=d93f21&label=Forks" alt="EZM Forks" />
+        <img src="https://img.shields.io/discord/700228330959536190?color=7683D5&label=Discord&logo=What" alt="EZM Discord badge" />
     </a>
 </p>
 
 # Enhanced Zeus Modules
-**Enhanced Zeus Modules (EZM)** was originally created by GamesByChris and M9-SD. With Expung3d doing slight edits and additions. EZM was adapted to be a composition by Expung3d and made into EZM Lite who added many new features and made the scripts available to all.
+**Enhanced Zeus Modules (EZM)** was originally created by [GamesByChris](https://github.com/Chrisdw1002) and [M9-SD](https://github.com/M9-SD) as a private script for Public Zeus. After scripted compositions were added Expung3d took the base functionality from EZM and made it into a public composition. Since the public release of EZM, the script has grown substantially and is now the go-to solution for vanilla Zeus improvements.
 
 ## What It Does
-EZM Lite adds a ton of new modules to Zeuses at the click of a button. Simply placing the composition as Zeus will add all of the modules to Zeus without the need for mods. In addition, everything is client side, no need to worry about lagging the server.
+EZM adds a ton of new modules to Zeuses at the click of a button. Simply placing the composition as Zeus will add all of the modules to Zeus without the need for mods. In addition, everything is client side, no need to worry about lagging the server.
 
-In addition to new modules, EZM adds new vanilla factions to the Zeus interface. Such as: the Malden Defense Force (non-canon), FIA Plus, Better Civilians, and more to be added in future.
+All the scripts in EZM are specifically built for <strong>Arma 3 Public Zeus servers</strong>, with everything within the script complying with the BattlEye filters applied to the Official Servers.
 
-These are specifically built for <strong>Arma 3 Public Zeus servers</strong>, with everything within the script complying with the BattlEye filters applied to the Official Servers.
+Not only does EZM add modules, but it also can add new vanilla factions to the Zeus interface. Such as: the Malden Defense Force, FIA+, AAF+, CSAT+, and Better Civilians. You can check out the EZM factions by clicking the banner below:
 
-## Keybinds
-<strong>Zeus Interface Keybinds:</strong>
-
- - Ctrl + Y: Closes the Zeus interface
- - Ctrl + U: Opens a menu to change your unit’s side
- - Alt + Left Mouse Button: Controls the selected unit
-
-<strong>Out-of-Zeus Keybinds:</strong>
-
- - Y: Re-opens the Zeus interface.
- - H: Holsters weapon.
+<a href="https://steamcommunity.com/workshop/filedetails/?id=3364978220">
+    <img src="https://imgur.com/NCVWbva.jpeg" alt="EZM Faction banner"/>
+</a>
 
 ## Features
  - Over a hundred new modules for Zeus to improve mission making.
  - Context menu on right click to quickly use features.
  - Custom interiors for buildings made by the Z.A.M. team.
- - Object previews of items hovered in the object tabs.
+ - Object previews for items hovered in the object tabs.
  - Pylon editor for jets and helicopters.
- - Vehicle editor similar to the Virtual Garage.
  - Area marker creation and editing.
  - Automated missions and automatic garrisoning of towns.
  - General bug fixes of the Zeus gamemode and quality of life improvements.
@@ -56,11 +50,15 @@ These are specifically built for <strong>Arma 3 Public Zeus servers</strong>, wi
  - Ability to disable mortar usage for missions.
  - Ability to god mode terrain fences so they cannot be ran over. 
  - Ability to disable the game moderator slot.
-
-<strong>For more information visit the [Z.A.M. website](https://www.zamarma.com/). </strong>
+ - Server Protection System which alerts players about trolls or scripters.
 
 ## Feedback, Bugs, and Suggestions
-For all feedback please use the [Enhanced Zeus Modules Issues Page](https://github.com/expung3d/Enhanced-Zeus-Modules/issues). When creating an issue, denote whether it is a suggestion or a bug. If it is a bug, please provide the severity as either LOW, MEDIUM, or URGENT.
+For all feedback please use the [issues system](https://github.com/expung3d/Enhanced-Zeus-Modules/issues). When creating an issue, denote whether it is a suggestion or a bug. If it is a bug, please provide the severity as either LOW, MEDIUM, or URGENT.
+
+## Contributing
+We appreciate anyone who tries to contribute to EZM. If you'd like to contribute, clone the repository to your computer and create a new branch with your changes. Once it's all working, make a pull request and someone from the team will review it.
+
+To see more information about contributing to this project, check out the [contribution guidelines](https://github.com/expung3d/Enhanced-Zeus-Modules/blob/main/CONTRIBUTING.md).
 
 ## License
-Enhanced Zeus Modules is licensed under its own EULA. ([EULA](https://github.com/expung3d/Enhanced-Zeus-Modules/blob/main/LICENSE)).
+Enhanced Zeus Modules is licensed under the MIT license. ([EULA](https://github.com/expung3d/Enhanced-Zeus-Modules/blob/main/LICENSE)).

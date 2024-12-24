@@ -3,7 +3,7 @@ if(!isNull (findDisplay 312) && {!isNil "this"} && {!isNull this}) then {
 };
 
 [] spawn {
-MAZ_EZM_Version = "V2.1.5";
+MAZ_EZM_Version = "V2.1.6";
 MAZ_EZM_autoAdd = profileNamespace getVariable ["MAZ_EZM_autoAddVar",true];
 MAZ_EZM_spawnWithCrew = true;
 MAZ_EZM_nvgsOnlyAtNight = true;
@@ -17,6 +17,26 @@ if(isNil "MAZ_EZM_factionAddons") then {
 if(isNil "MAZ_EZM_moduleAddons") then {
 	MAZ_EZM_moduleAddons = [];
 };
+
+comment "Close Debug display add initial respawns";
+	if (!isNull findDisplay 49) then {
+		comment "Likely ran EZM from debug before adding respawns... ";
+		comment "... adding manually to avoid module overwrite bug.";
+		[
+			createAgent ['ModuleRespawnPositionWest_F', [0,0,0], [], 0, 'CAN_COLLIDE'],
+			createAgent ['ModuleRespawnPositionEast_F', [0,0,0], [], 0, 'CAN_COLLIDE'],
+			createAgent ['ModuleRespawnPositionGuer_F', [0,0,0], [], 0, 'CAN_COLLIDE'],
+			createAgent ['ModuleRespawnPositionCiv_F', [0,0,0], [], 0, 'CAN_COLLIDE']
+		] spawn {sleep 2; {deleteVehicle _x} forEach _this};
+		if (!isNull findDisplay 312) then {
+			findDisplay 49 closeDisplay 0;
+			waitUntil {isNull findDisplay 312};
+			openCuratorInterface;
+			waitUntil {!isNull findDisplay 312}
+		} else {
+			findDisplay 49 closeDisplay 0;
+		};
+	};
 
 comment "Color Override";
 	EZM_themeColor = profileNamespace getVariable ["MAZ_EZM_ThemeColor",[0, 0.75, 0.75, 1]];
@@ -447,7 +467,7 @@ comment "Dialog Creation";
 
 			private _background = _display ctrlCreate ["RscText",-1,_rowControlGroup];
 			_background ctrlSetBackgroundColor [0,0,0,0.6];
-			_background ctrlSetPosition [(["W",10] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,(["W",16] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+			_background ctrlSetPosition [(["W",10.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,(["W",16] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",2.5] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 			_background ctrlSetTextColor [1,1,1,0.5];
 			_background ctrlCommit 0;
 
@@ -805,7 +825,7 @@ comment "Dialog Creation";
 				if(typeName _condition == "STRING") then {
 					_condition = compile _condition;
 				};
-				if([_display] call _condition) then {
+				if([_display,_ctrlGroup] call _condition) then {
 					_ctrlGroup ctrlShow true;
 					_ctrlGroup ctrlSetPositionY _height;
 					_ctrlGroup ctrlCommit 0;
@@ -4153,7 +4173,7 @@ comment "Dynamic Module Addons";
 
 comment "Modules";
 
-MAZ_EZM_fnc_createUnitForZeus = {
+MAZ_EZM_fnc_createZeusUnit = {
 	params ["_joinSide","_sideToJoin"];
 	if(!_joinSide) then {
 		_sideToJoin = sideLogic;
@@ -4163,8 +4183,9 @@ MAZ_EZM_fnc_createUnitForZeus = {
 	if(isNull _zeusLogic) exitWith {};
 	private _zeusIndex = allCurators find _zeusLogic;
 	private _isGameMod = false;
-	private _grp = createGroup [_sideToJoin,true];
-	private _zeusObject = _grp createUnit ["B_officer_F",[0,0,0],[],0,"CAN_COLLIDE"];
+	private _grp = createGroup [_sideToJoin, true];
+	private _zeusObject = (createGroup [_sideToJoin,true]) createUnit ["C_Man_French_universal_F",[0,0,0],[],0,"CAN_COLLIDE"];
+	[_zeusObject] joinSilent _grp;
 	_grp selectLeader _zeusObject;
 	_zeusObject setPosWorld _pos;
 	private _oldPlayer = player;
@@ -4172,25 +4193,19 @@ MAZ_EZM_fnc_createUnitForZeus = {
 	selectPlayer _zeusObject;
 	waitUntil{player == _zeusObject};
 	[_zeusObject,false] remoteExec ["allowDamage"];
-
 	[_zeusLogic] remoteExec ["unassignCurator",2];
-
 	waitUntil{(getAssignedCuratorUnit _zeusLogic) != _oldPlayer};
 	deleteVehicle _oldPlayer;
 	waitUntil{isNull (getAssignedCuratorUnit _zeusLogic)};
-
 	private _wl = missionNamespace getVariable ["MAZ_EZM_CuratorWhitelist",[]];
 	_wl pushBackUnique _zeusLogic;
 	missionNamespace setVariable ["MAZ_EZM_CuratorWhitelist",_wl,true];
 	waitUntil {_zeusLogic in (missionNamespace getVariable ["MAZ_EZM_CuratorWhitelist",[]])};
-
 	while{isNull (getAssignedCuratorUnit (allCurators select _zeusIndex))} do {
 		[player,allCurators select _zeusIndex] remoteExec ["assignCurator",2];
 		sleep 0.1;
 	};
-
 	waitUntil{getAssignedCuratorLogic player == _zeusLogic};
-
 	private _zeusLoadout = profileNamespace getVariable "MAZ_EZM_ZeusLoadout";
 	if(isNil "_zeusLoadout") then {
 		_zeusObject setUnitLoadout [[],[],["hgun_Pistol_heavy_01_green_F","","","",["11Rnd_45ACP_Mag",11],[],""],["U_Marshal",[["11Rnd_45ACP_Mag",2,11]]],["V_PlateCarrier_Kerry",[["11Rnd_45ACP_Mag",1,11]]],[],"H_Beret_02","G_Spectacles",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch",""]];
@@ -4199,17 +4214,13 @@ MAZ_EZM_fnc_createUnitForZeus = {
 		_zeusObject setUnitLoadout _zeusLoadout;
 	};
 	sleep 0.2;
-
 	while {(isNull (findDisplay 312))} do {
 		openCuratorInterface;
 	};
-
 	waitUntil{!(isNull (findDisplay 312))};
 	playSound "beep_target";
 	sleep 0.2;
-
 	[_zeusObject] call MAZ_EZM_fnc_addObjectToInterface;
-	
 	["Zeus Unit created, you can adjust its loadout by setting a Zeus Loadout."] call MAZ_EZM_fnc_systemMessage;
 	if(isNil "MAZ_EZM_mainLoop_Active") then {
 		[] spawn MAZ_EZM_fnc_initMainLoop;
@@ -4980,6 +4991,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_ezmShamelessPlug = {
 			[[],{
+				if(!isNull getAssignedCuratorUnit player) exitWith {"Zeus"};
 				waitUntil {alive player};
 				[
 					[
@@ -9204,14 +9216,6 @@ MAZ_EZM_fnc_initFunction = {
 
 	comment "Cinematics";
 
-		HYPER_EZM_fnc_showIntertitles = {
-			params ["_line1", "_line2"];
-			sleep 3;
-			_line1 spawn BIS_fnc_infoText;
-			sleep 5;
-			_line2 spawn BIS_fnc_infoText;
-		};
-
 		HYPER_EZM_fnc_splitMaxLine = {
 			params ["_inputString"];
 			private _maxLength = 22;
@@ -9294,13 +9298,6 @@ MAZ_EZM_fnc_initFunction = {
 			};
 			if (_author != "") then {_author = format [localize "STR_FORMAT_AUTHOR_SCRIPTED",_author];};
 
-			comment "Disable simulation on any vehicles to avoid crashing mid cutscene";
-			{
-				if (_x != vehicle _x) then {
-					[vehicle _x, false] remoteExec ["enableSimulationGlobal", 2];
-				};
-			} forEach allPlayers;
-
 			comment "Show intro titles";
 			private _track = switch (_backgroundSong) do {
 				case "epic": {"Music_Arrival"};
@@ -9335,8 +9332,6 @@ MAZ_EZM_fnc_initFunction = {
 			private _line1 = [_intertitles # 0] call HYPER_EZM_fnc_splitMaxLine;
 			private _line2 = [_intertitles # 1] call HYPER_EZM_fnc_splitMaxLine;
 			
-			[[_line1, _line2], HYPER_EZM_fnc_showIntertitles] remoteExec ["spawn", _allPlayers];
-
 			comment "Post processing";
 			switch (_postProcess) do {
 				case "none": {
@@ -9359,48 +9354,101 @@ MAZ_EZM_fnc_initFunction = {
 				};
 			};
 
-			if (_cinematicType == "Flyby") then {
-				comment "in flyby mode, we select the module location as our target, and the camera paths are automatically designated at 0 and 90 degrees";
-				HYPER_fnc_remoteCamera = {
-					params ["_target"];
-					private _zeus = !isNull (getAssignedCuratorLogic player);
-					private _camTarget = "Land_HelipadEmpty_F" createVehicleLocal _target;
-					private _circleRadius = 200;
-					private _camHeight = 200;
-					private _camSrc0 = [_target select 0, (_target select 1) + _circleRadius, (_target select 2) + _camHeight];
-					private _camSrc90 = [(_target select 0) + _circleRadius, _target select 1, (_target select 2) + _camHeight];
-					
-					private _camera = "camera" camCreate _camSrc0;
-					_camera cameraEffect ["internal", "back"];
-					_camera camPrepareTarget _camTarget;
-					_camera camSetFov 1;
-					_camera camCommitPrepared 0;
+			switch (_cinematicType) do {
+				case "Flyby": {
+					comment "in flyby mode, we select the module location as our target, and the camera paths are automatically designated at 0 and 90 degrees";
+					HYPER_fnc_remoteCamera = {
+						params ["_target", "_line1", "_line2"];
+						HYPER_EZM_fnc_showIntertitles = {
+							params ["_line1", "_line2"];
+							sleep 3;
+							_line1 spawn BIS_fnc_infoText;
+							sleep 5;
+							_line2 spawn BIS_fnc_infoText;
+						};
+						[_line1, _line2] spawn HYPER_EZM_fnc_showIntertitles;
+						private _zeus = !isNull (getAssignedCuratorLogic player);
+						private _camTarget = "Land_HelipadEmpty_F" createVehicleLocal _target;
+						private _circleRadius = 200;
+						private _camHeight = 200;
+						private _camSrc0 = [_target select 0, (_target select 1) + _circleRadius, (_target select 2) + _camHeight];
+						private _camSrc90 = [(_target select 0) + _circleRadius, _target select 1, (_target select 2) + _camHeight];
+						
+						private _camera = call MAZ_EZM_fnc_createCinematicCam;
+						[] spawn MAZ_EZM_fnc_enterCinematicCamera;
 
-					_camera camPreparePos _camSrc90;
-					_camera camCommitPrepared 15;
-					waitUntil { camCommitted _camera };
-					cutRsc ["RscStatic", "PLAIN"];
-					sleep 0.4;
+						_camera camPreparePos _camSrc0;
+						_camera camPrepareTarget _camTarget;
+						_camera camCommitPrepared 0;
 
-					_camera cameraEffect ["terminate", "back"];
-					camDestroy _camera;
+						_camera camPreparePos _camSrc90;
+						_camera camCommitPrepared 15;
+						waitUntil { camCommitted _camera };
+						cutRsc ["RscStatic", "PLAIN"];
+						sleep 0.4;
 
-					comment "Remove color correction right after cutscene is done so we don't have to remoteExec it";
-					ppEffectDestroy HYPER_PP_CC_Cinematic;
+						ppEffectDestroy HYPER_PP_CC_Cinematic;
+						
+						cutText ["", "BLACK IN", 2];
+						[1, 2, true, true] call BIS_fnc_cinemaBorder;
 
-					comment "Re-enable simulation on player vehicles";
-					if(player != vehicle player) then {
-						[vehicle player, true] remoteExec ["enableSimulationGlobal", 2];
+						call MAZ_EZM_fnc_destroyCinematicCamera;
 					};
-					
-					cutText ["", "BLACK IN", 2];
-					[1, 2, true, true] call BIS_fnc_cinemaBorder;
-					if(_zeus) then {
-						sleep 0.2;
-						openCuratorInterface;
-					};
+					[[_target, _line1, _line2],HYPER_fnc_remoteCamera] remoteExec ["spawn", _allPlayers];
 				};
-				[[_target],HYPER_fnc_remoteCamera] remoteExec ["spawn", _allPlayers];
+				case "News": {
+					HYPER_fnc_remoteCamera = {
+						params ["_target", "_briefingName", "_line1", "_line2"];
+						[] spawn {
+							playSoundUI ["a3\sounds_f\vehicles\air\heli_attack_01\heli_attack_01_ext_rotor.wss", 0.2];
+							sleep 7.5;
+							playSoundUI ["a3\sounds_f\vehicles\air\heli_attack_01\heli_attack_01_ext_rotor.wss", 0.2];
+						};
+						[
+							parseText format ["<t size='2'>%1</t>",_briefingName],
+							parseText format["// %1 - %2 // REPORTING LIVE FROM %3", _line1, _line2, worldName]
+						] spawn BIS_fnc_AAN;
+
+						private _cam = call MAZ_EZM_fnc_createCinematicCam;
+						[] spawn MAZ_EZM_fnc_enterCinematicCamera;
+
+						private _pos = _target;
+						private _posASL = AGLToASL _pos;
+						private _height = (_posASL # 2) + 200;
+						_cam camPrepareTarget _pos;
+						_cam camCommitPrepared 0;
+
+						private _posStart = _pos getPos [200,0];
+						_posStart set [2,_height];
+						_cam setPosASL _posStart;
+
+						private _angle = 0;
+						private _zoom = 0.75;
+						while {_angle <= 155} do {
+							private _posMove = _pos getPos [200,_angle];
+							_posMove set [2,_height];
+
+							if (_angle > 45 && _angle < 135) then {
+								_cam camSetFov (_zoom - 0.01);
+							};
+
+							_cam camPreparePos (ASLtoAGL _posMove);
+							_cam camCommitPrepared 0.5;
+							waitUntil { camCommitted _cam };
+
+							_angle = _angle + 5;
+						};
+						call MAZ_EZM_fnc_destroyCinematicCamera;
+						(uiNamespace getVariable "BIS_AAN") closeDisplay 1;
+						
+						comment "Remove color correction right after cutscene is done so we don't have to remoteExec it";
+						ppEffectDestroy HYPER_PP_CC_Cinematic;
+						
+						cutText ["", "BLACK IN", 2];
+						[1, 2, true, true] call BIS_fnc_cinemaBorder;
+					};
+					[[_target, _briefingName, _intertitles # 0, _intertitles # 1],HYPER_fnc_remoteCamera] remoteExec ["spawn", _allPlayers];
+				};
 			};
 		};
 
@@ -9413,8 +9461,8 @@ MAZ_EZM_fnc_initFunction = {
 					"COMBO",
 					"Cinematic Type",
 					[
-						["Flyby"],
-						["Flyby"],
+						["Flyby", "News"],
+						["Flyby", "News Helicopter"],
 						0
 					]
 				],
@@ -9446,7 +9494,7 @@ MAZ_EZM_fnc_initFunction = {
 				[
 					"TOOLBOX:YESNO",
 					["Zeus Can See Cutscene?","Zeus player may experience a small lag spike when cutscene ends."],
-					[false]
+					[true]
 				],
 				[
 					"COMBO",
@@ -9500,7 +9548,7 @@ MAZ_EZM_fnc_initFunction = {
 
 				"Close arsenal";
 				if (!isNull ((findDisplay -1) displayCtrl 44046)) then {  
-					(findDisplay -1) closeDisplay 0;  
+					(findDisplay -1) closeDisplay 0;
 					waitUntil {(isNull ((findDisplay -1) displayCtrl 44046))};
 				};
 
@@ -9702,7 +9750,7 @@ MAZ_EZM_fnc_initFunction = {
 		};
 
 		MAZ_EZM_fnc_deleteClutterModule = {
-			params ["_entity",["_deleteBuildings",true]];
+			params ["_entity","_pos",["_deleteBuildings",true]];
 			private _clutterNames = [
 				'Ground', 
 				'Canopy', 
@@ -9747,7 +9795,7 @@ MAZ_EZM_fnc_initFunction = {
 		};
 
 		MAZ_EZM_fnc_deleteBodies = {
-			[objNull,false] call MAZ_EZM_fnc_deleteClutterModule;
+			[objNull,nil,false] call MAZ_EZM_fnc_deleteClutterModule;
 		};
 
 		MAZ_EZM_fnc_deleteMinesModule = {
@@ -10632,11 +10680,217 @@ MAZ_EZM_fnc_initFunction = {
 
 	comment "Gameplay";
 
+	
+		HYPER_EZM_fnc_handleCreateIntelDetails = {
+			params ["_values", "_target"];
+			_values params ["_title","_authorName","_timestamp","_timezone","_subtitle","_image","_bodyText","_bodyTextLocked"];
+
+			HYPER_safeParse = {
+				params ["_str"];
+				private _num = parseNumber _str;
+				if ((_num == 0) && (_str != "0")) then {
+					-1
+				} else {
+					_num
+				}
+			};
+
+			HYPER_fnc_parseTimestamp = {
+				params ["_dateString"];
+				private _defaultDate = [2035, 1, 1, 10, 38];
+				private _parts = _dateString splitString " ";
+				if (count _parts != 2) exitWith {_defaultDate};
+				private _datePart = _parts select 0;
+				private _timePart = _parts select 1;
+				private _dateComponents = _datePart splitString "/";
+				if (count _dateComponents != 3) exitWith {_defaultDate};
+				private _timeComponents = _timePart splitString ":";
+				if (count _timeComponents != 2) exitWith {_defaultDate};
+
+				private _year   = [_dateComponents select 0] call HYPER_safeParse;
+				private _month  = [_dateComponents select 1] call HYPER_safeParse;
+				private _day    = [_dateComponents select 2] call HYPER_safeParse;
+				private _hour   = [_timeComponents select 0] call HYPER_safeParse;
+				private _minute = [_timeComponents select 1] call HYPER_safeParse;
+				if ( (_year == -1) || (_month == -1) || (_day == -1) || (_hour == -1) || (_minute == -1) ) exitWith {_defaultDate};
+				if (!((_year >= 0) && (_month >= 1 && _month <= 12) && (_day >= 1 && _day <= 31) && 
+					(_hour >= 0 && _hour <= 23) && (_minute >= 0 && _minute <= 59))) exitWith {_defaultDate};
+				[_year, _month, _day, _hour, _minute]
+			};
+			private _intelOptions = [];
+
+			comment "Image banner validation";
+			private _imageTexture = switch (_image) do {
+				case "warthog": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_64_co.paa"};
+				case "divers": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_65_co.paa"};
+				case "breach": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_04_co.paa"};
+				case "ww2medical": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_14_co.paa"};
+				case "exfil": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_106_co.paa"};
+				case "soldiers": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_59_co.paa"};
+				case "schematic": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_63_co.paa"};
+				case "riot": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_22_co.paa"};
+				case "ambulance": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_62_co.paa"};
+				case "ww2attack": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_92_co.paa"};
+				case "ghosts": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_18_co.paa"};
+				case "town": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_68_co.paa"};
+				case "decon": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_31_co.paa"};
+				case "tank": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_98_co.paa"};
+				case "launcher": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_122_co.paa"};
+				case "cargotrain": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_27_co.paa"};
+				case "convoy": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_87_co.paa"};
+				case "fallen": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_118_co.paa"};
+				case "firefight": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_76_co.paa"};
+				case "fleet": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_46_co.paa"};
+				case "drones": {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_30_co.paa"};
+				default {"a3\missions_f_aow\data\img\artwork\landscape\showcase_aow_picture_64_co.paa"};
+			};
+			
+			comment "Metadata group validation";
+			private _timestampParts = _timestamp call HYPER_fnc_parseTimestamp;
+			if (_authorName == "") then {_authorName = "Anonymous";};
+			if (_timezone == "") then {_timezone = "UTC";};
+
+			comment "Other field validation";
+			if (_title != "") then {_intelOptions pushBack ["title",_title];};
+			_intelOptions pushBack ["meta",[_authorName,_timestampParts,_timezone]];
+			if (_subtitle != "") then {_intelOptions pushBack ["textbold",_subtitle];};
+			_intelOptions pushBack ["image",_imageTexture];
+			if (_bodyText != "") then {_intelOptions pushBack ["text",_bodyText];};
+			if (_bodyTextLocked != "") then {_intelOptions pushBack ["textlocked",[_bodyTextLocked,"Please Subscribe"]];};
+
+			comment "Create intel object and action";
+			private _intelObj = "Land_Laptop_unfolded_F" createVehicle _target;
+			_intelObj setDamage 1;
+			_intelObj setPosATL _target;
+			_intelObj setObjectTextureGlobal [0, "a3\missions_f_orange\data\img\orange_compositions\c8\aan_co.paa"];
+
+			[_intelObj] call MAZ_EZM_fnc_ignoreWhenCleaning;
+
+			private _actionParams = [
+				_intelObj,
+				"<t color='#ff9b00'>View News Article</t>", 
+				"a3\ui_f\data\igui\cfg\holdactions\holdaction_search_ca.paa", 
+				"a3\ui_f\data\igui\cfg\holdactions\holdaction_search_ca.paa", 
+				"_this distance _target < 3",
+				"_caller distance _target < 3",  
+				{},
+				{},
+				{
+					private _args = _this select 3;
+					_args params ["_intelOptions"];
+
+					[ _intelOptions ] call BIS_fnc_showAANArticle;
+
+				},
+				{},
+				[_intelOptions],
+				2, 
+				10, 
+				false,
+				false 
+			];
+			_actionParams remoteExec ["BIS_fnc_holdActionAdd", 0, _intelObj];
+
+			[_intelObj] call MAZ_EZM_fnc_addObjectToInterface;
+			["AAN article laptop created.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+		};
+
+		HYPER_EZM_fnc_createAANIntel = {
+			private _target = [true] call MAZ_EZM_fnc_getScreenPosition;
+			private _dialogTitle = "Create AAN News Article";
+			private _content = [
+				[
+					"EDIT",
+					["Title", "The headline title of the article."],
+					[
+						"My Title",
+						1
+					]
+				],
+				[
+					"EDIT",
+					["Author Name", "The name of the author."],
+					[
+						name player,
+						1
+					]
+				],
+				[
+					"EDIT",
+					["Timestamp", "The date and time of the article, which MUST follow the format YYYY/MM/DD HH:MM."],
+					[
+						"2035/01/31 10:00",
+						1
+					]
+				],
+				[
+					"EDIT",
+					["Timezone", "The timezone of the article."],
+					[
+						"CET",
+						1
+					]
+				],
+				[
+					"EDIT",
+					["Subtitle", "A brief description of the article under the main title."],
+					[
+						"",
+						1
+					]
+				],
+				[
+					"COMBO",
+					["Image", "The image to be displayed with the article headline."],
+					[
+						["warthog", "divers", "breach", "ww2medical", "exfil", "soldiers", "schematic", "riot", "ambulance", "ww2attack", "ghosts", "town", "decon", "tank", "launcher", "cargotrain", "convoy", "fallen", "firefight", "fleet", "drones"],
+						["A-10 Warthog", "Divers", "Breach and Clear", "WW2 Medical", "Helo Exfil", "Two Soldiers", "Plane Schematic", "Riot", "Ambulance", "WW2 Assault", "Ghosts of War", "Town Liberated", "Decon Showers", "Tank", "Launcher", "Cargo Train", "Convoy", "Coffin Salute", "Firefight", "Carrier Fleet", "Small Drones"],
+						0
+					]
+				],
+				[
+					"EDIT:MULTI",
+					["Body Text", "The main body of the article."],
+					[
+						"",
+						5
+					]
+				],
+				[
+					"EDIT:MULTI",
+					["Body Text Locked", "A paragraph that is cut off by a subscription paywall."],
+					[
+						"",
+						3
+					]
+				]
+			];
+			private _onConfirm = {
+				params ["_values", "_args", "_display"];
+				_values params ["_title","_authorName","_timestamp","_timezone","_subtitle","_image","_bodyText","_bodyTextLocked"];
+				private _target = _args;
+
+				[ _values, _target ] call HYPER_EZM_fnc_handleCreateIntelDetails;
+				_display closeDisplay 1;
+			};
+			private _onCancel = {
+				params ["_values", "_args", "_display"];
+				_display closeDisplay 2;
+			};
+			[
+				_dialogTitle,
+				_content,
+				_onConfirm,
+				_onCancel,
+				_target
+			] call MAZ_EZM_fnc_createDialog;
+		};
+
 		HYPER_EZM_fnc_handleCreateIntel = {
 			params ["_title","_description","_intelObject","_deleteOnPickup", "_target", "_holdDuration", "_visibility"];
 
 			private _intelObjModel = switch (_intelObject) do {
-				case "laptop": {"Item_Laptop_Unfolded"};
+				case "laptop": {"Land_Laptop_unfolded_F"};
 				case "ruggedtablet": {"Land_Tablet_02_black_F"};
 				case "tablet": {"Land_Tablet_01_F"};
 				case "documents": {"LanD_File1_f"};
@@ -10646,6 +10900,7 @@ MAZ_EZM_fnc_initFunction = {
 			private _intelObj = _intelObjModel createVehicle _target;
 			_intelObj setDamage 1;
 			_intelObj setPosATL _target;
+			[_intelObj] call MAZ_EZM_fnc_ignoreWhenCleaning;
 
 			private _actionParams = [
 				_intelObj,
@@ -11527,6 +11782,19 @@ MAZ_EZM_fnc_initFunction = {
 			["Object replaced with simple object.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 		};
 
+		HYPER_EZM_fnc_setColorBlack = {
+			params ["_entity"];
+			if(_entity isEqualTo objNull) exitWith {["No object selected.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+
+			private _colorBlack = "#(argb,8,8,3)color(0,0,0,1)";
+			{
+				_entity setObjectTextureGlobal [_forEachIndex, _colorBlack];
+			} forEach (getObjectTextures _entity);
+
+			["Changed object color.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+
+		};
+
 	comment "Player Modifiers";
 
 		MAZ_EZM_fnc_disarmModule = {
@@ -11848,7 +12116,7 @@ MAZ_EZM_fnc_initFunction = {
 					["a3\data_f\flags\flag_us_co.paa","United States"],
 					["a3\data_f\flags\flag_uk_co.paa","United Kingdom"],
 					["a3\data_f\flags\flag_ion_co.paa","ION"]
-				] select _flagIndex) params ["_flag","_name"];
+				] select (parseNumber _flagIndex)) params ["_flag","_name"];
 				if(_nameOverride != "" && _nameOverride != "Override") then {
 					_name = _nameOverride;
 				};
@@ -12340,600 +12608,951 @@ MAZ_EZM_fnc_initFunction = {
 			[] spawn M9_open_jukebox;
 		};
 
-		M9sd_fnc_moduleSoundBoard = {
-			if (isNil 'JAM_zeus_uiColor') then 
-			{
-				uiNamespace setVariable ['JAM_zeus_uiColor', [(profilenamespace getvariable ['GUI_BCG_RGB_R',0.13]),(profilenamespace getvariable ['GUI_BCG_RGB_G',0.54]),(profilenamespace getvariable ['GUI_BCG_RGB_B',0.21]),(profilenamespace getvariable ['GUI_BCG_RGB_A',0.8])]];
-				missionNameSpace setVariable ['JAM_zeus_uiColor', [(profilenamespace getvariable ['GUI_BCG_RGB_R',0.13]),(profilenamespace getvariable ['GUI_BCG_RGB_G',0.54]),(profilenamespace getvariable ['GUI_BCG_RGB_B',0.21]),(profilenamespace getvariable ['GUI_BCG_RGB_A',0.8])]];
-			};
-			if (isNil 'JAM_zeus_allSound') then 
-			{
-				JAM_zeus_allSound = [];
-				private _subClasses = [configFile >> "CfgSounds"] call BIS_fnc_returnChildren;
-				{
-					private _class = configName _x;
-					private _name = getText (configFile >> "CfgSounds" >> _class >> 'name');
-					private _duration = getText (configFile >> "CfgSounds" >> _class >> 'duration');
-					private _sound = getArray (configFile >> "CfgSounds" >> _class >> 'sound');
-					private _titles = getArray (configFile >> "CfgSounds" >> _class >> 'titles');
-					JAM_zeus_allSound pushBack [_class, _name, _duration, _sound, _titles];
-				} forEach _subClasses;
-				missionNameSpace setVariable ['JAM_zeus_allSound', JAM_zeus_allSound];
-				uiNamespace setVariable ['JAM_zeus_allSound', JAM_zeus_allSound];
-			};
-			findDisplay 49 closeDisplay 0;
-			with uiNamespace do 
-			{
-				private _progress = 0;
-				disableSerialization;
-				createDialog 'RscDisplayEmpty';
-				_display = findDisplay -1;
-				showChat true;
+		M9sd_fnc_moduleSoundBoard2 = {
+			[] spawn {
+				startLoadingScreen ["Loading Sound Board..."];
 				playSound 'click';
 				playSound ['border_In', true];
-				startLoadingScreen ["Loading Sound Board..."];
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_background = _display ctrlCreate ['RscText', -1];
-				_background ctrlSetBackgroundColor [0,0,0,0.7];
-				_background ctrlSetPosition [0.381406 * safezoneW + safezoneX,0.247 * safezoneH + safezoneY,0.237187 * safezoneW,0.517 * safezoneH];
-				_background ctrlSetFade 1;
-				_background ctrlCommit 0;
-				_background ctrlSetFade 0;
-				_background ctrlCommit 1;
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_background = _display ctrlCreate ['RscStructuredText', -1];
-				_background ctrlSetBackgroundColor JAM_zeus_uiColor;
-				_background ctrlSetPosition [0.381406 * safezoneW + safezoneX,0.225 * safezoneH + safezoneY,0.237187 * safezoneW,0.022 * safezoneH];
-				_background ctrlSetStructuredText parseText format ["<t size='%1' align='center' font='puristaMedium' shadow='0'>Sound Board<t/>", str (1.0 * (safezoneh * 0.5))];
-				_background ctrlSetFade 1;
-				_background ctrlCommit 0;
-				_background ctrlSetFade 0;
-				_background ctrlCommit 1;
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_cancelCtrl = _display ctrlCreate ['RscButtonMenu',-1];
-				_cancelCtrl ctrlSetPosition [0.603125 * safezoneW + safezoneX,0.225 * safezoneH + safezoneY,0.0154688 * safezoneW,0.022 * safezoneH];
-				_cancelCtrl ctrlSetTooltip 'Exit';
-				_cancelCtrl ctrlSetBackgroundColor [0,0,0,0];
-				_cancelCtrl ctrlSetStructuredText parseText ("<t valign='middle' align='center' font='PuristaSemiBold' shadow='0' size='" + (str ((safeZoneH * 0.5) * 1)) + "'>X</t>");
-				_cancelCtrl ctrladdEventHandler ["ButtonClick", 
+				missionNamespace setVariable ['m9_sndbrdprog', 0];
+				progressLoadingScreen 0.1;
+				m9sd_fnc_populateSoundboardWithSearch = {
+					params ['_treeCtrl', ['_searchStr', ''], ['_onLoad', false]];
+					private _showRadioDubsOnly = false;
+					if (_searchStr == 'dubbing_radio') then {
+						_showRadioDubsOnly = true;
+					};
+					tvClear _treeCtrl;
+					private _addEverything = (_searchStr == '');
+					private _favorites = profilenamespace getvariable ['JAM_zeus_favoriteSounds', []];
+					private _color_favorite = [1,1,1,1];
+					private _color_searched = [0.66,1,0.66,1];
+					private _color_sound = JAM_zeus_uiColor2;
+					private _color_category = JAM_zeus_uiColor3;
+					private _icon_config = "a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa";
+					private _icon_addon = "a3\3den\data\displays\display3den\toolbar\open_ca.paa";
+					'private _progInc = (50/204297) * 0.7777;';
+					'0.000190336';'0.0002';
+					'100/34508';
+					private _progInc = 0.0028978;
+					private _lastSelectedPath = [];
+					private _lastSelectedName = profileNamespace getVariable ['JAM_zeus_selectedSoundDisplayName', ''];
+					{
+						if (_showRadioDubsOnly && (_forEachIndex == 0)) then {continue};
+						private _categoryName = _x # 0;
+						if (!_showRadioDubsOnly && ('dubbing_radio' in _categoryName)) then {continue};
+						private _categoryName2 = _categoryName trim ['\', 2];
+						private _categoryNameLength = count (_categoryName splitString '');
+						private _snds = _x # 1;
+						private _addCategory = false;
+						private _addWholeCategory = false;
+						if (_searchStr in [ _categoryName, '']) then {
+							_addCategory = true;
+							_addWholeCategory = true
+						} else {
+							if (_showRadioDubsOnly) then {
+								_addCategory = false;
+								_addWholeCategory = false;
+							};
+						};
+						private _matchedSndIdxs = [];
+						{
+							if (_addEverything) then {
+								_matchedSndIdxs pushBack _forEachIndex;
+								continue
+							};
+							private _snd = _x;
+							if (_snd isEqualType []) then {_snd = tolower (_snd # 0)};
+							if !(_searchStr in _snd) then {continue};
+							_matchedSndIdxs pushBack _forEachIndex;
+						} forEach _snds;
+						if (count _matchedSndIdxs > 0) then {_addCategory = true};
+						if !(_addCategory) then {continue};
+						private _indexA = _treeCtrl tvAdd [[], _categoryName2];
+						private _pathA = [_indexA];
+						_treeCtrl tvSetTooltip [_pathA, _categoryName];
+						_treeCtrl tvSetColor [_pathA, _color_category];
+						if (_categoryName == 'CfgSounds') then {
+							_treeCtrl tvSetPicture [_pathA, _icon_config];
+						} else {
+							_treeCtrl tvSetPicture [_pathA, _icon_addon];
+						};
+						if (_addWholeCategory) then {
+							_treeCtrl tvSetColor [[_indexA], if (_addEverything) then {_color_category} else {_color_searched}];
+						};
+						{
+							if (!(_forEachIndex in _matchedSndIdxs) && !_addWholeCategory) then {continue}; 
+							private _snd = _x;
+							if (_snd isEqualType []) then {
+								private _class = _snd # 0;
+								private _name = _snd # 1;
+								private _duration = _snd # 2;
+								private _sound = _snd # 3;
+								private _titles = _snd # 4;
+								private _indexC = _treeCtrl tvAdd [[_indexA], _class];
+								private _pathC = [_indexA, _indexC];
+								if (_class == _lastSelectedName) then {
+									_lastSelectedPath = _pathC;
+								};
+								'_treeCtrl tvSetCurSel _pathC;';
+								_treeCtrl tvSetTooltip [_pathC, _class];
+								_treeCtrl tvSetData [_pathC, str _snd];
+								_treeCtrl tvSetPicture [_pathC, "a3\modules_f_curator\data\portraitSound_ca.paa"];
+								if (_class in _favorites) then 
+								{
+									_treeCtrl tvSetColor [_pathC, _color_favorite];
+									_treeCtrl tvSetPictureColor [_pathC, _color_favorite];
+									_treeCtrl tvSetPictureRight [_pathC, 'a3\ui_f_curator\data\displays\rscDisplayCurator\modeRecent_ca.paa'];
+									_treeCtrl tvSetPictureRightColor [_pathC, _color_favorite];
+								} else 
+								{
+									_treeCtrl tvSetColor [_pathC, if (_addEverything) then {_color_sound} else {_color_searched} ];
+									_treeCtrl tvSetPictureColor [_pathC, _color_sound];
+									_treeCtrl tvSetPictureRight [_pathC, ''];
+								};
+							} else {
+								private _sndName = _snd select [_categoryNameLength-1, count (_snd splitString '')];
+								private _indexC = _treeCtrl tvAdd [[_indexA], _sndName];
+								private _pathC = [_indexA, _indexC];
+								if (_sndName == _lastSelectedName) then {
+									_lastSelectedPath = _pathC;
+								};
+								'_treeCtrl tvSetCurSel _pathC;';
+								_treeCtrl tvSetTooltip [_pathC, _snd];
+								_treeCtrl tvSetData [_pathC, str _snd];
+								_treeCtrl tvSetPicture [_pathC, "a3\modules_f_curator\data\portraitSound_ca.paa"];
+								if (_sndName in _favorites) then 
+								{
+									_treeCtrl tvSetColor [_pathC, _color_favorite];
+									_treeCtrl tvSetPictureColor [_pathC, _color_favorite];
+									_treeCtrl tvSetPictureRight [_pathC, 'a3\ui_f_curator\data\displays\rscDisplayCurator\modeRecent_ca.paa'];
+									_treeCtrl tvSetPictureRightColor [_pathC, _color_favorite];
+								} else 
+								{
+									_treeCtrl tvSetColor [_pathC, if (_addEverything) then {_color_sound} else {_color_searched}];
+									_treeCtrl tvSetPictureColor [_pathC, _color_sound];
+									_treeCtrl tvSetPictureRight [_pathC, ''];
+								};
+							};
+							missionNamespace setVariable ['m9_sndbrdprog', (missionNamespace getvariable ['m9_sndbrdprog', 0]) + _progInc];
+						} forEach _snds;
+					} forEach (missionNamespace getVariable ['M9_soundboard_tree', []]);
+					if !(_lastSelectedPath isEqualTo []) then {
+						_treeCtrl tvSetCurSel _lastSelectedPath;
+					};
+					if !(_addEverything) then {
+						'tvExpandAll _treeCtrl;'
+					} else {
+						'tvCollapseall _treectrl;'
+					};
+				};
+				uiNamespace setVariable ['m9sd_fnc_populateSoundboardWithSearch', m9sd_fnc_populateSoundboardWithSearch];
+				if (isNil 'JAM_zeus_uiColor') then 
 				{
-					params ["_control"];
-					[_control] spawn 
+					uiNamespace setVariable ['JAM_zeus_uiColor', [(profilenamespace getvariable ['GUI_BCG_RGB_R',0.13]),(profilenamespace getvariable ['GUI_BCG_RGB_G',0.54]),(profilenamespace getvariable ['GUI_BCG_RGB_B',0.21]),(profilenamespace getvariable ['GUI_BCG_RGB_A',0.8])]];
+					missionNameSpace setVariable ['JAM_zeus_uiColor', [(profilenamespace getvariable ['GUI_BCG_RGB_R',0.13]),(profilenamespace getvariable ['GUI_BCG_RGB_G',0.54]),(profilenamespace getvariable ['GUI_BCG_RGB_B',0.21]),(profilenamespace getvariable ['GUI_BCG_RGB_A',0.8])]];
+				};
+				_newcoloa=  (uiNamespace getVariable 'JAM_zeus_uiColor') vectorMultiply 1.5;
+				{
+					_x setVariable ['JAM_zeus_uiColor2', _newcoloa];
+				} forEach [missionNamespace, uiNamespace];
+				_olcola=  (uiNamespace getVariable 'JAM_zeus_uiColor');
+				_newcola2 = [(_olcola # 0) * 2,(_olcola # 1),(_olcola # 2) * 0.5,(_olcola # 3) * 1.33];
+				{
+					_x setVariable ['JAM_zeus_uiColor3', _newcola2];
+				} forEach [missionNamespace, uiNamespace];
+				uiNamespace setVariable ['m9_soundboardSearching', false];
+				if (isNil 'M9_soundboard_tree') then {
+					missionNamespace setVariable ['M9_soundboard_tree', call {
+						'Get first category of sounds from CfgSounds config classes';
+						missionNamespace setVariable ['bigboitotal',0];
+						private _soundBoardTree = [["CfgSounds", call {
+							private _allCfgSounds = [];
+							private _subClasses = [configFile >> "CfgSounds"] call BIS_fnc_returnChildren;
+							{
+								private _class = configName _x;
+								private _name = getText (configFile >> "CfgSounds" >> _class >> 'name');
+								private _duration = getText (configFile >> "CfgSounds" >> _class >> 'duration');
+								private _sound = getArray (configFile >> "CfgSounds" >> _class >> 'sound');
+								private _titles = getArray (configFile >> "CfgSounds" >> _class >> 'titles');
+								_allCfgSounds pushBack [_class, _name, _duration, _sound, _titles];
+								missionNamespace setVariable ['bigboitotal',(missionNamespace getVariable ['bigboitotal',0])+ 1];
+							} forEach _subClasses;
+							_allCfgSounds;
+						}]];
+						private _exts = [".wav", ".wss", ".ogg"];
+						private _extractRadioDubbing = true;
+						private _addonPaths = allAddonsInfo apply { _x select 0 };
+						if (!_extractRadioDubbing) then
+						{
+							_addonPaths = _addonPaths select { !("dubbing_radio" in _x) };
+						};
+						_addonPaths sort true;
+						{
+							private _addonPath = _x;
+							private _files = [];
+							{
+								_files append addonFiles [_addonPath, _x];
+							} forEach _exts;
+							if (_files isEqualTo []) then { continue };
+							_files sort true;
+							_soundBoardTree append [[_addonPath, _files]];
+							missionNamespace setVariable ['bigboitotal',(missionNamespace getVariable ['bigboitotal',0])+ (count _files)];
+						} forEach _addonPaths;
+						showchat true;
+						"systemChat str (missionNamespace getVariable ['bigboitotal',0]);"; "204297";
+						_soundBoardTree
+					}];
+				};
+				progressLoadingScreen 0.2;
+				findDisplay 49 closeDisplay 0;
+				with uiNamespace do 
+				{
+					disableSerialization;
+					createDialog 'RscDisplayEmpty';
+					private _display = findDisplay -1;
+					_display spawn {
+						private _display = _this;
+						private _prog = _display ctrlCreate ['RscStructuredText', -1];
+						_display setVariable ['prog', _prog];
+						_prog ctrlSetBackgroundColor [0,0,0,0];
+						_prog ctrlSetPosition [0.484531*0.995 * safezoneW + safezoneX,0.442 * safezoneH + safezoneY,0.0309375*1.25 * safezoneW,0.055 * safezoneH];
+						_prog ctrlCommit 0;
+						private _prog2 = _display ctrlCreate ['RscPictureKeepAspect', -1];
+						_display setVariable ['prog2', _prog2];
+						_prog2 ctrlSetBackgroundColor [0,0,0,0];
+						_prog2 ctrlSetText "a3\3den\data\cfgwaypoints\cycle_ca.paa";
+						_prog2 ctrlSetShadow 2;
+						_prog2 ctrlSetPosition [0.484531 * safezoneW + safezoneX,0.388 * safezoneH + safezoneY,0.0309375 * safezoneW,0.055 * safezoneH];
+						_prog2 ctrlCommit 0;
+						private _rot = 0;
+						while {!isNull _prog} do {
+							_prog ctrlSetStructuredText parseText format ["<t valign='middle' shadow='2' size='%1' align='center' font='puristaSemiBold'>%2%3</t>", str (1.5 * (safezoneh * 0.5)), round (missionNamespace getVariable ['m9_sndbrdprog', 0]), '%', str (0.8 * (safezoneh * 0.5))];
+							_rot = _rot + 32;
+							_prog2 ctrlSetAngle [_rot, 0.5, 0.5, false];
+							_prog2 ctrlCommit 0.2;
+							_prog ctrlCommit 0;
+							uiSleep 0.2;
+						};
+						ctrlDelete _prog;
+						ctrlDelete _prog2;
+					};
+					private _d = _display;
+					_d displayAddEventHandler ['unload',{
+						params ["_display", "_exitCode"];
+						uiNamespace setVariable ['m9_soundboardSearching', false];
+						if (false) then {'m9soundboardloadingscreen' cutText ["", "BLACK IN"];};
+						saveProfileNamespace;
+					}];
+					showChat true;
+					private _initialFade = 0;
+					progressLoadingScreen 0.3;
+					_background = _display ctrlCreate ['RscText', -1];
+					_background ctrlSetBackgroundColor [0,0,0,0.7];
+					_background ctrlSetPosition [0.381406 * safezoneW + safezoneX,0.247 * safezoneH + safezoneY,0.237187 * safezoneW,0.55 * safezoneH];
+					_background ctrlSetFade _initialFade;
+					_background ctrlCommit 0;
+					_background ctrlEnable false;
+					_tightal = _display ctrlCreate ['RscStructuredText', -1];
+					_tightal ctrlSetBackgroundColor JAM_zeus_uiColor;
+					_tightal ctrlSetPosition [0.381406 * safezoneW + safezoneX,0.203 * safezoneH + safezoneY,0.237187 * safezoneW,0.022 * safezoneH];
+					_tightal ctrlSetStructuredText parseText format ["<t size='%1' align='center' font='puristaMedium' shadow='0'>Sound Board 2.0<t/>", str (1.0 * (safezoneh * 0.5))];
+					_tightal ctrlSetTooltip format ["Description:\n\nThis utility allows you to view & playback all the sounds in the game.\nIt allows Zeuses to leverage their creativity & enables more immersive experiences.\nThis menu has controls & features to set favorites, preview sounds, broadcast sounds, \ncopy sound info, offset playback, adjust pitch, & more.\n\nDevs can also use this tool for easy testing & debugging of sound scripts."];
+					_tightal ctrlSetTooltipColorText [1,1,1,1];
+					_tightal ctrlSetTooltipColorShade JAM_zeus_uiColor;
+					_tightal ctrlSetTooltipColorBox [1,1,1,1];
+					_tightal ctrlSetFade _initialFade;
+					_tightal ctrlCommit 0;
+					_tightal ctrlEnable false;
+					_treeSearchCtrl = _d ctrlCreate ['RscEdit', -1];
+					_treeSearchCtrl ctrlSetFade _initialFade;
+					_treeSearchCtrl ctrlSetPosition [0.396875 * safezoneW + safezoneX,0.2254 * safezoneH + safezoneY,0.20625 * safezoneW,0.022 * safezoneH];
+					_treeSearchCtrl ctrlSetBackgroundColor [0,0,0,0.88];
+					_treeSearchCtrl ctrlSetTextColor [1,1,1,0.5];
+					_treeSearchCtrl ctrlSetText 'Search...';
+					_treeSearchCtrl ctrlSetFont 'RobotoCondensed';
+					_treeSearchCtrl ctrlSetTooltip 'Input any query & click the search button.\nThe search will take a minute to scan files.\nResults will appear in realtime.\n';
+					_treeSearchCtrl ctrlSetTooltipColorText [1,0.7,1,1];
+					_treeSearchCtrl ctrlSetTooltipColorShade [0.1,0.11,0.1,0.88];
+					_treeSearchCtrl ctrlSetTooltipColorBox [1,0.7,1,1];
+					_treeSearchCtrl ctrlSetFontHeight ((0.77 * (safeZoneH * 0.5)) / 10 / 2);
+					_treeSearchCtrl ctrlAddEventHandler ['SetFocus',{
+						params ["_control"];
+						if (ctrlText _control == 'Search...') then {
+							_control ctrlSetText '';
+							_control ctrlSetTextColor [0.22*4,0.11*5,0.22*6,1];
+							_control ctrlCommit 0;
+						};
+					}];
+					_treeSearchCtrl ctrlCommit 0;
+					'use search button instead '; 
+					' doesnt run fast enough for searching on each key press (editChanged/keydown)';
+					_treeSearchButtonCtrl_b  = _d ctrlCreate ['RscFrame', -1];
+					_treeSearchButtonCtrl_b ctrlSetPosition [0.603124 * safezoneW + safezoneX,0.225 * safezoneH + safezoneY,0.0154688 * safezoneW,0.022 * safezoneH];
+					_treeSearchButtonCtrl_b ctrlSetFade _initialFade;
+					_treeSearchButtonCtrl_b ctrlCommit 0;
+					_treeSearchButtonCtrl = _d ctrlCreate ['RscButtonMenu', -1];
+					_treeSearchButtonCtrl ctrlEnable false;
+					_treeSearchButtonCtrl ctrlSetPosition [0.603124 * safezoneW + safezoneX,0.2255 * safezoneH + safezoneY,0.0154 * safezoneW,0.021 * safezoneH];
+					_treeSearchButtonCtrl setVariable ['ctrlSearch', _treeSearchCtrl];
+					_treeSearchButtonCtrl ctrlSetStructuredText parseText format ["<t align='left' shadow='1' size='%1'>%2</t>", 0.83 * (safeZoneH * 0.5), "<img image='a3\3den\data\displays\display3den\search_start_ca.paa'></img>"];
+					_treeSearchButtonCtrl ctrlSetTooltip 'Search';
+					_treeSearchButtonCtrl ctrlSetTooltipColorText [1,1,1,1];
+					_treeSearchButtonCtrl ctrlSetTooltipColorShade [0.22,0.11,0.22,0.88];
+					_treeSearchButtonCtrl ctrlSetTooltipColorBox [1,1,1,1];
+					_treeSearchButtonCtrl ctrlSetFade _initialFade;
+					_treeSearchButtonCtrl ctrlAddEventHandler ['buttonclick', {_this spawn {with uiNamespace do {
+						params ["_control"];
+						private _Favbtn = (_control getVariable 'btnFav');
+						_control ctrlSetStructuredText parseText format ["<t align='left' shadow='1' size='%1'>%2</t>", 0.83 * (safeZoneH * 0.5), "<img image='a3\ui_f\data\igui\cfg\simpletasks\types\wait_ca.paa'></img>"];
+						_Favbtn ctrlSetStructuredText parseText format ["<t align='left' shadow='1' size='%1'>%2</t>", 0.83 * (safeZoneH * 0.5), "<img image='a3\ui_f\data\igui\cfg\simpletasks\types\wait_ca.paa'></img>"];
+						_Favbtn ctrlEnable false;
+						_Favbtn ctrlSetFade 0.66;
+						_control ctrlEnable false;
+						_control ctrlSetFade 0.66;
+						if (uiNamespace getVariable ['m9_soundboardSearching', false]) exitWith {};
+						uiNamespace setVariable ['m9_soundboardSearching', true];
+						private _ctrlTree = _control getVariable 'ctrlTree';
+						private _treeCtrl = _ctrlTree;
+						private _ctrlSearch = _control getVariable 'ctrlSearch';
+						private _newText = ctrlText _ctrlSearch;
+						if ((false) or (_newText == 'Search...')) exitWith {};
+						with uiNamespace do {
+							[_treeCtrl, _newText] call m9sd_fnc_populateSoundboardWithSearch;
+						};
+						"systemChat 'done';";
+						uiNamespace setVariable ['m9_soundboardSearching', false];
+						_control ctrlEnable true;
+						_control ctrlSetFade 0;
+						_control ctrlCommit 0;
+						_Favbtn ctrlEnable true;
+						_Favbtn ctrlSetFade 0;
+						_Favbtn ctrlCommit 0;
+						_Favbtn ctrlSetStructuredText parseText format ["<t align='left' shadow='1' size='%1'>%2</t>", 0.83 * (safeZoneH * 0.5), "<img image='a3\ui_f_curator\data\displays\rscDisplayCurator\modeRecent_ca.paa'></img>"];
+						_control ctrlSetStructuredText parseText format ["<t align='left' shadow='1' size='%1'>%2</t>", 0.83 * (safeZoneH * 0.5), "<img image='a3\3den\data\displays\display3den\search_start_ca.paa'></img>"];
+					}}}];
+					_treeSearchButtonCtrl ctrlSetBackgroundColor [0.22,0.11,0.22,0.88];
+					_treeSearchButtonCtrl ctrlCommit 0;
+					progressLoadingScreen 0.4;
+					_treeFavoritesFilterButtonCtrl_b  = _d ctrlCreate ['RscFrame', -1];
+					_treeFavoritesFilterButtonCtrl_b ctrlSetPosition [0.381406 * safezoneW + safezoneX,0.225 * safezoneH + safezoneY,0.0154688 * safezoneW,0.022 * safezoneH];
+					_treeFavoritesFilterButtonCtrl_b ctrlSetFade _initialFade;
+					_treeFavoritesFilterButtonCtrl_b ctrlCommit 0;
+					_treeFavoritesFilterButtonCtrl = _d ctrlCreate ['RscButtonMenu', -1];
+					_treeFavoritesFilterButtonCtrl ctrlEnable false;
+					_treeFavoritesFilterButtonCtrl ctrlSetPosition [0.38135 * safezoneW + safezoneX,0.225 * safezoneH + safezoneY,0.01542 * safezoneW,0.0215 * safezoneH];
+					_treeFavoritesFilterButtonCtrl ctrlSetStructuredText parseText format ["<t align='left' shadow='1' size='%1'>%2</t>", 0.83 * (safeZoneH * 0.5), "<img image='a3\ui_f_curator\data\displays\rscDisplayCurator\modeRecent_ca.paa'></img>"];
+					_treeFavoritesFilterButtonCtrl ctrlSetTooltip 'Filter the list to only show favorites.';
+					_treeFavoritesFilterButtonCtrl ctrlSetTooltipColorText [1,1,1,1];
+					_treeFavoritesFilterButtonCtrl ctrlSetTooltipColorShade [0.22,0.11,0.22,0.88];
+					_treeFavoritesFilterButtonCtrl ctrlSetTooltipColorBox [1,1,1,1];
+					_treeFavoritesFilterButtonCtrl ctrlSetFade _initialFade;
+					_treeFavoritesFilterButtonCtrl setVariable ['btnSrch', _treeSearchButtonCtrl];
+					_treeSearchButtonCtrl setVariable ['btnFav', _treeFavoritesFilterButtonCtrl];
+					_treeFavoritesFilterButtonCtrl ctrlAddEventHandler ['buttonclick', {_this spawn {with uiNamespace do {
+						params ["_control"];
+						private _Searchbtn = (_control getVariable 'btnSrch');
+						_control ctrlSetStructuredText parseText format ["<t align='left' shadow='1' size='%1'>%2</t>", 0.83 * (safeZoneH * 0.5), "<img image='a3\ui_f\data\igui\cfg\simpletasks\types\wait_ca.paa'></img>"];
+						_Searchbtn ctrlSetStructuredText parseText format ["<t align='left' shadow='1' size='%1'>%2</t>", 0.83 * (safeZoneH * 0.5), "<img image='a3\ui_f\data\igui\cfg\simpletasks\types\wait_ca.paa'></img>"];
+						_Searchbtn ctrlEnable false;
+						_Searchbtn ctrlSetFade 0.66;
+						_control ctrlEnable false;
+						_control ctrlSetFade 0.66;
+						private _ctrlTree = _control getVariable 'ctrlTree';
+						tvExpandall _ctrlTree;
+						private _favorites = profileNameSpace getVariable ['JAM_zeus_favoriteSounds', []];
+						private _nonFavoritesFountInIteration = -1;
+						while {_nonFavoritesFountInIteration != 0} do {
+							_nonFavoritesFountInIteration = 0;
+							private _categoryCount = _ctrlTree tvCount [];
+							private _categoryLastIdx = _categoryCount - 1;
+							for '_catIdx' from 0 to _categoryLastIdx do {
+								private _sndCount = _ctrlTree tvCount [_catIdx];
+								private _sndLastIdx2 = _sndCount - 1;
+								for '_sndIdx' from 0 to _sndLastIdx2 do {
+									private _ppath = [_catIdx, _sndIdx];
+									if !((_ctrlTree tvText _ppath) in _favorites) then {
+										_nonFavoritesFountInIteration = _nonFavoritesFountInIteration + 1;
+										_ctrlTree tvDelete _ppath;
+									} else {
+									};
+								};
+							};
+						};
+						'remove empty categories now';
+						private _emptyCatCount = -1;
+						while {_emptyCatCount != 0} do {
+							_emptyCatCount = 0;
+							private _categoryCount = _ctrlTree tvCount [];
+							private _categoryLastIdx = _categoryCount - 1;
+							for '_catIdx' from 0 to _categoryLastIdx do {
+								private _cPath = [_catIdx];
+								private _sndCount = _ctrlTree tvCount _cPath;
+								if (_sndCount == 0) then {
+									_emptyCatCount = _emptyCatCount + 1;
+									_ctrlTree tvDelete _cPath;
+								};
+							};
+						};
+						_Searchbtn ctrlEnable true;
+						_Searchbtn ctrlSetFade 0;
+						_control ctrlEnable true;
+						_control ctrlSetFade 0;
+						_control ctrlSetStructuredText parseText format ["<t align='left' shadow='1' size='%1'>%2</t>", 0.83 * (safeZoneH * 0.5), "<img image='a3\ui_f_curator\data\displays\rscDisplayCurator\modeRecent_ca.paa'></img>"];
+						_Searchbtn ctrlSetStructuredText parseText format ["<t align='left' shadow='1' size='%1'>%2</t>", 0.83 * (safeZoneH * 0.5), "<img image='a3\3den\data\displays\display3den\search_start_ca.paa'></img>"];
+					}}}];
+					progressLoadingScreen 0.5;
+					_treeFavoritesFilterButtonCtrl ctrlSetBackgroundColor [0.22,0.11,0.22,0.88];
+					_treeFavoritesFilterButtonCtrl ctrlCommit 0;
+					_cancelCtrl = _display ctrlCreate ['RscButtonMenu',-1];
+					_cancelCtrl ctrlSetPosition [0.603125 * safezoneW + safezoneX,0.203 * safezoneH + safezoneY,0.0154688 * safezoneW,0.022 * safezoneH];
+					_cancelCtrl ctrlSetTooltip 'EXIT';
+					_cancelCtrl ctrlSetTooltipColorText [1,0.1,0.1,1];
+					_cancelCtrl ctrlSetTooltipColorShade [1,1,1,1];
+					_cancelCtrl ctrlSetTooltipColorBox [0,0,0,1];
+					_cancelCtrl ctrlSetBackgroundColor [0,0,0,0];
+					_cancelCtrl ctrlSetStructuredText parseText ("<t valign='middle' align='center' font='PuristaSemiBold' shadow='0' size='" + (str ((safeZoneH * 0.5) * 1)) + "'>X</t>");
+					_cancelCtrl ctrladdEventHandler ["ButtonClick", 
 					{
 						params ["_control"];
-						disableSerialization;
+						[_control] spawn 
+						{
+							params ["_control"];
+							disableSerialization;
+							with uiNamespace do 
+							{
+								_parentDisplay = ctrlParent _control;
+								_parentDisplay closeDisplay 0;
+								"playSound 'click';";
+								playSound ['border_Out', true];
+							};
+						};
+					}];
+					_cancelCtrl ctrlSetFade _initialFade;
+					_cancelCtrl ctrlCommit 0;
+					_cancelCtrl = _display ctrlCreate ['RscButtonMenu',-1];
+					_cancelCtrl ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.764 * safezoneH + safezoneY,0.0670312 * safezoneW,0.022 * safezoneH];
+					_cancelCtrl ctrlSetTooltip 'Stop all sounds started from this menu.\n\n*Warning: Will NOT stop 3D sounds!';
+					_cancelCtrl ctrlSetBackgroundColor [0.6,0,0,0.8];
+					_cancelCtrl ctrlSetStructuredText parseText ("<t valign='middle' align='center' font='PuristaSemiBold' shadow='2' size='" + (str ((safeZoneH * 0.5) * 1)) + "'>STOP SOUNDS</t>");
+					_cancelCtrl ctrladdEventHandler ["ButtonClick", 
+					{
+						params ["_control"];
+						[[],
+						{
+							{
+								deleteVehicle _x;
+							} forEach (missionNameSpace getVariable ['JAM_zeus_playedSounds', []]);
+							private _playedSounds = [];
+							{
+								if !(isNull _x) then 
+								{
+									_playedSounds pushBack _x;
+								};
+							} forEach (missionNameSpace getVariable ['JAM_zeus_playedSounds', []]);
+							missionNameSpace setVariable ['JAM_zeus_playedSounds', _playedSounds];
+						}] remoteExec ['spawn'];
+					}];
+					_cancelCtrl ctrlSetFade _initialFade;
+					_cancelCtrl ctrlCommit 0;
+					_background = _display ctrlCreate ['RscText', -1];
+					_background ctrlSetBackgroundColor [0,0,0,0.7];
+					_background ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.665 * safezoneH + safezoneY,0.0670312 * safezoneW,0.022 * safezoneH];
+					_background ctrlSetFade _initialFade;
+					_background ctrlCommit 0;
+					_background ctrlEnable false;
+					_background = _display ctrlCreate ['RscFrame', -1];
+					_background ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.665 * safezoneH + safezoneY,0.0670312 * safezoneW,0.022 * safezoneH];
+					_background ctrlSetFade _initialFade;
+					_background ctrlCommit 0;
+					_background ctrlEnable false;
+					_background = _display ctrlCreate ['RscStructuredText', -1];
+					_background ctrlSetBackgroundColor [0,0,0,0];
+					_background ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.665 * safezoneH + safezoneY,0.0670312 * safezoneW,0.022 * safezoneH];
+					_background ctrlSetStructuredText parseText format ["<t size='%1' align='right'>isSpeech<t/>", str (1 * (safezoneh * 0.5))];
+					_background ctrlSetFade _initialFade;
+					_background ctrlCommit 0;
+					_background ctrlEnable false;
+					_backgroundeditframe = _display ctrlCreate ['RscEdit', -1];
+					_backgroundeditframe ctrlSetBackgroundColor [0,0,0,0];
+					_backgroundeditframe ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.665 * safezoneH + safezoneY,0.0154688 * safezoneW,0.022 * safezoneH];
+					_backgroundeditframe ctrlSetFade _initialFade;
+					_backgroundeditframe ctrlCommit 0;
+					_backgroundeditframe ctrlEnable false;
+					_checkbox = _display ctrlCreate ["RscCheckbox", -1];
+					_checkbox ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.665 * safezoneH + safezoneY,0.0154688 * safezoneW,0.022 * safezoneH];
+					_checkbox ctrladdEventHandler ["ButtonClick", 
+					{
+						params ["_control"];
 						with uiNamespace do 
 						{
-							_parentDisplay = ctrlParent _control;
-							_parentDisplay closeDisplay 0;
-							playSound 'click';
-							playSound ['border_Out', true];
-						};
-					};
-				}];
-				_cancelCtrl ctrlSetFade 1;
-				_cancelCtrl ctrlCommit 0;
-				_cancelCtrl ctrlSetFade 0;
-				_cancelCtrl ctrlCommit 1;
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_cancelCtrl = _display ctrlCreate ['RscButtonMenu',-1];
-				_cancelCtrl ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.731 * safezoneH + safezoneY,0.0670312 * safezoneW,0.022 * safezoneH];
-				_cancelCtrl ctrlSetTooltip 'Stop all sounds started from this menu.';
-				_cancelCtrl ctrlSetBackgroundColor [0.6,0,0,0.8];
-				_cancelCtrl ctrlSetStructuredText parseText ("<t valign='middle' align='center' font='PuristaSemiBold' shadow='2' size='" + (str ((safeZoneH * 0.5) * 1)) + "'>STOP SOUNDS</t>");
-				_cancelCtrl ctrladdEventHandler ["ButtonClick", 
-				{
-					params ["_control"];
-					[[],
-					{
-						{
-							deleteVehicle _x;
-						} forEach (missionNameSpace getVariable ['JAM_zeus_playedSounds', []]);
-						private _playedSounds = [];
-						{
-							if !(isNull _x) then 
+							if (cbChecked _control) then 
 							{
-								_playedSounds pushBack _x;
+								profileNamespace setVariable ['JAM_zeus_sB_isSpeech', true];
+							} else 
+							{
+								profileNamespace setVariable ['JAM_zeus_sB_isSpeech', false];
 							};
-						} forEach (missionNameSpace getVariable ['JAM_zeus_playedSounds', []]);
-						missionNameSpace setVariable ['JAM_zeus_playedSounds', _playedSounds];
-					}] remoteExec ['spawn'];
-				}];
-				_cancelCtrl ctrlSetFade 1;
-				_cancelCtrl ctrlCommit 0;
-				_cancelCtrl ctrlSetFade 0;
-				_cancelCtrl ctrlCommit 1;
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_background = _display ctrlCreate ['RscText', -1];
-				_background ctrlSetBackgroundColor [0,0,0,0.7];
-				_background ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.665 * safezoneH + safezoneY,0.0670312 * safezoneW,0.022 * safezoneH];
-				_background ctrlSetFade 1;
-				_background ctrlCommit 0;
-				_background ctrlSetFade 0;
-				_background ctrlCommit 1;
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_background = _display ctrlCreate ['RscFrame', -1];
-				_background ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.665 * safezoneH + safezoneY,0.0670312 * safezoneW,0.022 * safezoneH];
-				_background ctrlSetFade 1;
-				_background ctrlCommit 0;
-				_background ctrlSetFade 0;
-				_background ctrlCommit 1;
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_background = _display ctrlCreate ['RscStructuredText', -1];
-				_background ctrlSetBackgroundColor [0,0,0,0];
-				_background ctrlSetPosition [0.561875 * safezoneW + safezoneX,0.665 * safezoneH + safezoneY,0.0515625 * safezoneW,0.022 * safezoneH];
-				_background ctrlSetStructuredText parseText format ["<t size='%1' align='center'>isSpeech<t/>", str (1 * (safezoneh * 0.5))];
-				_background ctrlSetFade 1;
-				_background ctrlCommit 0;
-				_background ctrlSetFade 0;
-				_background ctrlCommit 1;
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_checkbox = _display ctrlCreate ["RscCheckbox", -1];
-				_checkbox ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.665 * safezoneH + safezoneY,0.0154688 * safezoneW,0.022 * safezoneH];
-				_checkbox ctrladdEventHandler ["ButtonClick", 
-				{
-					params ["_control"];
-					with uiNamespace do 
-					{
-						if (cbChecked _control) then 
-						{
-							profileNamespace setVariable ['JAM_zeus_sB_isSpeech', true];
-						} else 
-						{
-							profileNamespace setVariable ['JAM_zeus_sB_isSpeech', false];
 						};
-					};
-				}];
-				_checkbox ctrlSetTooltip 'Boolean - \ntrue to play it as speech, fadeSpeech applies.\nFalse to play it as sound, fadeSound applies';
-				_checkbox ctrlSetFade 1;
-				_checkbox ctrlCommit 0;
-				_checkbox ctrlSetFade 0;
-				_checkbox ctrlCommit 1;
-				_display setVariable ['cbSpeech', _checkbox];
-				if (profileNamespace getVariable ['JAM_zeus_sB_isSpeech', false]) then 
-				{
-					_checkbox cbSetChecked true;
-				} else 
-				{
-					_checkbox cbSetChecked false;
-				};
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_background = _display ctrlCreate ['RscText', -1];
-				_background ctrlSetBackgroundColor [0,0,0,0.7];
-				_background ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.698 * safezoneH + safezoneY,0.0670312 * safezoneW,0.022 * safezoneH];
-				_background ctrlSetFade 1;
-				_background ctrlCommit 0;
-				_background ctrlSetFade 0;
-				_background ctrlCommit 1;
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_background = _display ctrlCreate ['RscFrame', -1];
-				_background ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.698 * safezoneH + safezoneY,0.0670312 * safezoneW,0.022 * safezoneH];
-				_background ctrlSetFade 1;
-				_background ctrlCommit 0;
-				_background ctrlSetFade 0;
-				_background ctrlCommit 1;
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_background = _display ctrlCreate ['RscStructuredText', -1];
-				_background ctrlSetBackgroundColor [0,0,0,0];
-				_background ctrlSetPosition [0.561875 * safezoneW + safezoneX,0.698 * safezoneH + safezoneY,0.0515625 * safezoneW,0.022 * safezoneH];
-				_background ctrlSetStructuredText parseText format ["<t size='%1' align='center'>Offset<t/>", str (1 * (safezoneh * 0.5))];
-				_background ctrlSetFade 1;
-				_background ctrlCommit 0;
-				_background ctrlSetFade 0;
-				_background ctrlCommit 1;
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_offset = _display ctrlCreate ['RscEdit', -1];
-				_offset ctrlSetBackgroundColor [0,0,0,0.5];
-				_offset ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.698 * safezoneH + safezoneY,0.0154688 * safezoneW,0.022 * safezoneH];
-				_offset ctrlSetTooltip "Number - \nstart, in seconds.\nCan be negative.";
-				_offset ctrlSetText '0';
-				_offset ctrlSetFade 1;
-				_offset ctrlCommit 0;
-				_offset ctrlSetFade 0;
-				_offset ctrlCommit 1;
-				_display setVariable ['offset', _offset];
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_sounds = _display ctrlCreate ["RscListBox", -1];
-				_sounds ctrlSetPosition [0.386562 * safezoneW + safezoneX,0.258 * safezoneH + safezoneY,0.226875 * safezoneW,0.341 * safezoneH];
-				_favorites = profilenamespace getvariable ['JAM_zeus_favoriteSounds', []];
-				{
-					private _class = _x # 0;
-					private _name = _x # 1;
-					private _duration = _x # 2;
-					private _sound = _x # 3;
-					private _titles = _x # 4;
-					private _index = _sounds lbAdd _class;
-					_sounds lbSetTooltip [_index, _class];
-					_sounds lbSetData [_index, str _x];
-					_sounds lbSetPicture [_index, "a3\modules_f_curator\data\portraitSound_ca.paa"];
-					_sounds lbSetColorRight [_index, [1,1,1,0.5]];
-					if (_class in _favorites) then 
+					}];
+					progressLoadingScreen 0.6;
+					_checkbox ctrlSetTooltip 'Boolean - \ntrue to play it as speech, fadeSpeech applies.\nFalse to play it as sound, fadeSound applies';
+					_checkbox ctrlSetFade _initialFade;
+					_checkbox ctrlCommit 0;
+					_display setVariable ['cbSpeech', _checkbox];
+					if (profileNamespace getVariable ['JAM_zeus_sB_isSpeech', false]) then 
 					{
-						_sounds lbSetColor [_index, [1,1,1,1]];
-						_sounds lbSetPictureColor [_index, [1,1,1,1]];
-						_sounds lbSetPictureRight [_index, 'a3\ui_f_curator\data\displays\rscDisplayCurator\modeRecent_ca.paa'];
-						_sounds lbSetPictureRightColor [_index, [1,1,1,1]];
+						_checkbox cbSetChecked true;
 					} else 
 					{
-						_sounds lbSetColor [_index, JAM_zeus_uiColor];
-						_sounds lbSetPictureColor [_index, JAM_zeus_uiColor];
-						_sounds lbSetPictureRight [_index, ''];
-						_sounds lbSetPictureRightColor [_index, [1,1,1,0]];
+						_checkbox cbSetChecked false;
 					};
-				} forEach (uiNamespace getvariable ['JAM_zeus_allSound', []]);
-				_sounds ctrladdEventHandler ["LBSelChanged", 
-				{
-					params ["_control", "_selectedIndex"];
-					with uiNamespace do 
+					_background = _display ctrlCreate ['RscStructuredText', -1];
+					_background ctrlSetBackgroundColor [0,0,0,0.7];
+					_background ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.687 * safezoneH + safezoneY,0.0670312 * safezoneW,0.022 * safezoneH];
+					_background ctrlSetStructuredText parseText format ["<t size='%1' align='right'>Offset<t/>", str (1 * (safezoneh * 0.5))];
+					_background ctrlSetFade _initialFade;
+					_background ctrlCommit 0;
+					_background ctrlEnable false;
+					_background = _display ctrlCreate ['RscFrame', -1];
+					_background ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.687 * safezoneH + safezoneY,0.0670312 * safezoneW,0.022 * safezoneH];
+					_background ctrlSetFade _initialFade;
+					_background ctrlCommit 0;
+					_background ctrlEnable false;
+					_offset = _display ctrlCreate ['RscEdit', -1];
+					_offset ctrlSetFont 'RobotoCondensed';
+					_offset ctrlSetFontHeight ((0.64 * (safeZoneH * 0.5)) / 10 / 2);
+					_offset ctrlSetBackgroundColor [0,0,0,0];
+					_offset ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.687 * safezoneH + safezoneY,0.0154688 * safezoneW,0.022 * safezoneH];
+					_offset ctrlSetTooltip "Number - \nstart, in seconds.\nCan be negative.";
+					_offset ctrlSetText '0';
+					_offset ctrlSetFade _initialFade;
+					_offset ctrlCommit 0;
+					_display setVariable ['offset', _offset];
+					_background = _display ctrlCreate ['RscStructuredText', -1];
+					_background ctrlSetBackgroundColor [0,0,0,0.7];
+					_background ctrlSetPosition[0.546406 * safezoneW + safezoneX,0.709 * safezoneH + safezoneY,0.0670312 * safezoneW,0.022 * safezoneH];
+					_background ctrlSetStructuredText parseText format ["<t size='%1' align='right'>3D Sound<t/>", str (1 * (safezoneh * 0.5))];
+					_background ctrlSetFade _initialFade;
+					_background ctrlCommit 0;
+					_background ctrlEnable false;
+					_background = _display ctrlCreate ['RscFrame', -1];
+					_background ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.709 * safezoneH + safezoneY,0.0670312 * safezoneW,0.022 * safezoneH];
+					_background ctrlSetFade _initialFade;
+					_background ctrlCommit 0;
+					_background ctrlEnable false;
+					_background = _display ctrlCreate ['RscFrame', -1];
+					_background ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.709 * safezoneH + safezoneY,0.0154688 * safezoneW,0.022 * safezoneH];
+					_background ctrlSetFade _initialFade;
+					_background ctrlCommit 0;
+					_background ctrlEnable false;
+					_checkbox = _display ctrlCreate ["RscCheckbox", -1];
+					_checkbox ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.709 * safezoneH + safezoneY,0.0154688 * safezoneW,0.022 * safezoneH];
+					_checkbox ctrladdEventHandler ["ButtonClick", 
 					{
+						params ["_control"];
+						with uiNamespace do 
+						{
+							if (cbChecked _control) then 
+							{
+								profileNamespace setVariable ['JAM_zeus_sB_playSound3D', true];
+							} else 
+							{
+								profileNamespace setVariable ['JAM_zeus_sB_playSound3D', false];
+							};
+						};
+						saveprofilenamespace;
+					}];
+					_checkbox ctrlSetTooltip 'Use playSound3D to hear it in the 3D environment.\n\n*Warning:\n It is not possible to stop 3D sounds.';
+					_checkbox ctrlSetFade _initialFade;
+					_checkbox ctrlCommit 0;
+					_display setVariable ['cb3D', _checkbox];
+					if (profileNamespace getVariable ['JAM_zeus_sB_playSound3D', false]) then 
+					{
+						_checkbox cbSetChecked true;
+					} else 
+					{
+						_checkbox cbSetChecked false;
+					};
+					_background = _display ctrlCreate ['RscStructuredText', -1];
+					_background ctrlSetBackgroundColor [0,0,0,0.7];
+					_background ctrlSetPosition[0.546406 * safezoneW + safezoneX,0.731 * safezoneH + safezoneY,0.0670312 * safezoneW,0.022 * safezoneH];
+					_background ctrlSetStructuredText parseText format ["<t size='%1' align='right'>Pitch<t/>", str (1 * (safezoneh * 0.5))];
+					_background ctrlSetFade _initialFade;
+					_background ctrlCommit 0;
+					_background ctrlEnable false;
+					_background = _display ctrlCreate ['RscFrame', -1];
+					_background ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.731 * safezoneH + safezoneY,0.0670312 * safezoneW,0.022 * safezoneH];
+					_background ctrlSetFade _initialFade;
+					_background ctrlCommit 0;
+					_background ctrlEnable false;
+					_pitch = _display ctrlCreate ['RscEdit', -1];
+					_pitch ctrlSetFont 'RobotoCondensed';
+					_pitch ctrlSetFontHeight ((0.64 * (safeZoneH * 0.5)) / 10 / 2);
+					_pitch ctrlSetBackgroundColor [0,0,0,0];
+					_pitch ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.731 * safezoneH + safezoneY,0.0154688 * safezoneW,0.022 * safezoneH];
+					_pitch ctrlSetTooltip (
+						"soundPitch: Number - (Optional, default 1)\n" + 
+						"• 1.0 → normal\n" + 
+						"• 0.5 → Darth Vader\n" + 
+						"• 2.0 → Chipmunks\n\n*Warning:\n Only works with 3D sound (playSound3D)."
+					);
+					_pitch ctrlSetText '1';
+					_pitch ctrlSetFade _initialFade;
+					_pitch ctrlCommit 0;
+					_display setVariable ['pitch', _pitch];
+					_background = _display ctrlCreate ['RscFrame', -1];
+					_background ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.61 * safezoneH + safezoneY,0.0309375 * safezoneW,0.044 * safezoneH];
+					_background ctrlSetFade _initialFade;
+					_background ctrlCommit 0;
+					_preview = _display ctrlCreate ['RscButtonMenu',-1];
+					_preview ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.61 * safezoneH + safezoneY,0.0309375 * safezoneW,0.044 * safezoneH];
+					_preview ctrlSetTooltip 'Preview the selected sound.\nThe audio will only play on your computer.';
+					_preview ctrlSetBackgroundColor [0,0,0.6,0.2];
+					_preview ctrlSetStructuredText parseText ("<t valign='middle' align='center' color='#ffffff' font='PuristaLight' shadow='2' size='" + (str ((safeZoneH * 0.5) * 2)) + "'><img image='\a3\3den\data\displays\display3den\entitymenu\playFromHere_ca.paa'></img></t>");
+					_preview ctrladdEventHandler ["ButtonClick", 
+					{
+						params ["_control"];
+						private _display = ctrlParent _control;
+						private _sounds = _display getVariable 'sounds';
+						private _tvSelectionPath = tvCurSel _sounds;
+						private _sndpath = _sounds tvData _tvSelectionPath;	
+						_sndpath = call compile _sndpath;
+						if (_sndpath isEqualType []) then {
+							_sndpath = (_sndpath # 3) # 0;
+						} else {
+							if ( ('.wav' in _sndpath) or ('.wss' in _sndpath) or ('.ogg' in _sndpath) ) then {
+								(_display getVariable 'cb3D') cbSetChecked true;
+							};
+						};
+						private _soundName = _sounds tvText _tvSelectionPath;
+						private _isSpeech = cbChecked (_display getVariable 'cbSpeech');
+						private _is3D = cbChecked (_display getVariable 'cb3D');
+						private _offset = parseNumber (ctrlText (_display getVariable 'offset'));
+						private _pitch = parseNumber (ctrlText (_display getVariable 'pitch'));
+						if (_is3D) then {
+							private _source = if (isnull findDisplay 312) then {vehicle player} else {vehicle curatorCamera};
+							if ( ('.wav' in _sndpath) or ('.wss' in _sndpath) or ('.ogg' in _sndpath) ) then {
+								'is good'
+							} else {
+								_sndpath = _sndpath + '.wss';
+							};
+							'systemChat str _sndpath;';
+							playSound3D [_sndpath, _source, false, getposasl _source, 1, _pitch, 0, _offset, true];
+						} else {
+							private _sound = playSound [_soundName, _isSpeech, _offset];
+							private _playedSounds = missionNameSpace getVariable ['JAM_zeus_playedSounds', []];
+							_playedSounds pushBack _sound;
+							missionNameSpace setVariable ['JAM_zeus_playedSounds', _playedSounds];
+						};
+					}];
+					progressLoadingScreen 0.7;
+					_preview ctrlSetFade _initialFade;
+					_preview ctrlCommit 0;
+					_background = _display ctrlCreate ['RscFrame', -1];
+					_background ctrlSetPosition [0.5825 * safezoneW + safezoneX,0.61 * safezoneH + safezoneY,0.0309375 * safezoneW,0.044 * safezoneH];
+					_background ctrlSetFade _initialFade;
+					_background ctrlCommit 0;
+					_play = _display ctrlCreate ['RscButtonMenu',-1];
+					_play ctrlEnable false;
+					_preview ctrlEnable false;
+					_play ctrlSetPosition [0.5825 * safezoneW + safezoneX,0.61 * safezoneH + safezoneY,0.0309375 * safezoneW,0.044 * safezoneH];
+					_play ctrlSetTooltip 'Play the selected sound.\nThe audio will play on everyone’s computer.';
+					_play ctrlSetBackgroundColor [0,0.6,0,0.2];
+					_play ctrlSetStructuredText parseText ("<t valign='middle' align='center' color='#FFFFFF' font='PuristaLight' shadow='2' size='" + (str ((safeZoneH * 0.5) * 2)) + "'><img image='\a3\3den\data\displays\display3den\entitymenu\playFromHere_ca.paa'></img></t>");
+					_play ctrladdEventHandler ["ButtonClick", 
+					{
+						params ["_control"];
+						private _display = ctrlParent _control;
+						private _sounds = _display getVariable 'sounds';
+						private _tvSelectionPath = tvCurSel _sounds;
+						private _sndpath = _sounds tvData _tvSelectionPath;	
+						_sndpath = call compile _sndpath;
+						if (_sndpath isEqualType []) then {
+							_sndpath = (_sndpath # 3) # 0;
+						};
+						private _soundName = _sounds tvText _tvSelectionPath;
+						private _isSpeech = cbChecked (_display getVariable 'cbSpeech');
+						private _is3D = cbChecked (_display getVariable 'cb3D');
+						private _offset = parseNumber (ctrlText (_display getVariable 'offset'));
+						private _pitch = parseNumber (ctrlText (_display getVariable 'pitch'));
+						if (_is3D) then {
+							private _source = if (isnull findDisplay 312) then {vehicle player} else {vehicle curatorCamera};
+							if ( ('.wav' in _sndpath) or ('.wss' in _sndpath) or ('.ogg' in _sndpath) ) then {
+								'is good'
+							} else {
+								_sndpath = _sndpath + '.wss';
+							};
+							'systemChat str _sndpath;';
+							playSound3D [_sndpath, _source, false, getposasl _source, 1, _pitch, 0, _offset, false];
+						} else {
+							[[_soundName, _isSpeech, _offset],
+							{
+								params ['_soundName', '_isSpeech', '_offset'];
+								private _sound = playSound [_soundName, _isSpeech, _offset];
+								private _playedSounds = missionNameSpace getVariable ['JAM_zeus_playedSounds', []];
+								_playedSounds pushBack _sound;
+								missionNameSpace setVariable ['JAM_zeus_playedSounds', _playedSounds];
+							}] remoteExec ['spawn'];
+						};
+					}];
+					_play ctrlSetFade _initialFade;
+					_play ctrlCommit 0;
+					_script = _display ctrlCreate ['RscEdit', -1];
+					_script ctrlSetFont 'RobotoCondensed';
+					_script ctrlSetFontHeight ((0.72 * (safeZoneH * 0.5)) / 10 / 2);
+					_script ctrlSetBackgroundColor [0,0,0,0.9];
+					_script ctrlSetPosition [0.386562 * safezoneW + safezoneX,0.731 * safezoneH + safezoneY,0.154687 * safezoneW,0.022 * safezoneH];
+					_script ctrlSetText "...";
+					_script ctrlSetFade _initialFade;
+					_script ctrlCommit 0;
+					_display setVariable ['script', _script];
+					_script2 = _display ctrlCreate ['RscEdit', -1];
+					_script2 ctrlSetFont 'RobotoCondensed';
+					_script2 ctrlSetFontHeight ((0.72 * (safeZoneH * 0.5)) / 10 / 2);
+					_script2 ctrlSetBackgroundColor [0,0,0,0.9];
+					_script2 ctrlSetPosition [0.386562 * safezoneW + safezoneX,0.764 * safezoneH + safezoneY,0.154687 * safezoneW,0.022 * safezoneH];
+					_script2 ctrlSetText "...";
+					_script2 ctrlSetFade _initialFade;
+					_script2 ctrlCommit 0;
+					progressLoadingScreen 0.8;
+					_display setVariable ['script2', _script2];
+					_background = _display ctrlCreate ['RscText', -1];
+					_background ctrlSetBackgroundColor [0,0,0,0.7];
+					_background ctrlSetPosition [0.386562 * safezoneW + safezoneX,0.61 * safezoneH + safezoneY,0.154687 * safezoneW,0.11 * safezoneH];
+					_background ctrlSetFade _initialFade;
+					_background ctrlCommit 0;
+					_background = _display ctrlCreate ['RscFrame', -1];
+					_background ctrlSetPosition [0.386562 * safezoneW + safezoneX,0.61 * safezoneH + safezoneY,0.154687 * safezoneW,0.11 * safezoneH];
+					_background ctrlSetFade _initialFade;
+					_background ctrlCommit 0;
+					_background = _display ctrlCreate ['RscStructuredText', -1];
+					_background ctrlSetBackgroundColor [0,0,0,0];
+					_background ctrlSetPosition [0.386563 * safezoneW + safezoneX,0.61 * safezoneH + safezoneY,0.154687 * safezoneW,0.022 * safezoneH];
+					_background ctrlSetStructuredText parseText format ["<t size='%1' align='left'>Class:<t/>", str (1 * (safezoneh * 0.5))];
+					_background ctrlSetToolTip 'Classname of the sound if pulled from CfgSounds.';
+					_background ctrlSetFade _initialFade;
+					_background ctrlCommit 0;
+					_background = _display ctrlCreate ['RscStructuredText', -1];
+					_background ctrlSetBackgroundColor [0,0,0,0];
+					_background ctrlSetPosition [0.386562 * safezoneW + safezoneX,0.632 * safezoneH + safezoneY,0.154687 * safezoneW,0.022 * safezoneH];
+					_background ctrlSetStructuredText parseText format ["<t size='%1' align='left'>Name:<t/>", str (1 * (safezoneh * 0.5))];
+					_background ctrlSetToolTip 'Name of sound, if defined in CfgSounds subclass,\nor file name, if pulled from addons.';
+					_background ctrlSetFade _initialFade;
+					_background ctrlCommit 0;
+					_background = _display ctrlCreate ['RscStructuredText', -1];
+					_background ctrlSetBackgroundColor [0,0,0,0];
+					_background ctrlSetPosition [0.386562 * safezoneW + safezoneX,0.654 * safezoneH + safezoneY,0.154687 * safezoneW,0.022 * safezoneH];
+					_background ctrlSetStructuredText parseText format ["<t size='%1' align='left'>Duration:<t/>", str (1 * (safezoneh * 0.5))];
+					_background ctrlSetToolTip 'Length of sound, if defined in CfgSounds subclass.';
+					_background ctrlSetFade _initialFade;
+					_background ctrlCommit 0;
+					_background = _display ctrlCreate ['RscStructuredText', -1];
+					_background ctrlSetBackgroundColor [0,0,0,0];
+					_background ctrlSetPosition [0.386562 * safezoneW + safezoneX,0.676 * safezoneH + safezoneY,0.154687 * safezoneW,0.022 * safezoneH];
+					_background ctrlSetStructuredText parseText format ["<t size='%1' align='left'>Sound:<t/>", str (1 * (safezoneh * 0.5))];
+					_background ctrlSetToolTip 'File path of sound, and other info if defined in CfgSounds subclass.';
+					_background ctrlSetFade _initialFade;
+					_background ctrlCommit 0;
+					_background = _display ctrlCreate ['RscStructuredText', -1];
+					_background ctrlSetBackgroundColor [0,0,0,0];
+					_background ctrlSetPosition [0.386562 * safezoneW + safezoneX,0.698 * safezoneH + safezoneY,0.154687 * safezoneW,0.022 * safezoneH];
+					_background ctrlSetStructuredText parseText format ["<t size='%1' align='left'>Titles:<t/>", str (1 * (safezoneh * 0.5))];
+					_background ctrlSetToolTip 'Attribute defined in config.';
+					_background ctrlSetFade _initialFade;
+					_background ctrlCommit 0;
+					_class = _display ctrlCreate ['RscEdit', -1];
+					_class ctrlSetFont 'RobotoCondensed';
+					_class ctrlSetFontHeight ((0.72 * (safeZoneH * 0.5)) / 10 / 2);
+					_class ctrlSetPosition [0.427812 * safezoneW + safezoneX,0.61 * safezoneH + safezoneY,0.113437 * safezoneW,0.022 * safezoneH];
+					_class ctrlSetFade _initialFade;
+					_class ctrlCommit 0;
+					progressLoadingScreen 0.9;
+					_display setVariable ['class', _class];
+					_name = _display ctrlCreate ['RscEdit', -1];
+					_name ctrlSetFont 'RobotoCondensed';
+					_name ctrlSetFontHeight ((0.72 * (safeZoneH * 0.5)) / 10 / 2);
+					_name ctrlSetPosition [0.427813 * safezoneW + safezoneX,0.632 * safezoneH + safezoneY,0.113437 * safezoneW,0.022 * safezoneH];
+					_name ctrlSetFade _initialFade;
+					_name ctrlCommit 0;
+					_display setVariable ['name', _name];
+					_duration = _display ctrlCreate ['RscEdit', -1];
+					_duration ctrlSetFont 'RobotoCondensed';
+					_duration ctrlSetFontHeight ((0.72 * (safeZoneH * 0.5)) / 10 / 2);
+					_duration ctrlSetPosition [0.427813 * safezoneW + safezoneX,0.654 * safezoneH + safezoneY,0.113437 * safezoneW,0.022 * safezoneH];
+					_duration ctrlSetFade _initialFade;
+					_duration ctrlCommit 0;
+					_display setVariable ['duration', _duration];
+					_sound = _display ctrlCreate ['RscEdit', -1];
+					_sound ctrlSetFont 'RobotoCondensed';
+					_sound ctrlSetFontHeight ((0.72 * (safeZoneH * 0.5)) / 10 / 2);
+					_sound ctrlSetPosition [0.427813 * safezoneW + safezoneX,0.676 * safezoneH + safezoneY,0.113437 * safezoneW,0.022 * safezoneH];
+					_sound ctrlSetFade _initialFade;
+					_sound ctrlCommit 0;
+					_display setVariable ['sound', _sound];
+					_titles = _display ctrlCreate ['RscEdit', -1];
+					_titles ctrlSetFont 'RobotoCondensed';
+					_titles ctrlSetFontHeight ((0.72 * (safeZoneH * 0.5)) / 10 / 2);
+					_titles ctrlSetPosition [0.427813 * safezoneW + safezoneX,0.698 * safezoneH + safezoneY,0.113437 * safezoneW,0.022 * safezoneH];
+					_titles ctrlSetFade _initialFade;
+					_titles ctrlCommit 0;
+					_display setVariable ['titles', _titles];
+					_treeCtrl_f = _display ctrlCreate ['RscFrame', -1];
+					_treeCtrl_f ctrlSetText 'File Browser';
+					_treeCtrl_f ctrlSetFont 'EtelkaMonospaceProBold';
+					_treeCtrl_f ctrlSetFontHeight ((0.44 * (safeZoneH * 0.5)) / 10 / 2);
+					_treeCtrl_f ctrlSetTextColor [1,1,1,0.8];
+					_adjmnt = 0.008;
+					_treeCtrl_f ctrlSetPosition [0.386562 * safezoneW + safezoneX,(0.258 - _adjmnt) * safezoneH + safezoneY,0.226875 * safezoneW,(0.341 + _adjmnt) * safezoneH];
+					_treeCtrl_f ctrlSetFade _initialFade;
+					_treeCtrl_f ctrlEnable false;
+					_treeCtrl_f ctrlCommit 0;
+					progressLoadingScreen 1;
+					_treeCtrl = _display ctrlCreate ["RscTree", -1];
+					_display setVariable ['sounds', _treeCtrl];
+					_treeCtrl setVariable ['ctrlSearch', _treeSearchCtrl];
+					_treeSearchCtrl setVariable ['ctrlTree', _treeCtrl];
+					_treeFavoritesFilterButtonCtrl setVariable ['ctrlTree', _treeCtrl];
+					_treeSearchButtonCtrl setVariable ['ctrlTree', _treeCtrl];
+					_treeCtrl ctrlSetFont 'RobotoCondensed';
+					_treeCtrl ctrlSetFontHeight ((0.77 * (safeZoneH * 0.5)) / 10 / 2);
+					_treeCtrl ctrlSetPosition [0.386562 * safezoneW + safezoneX,0.258 * safezoneH + safezoneY,0.226875 * safezoneW,0.341 * safezoneH];
+					_treeCtrl ctrlCommit 0;
+					_treeCtrl ctrlSetFade 0.69;
+					_treeCtrl ctrlCommit 0;
+					_treeCtrl ctrlEnable true;
+					endLoadingScreen;
+					private _yes = [format ["<t align='center' font='PuristaMedium' size='1.4'>Skip initial loading?<br/><br/><t size='0.77'>Sound browser will be empty;<br/>ready for search query<br/><br/>"], "Sound Board", 'Yes', 'No', _display, false, true] call BIS_fnc_guiMessage;
+					if _yes then {
+					} else {
+						[_treeCtrl, '', true] call m9sd_fnc_populateSoundboardWithSearch;
+					};
+					_treeCtrl ctrladdEventHandler ["TreeSelChanged", 
+					{
+						params ["_control", "_selectionPath"];
+						with uiNamespace do 
+						{
+							_display = ctrlParent _control;
+							profileNamespace setVariable ['JAM_zeus_selectedSoundPath', _selectionPath];
+							profileNamespace setVariable ['JAM_zeus_selectedSoundDisplayName', _control tvText _selectionPath];
+							private _data = call (compile (_control tvData _selectionPath));
+							private _class = 'N/A';
+							private _name = 'N/A';
+							private _duration = 'N/A';
+							private _sound = 'N/A';
+							private _titles = 'N/A';
+							_sound2 = '';
+							if (_data isEqualType []) then {
+								_class = (_data # 0);
+								_name = (_data # 1);
+								_duration = (_data # 2);
+								_sound = str (_data # 3);
+								_sound2 = (_data # 3) # 0;
+								_titles = str (_data # 4);
+							} else {
+								_sndPathSplit = (_data splitstring '\');
+								_name = _sndPathSplit select (count _sndPathSplit - 1);
+								_sound2 = _data;
+							};
+							private _classCtrl = _display getVariable 'class';
+							private _nameCtrl = _display getVariable 'name';
+							private _durationCtrl = _display getVariable 'duration';
+							private _soundCtrl = _display getVariable 'sound';
+							private _titlesCtrl = _display getVariable 'titles';
+							_classCtrl ctrlSetText _class;
+							_nameCtrl ctrlSetText _name;
+							_durationCtrl ctrlSetText _duration;
+							_soundCtrl ctrlSetText _sound;
+							_titlesCtrl ctrlSetText _titles;
+							_classCtrl ctrlSetTooltip _class;
+							_nameCtrl ctrlSetTooltip _name;
+							_durationCtrl ctrlSetTooltip _duration;
+							_soundCtrl ctrlSetTooltip _sound;
+							_titlesCtrl ctrlSetTooltip _titles;
+							_classCtrl ctrlCommit 0;
+							_nameCtrl ctrlCommit 0;
+							_durationCtrl ctrlCommit 0;
+							_soundCtrl ctrlCommit 0;
+							_titlesCtrl ctrlCommit 0;
+							private _speechCtrl = _display getVariable 'cbSpeech';
+							private _play3Dctrl = _display getVariable 'cb3D';
+							private _offsetCtrl = _display getVariable 'offset';
+							private _pitchCtrl = _display getVariable 'pitch';
+							private _scriptCtrl = _display getVariable 'script';
+							private _script2Ctrl = _display getVariable 'script2';
+							private _offset = parseNumber (ctrlText _offsetCtrl);
+							private _scriptTxt = format ["playSound '%1';", _class];
+							if ( ('.wav' in _sound2) or ('.wss' in _sound2) or ('.ogg' in _sound2) ) then {
+								'is good'
+							} else {
+								_sound2 = _sound2 + '.wss';
+							};
+							private _scriptTxt2 = format ["playSound3D ['%1', player, false, getposasl player, 2, 1, 0, 0, false];", _sound2];
+							if (cbChecked _speechCtrl) then 
+							{
+								_scriptTxt = format ["playSound ['%1', true, 0];", _class];
+							} else 
+							{
+								_scriptTxt = format ["playSound ['%1', false, 0];", _class];
+							};
+							_scriptCtrl ctrlSetText _scriptTxt;
+							_scriptCtrl ctrlSetTooltip _scriptTxt;
+							_scriptCtrl ctrlCommit 0;
+							_script2Ctrl ctrlSetText _scriptTxt2;
+							_script2Ctrl ctrlSetTooltip _scriptTxt2;
+							_script2Ctrl ctrlCommit 0;
+						};
+					}];
+					_treeCtrl ctrladdEventHandler ["TreeDblClick", 
+					{
+						params ["_control", "_selectionPath"];
+						profileNamespace setVariable ['JAM_zeus_selectedSoundPath', _selectionPath];
 						_display = ctrlParent _control;
-						profileNamespace setVariable ['JAM_zeus_selectedSound', _selectedIndex];
-						private _data = call (compile (_control lbData _selectedIndex));
-						private _class = (_data # 0);
-						private _name = (_data # 1);
-						private _duration = (_data # 2);
-						private _sound = str (_data # 3);
-						private _titles = str (_data # 4);
-						private _classCtrl = _display getVariable 'class';
-						private _nameCtrl = _display getVariable 'name';
-						private _durationCtrl = _display getVariable 'duration';
-						private _soundCtrl = _display getVariable 'sound';
-						private _titlesCtrl = _display getVariable 'titles';
-						if (_class == '') then 
+						_favorites = profilenamespace getvariable ['JAM_zeus_favoriteSounds', []];
+						_sound = _control tvText _selectionPath;
+						_index = _favorites find _sound;
+						if (_index != -1) then 
 						{
-							_class = 'N/A';
-						};
-						if (_name == '') then 
-						{
-							_name = 'N/A';
-						};
-						if (_duration == '') then 
-						{
-							_duration = 'N/A';
-						};
-						if (_sound == '[]') then 
-						{
-							_sound = 'N/A';
-						};
-						if (_titles == '[]') then 
-						{
-							_titles = 'N/A';
-						};
-						_classCtrl ctrlSetText _class;
-						_nameCtrl ctrlSetText _name;
-						_durationCtrl ctrlSetText _duration;
-						_soundCtrl ctrlSetText _sound;
-						_titlesCtrl ctrlSetText _titles;
-						_classCtrl ctrlSetTooltip _class;
-						_nameCtrl ctrlSetTooltip _name;
-						_durationCtrl ctrlSetTooltip _duration;
-						_soundCtrl ctrlSetTooltip _sound;
-						_titlesCtrl ctrlSetTooltip _titles;
-						_classCtrl ctrlCommit 0;
-						_nameCtrl ctrlCommit 0;
-						_durationCtrl ctrlCommit 0;
-						_soundCtrl ctrlCommit 0;
-						_titlesCtrl ctrlCommit 0;
-						private _speechCtrl = _display getVariable 'cbSpeech';
-						private _offsetCtrl = _display getVariable 'offset';
-						private _scriptCtrl = _display getVariable 'script';
-						private _offset = parseNumber (ctrlText _offsetCtrl);
-						private _scriptTxt = format ["playSound '%1';", _class];
-						if (cbChecked _speechCtrl) then 
-						{
-							_scriptTxt = format ["playSound ['%1', true, 0];", _class];
+							_favorites deleteAt _index;
+							_control tvSetColor [_selectionPath, JAM_zeus_uiColor];
+							_control tvSetPictureColor [_selectionPath, JAM_zeus_uiColor];
+							_control tvSetPictureRight [_selectionPath, 'a3\ui_f_curator\data\CfgCurator\waypoint_ca.paa'];
+							_control tvSetPictureRightColor [_selectionPath, [1,1,1,0]];
+							profilenamespace setvariable ['JAM_zeus_favoriteSounds', _favorites];
+							playSound 'click';
+							playSound ['addItemOk', true];
+							_control ctrlCommit 0;
 						} else 
 						{
-							_scriptTxt = format ["playSound ['%1', false, 0];", _class];
+							_favorites pushBackUnique _sound;
+							_control tvSetColor [_selectionPath, [1,1,1,1]];
+							_control tvSetPictureColor [_selectionPath, [1,1,1,1]];
+							_control tvSetPictureRight [_selectionPath, 'a3\ui_f_curator\data\displays\rscDisplayCurator\modeRecent_ca.paa'];
+							_control tvSetPictureRightColor [_selectionPath, [1,1,1,1]];
+							profilenamespace setvariable ['JAM_zeus_favoriteSounds', _favorites];
+							playSound 'addItemOk';
+							playSound ['click', true];
+							_control ctrlCommit 0;
 						};
-						_scriptCtrl ctrlSetText _scriptTxt;
-						_scriptCtrl ctrlSetTooltip _scriptTxt;
-						_scriptCtrl ctrlCommit 0;
-					};
-				}];
-				_sounds ctrladdEventHandler ["LBDblClick", 
-				{
-					params ["_control", "_selectedIndex"];
-					profileNamespace setVariable ['JAM_zeus_selectedSound', _selectedIndex];
-					_display = ctrlParent _control;
-					_favorites = profilenamespace getvariable ['JAM_zeus_favoriteSounds', []];
-					_sound = _control lbText _selectedIndex;
-					_index = _favorites find _sound;
-					if (_index != -1) then 
+					}];
+					_treeCtrl ctrlSetFade _initialFade;
+					_treeCtrl ctrlCommit 0;
+					_play ctrlEnable true;
+					_preview ctrlEnable true;
+					_treeFavoritesFilterButtonCtrl ctrlEnable true;
+					_treeSearchButtonCtrl ctrlEnable true;
+					missionNamespace setVariable ['m9_sndbrdprog', 100];
+					private _goob = _display getVariable ['prog', objnull];
+					if (!isnull _goob) then {ctrlDelete _goob};
+					if (false) then {'m9soundboardloadingscreen' cutText ["", "BLACK IN"];};
 					{
-						_favorites deleteAt _index;
-						_control lbSetColor [_selectedIndex, JAM_zeus_uiColor];
-						_control lbSetPictureColor [_selectedIndex, JAM_zeus_uiColor];
-						_control lbSetPictureRight [_selectedIndex, 'a3\ui_f_curator\data\CfgCurator\waypoint_ca.paa'];
-						_control lbSetPictureRightColor [_selectedIndex, [1,1,1,0]];
-						profilenamespace setvariable ['JAM_zeus_favoriteSounds', _favorites];
-						playSound 'click';
-						playSound ['addItemOk', true];
-						_control ctrlCommit 0;
-					} else 
-					{
-						_favorites pushBackUnique _sound;
-						_control lbSetColor [_selectedIndex, [1,1,1,1]];
-						_control lbSetPictureColor [_selectedIndex, [1,1,1,1]];
-						_control lbSetPictureRight [_selectedIndex, 'a3\ui_f_curator\data\displays\rscDisplayCurator\modeRecent_ca.paa'];
-						_control lbSetPictureRightColor [_selectedIndex, [1,1,1,1]];
-						profilenamespace setvariable ['JAM_zeus_favoriteSounds', _favorites];
-						playSound 'addItemOk';
-						playSound ['click', true];
-						_control ctrlCommit 0;
-					};
-				}];
-				_sounds ctrlSetFade 1;
-				_sounds ctrlCommit 0;
-				_sounds ctrlSetFade 0;
-				_sounds ctrlCommit 1;
-				_display setVariable ['sounds', _sounds];
-				
-				_display displayaddEventHandler ['unload', 
-				{
-					params ["_display", "_exitCode"];
-					saveProfileNamespace;
-				}];
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_background = _display ctrlCreate ['RscFrame', -1];
-				_background ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.61 * safezoneH + safezoneY,0.0309375 * safezoneW,0.044 * safezoneH];
-				_background ctrlSetFade 1;
-				_background ctrlCommit 0;
-				_background ctrlSetFade 0;
-				_background ctrlCommit 1;
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_preview = _display ctrlCreate ['RscButtonMenu',-1];
-				_preview ctrlSetPosition [0.546406 * safezoneW + safezoneX,0.61 * safezoneH + safezoneY,0.0309375 * safezoneW,0.044 * safezoneH];
-				_preview ctrlSetTooltip 'Preview the selected sound.\nThe audio will only play on your computer.';
-				_preview ctrlSetBackgroundColor [0,0,0.6,0.2];
-				_preview ctrlSetStructuredText parseText ("<t valign='middle' align='center' color='#ffffff' font='PuristaLight' shadow='2' size='" + (str ((safeZoneH * 0.5) * 2)) + "'><img image='\a3\3den\data\displays\display3den\entitymenu\playFromHere_ca.paa'></img></t>");
-				_preview ctrladdEventHandler ["ButtonClick", 
-				{
-					params ["_control"];
-					private _display = ctrlParent _control;
-					private _sounds = _display getVariable 'sounds';
-					private _soundName = _sounds lbText (lbCurSel _sounds);
-					private _isSpeech = cbChecked (_display getVariable 'cbSpeech');
-					private _offset = parseNumber (ctrlText (_display getVariable 'offset'));
-					private _sound = playSound [_soundName, _isSpeech, _offset];
-					private _playedSounds = missionNameSpace getVariable ['JAM_zeus_playedSounds', []];
-					_playedSounds pushBack _sound;
-					missionNameSpace setVariable ['JAM_zeus_playedSounds', _playedSounds];
-				}];
-				_preview ctrlSetFade 1;
-				_preview ctrlCommit 0;
-				_preview ctrlSetFade 0;
-				_preview ctrlCommit 1;
-				_background = _display ctrlCreate ['RscFrame', -1];
-				_background ctrlSetPosition [0.5825 * safezoneW + safezoneX,0.61 * safezoneH + safezoneY,0.0309375 * safezoneW,0.044 * safezoneH];
-				_background ctrlSetFade 1;
-				_background ctrlCommit 0;
-				_background ctrlSetFade 0;
-				_background ctrlCommit 1;
-				_play = _display ctrlCreate ['RscButtonMenu',-1];
-				_play ctrlSetPosition [0.5825 * safezoneW + safezoneX,0.61 * safezoneH + safezoneY,0.0309375 * safezoneW,0.044 * safezoneH];
-				_play ctrlSetTooltip 'Play the selected sound.\nThe audio will play on everyone’s computer.';
-				_play ctrlSetBackgroundColor [0,0.6,0,0.2];
-				_play ctrlSetStructuredText parseText ("<t valign='middle' align='center' color='#FFFFFF' font='PuristaLight' shadow='2' size='" + (str ((safeZoneH * 0.5) * 2)) + "'><img image='\a3\3den\data\displays\display3den\entitymenu\playFromHere_ca.paa'></img></t>");
-				_play ctrladdEventHandler ["ButtonClick", 
-				{
-					params ["_control"];
-					private _display = ctrlParent _control;
-					private _sounds = _display getVariable 'sounds';
-					private _soundName = _sounds lbText (lbCurSel _sounds);
-					private _isSpeech = cbChecked (_display getVariable 'cbSpeech');
-					private _offset = parseNumber (ctrlText (_display getVariable 'offset'));
-					[[_soundName, _isSpeech, _offset],
-					{
-						params ['_soundName', '_isSpeech', '_offset'];
-						private _sound = playSound [_soundName, _isSpeech, _offset];
-						private _playedSounds = missionNameSpace getVariable ['JAM_zeus_playedSounds', []];
-						_playedSounds pushBack _sound;
-						missionNameSpace setVariable ['JAM_zeus_playedSounds', _playedSounds];
-					}] remoteExec ['spawn'];
-				}];
-				_play ctrlSetFade 1;
-				_play ctrlCommit 0;
-				_play ctrlSetFade 0;
-				_play ctrlCommit 1;
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_script = _display ctrlCreate ['RscEdit', -1];
-				_script ctrlSetBackgroundColor [0,0,0,0.9];
-				_script ctrlSetPosition [0.386562 * safezoneW + safezoneX,0.731 * safezoneH + safezoneY,0.154687 * safezoneW,0.022 * safezoneH];
-				_script ctrlSetText "playSound '';";
-				_script ctrlSetFade 1;
-				_script ctrlCommit 0;
-				_script ctrlSetFade 0;
-				_script ctrlCommit 1;
-				_display setVariable ['script', _script];
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_background = _display ctrlCreate ['RscText', -1];
-				_background ctrlSetBackgroundColor [0,0,0,0.7];
-				_background ctrlSetPosition [0.386562 * safezoneW + safezoneX,0.61 * safezoneH + safezoneY,0.154687 * safezoneW,0.11 * safezoneH];
-				_background ctrlSetFade 1;
-				_background ctrlCommit 0;
-				_background ctrlSetFade 0;
-				_background ctrlCommit 1;
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_background = _display ctrlCreate ['RscFrame', -1];
-				_background ctrlSetPosition [0.386562 * safezoneW + safezoneX,0.61 * safezoneH + safezoneY,0.154687 * safezoneW,0.11 * safezoneH];
-				_background ctrlSetFade 1;
-				_background ctrlCommit 0;
-				_background ctrlSetFade 0;
-				_background ctrlCommit 1;
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_background = _display ctrlCreate ['RscStructuredText', -1];
-				_background ctrlSetBackgroundColor [0,0,0,0];
-				_background ctrlSetPosition [0.386563 * safezoneW + safezoneX,0.61 * safezoneH + safezoneY,0.154687 * safezoneW,0.022 * safezoneH];
-				_background ctrlSetStructuredText parseText format ["<t size='%1' align='left'>Class:<t/>", str (1 * (safezoneh * 0.5))];
-				_background ctrlSetFade 1;
-				_background ctrlCommit 0;
-				_background ctrlSetFade 0;
-				_background ctrlCommit 1;
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_background = _display ctrlCreate ['RscStructuredText', -1];
-				_background ctrlSetBackgroundColor [0,0,0,0];
-				_background ctrlSetPosition [0.386562 * safezoneW + safezoneX,0.632 * safezoneH + safezoneY,0.154687 * safezoneW,0.022 * safezoneH];
-				_background ctrlSetStructuredText parseText format ["<t size='%1' align='left'>Name:<t/>", str (1 * (safezoneh * 0.5))];
-				_background ctrlSetFade 1;
-				_background ctrlCommit 0;
-				_background ctrlSetFade 0;
-				_background ctrlCommit 1;
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_background = _display ctrlCreate ['RscStructuredText', -1];
-				_background ctrlSetBackgroundColor [0,0,0,0];
-				_background ctrlSetPosition [0.386562 * safezoneW + safezoneX,0.654 * safezoneH + safezoneY,0.154687 * safezoneW,0.022 * safezoneH];
-				_background ctrlSetStructuredText parseText format ["<t size='%1' align='left'>Duration:<t/>", str (1 * (safezoneh * 0.5))];
-				_background ctrlSetFade 1;
-				_background ctrlCommit 0;
-				_background ctrlSetFade 0;
-				_background ctrlCommit 1;
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_background = _display ctrlCreate ['RscStructuredText', -1];
-				_background ctrlSetBackgroundColor [0,0,0,0];
-				_background ctrlSetPosition [0.386562 * safezoneW + safezoneX,0.676 * safezoneH + safezoneY,0.154687 * safezoneW,0.022 * safezoneH];
-				_background ctrlSetStructuredText parseText format ["<t size='%1' align='left'>Sound:<t/>", str (1 * (safezoneh * 0.5))];
-				_background ctrlSetFade 1;
-				_background ctrlCommit 0;
-				_background ctrlSetFade 0;
-				_background ctrlCommit 1;
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_background = _display ctrlCreate ['RscStructuredText', -1];
-				_background ctrlSetBackgroundColor [0,0,0,0];
-				_background ctrlSetPosition [0.386562 * safezoneW + safezoneX,0.698 * safezoneH + safezoneY,0.154687 * safezoneW,0.022 * safezoneH];
-				_background ctrlSetStructuredText parseText format ["<t size='%1' align='left'>Titles:<t/>", str (1 * (safezoneh * 0.5))];
-				_background ctrlSetFade 1;
-				_background ctrlCommit 0;
-				_background ctrlSetFade 0;
-				_background ctrlCommit 1;
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_class = _display ctrlCreate ['RscEdit', -1];
-				_class ctrlSetPosition [0.427812 * safezoneW + safezoneX,0.61 * safezoneH + safezoneY,0.113437 * safezoneW,0.022 * safezoneH];
-				_class ctrlSetFade 1;
-				_class ctrlCommit 0;
-				_class ctrlSetFade 0;
-				_class ctrlCommit 1;
-				_display setVariable ['class', _class];
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_name = _display ctrlCreate ['RscEdit', -1];
-				_name ctrlSetPosition [0.427813 * safezoneW + safezoneX,0.632 * safezoneH + safezoneY,0.113437 * safezoneW,0.022 * safezoneH];
-				_name ctrlSetFade 1;
-				_name ctrlCommit 0;
-				_name ctrlSetFade 0;
-				_name ctrlCommit 1;
-				_display setVariable ['name', _name];
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_duration = _display ctrlCreate ['RscEdit', -1];
-				_duration ctrlSetPosition [0.427813 * safezoneW + safezoneX,0.654 * safezoneH + safezoneY,0.113437 * safezoneW,0.022 * safezoneH];
-				_duration ctrlSetFade 1;
-				_duration ctrlCommit 0;
-				_duration ctrlSetFade 0;
-				_duration ctrlCommit 1;
-				_display setVariable ['duration', _duration];
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_sound = _display ctrlCreate ['RscEdit', -1];
-				_sound ctrlSetPosition [0.427813 * safezoneW + safezoneX,0.676 * safezoneH + safezoneY,0.113437 * safezoneW,0.022 * safezoneH];
-				_sound ctrlSetFade 1;
-				_sound ctrlCommit 0;
-				_sound ctrlSetFade 0;
-				_sound ctrlCommit 1;
-				_display setVariable ['sound', _sound];
-				
-				_progress = _progress + 3.33;
-				progressLoadingScreen _progress;
-				
-				_titles = _display ctrlCreate ['RscEdit', -1];
-				_titles ctrlSetPosition [0.427813 * safezoneW + safezoneX,0.698 * safezoneH + safezoneY,0.113437 * safezoneW,0.022 * safezoneH];
-				_titles ctrlSetFade 1;
-				_titles ctrlCommit 0;
-				_titles ctrlSetFade 0;
-				_titles ctrlCommit 1;
-				_display setVariable ['titles', _titles];
-				_sounds lbSetCurSel (profileNamespace getVariable ['JAM_zeus_selectedSound', 0]);
-				endLoadingScreen;
+						_x ctrlSetFade 0;
+						_x ctrlCommit 3;
+					} forEach allControls _display;
+					playSound 'click';
+					playSound ['border_Out', true];
+					_treeCtrl ctrlEnable true;
+				};
 			};
-		
 		};
 
 	comment "Special Effects";
@@ -14074,6 +14693,42 @@ MAZ_EZM_fnc_initFunction = {
 			_entity setDamage 0;
 
 			["Vehicle repaired.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+		};
+
+		HYPER_EZM_fnc_setPlateNumber = {
+			params ["_entity"];
+			if (!(_entity isKindOf "Car_F")) exitWith {
+				["This is not a vehicle!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;
+			};
+			[
+				"Set License Plate Number",
+				[ 
+					[
+						"EDIT",
+						["Plate Number", "The maximum length of a plate number is 12 characters"],
+						[ 
+							getPlateNumber _entity, 
+							1 
+						]
+					]
+				], 
+				{
+					params ["_values", "_args", "_display"];
+					private _entity = _args;
+					private _inputText = _values select 0;
+					if (count _inputText > 12) then {
+						_inputText = _inputText select [0, 12];
+					};
+					[_entity,_inputText] remoteExec ["setPlateNumber"];
+					["License Plate Number set.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+					_display closeDisplay 1; 
+				}, 
+				{ 
+					_display closeDisplay 2; 
+				}, 
+				_entity
+			] call MAZ_EZM_fnc_createDialog;
+
 		};
 
 	comment "Zeus";
@@ -15582,7 +16237,6 @@ MAZ_EZM_fnc_initFunction = {
 [] call MAZ_EZM_fnc_initFunction;
 
 MAZ_EZM_fnc_editZeusInterface = {
-	comment " 👽 ";
 	if (isNull (findDisplay 312)) exitWith {};
 	showChat true;
 	private _fnc_editInterface = {
@@ -16802,6 +17456,15 @@ MAZ_EZM_fnc_editZeusInterface = {
 					"a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
+				[
+					MAZ_zeusModulesTree,
+					MAZ_GameplayTree,
+					"Create AAN News Article",
+					"Creates a laptop which shows an AAN News Article when interacted on.\nCreated by: Bijx",
+					"HYPER_EZM_fnc_createAANIntel",
+					"a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa"
+				] call MAZ_EZM_fnc_zeusAddModule;
+
 			comment "Markers";
 
 				[] call MAZ_EZM_fnc_drawEventhandlerAreaMarkers;
@@ -16914,6 +17577,15 @@ MAZ_EZM_fnc_editZeusInterface = {
 					"Replaces the object it's placed on with a simple object to improve performance.",
 					"MAZ_EZM_fnc_replaceWithSimpleObject",
 					"a3\3den\data\cfgwaypoints\scripted_ca.paa"
+				] call MAZ_EZM_fnc_zeusAddModule;
+				
+				[
+					MAZ_zeusModulesTree,
+					MAZ_ObjectModTree,
+					"Set Color to Black",
+					"Changes textures of an object / unit to black if possible.",
+					"HYPER_EZM_fnc_setColorBlack",
+					"a3\ui_f\data\gui\rsc\rscdisplaygarage\texturesources_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
 
 				[
@@ -17124,9 +17796,9 @@ MAZ_EZM_fnc_editZeusInterface = {
 				[
 					MAZ_zeusModulesTree,
 					MAZ_SoundsTree,
-					'Sound Board',
+					'Sound Board 2.0',
 					'Open the Sound Board GUI and play any sound from the game files.\nYou can preview sounds to play them only on your client,\nor you can play them on all clients.',
-					'M9sd_fnc_moduleSoundBoard',
+					'M9sd_fnc_moduleSoundBoard2',
 					'a3\modules_f_curator\data\portraitSound_ca.paa'
 				] call MAZ_EZM_fnc_zeusAddModule;
 			
@@ -17334,6 +18006,15 @@ MAZ_EZM_fnc_editZeusInterface = {
 					"MAZ_EZM_fnc_repairVehicleModule",
 					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\repair_ca.paa'
 				] call MAZ_EZM_fnc_zeusAddModule;
+				
+				[
+					MAZ_zeusModulesTree,
+					MAZ_VehicleModTree,
+					"Set Plate Number",
+					"Set the license plate number of a car.",
+					"HYPER_EZM_fnc_setPlateNumber",
+					"a3\ui_f\data\igui\cfg\simpletasks\types\car_ca.paa"
+				] call MAZ_EZM_fnc_zeusAddModule;
 
 			comment "Zeus";
 
@@ -17360,6 +18041,17 @@ MAZ_EZM_fnc_editZeusInterface = {
 					"MAZ_EZM_fnc_editZeusInterfaceColors",
 					"a3\modules_f_curator\data\iconpostprocess_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
+
+				if(typeOf player != "C_Man_French_universal_F") then {
+					[
+						MAZ_zeusModulesTree,
+						MAZ_ZeusTree,
+						"Create Zeus Unit",
+						"Change the Zeus interface colors and opacity.",
+						"MAZ_EZM_fnc_askAboutZeusUnit",
+						"a3\ui_f\data\map\vehicleicons\iconmancommander_ca.paa"
+					] call MAZ_EZM_fnc_zeusAddModule;
+				};
 
 			comment "Zeus Preview";
 				[] call MAZ_EZM_fnc_zeusPreviewImage;
@@ -18020,7 +18712,7 @@ MAZ_EZM_addZeusKeybinds_312 = {
 MAZ_EZM_fnc_switchGroupSetup = {
 	params ["_side"];
 	private _group = createGroup [_side,true];
-	private _groupName = "Stryker 1-4";
+	private _groupName = "Mount Olympus";
 	[player] join _group;
 	[_group, player] remoteExec ["selectLeader"];					
 	_group setGroupIdGlobal [_groupName];
@@ -18109,6 +18801,18 @@ MAZ_EZM_fnc_groupMenuTeamSwitcher = {
 MAZ_EZM_fnc_initMainLoop = {
 	MAZ_EZM_mainLoop_Active = true;
 	["Enhanced Zeus Modules Initialized!","beep_target"] call MAZ_EZM_fnc_systemMessage;
+
+	comment "Put Zeus in a locked squad called Mount Olympus to avoid hearing random ungrouped people in group chat.";
+	private _groupName = "Mount Olympus";
+	private _grp = group player;
+	_grp setGroupIdGlobal [_groupName];
+	private _leader = leader _grp;
+	private _data = ["Curator", _groupName, true]; comment " [<Insignia>, <Group Name>, <Private>] ";
+	["RegisterGroup", [_grp, _leader, _data]] remoteExecCall ['BIS_fnc_dynamicGroups'];
+	["AddGroupMember", [_grp,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
+	["SwitchLeader", [_grp,player]] remoteExecCall ['BIS_fnc_dynamicGroups'];
+	["SetPrivateState", [_grp,true]] remoteExecCall ['BIS_fnc_dynamicGroups'];	
+	["SetName", [_grp,_groupName]] remoteExecCall ['BIS_fnc_dynamicGroups'];
 	
 	while {MAZ_EZM_mainLoop_Active} do {
 		waitUntil {uiSleep 0.01; (!isNull (findDisplay 312))};
@@ -18177,11 +18881,17 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 };
 
 private _changelog = [
-	"Added Create Intel module to Gameplay",
-	"Changed original EZM functions to have less code repetition",
-	"Fixed the Remove Teamkillers module",
-	"Fixed attributes menu opening incorrectly with players in vehicles",
-	"Overhauled the Attributes Dialog system. Should run in half the time"
+	"Added Set Color to Black module to Object Modifiers",
+	"Added Set Plate Number module to Vehicle Modifiers",
+	"Added default Zeus group to prevent Zeus from hearing other people in group",
+	"Changed the Zeus unit type to a universal character that can equip any uniform",
+	"Changed Soundboard to V2.0",
+	"Changed the Soundboard module to the newest version from M9-SD",
+	"Changed EZM to close the pause menu if ran from the pause menu",
+	"Changed EZM plug to not run for Zeus",
+	"Fixed an issue where using the delete clutter module would do nothing",
+	"Fixed SIDES element not having spacing",
+	"Fixed 48+2 Side Switcher wasn't working"
 ];
 
 private _changelogString = "";
@@ -18189,80 +18899,123 @@ private _changelogString = "";
 	_changelogString = _changelogString + "- " + _x + (toString [13,10]);
 }forEach _changelog;
 
-["Create Zeus Unit?",[
-	[
-		"TOOLBOX:YESNO",
-		["Create Zeus Unit?","Whether to create a new controllable unit for your player."],
-		[true]
-	],
-	[
-		"TOOLBOX:YESNO",
-		["Join a Side Channel?","Whether you will be set as a certain side and be able to hear their side chat."],
-		[true],
-		{true},
-		{
-			params ["_display","_value"];
-			_display setVariable ["MAZ_EZM_showSides",_value];
-		}
-	],
-	[
-		"SIDES",
-		"Side to Join",
-		west,
-		{
-			params ["_display"];
-			_display getVariable ["MAZ_EZM_showSides",true];
-		}
-	],
-	[
-		"EDIT:MULTI",
-		"Change Log",
+MAZ_EZM_fnc_askAboutZeusUnit = {
+	["Create Zeus Unit?",[
 		[
-			_changelogString,
-			5
+			"TOOLBOX:YESNO",
+			["Create Zeus Unit?","Whether to create a new controllable unit for your player."],
+			[true]
+		],
+		[
+			"TOOLBOX:YESNO",
+			["Join a Side Channel?","Whether you will be set as a certain side and be able to hear their side chat."],
+			[true],
+			{true},
+			{
+				params ["_display","_value"];
+				_display setVariable ["MAZ_EZM_showSides",_value];
+			}
+		],
+		[
+			"SIDES",
+			"Side to Join",
+			west,
+			{
+				params ["_display"];
+				_display getVariable ["MAZ_EZM_showSides",true];
+			}
+		],
+		[
+			"EDIT:MULTI",
+			"Change Log",
+			[
+				_changelogString,
+				5
+			],
+			{
+				params ["_display","_controlGroup"];
+				private _textCtrl = _controlGroup controlsGroupCtrl 214;
+				((ctrlText _textCtrl) != "");
+			}
 		]
-	]
-],{
-	params ["_values","_args","_display"];
-	_values params ["_createZeusUnit","_joinSide","_sideToJoin"];
-	
-	if(_createZeusUnit) then {
-		[_joinSide,_sideToJoin] spawn MAZ_EZM_fnc_createUnitForZeus;
-	} else {
-		if(_joinSide) then {
-			[player] joinSilent (createGroup [_sideToJoin,true]);
+	],{
+		params ["_values","_args","_display"];
+		_values params ["_createZeusUnit","_joinSide","_sideToJoin"];
+		
+		if(_createZeusUnit) then {
+			[_joinSide,_sideToJoin] spawn MAZ_EZM_fnc_createZeusUnit;
+		} else {
+			if(_joinSide) then {
+				[player] joinSilent (createGroup [_sideToJoin,true]);
+			};
+			if (isNil "MAZ_EZM_mainLoop_Active") then {
+				[] spawn MAZ_EZM_fnc_initMainLoop;
+			};
 		};
-		if (isNil "MAZ_EZM_mainLoop_Active") then {
-			[] spawn MAZ_EZM_fnc_initMainLoop;
-		};
-	};
-	_display closeDisplay 1;
-},{
-	params ["_values","_args","_display"];
-	_display closeDisplay 2;
-},[],{
-	params ["_display"];
-	_display setVariable ["MAZ_EZM_showSides",true];
-}] call MAZ_EZM_fnc_createDialog;
+		_display closeDisplay 1;
+	},{
+		params ["_values","_args","_display"];
+		_display closeDisplay 2;
+	},[],{
+		params ["_display"];
+		_display setVariable ["MAZ_EZM_showSides",true];
+	}] call MAZ_EZM_fnc_createDialog;
+};
+
+call MAZ_EZM_fnc_askAboutZeusUnit;
+
+};
+
+comment "
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠿⠿⠿⠿⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠛⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠛⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠛⠉⠀⠀⠀⠀⠀⠀⠀⠀⠠⣤⣤⣤⣄⣀⠀⠀⠀⠀⠀⠀⠀⠉⠻⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣶⣄⠀⠀⠀⠀⠀⠀⠀⠉⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠁⠀⠀⠀⠀⠀⠀⠀⣠⣄⠀⠀⠀⠀⠀⠀⠈⢻⣿⣿⣿⣿⣿⣷⡄⠀⠀⠀⠀⠀⠀⠀⠈⠻⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⢰⣿⣿⣷⣤⡀⠀⠀⠀⠀⠀⠹⣿⣿⣿⣿⣿⣿⡆⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⡿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣶⣄⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⡛⠉⠀⠀⠀⠀⠀⠀⣈⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣿⣿⣿
+⣿⣿⣿⣿⣿⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣿⣿⣿⣿⣿⣿⣦⣄⠀⠀⠀⢾⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣾⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣿⣿⣿⣿⣿⣿⣿⣷⣤⡀⠀⠻⣿⣿⣿⣿⣿⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣷⣄⠀⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⣄⠙⣿⣿⣿⠏⠀⠀⠀⠀⠀⠀⠀⠀⣠⣾⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣄⡀⠀⠀⠀⠀⠀⠀⠈⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣬⠟⠁⠀⠀⠀⠀⠀⠀⢀⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⣄⠀⠀⠀⠀⠀⠀⠀⠉⠛⠛⠿⠿⠿⠛⠛⠉⠀⠀⠀⠀⠀⠀⠀⣠⣴⣿⣿⠉⢹⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣤⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣤⣶⣿⣿⣿⣿⣿⠀⢸⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣶⣦⣤⣤⣤⣤⣤⣴⣶⣶⣿⣿⣿⣿⣿⣿⣿⣿⣀⣀⣀⠀⢀⣀⣀⣸⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⢸⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣾⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⡟⢛⣛⣿⣿⣿⣿⠛⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢻⣿⣿⣛⡛⢛⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⡇⢨⣭⣿⢰⡆⢹⠀⣶⢸⡗⣒⠈⡇⢰⡆⢹⠠⣶⡏⢐⣂⢹⠠⡦⢸⣿⣿⠟⣠⣿⡇⣒⣀⡇⢸⠇⣿⣐⡒⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣷⣶⣶⣿⣾⣷⣾⣶⣿⣾⣷⣶⣶⣷⣾⣷⣾⣷⣶⣿⣶⣶⣾⣶⣾⣾⣿⣿⣶⣶⣶⣿⣶⣶⣿⣶⣶⣿⣶⣶⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡏⠙⣿⠋⢹⡿⠿⢿⣿⠿⠉⣿⢿⡿⢿⠉⣿⡿⠿⣿⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⢰⣀⡆⢸⡀⠷⢈⡇⠾⠀⣿⠸⠇⢸⠀⣏⠨⠥⢼⠬⠙⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣿⣿⣾⣿⣿⣷⣿⣿⣿⣿⣷⣶⣿⣷⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+";
 
 comment "
 	TODO Expung3d:
- - EZM Eventhandlers
- - Add Dead Soldier compositions to all factions 
- - NATO+ 
- - Better Looters 
- - Paradrop Reinforcements 
- - Airdrop selected object 
- - Disable/Enable Thermals 
- - More waypoints 
- - Composition wrecks do not attach objects correctly 
- - Other seasonal modules 
- - Add more building interiors (Malden)
- - Advanced Difficulty Settings
+		- EZM Eventhandlers
+		- Add Dead Soldier compositions to all factions 
+		- NATO+ 
+		- Better Looters 
+		- Paradrop Reinforcements 
+		- Airdrop selected object 
+		- Disable/Enable Thermals 
+		- More waypoints 
+		- Composition wrecks do not attach objects correctly 
+		- Other seasonal modules 
+		- Add more building interiors (Malden)
+		- Advanced Difficulty Settings
+		- Airstrike Helicopter
+		- Cinematics
+		- Play video module
+		- Fix IR Strobes not deleting https://forums.bohemia.net/forums/topic/160424-ir-strobe-deletevehicle-issues/
 
- - Airstrike Helicopter
- - Cinematics
- - Play video module
+	TODO M9-SD:
+		- skip time transition module
+		- wildfire module 
+		- buddha module 
 ";
-
-};
