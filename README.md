@@ -22,7 +22,7 @@
 </p>
 
 # Enhanced Zeus Modules
-**Enhanced Zeus Modules (EZM)** was originally created by GamesByChris and M9-SD as a private script for Public Zeus. After scripted compositions were added Expung3d took the base functionality from EZM and made it into a public composition. Since the public release of EZM, the script has grown substantially and is now the go-to solution for vanilla Zeus improvements.
+**Enhanced Zeus Modules (EZM)** was originally created by [GamesByChris](https://github.com/Chrisdw1002) and [M9-SD](https://github.com/M9-SD) as a private script for Public Zeus. After scripted compositions were added Expung3d took the base functionality from EZM and made it into a public composition. Since the public release of EZM, the script has grown substantially and is now the go-to solution for vanilla Zeus improvements.
 
 ## What It Does
 EZM adds a ton of new modules to Zeuses at the click of a button. Simply placing the composition as Zeus will add all of the modules to Zeus without the need for mods. In addition, everything is client side, no need to worry about lagging the server.
