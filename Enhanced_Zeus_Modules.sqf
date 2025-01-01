@@ -4178,7 +4178,7 @@ MAZ_EZM_fnc_createZeusUnit = {
 	if(!_joinSide) then {
 		_sideToJoin = sideLogic;
 	};
-	private _pos = getPos player;
+	private _pos = getPosWorld player;
 	private _zeusLogic = getAssignedCuratorLogic player;
 	if(isNull _zeusLogic) exitWith {};
 	private _zeusIndex = allCurators find _zeusLogic;
@@ -4758,13 +4758,13 @@ MAZ_EZM_fnc_initFunction = {
 					params ["_object"];
 					waitUntil {uiSleep 0.1; !alive _object};
 					waitUntil {
-						(count (allPlayers select { (getPos _x) distance _object < 1600 })) == 0 ||
+						(count (allPlayers select { (getPosATL _x) distance _object < 1600 })) == 0 ||
 						isNull _object
 					};
 					if(!isNull _object) then {
 						sleep 300;
 						"After 5 minutes check if players are still near, if they are, call function again, else delete.";
-						if(count (allPlayers select { (getPos _x) distance _object < 1600 }) != 0) exitWith {[_object] spawn _fnc_cleaner;};
+						if(count (allPlayers select { (getPosATL _x) distance _object < 1600 }) != 0) exitWith {[_object] spawn _fnc_cleaner;};
 						deleteVehicle _object;
 					};
 				};
@@ -5442,7 +5442,7 @@ MAZ_EZM_fnc_initFunction = {
 					deleteWaypoint [_group,_forEachIndex];
 				}forEach (waypoints _group);
 
-				private _nearestBuildings = nearestObjects [getPos _entity, ["building"], 50, true];
+				private _nearestBuildings = nearestObjects [getPosATL _entity, ["building"], 50, true];
 				_nearestBuildings = _nearestBuildings select {(count ([_x] call BIS_fnc_buildingPositions)) > 0};
 
 				if (_nearestBuildings isEqualTo []) exitWith { false };
@@ -5535,7 +5535,7 @@ MAZ_EZM_fnc_initFunction = {
 					deleteWaypoint [_group,_forEachIndex];
 				}forEach (waypoints _group);
 
-				private _nearestBuildings = nearestObjects [getPos _entity, ["building"], 50, true];
+				private _nearestBuildings = nearestObjects [getPosATL _entity, ["building"], 50, true];
 				_nearestBuildings = _nearestBuildings select {count ([_x] call BIS_fnc_buildingPositions) > 0};
 
 				if (_nearestBuildings isEqualTo []) exitWith { false };
@@ -7367,7 +7367,7 @@ MAZ_EZM_fnc_initFunction = {
 								if !(_x in [cursorTarget, cursorObject]) then {continue};
 								if((_x distance (vehicle player)) > 28) then {continue};
 
-								private _position = getPos _x;
+								private _position = getPosATL _x;
 								_position set [2, (_position # 2) + M9SD_smallArsenalIcons_offset];
 								drawIcon3D[
 									M9SD_smallArsenalIcons_texture, [1, 1, 1, 1],
@@ -7665,7 +7665,7 @@ MAZ_EZM_fnc_initFunction = {
 			private _newPos = [_craterCrash] call MAZ_EZM_fnc_crashSetPosition;
 			[_crashGhosthawk,_newPos] call MAZ_EZM_fnc_crashSounds;
 
-			private _positionOfCrash = getPos _craterCrash;
+			private _positionOfCrash = getPosATL _craterCrash;
 			private _smokeObject = [_positionOfCrash] call MAZ_EZM_fnc_createSmokeForCrash;
 			private _crashObjects = [_craterCrash,_crashGhosthawk,_smokeObject];
 			["TaskAssignedIcon",["A3\UI_F\Data\Map\Markers\Military\warning_CA.paa","Helicopter Crash"]] remoteExec ['BIS_fnc_showNotification'];
@@ -7699,7 +7699,7 @@ MAZ_EZM_fnc_initFunction = {
 					private _rewardBoxes = [];
 					for "_i" from 0 to (_randomAmount-1) do {
 						private _rewardType = selectRandom ["guns","equip"];
-						private _rewardBox = [getPos (_crashObjects select 0),_rewardType] call MAZ_EZM_fnc_createReward;
+						private _rewardBox = [getPosATL (_crashObjects select 0),_rewardType] call MAZ_EZM_fnc_createReward;
 						_rewardBoxes pushBack _rewardBox;
 					};
 					deleteMarker _heliCrashMarker;
@@ -8396,7 +8396,7 @@ MAZ_EZM_fnc_initFunction = {
 				deleteWaypoint [_group,_forEachIndex];
 			}forEach (waypoints _group);
 
-			private _nearestBuildings = [getPos _leader,50] call MAZ_EZM_fnc_getGarrisonBuildings;
+			private _nearestBuildings = [getPosATL _leader,50] call MAZ_EZM_fnc_getGarrisonBuildings;
 
 			if (_nearestBuildings isEqualTo []) exitWith { false };
 			_group setbehaviour "AWARE";
@@ -8487,7 +8487,7 @@ MAZ_EZM_fnc_initFunction = {
 			for "_i" from 0 to _numOfPatrols do {
 				private _randPos = [[[_position,150]]] call BIS_fnc_randomPos;
 				private _nearRoads = _randPos nearRoads 150;
-				private _nearRoad = getPos (selectRandom _nearRoads);
+				private _nearRoad = getPosATL (selectRandom _nearRoads);
 				private _randomNumOfUnits = [4,6] call BIS_fnc_randomInt;
 
 				private _grp = createGroup [_side,true];
@@ -8500,7 +8500,7 @@ MAZ_EZM_fnc_initFunction = {
 				};
 
 				for "_j" from 0 to 5 do {
-					private _waypoint = _grp addWaypoint [getPos (selectRandom _nearRoads),0];
+					private _waypoint = _grp addWaypoint [getPosATL (selectRandom _nearRoads),0];
 					_waypoint setWaypointType "MOVE";
 					_waypoint setWaypointBehaviour "SAFE";
 					_waypoint setWaypointSpeed "LIMITED";
@@ -8786,7 +8786,7 @@ MAZ_EZM_fnc_initFunction = {
 				deleteMarker MAZ_EZM_buildingCompMarker;
 			};
 			MAZ_EZM_buildingCompMarker = createMarker ["BuildingSizeMarker", position _building];
-			MAZ_EZM_buildingCompMarker setMarkerPos (getPos _building);
+			MAZ_EZM_buildingCompMarker setMarkerPos (getPosATL _building);
 			MAZ_EZM_buildingCompMarker setMarkerDir (getDir _building);
 			MAZ_EZM_buildingCompMarker setMarkerBrush "Solid";
 			MAZ_EZM_buildingCompMarker setMarkerShape "RECTANGLE";
@@ -8965,7 +8965,7 @@ MAZ_EZM_fnc_initFunction = {
 			if(_compDataFull isEqualTo []) exitWith {if(_doDebug) then {["Cannot find any saved types","addItemFailed"] call MAZ_EZM_fnc_systemMessage}};
 			private _compData = _compDataFull;
 			if(!([typeOf _building,_typeOfBuilding] call MAZ_EZM_fnc_isSameBuildingType)) exitWith {if(_doDebug) then {["Wrong house type","addItemFailed"] call MAZ_EZM_fnc_systemMessage}};
-			private _isTerrainBuilding = if(_building in(nearestTerrainObjects [getPos _building, ["House"], 50])) then {true} else {false};
+			private _isTerrainBuilding = if(_building in (nearestTerrainObjects [getPosATL _building, ["House"], 50])) then {true} else {false};
 			if(_isTerrainBuilding) then {
 				comment "Replace building, terrain buildings don't invoke BuildingChanged MEH";
 				_building setVariable ["MAZ_EZM_hasCompSetup",true,true];
@@ -9040,7 +9040,7 @@ MAZ_EZM_fnc_initFunction = {
 				["_2d",false,[false]]
 			];
 			if(_position isEqualTo [0,0,0]) exitWith {["Provide a position argument to getNearestBuilding!","addItemFailed"] call MAZ_EZM_fnc_systemMessage};
-			if(_position isEqualType objNull) then {_position = getPos _position;};
+			if(_position isEqualType objNull) then {_position = getPosATL _position;};
 			private _nearestBuildings = (nearestObjects [_position, ["building"], _radius, _2d]) select {
 
 				count ([_x] call BIS_fnc_buildingPositions) > 0
@@ -9166,7 +9166,7 @@ MAZ_EZM_fnc_initFunction = {
 				_building setVariable ["MAZ_EZM_hasCompSetup",false,true];
 				_building = _building getVariable "MAZ_EZM_compParent";
 			};
-			private _isTerrainBuilding = if(_building in(nearestTerrainObjects [getPos _building, ["House"], 50])) then {true} else {false};
+			private _isTerrainBuilding = if(_building in (nearestTerrainObjects [getPosATL _building, ["House"], 50])) then {true} else {false};
 			if(_isTerrainBuilding) then {
 				comment "Replace building, terrain buildings don't invoke BuildingChanged MEH";
 				_building setVariable ["MAZ_EZM_hasCompSetup",false,true];
@@ -10663,7 +10663,7 @@ MAZ_EZM_fnc_initFunction = {
 							((nearestObjects [_obj,["CAManBase"],_radius]) findIf {side (group _x) in _sides}) != -1
 						)
 					};
-					private _pos = getPos _ied;
+					private _pos = getPosATL _ied;
 					_pos set [2,0];
 					_ied setPosATL _pos;
 					_ied setDamage 1;
@@ -14502,7 +14502,7 @@ MAZ_EZM_fnc_initFunction = {
 						_unit = _this;
 						_vehicle = vehicle _unit;
 						_vehicleRole = str assignedvehiclerole _unit;
-						private _initialPos = getPos player;
+						private _initialPos = getPosATL player;
 						private _initialHidden = isObjectHidden player;
 
 						bis_fnc_moduleRemoteControl_unit = _unit;
@@ -14661,7 +14661,7 @@ MAZ_EZM_fnc_initFunction = {
 			params ["_entity"];
 			if(isNull _entity) exitWith {["No object!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 
-			_entity setVectorUp surfaceNormal getPos _entity;
+			_entity setVectorUp surfaceNormal getPosATL _entity;
 			_entity setPosATL [getPosATL _entity select 0, getPosATL _entity select 1, 0.2];
 
 			["Vehicle unflipped.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
@@ -15708,7 +15708,7 @@ MAZ_EZM_fnc_initFunction = {
 								{
 									if (pos_p=="open") then 
 									{
-										_alias_local_fog = "#particlesource" createVehicleLocal (getpos player);
+										_alias_local_fog = "#particlesource" createVehicleLocal (getPosATL player);
 										_alias_local_fog setParticleCircle [10,[3,3,0]];
 										_alias_local_fog setParticleRandom [2,[0.25,0.25,0],[1,1,0],1,1,[0,0,0,0.1],0,0];
 										_alias_local_fog setParticleParams [["\A3\data_f\cl_basic",1,0,1],"","Billboard",1,8,[0,0,0],[-1,-1,0],3,10.15,7.9,0.03,[5,10,10],[[0.5,0.5,0.5,0],[0.5,0.5,0.5,0.1],[1,1,1,0]],[1],1, 0,"","",player];
@@ -15718,7 +15718,7 @@ MAZ_EZM_fnc_initFunction = {
 									};
 									if (pos_p=="player_car") then 
 									{
-										_alias_local_fog = "#particlesource" createVehicleLocal (getpos player);
+										_alias_local_fog = "#particlesource" createVehicleLocal (getPosATL player);
 										_alias_local_fog setParticleCircle [30,[3,3,0]];
 										_alias_local_fog setParticleRandom [0,[0.25,0.25,0],[1,1,0],1,1,[0,0,0,0.1],0,0];
 										_alias_local_fog setParticleParams [["\A3\data_f\cl_basic",1,0,1],"","Billboard",1,4,[0,0,0],[-1,-1,0],3,10.15,7.9,0.03,[5,10,20],[[0.5,0.5,0.5,0],[0.5,0.5,0.5,0.1],[1,1,1,0]],[1],1, 0,"","",player];
@@ -15728,7 +15728,7 @@ MAZ_EZM_fnc_initFunction = {
 									};
 									if (pos_p=="in_da_house") then  
 									{
-										_alias_local_fog = "#particlesource" createVehicleLocal (getpos player);
+										_alias_local_fog = "#particlesource" createVehicleLocal (getPosATL player);
 										_alias_local_fog setParticleCircle [raza_snow,[3,3,0]];
 										_alias_local_fog setParticleRandom [0,[0.25,0.25,0],[1,1,0],1,1,[0,0,0,0.1],0,0];
 										_alias_local_fog setParticleParams [["\A3\data_f\cl_basic",1,0,1],"","Billboard",1,4,[0,0,0],[-1,-1,0],3,10.15,7.9,0.03,[5,10,20],[[0.5,0.5,0.5,0],[0.5,0.5,0.5,0.1],[1,1,1,0]],[1],1, 0,"","",player];
@@ -16148,8 +16148,8 @@ MAZ_EZM_fnc_initFunction = {
 									_fragments = _this select 1; 
 									_color2 = _this select 2; 
 									_selector = _this select 3; 
-									_rocket = "CMflare_Chaff_Ammo" createVehicle (getPos _rocket);  
-									_smoke = "SmokeLauncherAmmo" createVehicle (getPos _rocket);  
+									_rocket = "CMflare_Chaff_Ammo" createVehicle (getPosATL _rocket);  
+									_smoke = "SmokeLauncherAmmo" createVehicle (getPosATL _rocket);  
 									_rocket setVelocity (_fragments select _selector); 
 									_light2 = "#lightpoint" createVehicle [0,0,0]; 
 									[_light2,3] remoteExec ['setLightBrightness']; 
@@ -18304,7 +18304,7 @@ MAZ_EZM_editZeusLogic = {
 			if(missionNamespace getVariable ["MAZ_EZM_isInGroupTabVar",false]) exitWith {};
 			if(missionNamespace getVariable ["MAZ_EZM_copyingTimerOn",false]) exitWith {};
 
-			private _objPos = getPos _entity;
+			private _objPos = getPosATL _entity;
 			private _newPos = [true] call MAZ_EZM_fnc_getScreenPosition;
 			if(surfaceIsWater _objPos) then {
 				private _isOnCarrier = false;
@@ -18891,7 +18891,8 @@ private _changelog = [
 	"Changed EZM plug to not run for Zeus",
 	"Fixed an issue where using the delete clutter module would do nothing",
 	"Fixed SIDES element not having spacing",
-	"Fixed 48+2 Side Switcher wasn't working"
+	"Fixed 48+2 Side Switcher wasn't working",
+	"Removed all getPos commands in favor of faster getPosATL"
 ];
 
 private _changelogString = "";
