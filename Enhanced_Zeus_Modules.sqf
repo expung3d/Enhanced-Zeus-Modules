@@ -2869,100 +2869,129 @@ comment "Context Menu";
 		MAZ_EZM_contextMenuActions set [_index,nil];
 	};
 
-	MAZ_EZM_fnc_createContextMenuBase = {
-		params ["_xPos","_yPos"];
-		
-		private _display = findDisplay 312;
-		MAZ_EZM_contextMenuBase = _display ctrlCreate ["RscControlsGroupNoScrollbars",-1];
-		MAZ_EZM_contextMenuBase ctrlSetPosition [_xPos,_yPos,["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0];
-		MAZ_EZM_contextMenuBase ctrlSetBackgroundColor [0,0,0,0.6];
-		MAZ_EZM_contextMenuBase ctrlCommit 0;
+	MAZ_EZM_fnc_openContextMenu = {
+		comment "Check for actions";
+			if(isNil "MAZ_EZM_contextMenuActions") exitWith {};
 
-		private _controlGroupFrame = _display ctrlCreate ["RscFrame",-1,MAZ_EZM_contextMenuBase];
-		_controlGroupFrame ctrlSetPosition [0,0,["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0];
-		_controlGroupFrame ctrlSetTextColor [0,0,0,0.8];
-		_controlGroupFrame ctrlCommit 0;
+		comment "Close existing context menu";
+			call MAZ_EZM_fnc_closeContextMenu;
 
-		[MAZ_EZM_contextMenuBase,_controlGroupFrame]
-	};
+		comment "Get cursor entity";
+			private _targetObjArray = curatorMouseOver;
+			private _entity = objNull;
+			if ((_targetObjArray isEqualTo []) || (_targetObjArray isEqualTo [''])) then {} else {
+				_entity = _targetObjArray select 1;
+			};
 
-	MAZ_EZM_fnc_createContextMenuRow = {
-		params ["_ctrlGroup","_yPos","_displayName","_code","_img","_color"];
-		private _display = findDisplay 312;
-		private _ctrl = _display ctrlCreate ["RscButtonMenu",-1,_ctrlGroup];
-		if(_img != "") then {
-			_displayName = "     " + _displayName;
-			private _picture = _display ctrlCreate ["RscPicture",-1,_ctrlGroup];
-			_picture ctrlSetText _img;
-			_picture ctrlSetTextColor _color;
-			_picture ctrlSetPosition [["W",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,_yPos,["W",0.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",0.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
-			_picture ctrlCommit 0;
+			private _worldPos = [true] call MAZ_EZM_fnc_getScreenPosition;
+
+		with uiNamespace do {
+			getMousePosition params ["_mouseX","_mouseY"];
+
+			private _display = findDisplay 312;
+			MAZ_EZM_contextMenuBase = _display ctrlCreate ["RscControlsGroupNoScrollbars",-1];
+			MAZ_EZM_contextMenuBase ctrlSetPosition [_mouseX,_mouseY,0,0];
+			MAZ_EZM_contextMenuBase ctrlSetBackgroundColor [0,0,0,0.6];
+			MAZ_EZM_contextMenuBase ctrlCommit 0;
+
+			MAZ_EZM_contextMenuBase setVariable ["MAZ_EZM_contextParams",[_worldPos,_entity]];
+
+			[MAZ_EZM_contextMenuBase,controlNull,missionNamespace getVariable "MAZ_EZM_contextMenuActions"] call (missionNamespace getVariable ["MAZ_EZM_fnc_createContextMenuActions",{}]);
 		};
-		_ctrl ctrlSetText _displayName;
-		_ctrl ctrlSetFont "RobotoCondensed";
-		_ctrl ctrlSetPosition [0,_yPos,["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
-		_ctrl ctrlSetTextColor _color;
-		_ctrl ctrlSetBackgroundColor [0,0,0,0.6];
-		_ctrl ctrlSetActiveColor [0,0,0,0.7];
-		_ctrl ctrlAddEventHandler ["ButtonClick",_code];
-		_ctrl ctrlCommit 0;
-
-		_ctrl
 	};
 
-	MAZ_EZM_fnc_destroyContextMenu = {
-		sleep 0.01;
-		private _ctrlGroup = uiNamespace getVariable ["MAZ_EZM_contextMenuBase",controlNull];
-		if(isNull _ctrlGroup) exitWith {};
-		[_ctrlGroup] call MAZ_EZM_fnc_closeAllSubControls;
-		private _childrenGroup = uiNamespace getVariable ["MAZ_EZM_contextChildrenGroup",controlNull];
-		if(isNull _childrenGroup) exitWith {};
-		[_childrenGroup] call MAZ_EZM_fnc_closeAllSubControls;
+	MAZ_EZM_fnc_closeContextMenu = {
+		if !(call MAZ_EZM_fnc_isContextMenuOpen) exitWith {};
+		[0] call MAZ_EZM_fnc_closeContextMenuToDepth;
+		with uiNamespace do {
+			ctrlDelete MAZ_EZM_contextMenuBase;
+			MAZ_EZM_contextMenuBase = nil;
+		};
+		uiNamespace setVariable ["MAZ_EZM_contextStack",[]];
 	};
 
-	MAZ_EZM_fnc_addContextMenuChildRows = {
-		params ["_position","_children","_ctrlParent"];
-		private _controlGroupParentOfParent = ctrlParentControlsGroup _ctrlParent;
-		_position = _position vectorAdd (ctrlPosition _controlGroupParentOfParent);
-		_position params ["_xPos","_yPos","_wPos","_hPos"];
-		
+	MAZ_EZM_fnc_closeContextMenuGroup = {
+		params ["_controlGroup"];
+		{
+			ctrlDelete _x;
+		}forEach (allControls _controlGroup);
+		ctrlDelete _controlGroup;
+	};
+
+	MAZ_EZM_fnc_closeContextMenuToDepth = {
+		params ["_depth"];
+		private _openContextMenus = uiNamespace getVariable ["MAZ_EZM_contextStack",[]];
+		private _menusAboveDepth = _openContextMenus select [_depth];
+		{
+			[_x] call MAZ_EZM_fnc_closeContextMenuGroup;
+		}forEach _menusAboveDepth;
+		_openContextMenus = _openContextMenus - _menusAboveDepth;
+		uiNamespace setVariable ["MAZ_EZM_contextStack",_openContextMenus];
+	};
+
+	MAZ_EZM_fnc_createContextMenuActions = {
+		params ["_parentGroup",["_parentControl",controlNull],["_actions",[]]];
+		"Close the existing menus that are above the depth of selected action";
+		private _depth = _parentGroup getVariable ["MAZ_EZM_contextDepth",-1];
+		[_depth + 1] call MAZ_EZM_fnc_closeContextMenuToDepth;
+
+		"If there are no actions, don't create a new menu";
+		if(count _actions == 0) exitWith {};
+
+		"Create base control group for actions";
 		private _display = findDisplay 312;
 		private _controlGroup = _display ctrlCreate ["RscControlsGroupNoScrollbars",-1];
-		_controlGroup ctrlSetPosition [_xPos + (["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),_yPos,["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0];
-		_controlGroup ctrlSetBackgroundColor [0,0,0,0.6];
-		_controlGroup ctrlCommit 0;
-
 		private _controlGroupFrame = _display ctrlCreate ["RscFrame",-1,_controlGroup];
 		_controlGroupFrame ctrlSetPosition [0,0,["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0];
 		_controlGroupFrame ctrlSetTextColor [0,0,0,0.6];
-		_controlGroupFrame ctrlCommit 0;
 
+		"Get position offset to the right based on parent size and position";
+		(ctrlPosition _parentGroup) params ["_parentX","_parentY","_parentW","_parentH"];
+		private _xPos = _parentX + _parentW;
+
+		"Get position offset down based on parent control from mouse enter";
+		private _yPos = _parentY;
+		if(!isNull _parentControl) then {
+			_yPos = _yPos + ((ctrlPosition _parentControl) select 1);
+		};
+
+		_controlGroup ctrlSetPosition [_xPos,_yPos,["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,0];
+		_controlGroup ctrlSetBackgroundColor [0,0,0,0.6];
+		_controlGroup ctrlCommit 0;
+
+		"Setup each open menu as variable for closing and handling";
+		private _openContextMenus = uiNamespace getVariable ["MAZ_EZM_contextStack",[]];
+		private _index = _openContextMenus pushBack _controlGroup;
+		_controlGroup setVariable ["MAZ_EZM_contextDepth",_index];
+		uiNamespace setVariable ["MAZ_EZM_contextStack",_openContextMenus];
+
+		"Add each action from the _actions variable";
+		"Save row controls to the control group";
 		private _groupHeight = 0;
+		private _rows = [];
+
+		"Sort by priority";
+		private _entity = (MAZ_EZM_contextMenuBase getVariable ["MAZ_EZM_contextParams",[[],objNull]]) select 1;
+		_actions = [_actions,[],{_x select 3},"ASCEND"] call BIS_fnc_sortBy;
 		{
-			_x params ["_displayName","_code","_condition",["_img",""],["_color",[1,1,1,1]]];
-			_code = compile (format ["params ['_childControl'];((_childControl getVariable 'contextMenuParent') getVariable 'contextMenuParams') params ['_pos','_entity'];[_pos,_entity] call %1;",_code]);
-			private _ctrl = _display ctrlCreate ["RscButtonMenu",-1,_controlGroup];
-			_ctrl setVariable ["contextMenuParent",_ctrlParent];
-			if(_img != "") then {
-				_displayName = "     " + _displayName;
-				private _picture = _display ctrlCreate ["RscPicture",-1,_controlGroup];
-				_picture ctrlSetText _img;
-				_picture ctrlSetTextColor _color;
-				_picture ctrlSetPosition [0,_groupHeight,["W",0.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",0.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
-				_picture ctrlCommit 0;
+			"Check condition";
+			if(isNil "_x") then {continue};
+			_x params ["_displayName","_code","_condition","_priority","_img","_color","_actions"];
+			with missionNamespace do {
+				private _result = _entity call _condition;
+				uiNamespace setVariable ["MAZ_EZM_contextCondition",_result];
 			};
-			_ctrl ctrlSetText _displayName;
-			_ctrl ctrlSetFont "RobotoCondensed";
-			_ctrl ctrlSetPosition [0,_groupHeight,["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
-			_ctrl ctrlSetTextColor _color;
-			_ctrl ctrlSetBackgroundColor [0,0,0,0.6];
-			_ctrl ctrlSetActiveColor [0,0,0,0.7];
-			_ctrl ctrlAddEventHandler ["ButtonClick",_code];
-			_ctrl ctrlCommit 0;
+			if(!MAZ_EZM_contextCondition) then {continue};
 
+			"Create row, update height";
+			private _row = [_controlGroup,_groupHeight,_displayName,_code,_condition,_priority,_img,_color,_actions] call (missionNamespace getVariable ["MAZ_EZM_fnc_createContextMenuRow",{}]);
+			_rows pushBack _row;
 			_groupHeight = _groupHeight + (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
-		}forEach _children;
 
+		}forEach _actions;
+		_controlGroup setVariable ["MAZ_EZM_contextRows",_rows];
+
+		"Update control group height";
 		_controlGroup ctrlSetPositionH _groupHeight;
 		_controlGroup ctrlCommit 0;
 		_controlGroupFrame ctrlSetPositionH _groupHeight;
@@ -2972,128 +3001,76 @@ comment "Context Menu";
 			_controlGroup ctrlSetPositionY ((_yPos - _groupHeight) + (["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat));
 			_controlGroup ctrlCommit 0;
 		};
-		
-		_ctrlParent setVariable ["contextMenuChildrenCtrlGroup",_controlGroup];
 
-		_controlGroup
+		uiNamespace setVariable ["MAZ_EZM_contextCondition",nil];
+	};
+
+	MAZ_EZM_fnc_createContextMenuRow = {
+		params [["_parent",controlNull],["_yPos",0],["_displayName","[ TEMPLATE ]"],["_code", {}],["_condition",{true}],["_priority",3],["_img",""],["_color",[1,1,1,1]],["_childActions",[]]];
+		if(isNull _parent) exitWith {};
+
+		private _display = findDisplay 312;
+		private _ctrl = _display ctrlCreate ["RscButtonMenu",-1,_parent];
+
+		if(_img != "") then {
+			_displayName = "     " + _displayName;
+			private _picture = _display ctrlCreate ["RscPicture",-1,_parent];
+			_picture ctrlSetText _img;
+			_picture ctrlSetTextColor _color;
+			_picture ctrlSetPosition [(["W",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),_yPos,["W",0.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",0.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
+			_picture ctrlCommit 0;
+		};
+
+		_code = compile (format ["private _base = uiNamespace getVariable 'MAZ_EZM_contextMenuBase'; (_base getVariable 'MAZ_EZM_contextParams') params ['_pos','_entity']; [_pos,_entity] call %1;",_code]);
+
+		_ctrl ctrlSetText _displayName;
+		_ctrl ctrlSetFont "RobotoCondensed";
+		_ctrl ctrlSetPosition [0,_yPos,["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat];
+		_ctrl ctrlSetTextColor _color;
+		_ctrl ctrlSetBackgroundColor [0,0,0,0.6];
+		_ctrl ctrlSetActiveColor [0,0,0,0.7];
+		_ctrl ctrlAddEventHandler ["ButtonClick", _code];
+		_ctrl ctrlCommit 0;
+
+		private _entity = MAZ_EZM_contextMenuBase getVariable "MAZ_EZM_contextParams";
+		_entity = if(isNil "_entity") then {
+			objNull
+		} else {
+			_entity select 1;
+		};
+		private _activeChildren = _childActions select {
+			private _child = _x;
+			with missionNamespace do {
+				if(typeName (_child select 2) == "SCALAR") then {
+					systemChat (str _child);
+				};
+				private _result = _entity call (_child select 2);
+				uiNamespace setVariable ["MAZ_EZM_contextCondition",_result];
+			};
+			uiNamespace getVariable ["MAZ_EZM_contextCondition",false]
+		};
+		if((count _activeChildren) > 0) then {
+			private _pictureDrop = (findDisplay 312) ctrlCreate ["RscPicture",-1,_parent];
+			_pictureDrop ctrlSetText "A3\ui_f\data\gui\rsccommon\rsctree\hiddenTexture_ca.paa";
+			_pictureDrop ctrlSetTextColor [1,1,1,1];
+			_pictureDrop ctrlSetPosition [["W",8] call (missionNamespace getVariable "MAZ_EZM_fnc_convertToGUI_GRIDFormat"),_yPos,["W",1] call (missionNamespace getVariable "MAZ_EZM_fnc_convertToGUI_GRIDFormat"),["H",1] call (missionNamespace getVariable "MAZ_EZM_fnc_convertToGUI_GRIDFormat")];
+			_pictureDrop ctrlCommit 0;
+		};
+		_ctrl setVariable ["MAZ_EZM_contextChildActions",_activeChildren];
+		
+		_ctrl ctrlAddEventHandler ["MouseEnter", {
+			params ["_ctrl"];
+			private _childActions = _ctrl getVariable ["MAZ_EZM_contextChildActions",[]];
+			private _parentGroup = ctrlParentControlsGroup _ctrl;
+			[_parentGroup,_ctrl,_childActions] call (missionNamespace getVariable ["MAZ_EZM_fnc_createContextMenuActions",{}]);
+		}];
+
+		_ctrl
 	};
 
 	MAZ_EZM_fnc_isContextMenuOpen = {
 		private _contextBase = uiNamespace getVariable ["MAZ_EZM_contextMenuBase",controlNull];
 		!(isNull _contextBase)
-	};
-	
-	MAZ_EZM_fnc_closeContextMenu = {
-		if !(call MAZ_EZM_fnc_isContextMenuOpen) exitWith {};
-		[] spawn MAZ_EZM_fnc_destroyContextMenu;
-	};
-
-	MAZ_EZM_fnc_closeAllSubControls = {
-		params ["_control"];
-		if((count (allControls _control)) > 0) then {
-			{
-				[_x] call MAZ_EZM_fnc_closeAllSubControls;
-			}forEach (allControls _control);
-		};
-		ctrlDelete _control;
-	};
-
-	MAZ_EZM_fnc_createContextMenu = {
-		comment "Check for actions";
-		if(isNil "MAZ_EZM_contextMenuActions") exitWith {};
-		private _contextBase = uiNamespace getVariable ["MAZ_EZM_contextMenuBase",controlNull];
-		if(!isNull _contextBase) then {
-			[_contextBase] call MAZ_EZM_fnc_closeAllSubControls;
-			uiNamespace setVariable ["MAZ_EZM_contextMenuBase",controlNull];
-		};
-
-		comment "Get cursor entity";
-		private _targetObjArray = curatorMouseOver;
-		private _entity = objNull;
-		if ((_targetObjArray isEqualTo []) || (_targetObjArray isEqualTo [''])) then {} else {
-			_entity = _targetObjArray select 1;
-		};
-
-		comment "Create base context menu dialog";
-		with uiNamespace do {
-			private _posArray = getMousePosition;
-			_posArray params ["_mouseX","_mouseY"];
-			(_posArray call (missionNamespace getVariable "MAZ_EZM_fnc_createContextMenuBase")) params ["_ctrlGroup","_ctrlGroupFrame"];
-			_ctrlGroup ctrlAddEventHandler ["MouseExit",{
-				params ["_control"];
-				private _currentChildren = uiNamespace getVariable "MAZ_EZM_contextChildrenGroup";
-				if(!isNull _currentChildren) then {
-					[_currentChildren] call MAZ_EZM_fnc_closeAllSubControls;
-					uiNamespace setVariable ["MAZ_EZM_contextChildrenGroup",controlNull];
-				};
-			}];
-			private _worldPos = [true] call (missionNamespace getVariable "MAZ_EZM_fnc_getScreenPosition");
-
-			comment "Run conditionals";
-			private _yPos = 0;
-			private _actions = +(missionNamespace getVariable "MAZ_EZM_contextMenuActions");
-			_actions = [_actions,[],{_x select 3},"ASCEND"] call BIS_fnc_sortBy;
-			{
-				if(isNil "_x") then {continue};
-				_x params ["_displayName","_code","_condition","_priority","_img","_color","_childActions"];
-				with missionNamespace do {
-					private _result = _entity call _condition;
-					uiNamespace setVariable ["MAZ_EZM_contextConditionResult",_result];
-				};
-				if(MAZ_EZM_contextConditionResult) then {
-					_code = compile (format ["params ['_control'];(_control getVariable 'contextMenuParams') params ['_pos','_entity'];[_pos,_entity] call %1;",_code]);
-					private _ctrl = [_ctrlGroup,_yPos,_displayName,_code,_img,_color] call (missionNamespace getVariable "MAZ_EZM_fnc_createContextMenuRow");
-					_ctrl setVariable ["contextMenuParams",[_worldPos,_entity]];
-					(ctrlPosition _ctrl) params ["","","","_posH"];
-					if(count _childActions != 0) then {
-						private _activeChildren = [];
-						{
-							_x params ["","","_conditionChild"];
-							with missionNamespace do {
-								private _result = _entity call _conditionChild;
-								uiNamespace setVariable ["MAZ_EZM_contextConditionResult",_result];
-							};
-							if(MAZ_EZM_contextConditionResult) then {
-								_activeChildren pushBack _x;
-							};
-						}forEach _childActions;
-						_ctrl setVariable ["MAZ_EZM_contextChildrenData",_activeChildren];
-
-						if((count _activeChildren) > 0) then {
-							private _pictureDrop = (findDisplay 312) ctrlCreate ["RscPicture",-1,_ctrlGroup];
-							_pictureDrop ctrlSetText "A3\ui_f\data\gui\rsccommon\rsctree\hiddenTexture_ca.paa";
-							_pictureDrop ctrlSetTextColor [1,1,1,1];
-							_pictureDrop ctrlSetPosition [["W",8] call (missionNamespace getVariable "MAZ_EZM_fnc_convertToGUI_GRIDFormat"),_yPos,["W",1] call (missionNamespace getVariable "MAZ_EZM_fnc_convertToGUI_GRIDFormat"),["H",1] call (missionNamespace getVariable "MAZ_EZM_fnc_convertToGUI_GRIDFormat")];
-							_pictureDrop ctrlCommit 0;
-						};
-					};
-					_ctrl ctrlAddEventHandler ["MouseEnter",{
-						params ["_control"];
-						private _currentChildren = uiNamespace getVariable ["MAZ_EZM_contextChildrenGroup",controlNull];
-						if(!isNull _currentChildren) then {
-							[_currentChildren] call MAZ_EZM_fnc_closeAllSubControls;
-						};
-						private _children = _control getVariable "MAZ_EZM_contextChildrenData";
-						if(!isNil "_children") then {
-							private _childGroup = [ctrlPosition _control,_children,_control] call (missionNamespace getVariable "MAZ_EZM_fnc_addContextMenuChildRows");
-							uiNamespace setVariable ["MAZ_EZM_contextChildrenGroup",_childGroup];
-						};
-					}];
-					_yPos = _yPos + _posH;
-				};
-				MAZ_EZM_contextConditionResult = nil;
-			}forEach _actions;
-
-			_ctrlGroup ctrlSetPositionH _yPos;
-			_ctrlGroupFrame ctrlSetPositionH _yPos;
-			_ctrlGroup ctrlCommit 0;
-			_ctrlGroupFrame ctrlCommit 0;
-			if(_mouseY + _yPos > 1.405) then {
-				(ctrlPosition _ctrlGroup) params ["","_posY"];
-				_ctrlGroup ctrlSetPositionY (1.405 - _yPos);
-				_ctrlGroup ctrlCommit 0;
-			};
-		};
 	};
 
 	"General Actions";
@@ -3137,8 +3114,10 @@ comment "Context Menu";
 						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
 					},
 					{true},
+					3,
 					"",
-					[1,1,1,1]
+					[1,1,1,1],
+					[]
 				],
 				[
 					"100m",
@@ -3148,8 +3127,10 @@ comment "Context Menu";
 						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
 					},
 					{true},
+					3,
 					"",
-					[1,1,1,1]
+					[1,1,1,1],
+					[]
 				],
 				[
 					"250m",
@@ -3159,8 +3140,10 @@ comment "Context Menu";
 						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
 					},
 					{true},
+					3,
 					"",
-					[1,1,1,1]
+					[1,1,1,1],
+					[]
 				],
 				[
 					"500m",
@@ -3170,8 +3153,10 @@ comment "Context Menu";
 						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
 					},
 					{true},
+					3,
 					"",
-					[1,1,1,1]
+					[1,1,1,1],
+					[]
 				],
 				[
 					"1000m",
@@ -3181,8 +3166,10 @@ comment "Context Menu";
 						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
 					},
 					{true},
+					3,
 					"",
-					[1,1,1,1]
+					[1,1,1,1],
+					[]
 				]
 			]
 		] call MAZ_EZM_fnc_createNewContextAction;
@@ -3210,6 +3197,7 @@ comment "Context Menu";
 						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
 					},
 					{true},
+					3,
 					"",
 					[1,1,1,1]
 				],
@@ -3221,6 +3209,7 @@ comment "Context Menu";
 						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
 					},
 					{true},
+					3,
 					"",
 					[1,1,1,1]
 				],
@@ -3232,6 +3221,7 @@ comment "Context Menu";
 						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
 					},
 					{true},
+					3,
 					"",
 					[1,1,1,1]
 				],
@@ -3243,6 +3233,7 @@ comment "Context Menu";
 						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
 					},
 					{true},
+					3,
 					"",
 					[1,1,1,1]
 				],
@@ -3254,6 +3245,7 @@ comment "Context Menu";
 						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
 					},
 					{true},
+					3,
 					"",
 					[1,1,1,1]
 				]
@@ -3286,6 +3278,7 @@ comment "Context Menu";
 						[objNull,_pos] call MAZ_EZM_fnc_teleportPlayerModule;
 					},
 					{true},
+					3,
 					"a3\ui_f\data\gui\rsc\rscdisplaymain\menu_singleplayer_ca.paa",
 					[1,1,1,1]
 				],
@@ -3298,6 +3291,7 @@ comment "Context Menu";
 						}forEach allPlayers;
 					},
 					{true},
+					3,
 					"a3\ui_f\data\gui\rsc\rscdisplaymain\menu_multiplayer_ca.paa",
 					[1,1,1,1]
 				],
@@ -3336,6 +3330,7 @@ comment "Context Menu";
 
 						_return
 					},
+					3,
 					"a3\3den\data\cfgwaypoints\getin_ca.paa",
 					[1,1,1,1]
 				]
@@ -3423,6 +3418,7 @@ comment "Context Menu";
 						["Open",[true,nil,_entity]] call BIS_fnc_arsenal;
 					},
 					{true},
+					3,
 					"",
 					[1,1,1,1]
 				],
@@ -3433,6 +3429,7 @@ comment "Context Menu";
 						_entity setUnitLoadout (getUnitLoadout (configFile >> "CfgVehicles" >> typeOf _entity));
 					},
 					{true},
+					3,
 					"",
 					[1,1,1,1]
 				],
@@ -3443,6 +3440,7 @@ comment "Context Menu";
 						MAZ_EZM_copiedUnitLoadout = getUnitLoadout _entity;
 					},
 					{true},
+					3,
 					"",
 					[1,1,1,1]
 				],
@@ -3455,6 +3453,7 @@ comment "Context Menu";
 					{
 						(!isNil "MAZ_EZM_copiedUnitLoadout")
 					},
+					3,
 					"",
 					[1,1,1,1]
 				],
@@ -3466,6 +3465,7 @@ comment "Context Menu";
 						["Zeus loadout saved","addItemOK"] call MAZ_EZM_fnc_systemMessage;
 					},
 					{true},
+					3,
 					"a3\ui_f_curator\data\logos\arma3_zeus_icon_ca.paa",
 					[1,1,1,1]
 				]
@@ -3523,6 +3523,7 @@ comment "Context Menu";
 						[_entity] joinSilent (createGroup [west,true]);
 					},
 					{true},
+					3,
 					"a3\3den\data\displays\display3den\panelright\side_west_ca.paa",
 					[1,1,1,1]
 				],
@@ -3533,6 +3534,7 @@ comment "Context Menu";
 						[_entity] joinSilent (createGroup [east,true]);
 					},
 					{true},
+					3,
 					"a3\3den\data\displays\display3den\panelright\side_east_ca.paa",
 					[1,1,1,1]
 				],
@@ -3543,6 +3545,7 @@ comment "Context Menu";
 						[_entity] joinSilent (createGroup [independent,true]);
 					},
 					{true},
+					3,
 					"a3\3den\data\displays\display3den\panelright\side_guer_ca.paa",
 					[1,1,1,1]
 				],
@@ -3553,6 +3556,7 @@ comment "Context Menu";
 						[_entity] joinSilent (createGroup [civilian,true]);
 					},
 					{true},
+					3,
 					"a3\3den\data\displays\display3den\panelright\side_civ_ca.paa",
 					[1,1,1,1]
 				]
@@ -3657,6 +3661,7 @@ comment "Context Menu";
 						[_entity] spawn MAZ_EZM_fnc_editVehiclePylons;
 					},
 					{true},
+					3,
 					"",
 					[1,1,1,1]
 				],
@@ -3674,6 +3679,7 @@ comment "Context Menu";
 						}forEach _pylons;
 					},
 					{true},
+					3,
 					"",
 					[1,1,1,1]
 				]
@@ -3726,6 +3732,7 @@ comment "Context Menu";
 						[leader _entity] call MAZ_EZM_fnc_garrisonInstantModule;
 					},
 					{true},
+					3,
 					"",
 					[1,1,1,1]
 				],
@@ -3736,6 +3743,7 @@ comment "Context Menu";
 						[leader _entity] call MAZ_EZM_fnc_garrisonSearchModule;
 					},
 					{true},
+					3,
 					"",
 					[1,1,1,1]
 				],
@@ -3746,6 +3754,7 @@ comment "Context Menu";
 						[leader _entity] call MAZ_EZM_fnc_unGarrisonModule;
 					},
 					{true},
+					3,
 					"",
 					[1,1,1,1]
 				]
@@ -3777,6 +3786,7 @@ comment "Context Menu";
 						(units _entity) joinSilent _group;
 					},
 					{true},
+					3,
 					"a3\3den\data\displays\display3den\panelright\side_west_ca.paa",
 					[1,1,1,1]
 				],
@@ -3789,6 +3799,7 @@ comment "Context Menu";
 						(units _entity) joinSilent _group;
 					},
 					{true},
+					3,
 					"a3\3den\data\displays\display3den\panelright\side_east_ca.paa",
 					[1,1,1,1]
 				],
@@ -3801,6 +3812,7 @@ comment "Context Menu";
 						(units _entity) joinSilent _group;
 					},
 					{true},
+					3,
 					"a3\3den\data\displays\display3den\panelright\side_guer_ca.paa",
 					[1,1,1,1]
 				],
@@ -3813,6 +3825,7 @@ comment "Context Menu";
 						(units _entity) joinSilent _group;
 					},
 					{true},
+					3,
 					"a3\3den\data\displays\display3den\panelright\side_civ_ca.paa",
 					[1,1,1,1]
 				]
@@ -18336,6 +18349,7 @@ MAZ_EZM_editZeusLogic = {
 				};
 			} else {
 				if(_entity isKindOf "AllVehicles") then {
+					_newPos set [2,0];
 					_entity setPosATL _newPos;
 				};
 			};
@@ -18587,14 +18601,14 @@ MAZ_EZM_addZeusKeybinds_312 = {
 				
 				_distanceTraveled = sqrt (((_difference_x)^2) + ((_difference_y)^2));
 				
-				if (_distanceTraveled <= _wiggleRoom) then 
-				{
-					[] call MAZ_EZM_fnc_createContextMenu;
+				if (_distanceTraveled <= _wiggleRoom) then {
+					call MAZ_EZM_fnc_openContextMenu;
 				};
 			};
 		} else {
-			if(call MAZ_EZM_fnc_isContextMenuOpen) then {
-				[] spawn MAZ_EZM_fnc_destroyContextMenu;
+			[] spawn {
+				sleep 0.01;
+				call MAZ_EZM_fnc_closeContextMenu;
 			};
 		};
 	}];
@@ -18827,9 +18841,9 @@ MAZ_EZM_fnc_initMainLoop = {
 			MAZ_CDLC_Setup = true;
 		};
 
-		[] spawn MAZ_EZM_editZeusLogic;
+		call MAZ_EZM_editZeusLogic;
 		[] spawn MAZ_EZM_addZeusKeybinds_312;
-		[] spawn MAZ_EZM_fnc_editZeusInterface;
+		call MAZ_EZM_fnc_editZeusInterface;
 		call MAZ_EZM_fnc_addRespawnModules;
 		playSound "beep_target";
 		[missionNamespace, "EZM_onZeusInterfaceOpened", [findDisplay 312]] call BIS_fnc_callScriptedEventHandler;
@@ -18884,6 +18898,7 @@ private _changelog = [
 	"Added Set Color to Black module to Object Modifiers",
 	"Added Set Plate Number module to Vehicle Modifiers",
 	"Added default Zeus group to prevent Zeus from hearing other people in group",
+	"Added infinite depth to the Context Menu system",
 	"Changed the Zeus unit type to a universal character that can equip any uniform",
 	"Changed Soundboard to V2.0",
 	"Changed the Soundboard module to the newest version from M9-SD",
@@ -18892,6 +18907,7 @@ private _changelog = [
 	"Fixed an issue where using the delete clutter module would do nothing",
 	"Fixed SIDES element not having spacing",
 	"Fixed 48+2 Side Switcher wasn't working",
+	"Fixed issue where vehicles would spawn higher than they should",
 	"Removed all getPos commands in favor of faster getPosATL"
 ];
 
@@ -18967,7 +18983,7 @@ call MAZ_EZM_fnc_askAboutZeusUnit;
 
 };
 
-comment "
+"
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠿⠿⠿⠿⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠛⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠛⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
@@ -18996,7 +19012,7 @@ comment "
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 ";
 
-comment "
+"
 	TODO Expung3d:
 		- EZM Eventhandlers
 		- Add Dead Soldier compositions to all factions 
