@@ -3041,9 +3041,6 @@ comment "Context Menu";
 		private _activeChildren = _childActions select {
 			private _child = _x;
 			with missionNamespace do {
-				if(typeName (_child select 2) == "SCALAR") then {
-					systemChat (str _child);
-				};
 				private _result = _entity call (_child select 2);
 				uiNamespace setVariable ["MAZ_EZM_contextCondition",_result];
 			};
