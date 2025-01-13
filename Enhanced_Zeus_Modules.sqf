@@ -2861,6 +2861,81 @@ comment "Context Menu";
 		_index
 	};
 
+	MAZ_EZM_fnc_addChildContextAction = {
+		params [
+			["_parentActionPath",[],[[]]],
+			["_actionData", [], [[]]]
+		];
+		_actionData params [
+			["_displayName","[ TEMPLATE ]", [""]],
+			["_code",{},[{}]],
+			["_condition",{true},[{}]],
+			["_priority",3,[1]],
+			["_img","",[""]],
+			["_color",[1,1,1,1],[[]]],
+			["_childActions",[],[[]]]
+		];
+		if(isNil "MAZ_EZM_contextMenuActions") exitWith {-1};
+		if(count _parentActionPath == 0) exitWith {-1};
+		private _actions = [];
+		private _tempAction = +MAZ_EZM_contextMenuActions;
+		{
+			if(_forEachIndex == 0) then {
+				if(_x >= count _tempAction) exitWith {-1};
+				_tempAction = _tempAction select _x;
+			} else {
+				private _actions = _tempAction select 6;
+				if(_x >= count _tempAction) exitWith {-1};
+				_tempAction = _tempAction select 6 select _x;
+			};
+			_actions pushBack _tempAction;
+		}forEach _parentActionPath;
+		private _index = ((_actions select -1) select 6) pushBack _actionData;
+
+		private _count = count _actions - 2;
+		for "_i" from _count to 0 step -1 do {
+			private _actionToMoveFrom = _actions select (_i + 1);
+			(_actions select _i) set [6,_actionToMoveFrom];
+		};
+		MAZ_EZM_contextMenuActions set [_parentActionPath # 0,_actions select 0];
+
+		(_parentActionPath + [_index]);
+	};
+
+	MAZ_EZM_fnc_removeChildContextAction = {
+		params [
+			["_parentActionPath",[],[[]]]
+		];
+		if(isNil "MAZ_EZM_contextMenuActions") exitWith {false};
+		if(count _parentActionPath == 0) exitWith {false};
+		private _actions = [];
+		private _tempAction = +MAZ_EZM_contextMenuActions;
+		{
+			if(_forEachIndex == (count _parentActionPath) - 1) then {continue};
+			if(_forEachIndex == 0) then {
+				if(_x >= count _tempAction) exitWith {false};
+				_tempAction = _tempAction select _x;
+			} else {
+				private _actions = _tempAction select 6;
+				if(_x >= count _tempAction) exitWith {false};
+				_tempAction = _tempAction select 6 select _x;
+			};
+			_actions pushBack _tempAction;
+		}forEach _parentActionPath;
+		copyToClipboard str (_actions select -1);
+		(_actions select -1 select 6) deleteAt (_parentActionPath select -1);
+
+		private _count = count _actions - 2;
+		for "_i" from _count to 0 step -1 do {
+			private _actionToMoveFrom = _actions select (_i + 1);
+			(_actions select _i) set [6,_actionToMoveFrom];
+		};
+		
+		MAZ_EZM_contextMenuActions set [_parentActionPath # 0,_actions select 0];
+		
+		true
+	};
+
 	MAZ_EZM_fnc_removeContextAction = {
 		params ["_index"];
 		if(_index < 0 || _index >= (count MAZ_EZM_contextMenuActions)) exitWith {
@@ -3072,179 +3147,246 @@ comment "Context Menu";
 
 	"General Actions";
 
-		if(!isNil "MAZ_EZM_action_openDebugConsole") then {
-			[MAZ_EZM_action_openDebugConsole] call MAZ_EZM_fnc_removeContextAction;
+		if(!isNil "MAZ_EZM_action_devTools") then {
+			[MAZ_EZM_action_devTools] call MAZ_EZM_fnc_removeContextAction;
 		};
-		MAZ_EZM_action_openDebugConsole = [
-			"Open Debug Console",
+		MAZ_EZM_action_devTools = [
+			"Dev Tools",
 			{
 				params ["_pos","_entity"];
 				[_entity] call MAZ_EZM_fnc_debugConsoleLocalModule;
 			},
 			{true},
-			6,
-			"a3\3den\data\displays\display3den\entitymenu\findconfig_ca.paa",
-			[1,1,1,1],
-			[]
-		] call MAZ_EZM_fnc_createNewContextAction;
-
-		if(!isNil "MAZ_EZM_action_addEditableObjects") then {
-			[MAZ_EZM_action_addEditableObjects] call MAZ_EZM_fnc_removeContextAction;
-		};
-		MAZ_EZM_action_addEditableObjects = [
-			"Add Editable Objects",
-			{
-				params ["_pos"];
-				private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
-				[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
-			},
-			{true},
-			6,
-			"a3\3den\data\displays\display3den\panelright\customcomposition_add_ca.paa",
+			5.9,
+			"a3\3den\data\displays\display3den\toolbar\help_tutorial_ca.paa",
 			[1,1,1,1],
 			[
 				[
-					"50m",
+					"Debug Console",
 					{
-						params ["_pos"];
-						private _objects = [_pos,50] call MAZ_EZM_fnc_getEditableObjectsRadius;
-						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+						params ["_pos","_entity"];
+						[_entity] call MAZ_EZM_fnc_debugConsoleLocalModule;
 					},
 					{true},
-					3,
-					"",
+					1,
+					"a3\3den\data\displays\display3den\entitymenu\findconfig_ca.paa",
 					[1,1,1,1],
 					[]
 				],
 				[
-					"100m",
+					"Config Viewer",
 					{
-						params ["_pos"];
-						private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
-						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+						params ["_pos","_entity"];
+						[_entity] call MAZ_EZM_fnc_showObjectConfig;
 					},
 					{true},
-					3,
-					"",
+					2,
+					"a3\3den\data\displays\display3den\search_start_ca.paa",
 					[1,1,1,1],
 					[]
 				],
 				[
-					"250m",
+					"Function Viewer",
 					{
-						params ["_pos"];
-						private _objects = [_pos,250] call MAZ_EZM_fnc_getEditableObjectsRadius;
-						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+						params ["_pos","_entity"];
+						call MAZ_EZM_fnc_functionViewer;
 					},
 					{true},
 					3,
-					"",
+					"a3\3den\data\displays\display3den\entitymenu\functions_ca.paa",
 					[1,1,1,1],
 					[]
 				],
 				[
-					"500m",
+					"Animation Viewer",
 					{
-						params ["_pos"];
-						private _objects = [_pos,500] call MAZ_EZM_fnc_getEditableObjectsRadius;
-						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+						params ["_pos","_entity"];
+						[_entity] call MAZ_EZM_fnc_openAnimViewerModule;
 					},
 					{true},
-					3,
-					"",
+					4,
+					"a3\3den\data\attributes\speedmode\limited_ca.paa",
 					[1,1,1,1],
 					[]
 				],
 				[
-					"1000m",
+					"GUI Editor",
 					{
-						params ["_pos"];
-						private _objects = [_pos,1000] call MAZ_EZM_fnc_getEditableObjectsRadius;
-						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+						params ["_pos","_entity"];
+						call MAZ_EZM_fnc_openGUIEditor;
 					},
 					{true},
-					3,
-					"",
+					5,
+					"a3\3den\data\displays\display3den\panelright\customcomposition_edit_ca.paa",
 					[1,1,1,1],
 					[]
 				]
 			]
 		] call MAZ_EZM_fnc_createNewContextAction;
 
-		if(!isNil "MAZ_EZM_action_removeEditableObjects") then {
-			[MAZ_EZM_action_removeEditableObjects] call MAZ_EZM_fnc_removeContextAction;
+		if(!isNil "MAZ_EZM_action_editableObjects") then {
+			[MAZ_EZM_action_editableObjects] call MAZ_EZM_fnc_removeContextAction;
 		};
-		MAZ_EZM_action_removeEditableObjects = [
-			"Remove Edit Objects",
-			{
-				params ["_pos"];
-				private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
-				[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
-			},
+		MAZ_EZM_action_editableObjects = [
+			"Editable Objects",
+			{},
 			{true},
-			7,
-			"a3\3den\data\cfg3den\group\iconcustomcomposition_ca.paa",
+			6,
+			"a3\3den\data\displays\display3den\panelright\customcomposition_add_ca.paa",
 			[1,1,1,1],
 			[
 				[
-					"50m",
-					{
-						params ["_pos"];
-						private _objects = [_pos,50] call MAZ_EZM_fnc_getEditableObjectsRadius;
-						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
-					},
-					{true},
-					3,
-					"",
-					[1,1,1,1]
-				],
-				[
-					"100m",
+					"Add",
 					{
 						params ["_pos"];
 						private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
-						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
 					},
 					{true},
 					3,
-					"",
-					[1,1,1,1]
+					"a3\3den\data\displays\display3den\panelright\customcomposition_add_ca.paa",
+					[1,1,1,1],
+					[
+						[
+							"50m",
+							{
+								params ["_pos"];
+								private _objects = [_pos,50] call MAZ_EZM_fnc_getEditableObjectsRadius;
+								[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+							},
+							{true},
+							3,
+							"",
+							[1,1,1,1],
+							[]
+						],
+						[
+							"100m",
+							{
+								params ["_pos"];
+								private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
+								[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+							},
+							{true},
+							3,
+							"",
+							[1,1,1,1],
+							[]
+						],
+						[
+							"250m",
+							{
+								params ["_pos"];
+								private _objects = [_pos,250] call MAZ_EZM_fnc_getEditableObjectsRadius;
+								[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+							},
+							{true},
+							3,
+							"",
+							[1,1,1,1],
+							[]
+						],
+						[
+							"500m",
+							{
+								params ["_pos"];
+								private _objects = [_pos,500] call MAZ_EZM_fnc_getEditableObjectsRadius;
+								[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+							},
+							{true},
+							3,
+							"",
+							[1,1,1,1],
+							[]
+						],
+						[
+							"1000m",
+							{
+								params ["_pos"];
+								private _objects = [_pos,1000] call MAZ_EZM_fnc_getEditableObjectsRadius;
+								[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
+							},
+							{true},
+							3,
+							"",
+							[1,1,1,1],
+							[]
+						]
+					]
 				],
 				[
-					"250m",
+					"Remove",
 					{
 						params ["_pos"];
-						private _objects = [_pos,250] call MAZ_EZM_fnc_getEditableObjectsRadius;
-						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
+						private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
+						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_addObjectToInterface;
 					},
 					{true},
-					3,
-					"",
-					[1,1,1,1]
-				],
-				[
-					"500m",
-					{
-						params ["_pos"];
-						private _objects = [_pos,500] call MAZ_EZM_fnc_getEditableObjectsRadius;
-						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
-					},
-					{true},
-					3,
-					"",
-					[1,1,1,1]
-				],
-				[
-					"1000m",
-					{
-						params ["_pos"];
-						private _objects = [_pos,1000] call MAZ_EZM_fnc_getEditableObjectsRadius;
-						[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
-					},
-					{true},
-					3,
-					"",
-					[1,1,1,1]
+					6,
+					"a3\3den\data\cfg3den\group\iconcustomcomposition_ca.paa",
+					[1,1,1,1],
+					[
+						[
+							"50m",
+							{
+								params ["_pos"];
+								private _objects = [_pos,50] call MAZ_EZM_fnc_getEditableObjectsRadius;
+								[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
+							},
+							{true},
+							3,
+							"",
+							[1,1,1,1]
+						],
+						[
+							"100m",
+							{
+								params ["_pos"];
+								private _objects = [_pos,100] call MAZ_EZM_fnc_getEditableObjectsRadius;
+								[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
+							},
+							{true},
+							3,
+							"",
+							[1,1,1,1]
+						],
+						[
+							"250m",
+							{
+								params ["_pos"];
+								private _objects = [_pos,250] call MAZ_EZM_fnc_getEditableObjectsRadius;
+								[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
+							},
+							{true},
+							3,
+							"",
+							[1,1,1,1]
+						],
+						[
+							"500m",
+							{
+								params ["_pos"];
+								private _objects = [_pos,500] call MAZ_EZM_fnc_getEditableObjectsRadius;
+								[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
+							},
+							{true},
+							3,
+							"",
+							[1,1,1,1]
+						],
+						[
+							"1000m",
+							{
+								params ["_pos"];
+								private _objects = [_pos,1000] call MAZ_EZM_fnc_getEditableObjectsRadius;
+								[_objects,getAssignedCuratorLogic player] call MAZ_EZM_fnc_removeObjectFromInterface;
+							},
+							{true},
+							3,
+							"",
+							[1,1,1,1]
+						]
+					]
 				]
 			]
 		] call MAZ_EZM_fnc_createNewContextAction;
@@ -3264,7 +3406,7 @@ comment "Context Menu";
 				player setPosATL _pos;
 			},
 			{true},
-			5.9,
+			5.8,
 			"a3\3den\data\cfgwaypoints\move_ca.paa",
 			[1,1,1,1],
 			[
@@ -3329,6 +3471,66 @@ comment "Context Menu";
 					},
 					3,
 					"a3\3den\data\cfgwaypoints\getin_ca.paa",
+					[1,1,1,1]
+				]
+			]
+		] call MAZ_EZM_fnc_createNewContextAction;
+
+		if(!isNil "MAZ_EZM_action_cleanup") then {
+			[MAZ_EZM_action_cleanup] call MAZ_EZM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_cleanup = [
+			"Cleaning Tools",
+			{
+				call MAZ_EZM_fnc_deleteBodies;
+			},
+			{true},
+			6.1,
+			"a3\3den\data\displays\display3den\panelleft\entitylist_delete_ca.paa",
+			[1,1,1,1],
+			[
+				[
+					"Delete Bodies",
+					{
+						params ["_pos","_entity"];
+						call MAZ_EZM_fnc_deleteBodies;
+					},
+					{true},
+					3,
+					"a3\ui_f_curator\data\cfgmarkers\kia_ca.paa",
+					[1,1,1,1]
+				],
+				[
+					"Delete Clutter",
+					{
+						params ["_pos","_entity"];
+						[nil,objNull,true] call MAZ_EZM_fnc_deleteClutterModule;
+					},
+					{true},
+					3,
+					"a3\3den\data\displays\display3den\panelleft\entitylist_delete_ca.paa",
+					[1,1,1,1]
+				],
+				[
+					"Delete Markers",
+					{
+						params ["_pos","_entity"];
+						call MAZ_EZM_fnc_deleteMarkersModule;
+					},
+					{true},
+					3,
+					"a3\3den\data\displays\display3den\panelright\submode_marker_icon_ca.paa",
+					[1,1,1,1]
+				],
+				[
+					"Delete Mines",
+					{
+						params ["_pos","_entity"];
+						call MAZ_EZM_fnc_deleteMinesModule;
+					},
+					{true},
+					3,
+					"a3\ui_f_curator\data\cfgmarkers\minefieldap_ca.paa",
 					[1,1,1,1]
 				]
 			]
@@ -3416,7 +3618,7 @@ comment "Context Menu";
 					},
 					{true},
 					3,
-					"",
+					"a3\3den\data\displays\display3den\panelright\customcomposition_edit_ca.paa",
 					[1,1,1,1]
 				],
 				[
@@ -3427,7 +3629,7 @@ comment "Context Menu";
 					},
 					{true},
 					3,
-					"",
+					"a3\3den\data\displays\display3den\toolbar\undo_ca.paa",
 					[1,1,1,1]
 				],
 				[
@@ -3438,7 +3640,7 @@ comment "Context Menu";
 					},
 					{true},
 					3,
-					"",
+					"a3\3den\data\cfg3den\history\changeattributes_ca.paa",
 					[1,1,1,1]
 				],
 				[
@@ -3451,7 +3653,7 @@ comment "Context Menu";
 						(!isNil "MAZ_EZM_copiedUnitLoadout")
 					},
 					3,
-					"",
+					"a3\3den\data\cfg3den\history\pasteitems_ca.paa",
 					[1,1,1,1]
 				],
 				[
@@ -3562,11 +3764,11 @@ comment "Context Menu";
 
 	"Vehicle Actions";
 
-		if(!isNil "MAZ_EZM_action_repairVehicle") then {
-			[MAZ_EZM_action_repairVehicle] call MAZ_EZM_fnc_removeContextAction;
+		if(!isNil "MAZ_EZM_action_vehicleState") then {
+			[MAZ_EZM_action_vehicleState] call MAZ_EZM_fnc_removeContextAction;
 		};
-		MAZ_EZM_action_repairVehicle = [
-			"Repair",
+		MAZ_EZM_action_vehicleState = [
+			"Vehicle State",
 			{
 				params ["_pos","_entity"];
 				_entity setDamage 0;
@@ -3582,53 +3784,66 @@ comment "Context Menu";
 			},
 			2,
 			"a3\ui_f\data\igui\cfg\cursors\iconrepairvehicle_ca.paa",
-			[1,1,1,1]
-		] call MAZ_EZM_fnc_createNewContextAction;
+			[1,1,1,1],
+			[
+				[
+					"Repair",
+					{
+						params ["_pos","_entity"];
+						_entity setDamage 0;
+					},
+					{
+						private _return = false;
+						if(_this isEqualType grpNull) exitWith {_return};
+						if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles") then {
+							_return = true;
+						};
 
-		if(!isNil "MAZ_EZM_action_refuelVehicle") then {
-			[MAZ_EZM_action_refuelVehicle] call MAZ_EZM_fnc_removeContextAction;
-		};
-		MAZ_EZM_action_refuelVehicle = [
-			"Refuel",
-			{
-				params ["_pos","_entity"];
-				[_entity,1] remoteExec ['setFuel'];
-			},
-			{
-				private _return = false;
-				if(_this isEqualType grpNull) exitWith {_return};
-				if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles") then {
-					_return = true;
-				};
+						_return
+					},
+					2,
+					"a3\ui_f\data\igui\cfg\cursors\iconrepairvehicle_ca.paa",
+					[1,1,1,1]
+				],
+				[
+					"Refuel",
+					{
+						params ["_pos","_entity"];
+						[_entity,1] remoteExec ['setFuel'];
+					},
+					{
+						private _return = false;
+						if(_this isEqualType grpNull) exitWith {_return};
+						if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles") then {
+							_return = true;
+						};
 
-				_return
-			},
-			2,
-			"a3\ui_f\data\igui\cfg\actions\refuel_ca.paa",
-			[1,1,1,1]
-		] call MAZ_EZM_fnc_createNewContextAction;
+						_return
+					},
+					3,
+					"a3\ui_f\data\igui\cfg\actions\refuel_ca.paa",
+					[1,1,1,1]
+				],
+				[
+					"Rearm",
+					{
+						params ["_pos","_entity"];
+						[_entity,1] remoteExec ['setVehicleAmmo'];
+					},
+					{
+						private _return = false;
+						if(_this isEqualType grpNull) exitWith {_return};
+						if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles") then {
+							_return = true;
+						};
 
-		if(!isNil "MAZ_EZM_action_rearmVehicle") then {
-			[MAZ_EZM_action_rearmVehicle] call MAZ_EZM_fnc_removeContextAction;
-		};
-		MAZ_EZM_action_rearmVehicle = [
-			"Rearm",
-			{
-				params ["_pos","_entity"];
-				[_entity,1] remoteExec ['setVehicleAmmo'];
-			},
-			{
-				private _return = false;
-				if(_this isEqualType grpNull) exitWith {_return};
-				if(!(typeOf _this isKindOf "CAManBase") && alive _this && !isNull _this && typeOf _this isKindOf "AllVehicles") then {
-					_return = true;
-				};
-
-				_return
-			},
-			2,
-			"a3\ui_f\data\igui\cfg\simpletasks\types\rearm_ca.paa",
-			[1,1,1,1]
+						_return
+					},
+					4,
+					"a3\ui_f\data\igui\cfg\simpletasks\types\rearm_ca.paa",
+					[1,1,1,1]
+				]
+			]
 		] call MAZ_EZM_fnc_createNewContextAction;
 
 		if(!isNil "MAZ_EZM_action_editPylons") then {
@@ -3701,6 +3916,47 @@ comment "Context Menu";
 			1,
 			"a3\ui_f\data\gui\rsc\rscdisplayarsenal\spacegarage_ca.paa",
 			[1,1,1,1]
+		] call MAZ_EZM_fnc_createNewContextAction;
+
+		if(!isNil "MAZ_EZM_action_ships") then {
+			[MAZ_EZM_action_ships] call MAZ_EZM_fnc_removeContextAction;
+		};
+		MAZ_EZM_action_ships = [
+			"Replace Ship",
+			{},
+			{
+				private _return = false;
+				if(_this isEqualType grpNull) exitWith {_return};
+				if(typeOf _entity isKindOf "Ship") then {_return = true};
+				_return
+			},
+			2,
+			"a3\ui_f\data\map\vehicleicons\iconship_ca.paa",
+			[1,1,1,1],
+			[
+				[
+					"USS Freedom",
+					{
+						params ["_pos","_entity"];
+						[_entity] call MAZ_EZM_fnc_createCarrierModule;
+					},
+					{true},
+					3,
+					"",
+					[1,1,1,1]
+				],
+				[
+					"USS Liberty",
+					{
+						params ["_pos","_entity"];
+						[_entity] call MAZ_EZM_fnc_createDestroyerModule;
+					},
+					{true},
+					3,
+					"",
+					[1,1,1,1]
+				]
+			]
 		] call MAZ_EZM_fnc_createNewContextAction;
 
 	"Group Actions";
