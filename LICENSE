@@ -1,56 +1,21 @@
-Enhanced Zeus Modules End-User License Agreement
-Copyright 2023 Expung3d
+MIT License
 
-The Short:
-	This short description of the End-User License Agreement is not legally binding. For an in-depth description of your rights please read further in this license.
-	You may:
-		Use, edit, modify, re-upload*, publish*, distribute*, and copy this script.
-		
-		*restrictions apply
-	You may not:
-		Use this script for commercial use. 
-		Re-release the contents of this script without releasing it under the Enhanced Zeus Modules name. 
-			i.e. If your name is M9-SD you would release your subsequent version as Enhanced Zeus Modules [M9-SD Edition]
-		Re-release any of the contents of this script without licensing it under this same license.
-		Re-release the contents of this script without at least ONE (1) attribution in the script's features.
-			i.e. You must add at least one new module, feature, dialog feature, etc.
+Copyright (c) 2024 Expung3d
 
-1. Introduction:
-	1.1 Introduction. 
-		This End-User License Agreement ('EULA') is a legal agreement between You, the user, and Expung3d, the developer, and governs your use of the Scripts contained herein. 
-		Through usage of this Script You are agreeing that You are of legal age to legally consent to this agreement and are bound to all of the terms of this legal agreement. 
-		If You do not agree to the terms of this agreement, do not install or use the Script.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-	1.2 Disclaimer. 
-    		This Script is provided without warranty. Use at your own risk. There will be updates and bug fixes applied to this Script in future.
-    		Downloading a newer version of this Script extends your Agreement to the new version as well, unless Your Agreement has been terminated prior.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-	1.3 Limitation of Liability.
-		Under no circumstances shall Expung3d or his affiliates, partners, or licensors be liable for any indirect, incidental, consequential, special or exemplary damages arising out of or in connection with your access or use of or inability to access or use the Script, whether or not the damages were foreseeable and whether or not Expung3d was advised of the possibility of such damages.
-
-2. Terms:
-	2.1 License Grant. 
-		I, Expung3d, grant You a revocable, non-exclusive, non-transferable, limited right to install and use the Script onto any device owned and controlled by You, and to access and use the Script on such device in accordance with the terms and conditions of this License.
-
-	2.2 Restrictions on Use. 
-		You shall use the Script strictly in accordance with the terms of the Agreement and shall not:
-		  (a). Use the contents of this Script for commercial use.
-		  (b). Re-release any of the Script’s contents under the name of anything other than Enhanced Zeus Modules [Your Name] Edition.
-		  (c). Any subsequent releases based upon the foundation of the Script must be open source and licensed under this same license.
-		  (d). Re-release the contents of this Script without one (1) minimum attribution to the Script (i.e. a new module or new feature).
-
-3. Term and Termination:
-	3.1 Agreement Duration.
-		This Agreement remains effective until termination. This Agreement will be immediately terminated upon notice if You exceed the scope of the license granted or otherwise fail to comply with Section 2.
-
-	3.2 Self Termination.
-		You may terminate this Agreement at any time by returning or certifying destruction of all copies of the Script used by You and providing written notice to Expung3d.
-
-	3.3 Handling of Termination.
-		Upon termination of this Agreement, You shall ensure that all use of this Script ceases, remove any portion of the Script within your own works, and shall certify destruction of all copies of the Software used by You to Expung3d's reasonable satisfaction.
-
-4. Contact Information:
-	4.1 Expung3d's Contact Info.
-		Expung3d may be contacted through E-Mail or Discord
-			E-Mail: ZAMOfficialArma @ gmail.com
-			Discord: Expunged#9959
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
