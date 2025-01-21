@@ -6613,7 +6613,7 @@ MAZ_EZM_fnc_initFunction = {
 				private _typeArray = [];
 				if(_type) then {
 					_typeArray pushBack 'Vehicle';
-					switch (_payloadType) do {
+					switch (parseNumber _payloadType) do {
 						case 0: {_typeArray pushBack 'B_MRAP_01_F';};
 						case 1: {_typeArray pushBack 'B_MRAP_01_hmg_F';};
 						case 2: {_typeArray pushBack 'B_MRAP_01_gmg_F';};
@@ -18811,52 +18811,30 @@ MAZ_EZM_addZeusKeybinds_312 = {
 	MAZ_EZM_rightClickContextMenuDownEH = (findDisplay 312) displayAddEventHandler ["MouseButtonDown",{
 		params ["_displayOrControl", "_button", "_xPos", "_yPos", "_shift", "_ctrl", "_alt"];
 		if(_button == 1 && (!_ctrl && !_shift && !_alt)) then {
-			
-				MAZ_EZM_mousePressTimeContext = time;
-			
-			comment "detect mouse movement (panning camera)";
-			
-				JAM_EZM_mouseMovementContext = getMousePosition;
-			
+			MAZ_EZM_mousePressTimeContext = time;
+			MAZ_EZM_mouseMovementContext = getMousePosition;
 		};
 	}];
 	MAZ_EZM_rightClickContextMenuUpEH = (findDisplay 312) displayAddEventHandler ["MouseButtonUp", {
 		params ["_displayOrControl", "_button", "_xPos", "_yPos", "_shift", "_ctrl", "_alt"];
-		comment "TODO:Optimize";
 		if(_button == 1 && (!_ctrl && !_shift && !_alt)) then {
-			if (isNil 'MAZ_EZM_mousePressTimeContext') then {MAZ_EZM_mousePressTimeContext = time;};
+			if (isNil "MAZ_EZM_mousePressTimeContext") then {MAZ_EZM_mousePressTimeContext = time;};
+			if (isNil "MAZ_EZM_mouseMovementContext") then {MAZ_EZM_mouseMovementContext = getMousePosition};
 			private _buttonHoldTime = time - MAZ_EZM_mousePressTimeContext;
 			MAZ_EZM_mousePressTimeContext = nil;
 			if (_buttonHoldTime < 0.2) then {
-			
-				comment "Tweak amount of tolerance (for camera panning):";
-				
-				comment "systemchat 'holdtime good';";
-				
-				_wiggleRoom = 0.01;
-			
-				_mousePosLast = missionNamespace getvariable ['JAM_EZM_mouseMovementContext', getMousePosition];
-				_mousePosCurrent = getMousePosition;
-				
-				_mousePosLast_x = _mousePosLast # 0;
-				_mousePosLast_y = _mousePosLast # 1;
-				
-				_mousePosCurrent_x = _mousePosCurrent # 0;
-				_mousePosCurrent_y = _mousePosCurrent # 1;
-				
-				_difference_x = _mousePosCurrent_x - _mousePosLast_x;
-				_difference_y = _mousePosCurrent_y - _mousePosLast_y;
-				
-				_absoluteDifference_x = if (_difference_x < 0) then {_difference_x * -1} else {_difference_x};
-				_absoluteDifference_y = if (_difference_y < 0) then {_difference_y * -1} else {_difference_y};
+				private _wiggleRoom = 0.01;
+				private _diff = getMousePosition vectorDiff MAZ_EZM_mouseMovementContext;
+				_diff params ["_difference_x","_difference_y"];
 				
 				comment "distance formula: d=√((x2−x1)^2+(y2−y1)^2)";
 				
-				_distanceTraveled = sqrt (((_difference_x)^2) + ((_difference_y)^2));
+				private _distanceTraveled = sqrt (((_difference_x)^2) + ((_difference_y)^2));
 				
 				if (_distanceTraveled <= _wiggleRoom) then {
 					call MAZ_EZM_fnc_openContextMenu;
 				};
+				MAZ_EZM_mouseMovementContext = nil;
 			};
 		} else {
 			[] spawn {
