@@ -3,7 +3,7 @@ if(!isNull (findDisplay 312) && {!isNil "this"} && {!isNull this}) then {
 };
 
 [] spawn {
-MAZ_EZM_Version = "V2.1.6";
+MAZ_EZM_Version = "V2.1.7";
 MAZ_EZM_autoAdd = profileNamespace getVariable ["MAZ_EZM_autoAddVar",true];
 MAZ_EZM_spawnWithCrew = true;
 MAZ_EZM_nvgsOnlyAtNight = true;
@@ -8587,7 +8587,7 @@ MAZ_EZM_fnc_initFunction = {
 					} forEach nearestLocations [getArray (configFile >> "CfgWorlds" >> worldName >> "centerPosition"), [_x], worldSize];	
 				} forEach ["NameVillage", "NameCity", "NameCityCapital"];
 				if(!(toUpper _town in _locationNames) && ((toUpper _town) != "NONE" && (toUpper _town) != "")) exitWith {["No such town!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
-				[_town,_sideNew,_garrPercent,_patrols,_fortify,_notify] spawn MAZ_EZM_fnc_garrisonTown; 
+				[_town,_side,_garrPercent,_patrols,_fortify,_notify] spawn MAZ_EZM_fnc_garrisonTown; 
 				_display closeDisplay 1;
 			},{
 				params ["_values","_args","_display"];
