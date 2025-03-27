@@ -9407,16 +9407,18 @@ MAZ_EZM_fnc_initFunction = {
 					[[_target, _line1, _line2],HYPER_fnc_remoteCamera] remoteExec ["spawn", _allPlayers];
 				};
 				case "News": {
+					private _briefingNameTitle = parseText format ["<t size='2'>%1</t>",_briefingName];
+					private _subTitle = parseText format["// %1 - %2 // REPORTING LIVE FROM %3", _intertitles # 0, _intertitles # 1, worldName];
 					HYPER_fnc_remoteCamera = {
-						params ["_target", "_briefingName", "_line1", "_line2"];
+						params ["_target", "_briefingNameTitle", "_subTitle"];
 						[] spawn {
 							playSoundUI ["a3\sounds_f\vehicles\air\heli_attack_01\heli_attack_01_ext_rotor.wss", 0.2];
 							sleep 7.5;
 							playSoundUI ["a3\sounds_f\vehicles\air\heli_attack_01\heli_attack_01_ext_rotor.wss", 0.2];
 						};
 						[
-							parseText format ["<t size='2'>%1</t>",_briefingName],
-							parseText format["// %1 - %2 // REPORTING LIVE FROM %3", _line1, _line2, worldName]
+							_briefingNameTitle,
+							_subTitle
 						] spawn BIS_fnc_AAN;
 
 						private _cam = call MAZ_EZM_fnc_createCinematicCam;
@@ -9457,7 +9459,7 @@ MAZ_EZM_fnc_initFunction = {
 						cutText ["", "BLACK IN", 2];
 						[1, 2, true, true] call BIS_fnc_cinemaBorder;
 					};
-					[[_target, _briefingName, _intertitles # 0, _intertitles # 1],HYPER_fnc_remoteCamera] remoteExec ["spawn", _allPlayers];
+					[[_target, _briefingNameTitle, _subTitle],HYPER_fnc_remoteCamera] remoteExec ["spawn", _allPlayers];
 				};
 			};
 		};
