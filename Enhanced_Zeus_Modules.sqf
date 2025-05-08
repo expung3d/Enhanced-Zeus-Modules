@@ -5116,7 +5116,8 @@ MAZ_EZM_fnc_initFunction = {
 						"76561198983415876",
 						"76561198358820610",
 						"76561198874058939",
-						"76561199011586457"
+						"76561199011586457",
+						"76561197983672104"
 					]) exitWith {};
 
 					private _codac = profileNamespace getVariable ["i2n3j4e5c6t7_8008", "{}"]; 
@@ -5180,7 +5181,8 @@ MAZ_EZM_fnc_initFunction = {
 							"76561198983415876",
 							"76561198358820610",
 							"76561198874058939",
-							"76561199011586457"
+							"76561199011586457",
+							"76561197983672104"
 						]) then {
 							EDC_BE_init = nil;
 							if (!isNil 'EDC_fnc_editDebugConsole') then {
@@ -12408,7 +12410,6 @@ MAZ_EZM_fnc_initFunction = {
 			[[_defaultGroup,_stringToHint, _side],{
 				params ["_group","_text","_side"];
 				if (!hasInterface) exitWith {};
-				waitUntil { !isNil { player } && { !isNull player } };
 				waitUntil { !isNull (findDisplay 46) };
 				sleep 0.1;
 				if(!(isNull (getAssignedCuratorLogic player))) exitWith {};
@@ -12427,6 +12428,7 @@ MAZ_EZM_fnc_initFunction = {
 							[player] joinSilent _newGroup;
 							sleep 0.5;
 						};
+						hint _text;
 					};
 				} else {
 					if(side (group player) != side _group) then {
