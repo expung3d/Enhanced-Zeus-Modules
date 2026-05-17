@@ -1039,15 +1039,15 @@ comment "Attributes Dialog System";
 		_controlsGroup ctrlSetPosition [0,0,(["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_controlsGroup ctrlCommit 0;
 
-		private _rowLabel = _display ctrlCreate ["RscText",150,_controlsGroup];
-		_rowLabel ctrlSetPosition [0,0,(["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
-		_rowLabel ctrlSetBackgroundColor [0,0,0,0.6];
-		_rowLabel ctrlCommit 0;
-
 		private _rowBG = _display ctrlCreate ["RscPicture",152,_controlsGroup];
 		_rowBG ctrlSetPosition [(["W",9.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),0,(["W",16.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
 		_rowBG ctrlSetText "#(argb,8,8,3)color(1,1,1,0.1)";
 		_rowBG ctrlCommit 0;
+
+		private _rowLabel = _display ctrlCreate ["RscText",150,_controlsGroup];
+		_rowLabel ctrlSetPosition [0,0,(["W",9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat),(["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat)];
+		_rowLabel ctrlSetBackgroundColor [0,0,0,0.6];
+		_rowLabel ctrlCommit 0;
 
 		_controlsGroup
 	};
@@ -1083,6 +1083,9 @@ comment "Attributes Dialog System";
 		_rowLabel ctrlSetStructuredText parseText (format ["<t align='%1'>%2</t>",_align,_text]);
 		_rowLabel ctrlSetPositionW (["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_rowLabel ctrlCommit 0;
+
+		private _rowBG = _rowControlsGroup controlsGroupCtrl 152;
+		_rowBG ctrlSetText "";
 
 		private _rowEditMultiBox = _display ctrlCreate ["RscEditMulti",161,_rowControlsGroup];
 		_rowEditMultiBox ctrlSetPosition [["W",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,(["H",1.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) + pixelH,["W",25.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,((["H",2.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH)];
@@ -1426,7 +1429,7 @@ comment "Attributes Dialog System";
 
 	MAZ_EZM_fnc_createAttribInitRow = {
 		params ["_display","_settings"];
-		_settings params ["_entity", ["_showApply",true]];
+		_settings params ["_entity", ["_showApply",false]];
 		private _rowControlsGroup = [_display] call MAZ_EZM_fnc_createAttributesRowBase;
 		_rowControlsGroup ctrlSetPositionH (["H",4] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_rowControlsGroup ctrlCommit 0;
@@ -1436,6 +1439,9 @@ comment "Attributes Dialog System";
 		_rowLabel ctrlSetStructuredText parseText (format ["<t align='left'>%1</t>",_text]);
 		_rowLabel ctrlSetPositionW (["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
 		_rowLabel ctrlCommit 0;
+
+		private _rowBG = _rowControlsGroup controlsGroupCtrl 152;
+		_rowBG ctrlSetText "";
 
 		private _rowEditMultiBox = _display ctrlCreate ["RscEditMulti",161,_rowControlsGroup];
 		_rowEditMultiBox ctrlSetPosition [["W",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,(["H",1.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) + pixelH,["W",25.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,((["H",2.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH)];
@@ -17531,6 +17537,8 @@ MAZ_EZM_fnc_editZeusInterface = {
 				_x ctrlAddEventhandler ["TreeSelChanged",{
 					params ["_control","_path"];
 					with uiNamespace do {
+						MAZ_EZM_ContextPath = _path;
+						if(_path isEqualTo []) exitWith {};
 						MAZ_EZM_SelectionPath = _path;
 					};
 				}];
@@ -19229,7 +19237,7 @@ MAZ_EZM_addZeusKeybinds_312 = {
 	}];
 	MAZ_EZM_rightClickContextMenuUpEH = (findDisplay 312) displayAddEventHandler ["MouseButtonUp", {
 		params ["_displayOrControl", "_button", "_xPos", "_yPos", "_shift", "_ctrl", "_alt"];
-		if (!((uiNamespace getVariable ["MAZ_EZM_SelectionPath", []]) isEqualTo [])) exitWith {};
+		if (!((uiNamespace getVariable ["MAZ_EZM_ContextPath", []]) isEqualTo [])) exitWith {};
 		if(_button == 1 && (!_ctrl && !_shift && !_alt)) then {
 			if (isNil "MAZ_EZM_mousePressTimeContext") then {MAZ_EZM_mousePressTimeContext = time;};
 			if (isNil "MAZ_EZM_mouseMovementContext") then {MAZ_EZM_mouseMovementContext = getMousePosition};
