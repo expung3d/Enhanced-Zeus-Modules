@@ -1423,6 +1423,51 @@ comment "Attributes Dialog System";
 
 		_rowControlsGroup
 	};
+
+	MAZ_EZM_fnc_createAttribInitRow = {
+		params ["_display","_settings"];
+		_settings params ["_entity", ["_showApply",true]];
+		private _rowControlsGroup = [_display] call MAZ_EZM_fnc_createAttributesRowBase;
+		_rowControlsGroup ctrlSetPositionH (["H",4] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		_rowControlsGroup ctrlCommit 0;
+
+		private _rowLabel = _rowControlsGroup controlsGroupCtrl 150;
+		private _text = ctrlText _rowLabel;
+		_rowLabel ctrlSetStructuredText parseText (format ["<t align='left'>%1</t>",_text]);
+		_rowLabel ctrlSetPositionW (["W",26] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+		_rowLabel ctrlCommit 0;
+
+		private _rowEditMultiBox = _display ctrlCreate ["RscEditMulti",161,_rowControlsGroup];
+		_rowEditMultiBox ctrlSetPosition [["W",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,(["H",1.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) + pixelH,["W",25.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,((["H",2.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH)];
+		_rowEditMultiBox ctrlSetBackgroundColor [0,0,0,0.3];
+		_rowEditMultiBox ctrlSetFont "EtelkaMonospacePro";
+		_rowEditMultiBox ctrlSetFontHeight 0.03;
+		_rowEditMultiBox ctrlCommit 0;
+
+		if(_showApply) then {
+			_rowControlsGroup ctrlSetPositionH (["H",5.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat);
+			private _initApplyButton = _display ctrlCreate ["RscButtonMenu",162,_rowControlsGroup];
+			_initApplyButton ctrlSetPosition [["W",0.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,(["H",4.1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) + pixelH,["W",25.9] call MAZ_EZM_fnc_convertToGUI_GRIDFormat,((["H",1] call MAZ_EZM_fnc_convertToGUI_GRIDFormat) - pixelH)];
+			_initApplyButton ctrlSetStructuredText parseText "APPLY";
+			_initApplyButton ctrlAddEventHandler ["ButtonClick", {
+				params ["_control"];
+				private _rowControlsGroup = ctrlParentControlsGroup _control;
+				private _input = "this = _this;" + (ctrlText (_rowControlsGroup controlsGroupCtrl 161));
+				private _entity = _control getVariable ["MAZ_EZM_initEntity",null];
+				_entity call (compile _input);
+				["Init compiled and ran.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+			}];
+			_initApplyButton ctrlCommit 0;
+			_initApplyButton setVariable ["MAZ_EZM_initEntity",_entity];
+		};
+
+		_rowControlsGroup setVariable ["MAZ_EZM_getControlValue",{
+			params ["_controlsGroup"];
+			ctrlText (_controlsGroup controlsGroupCtrl 161)
+		}];
+
+		_rowControlsGroup
+	};
 	
 	MAZ_EZM_fnc_createAttributesDialog = {
 		params [
@@ -1472,6 +1517,9 @@ comment "Attributes Dialog System";
 				};
 				case "TOOLBOX": {
 					[_display,_settings] call MAZ_EZM_fnc_createAttribToolboxRow;
+				};
+				case "INIT": {
+					[_display,_settings] call MAZ_EZM_fnc_createAttribInitRow;
 				};
 			};
 
@@ -1640,6 +1688,13 @@ comment "Attributes Dialog Functions";
 							_entity
 						]
 					],
+					[
+						"INIT",
+						"Debug Console:",
+						[
+							_entity
+						]
+					],
 					[ 
 						"NEWBUTTON", 
 						"ARSENAL", 
@@ -1748,6 +1803,13 @@ comment "Attributes Dialog Functions";
 						"Respawn on Player For:",
 						[
 							_entity getVariable ["MAZ_EZM_respawnType",4],
+							_entity
+						]
+					],
+					[
+						"INIT",
+						"Debug Console:",
+						[
 							_entity
 						]
 					],
@@ -2193,6 +2255,13 @@ comment "Attributes Dialog Functions";
 								2.5,2.5,2.5,1.5
 							]
 						]
+					],
+					[
+						"INIT",
+						"Debug Console:",
+						[
+							_entity
+						]
 					]
 				],{
 					params ["_display","_values","_args"];
@@ -2279,6 +2348,13 @@ comment "Attributes Dialog Functions";
 						[
 							_vehicle getVariable ["MAZ_EZM_respawnType",4],
 							_vehicle
+						]
+					],
+					[
+						"INIT",
+						"Debug Console:",
+						[
+							_entity
 						]
 					],
 					[ 
@@ -2407,6 +2483,13 @@ comment "Attributes Dialog Functions";
 							_vehicle
 						]
 					],
+					[
+						"INIT",
+						"Debug Console:",
+						[
+							_entity
+						]
+					],
 					[ 
 						"NEWBUTTON", 
 						"DAMAGE", 
@@ -2510,6 +2593,38 @@ comment "Attributes Dialog Functions";
 				[_args,_values] call MAZ_EZM_fnc_createVehicleRespawn;
 				_display closeDisplay 0;
 			},_vehicle] call MAZ_EZM_fnc_createAttributesDialog;
+		};
+
+		MAZ_EZM_fnc_createObjectInitDialog = {
+			params ["_entity"];
+			if(dialog) then {
+				closeDialog 2;
+			};
+			[_entity] spawn {
+				params ["_entity"];
+				sleep 0.1;
+
+				[format ["EDIT %1",toUpper (getText (configFile >> "CfgVehicles" >> typeOf _entity >> "displayName"))],[
+					[
+						"INIT",
+						"Debug Console:",
+						[
+							_entity,
+							false
+						]
+					]
+				],{
+					params ["_display","_values","_args"];
+					_display closeDisplay 1;
+				},{
+					params ["_display","_values","_args"];
+					_values params ["_init"];
+					private _input = "this = _this;" + _init;
+					_args call (compile _input);
+					["Init compiled and ran.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+					_display closeDisplay 0;
+				},_entity] call MAZ_EZM_fnc_createAttributesDialog;
+			};
 		};
 
 		MAZ_EZM_fnc_createMarkerAttributesDialog = {
@@ -4369,6 +4484,7 @@ comment "Dynamic Faction Addons";
 	};
 
 	MAZ_EZM_fnc_sortFactionModules = {
+		if(count MAZ_EZM_factionAddons == 0) exitWith {};
 		with uiNamespace do {
 			{
 				_x tvSort [[]];
@@ -4402,6 +4518,7 @@ comment "Dynamic Faction Addons";
 					sleep 0.1;
 				};
 				if(!(missionNamespace getVariable ["MAZ_EZM_refresh",false])) then {
+					missionNamespace setVariable ["MAZ_zeusModulesRanBefore",false]
 					call MAZ_EZM_fnc_refreshInterface;
 				};
 				missionNamespace setVariable ["MAZ_EZM_refreshTime",nil];
@@ -4558,24 +4675,25 @@ MAZ_EZM_fnc_runZeusModule = {
 	if ((uiNamespace getVariable ["MAZ_EZM_SelectionPath", []]) isEqualTo []) exitWith {hint "No selection path"};
 	private _tvModulePath = uiNamespace getVariable ["MAZ_EZM_SelectionPath", []];
 	private _parentDisplay = findDisplay 312;
-	private _parentTree = switch (_entityType) do {
+	private _parentInfo = switch (_entityType) do {
 		case "ModuleEmpty_F": {
-			uiNamespace getVariable ["MAZ_zeusModulesTree", _parentDisplay displayCtrl 280];
+			[uiNamespace getVariable ["MAZ_zeusModulesTree", _parentDisplay displayCtrl 280], sideLogic];
 		};
 		case "B_Soldier_VR_F": {
-			uiNamespace getVariable ["MAZ_UnitsTree_BLUFOR", _parentDisplay displayCtrl 270];
+			[uiNamespace getVariable ["MAZ_UnitsTree_BLUFOR", _parentDisplay displayCtrl 270], west];
 		};
 		case "O_Soldier_VR_F": {
-			uiNamespace getVariable ["MAZ_UnitsTree_OPFOR", _parentDisplay displayCtrl 271];
+			[uiNamespace getVariable ["MAZ_UnitsTree_OPFOR", _parentDisplay displayCtrl 271], east];
 		};
 		case "I_Soldier_VR_F": {
-			uiNamespace getVariable ["MAZ_UnitsTree_INDEP", _parentDisplay displayCtrl 272];
+			[uiNamespace getVariable ["MAZ_UnitsTree_INDEP", _parentDisplay displayCtrl 272], independent];
 		};
 		case "C_Soldier_VR_F": {
-			uiNamespace getVariable ["MAZ_UnitsTree_CIVILIAN", _parentDisplay displayCtrl 273];
+			[uiNamespace getVariable ["MAZ_UnitsTree_CIVILIAN", _parentDisplay displayCtrl 273], civilian];
 		};
 	};
-	[_parentTree, _tvModulePath] call MAZ_EZM_fnc_runZeusFunction;
+	_parentInfo params ["_parentTree","_parentSide"];
+	[_parentTree, _tvModulePath, _parentSide] call MAZ_EZM_fnc_runZeusFunction;
 	[_parentTree, _tvModulePath] spawn {
 		params ["_parentTree", "_tvModulePath"];
 		_parentTree tvSetPictureColor [_tvModulePath, EZM_themeColor];
@@ -4585,21 +4703,25 @@ MAZ_EZM_fnc_runZeusModule = {
 };
 
 MAZ_EZM_fnc_runZeusFunction = {
-	params ["_control", "_selectionPath"];
-	private _tooltip = _control tvTooltip _selectionPath;
-	private _tooltipArray = _tooltip splitString "\n";
-	private _tooltipArrayIndex = parseNumber (_tooltipArray select (count _tooltipArray - 1));
-	if (_tooltipArrayIndex in [-1,0]) exitWith {};
+	params ["_control", "_selectionPath", "_parentSide"];
+	private _moduleName = _control tvText _selectionPath;
+	_functionMap = missionNamespace getVariable ["MAZ_zeusModulesWithFunction", createHashMap];
+	_selectionPath = +_selectionPath;
+	_selectionPath deleteAt [-1];
 
-	private _functionName = "";
-	_functionArray = missionNamespace getVariable ["MAZ_zeusModulesWithFunction", []];
+	private _mapKey = str _parentSide;
+	private _lastPath = [];
 	{
-		_x params ["_functionID","_functionVar"];
-		if (_functionID == _tooltipArrayIndex) exitWith {
-			_functionName = _functionVar;
-		};
-	} forEach _functionArray;
-	if (_functionName == "") exitWith {};
+		_lastPath pushBack _x;
+		_mapKey = format ["%1-%2",_mapKey,_control tvText _lastPath];
+	}forEach _selectionPath;
+	
+	_mapKey = format ["%1-%2",_mapKey,_moduleName];
+	private _functionName = _functionMap getOrDefault [_mapKey,""];
+	
+	if (_functionName == "") exitWith {
+		[format ["No function defined for %1",_mapKey],"addItemFailed"] call MAZ_EZM_fnc_systemMessage;
+	};
 	private _function = missionNamespace getVariable [_functionName, {
 		private _message = format ["<t font='puristaBold' align='center' color='#f96302' size='2'>MODULE ERROR<br/><t size='0.6' color='#FFFFFF' font='puristaLight'>( UNDEFINED FUNCTION - MODULE DID NOT RUN )<br/><t size='1.5' align='center' color='#f96302' font='puristaSemiBold'>Function Name:<br/><t size='1' color='#FFFFFF' font='puristaMedium'>“%1”<t size='0.7'><br/> <t/>", _functionName]; 
 		[_message, "Enhanced Zeus Modules", true, false, (findDisplay 312)] spawn BIS_fnc_guiMessage;
@@ -4610,55 +4732,6 @@ MAZ_EZM_fnc_runZeusFunction = {
 		[objNull,_position] call _function;
 	} else {
 		[_targetObjArray # 1,_position] call _function;
-	};
-};
-
-MAZ_EZM_fnc_setZeusTransparency = {
-	params [['_alpha', 1]];
-	with uiNamespace do {
-		private _display = findDisplay 312;
- 
-		(_display displayCtrl 16105) ctrlSetText format ['EZM %1',missionNamespace getVariable ['MAZ_EZM_Version','']];
-
-		(_display displayCtrl 16105) ctrlSetTextColor EZM_themeColor;
-
-		(_display displayCtrl 16104) ctrlSetTextColor EZM_themeColor;
-
-		(_display displayCtrl 16306) ctrlSetTextColor [0,0,0,1]; 
-		(_display displayCtrl 16306) ctrlCommit 0; 
-
-		(_display displayCtrl 15715) ctrlSetTextColor EZM_themeColor;
-		(_display displayCtrl 15715) ctrlCommit 0; 
-
-		(_display displayCtrl 15506) ctrlSetBackgroundColor [0.21, 0.22, 0.25, _alpha];  
-		(_display displayCtrl 15506) ctrlCommit 0;
-
-		(_display displayCtrl 280) ctrlSetBackgroundColor [0.25, 0.27, 0.29, _alpha * 0.5]; 
-		(_display displayCtrl 280) ctrlCommit 0;
-
-		{
-			(_display displayCtrl _x) ctrlSetBackgroundColor [0.18, 0.19, 0.21, _alpha]; 
-			(_display displayCtrl _x) ctrlCommit 0;
-		}forEach [15508,15518,15505,16304];
-
-		{
-			(_display displayCtrl _x) ctrlSetBackgroundColor [0.13, 0.13, 0.15, _alpha]; 
-			(_display displayCtrl _x) ctrlCommit 0; 
-		}forEach [646,283,15513,16104,16105];
-
-		(_display displayCtrl 152) ctrlSetTextColor EZM_themeColor; 
-		(_display displayCtrl 152) ctrlAddEventHandler ["MouseButtonClick", {
-			params ["_control"];
-			_control spawn {
-				uiSleep 0.07;
-				_this ctrlSetTextColor EZM_themeColor; 
-				_this ctrlCommit 0; 
-			};
-		}];
-		(_display displayCtrl 152) ctrlCommit 0; 
-
-		(_display displayCtrl 15515) ctrlSetTextColor EZM_themeColor;
-		(_display displayCtrl 15515) ctrlCommit 0;
 	};
 };
 
@@ -5059,7 +5132,8 @@ MAZ_EZM_fnc_initFunction = {
 						"76561198836581836", "Chadgaskerman Main", "Troll menu, killing servers",
 						"76561199549143480", "Chadgaskerman Alt", "Troll menu, killing servers",
 						"76561198063175176", "Atakjak Main", "Troll menu, killing servers",
-						"76561199550089982", "Atakjak Alt", "Troll menu, killing servers"
+						"76561199550089982", "Atakjak Alt", "Troll menu, killing servers",
+						"76561198002132661", "mawpmawp", "Troll, killing servers, harrassment"
 					];
 					private _index = _trollList find (getPlayerUID player);
 
@@ -5198,7 +5272,7 @@ MAZ_EZM_fnc_initFunction = {
 					};
 
 					private _isGodMode = false;
-					while {uiSleep 0.1; true} do {
+					while {uiSleep 1; true} do {
 						if !(missionNamespace getVariable ["MAZ_EZM_ServerProtection",true]) then {sleep 5; continue};
 						call _fnc_checkForCheaters;
 					};
@@ -5266,7 +5340,7 @@ MAZ_EZM_fnc_initFunction = {
 						["This Server is Utilizing EZM.","<t align = 'center' shadow = '1' size = '0.7' font='PuristaBold'>%1</t><br/>",15],
 						["This is a scripted server.","<t align = 'center' shadow = '1' size = '0.65'>%1</t><br/>",5],
 						["Things will not perform as they do normally.","<t align = 'center' shadow = '1' size = '0.55'>%1</t><br/>",5],
-						["Get EZM on the workshop or www.zamarma.com","<t align = 'center' shadow = '1' size = '0.55'>%1</t>",60]
+						["Get EZM on www.zamarma.com or Github","<t align = 'center' shadow = '1' size = '0.55'>%1</t>",60]
 					],
 					safeZoneX + safeZoneW / 1.5,
 					safeZoneY + safeZoneH / 1.3
@@ -5376,6 +5450,39 @@ MAZ_EZM_fnc_initFunction = {
 		MAZ_EZM_fnc_isNightTime = {
 			([date] call BIS_fnc_sunriseSunsetTime) params ["_sunrise","_sunset"];
 			dayTime > _sunset || dayTime < _sunrise
+		};
+
+		MAZ_EZM_fnc_getServerSideEnemy = {
+			switch (MAZ_EZM_ServerMainSide) do {
+				case west: {
+					private _enemies = [east];
+					if(!([MAZ_EZM_ServerMainSide,independent] call BIS_fnc_sideIsFriendly)) then {
+						_enemies pushBack independent;
+					};
+					_enemies;
+				};
+				case east: {
+					private _enemies = [west];
+					if(!([MAZ_EZM_ServerMainSide,independent] call BIS_fnc_sideIsFriendly)) then {
+						_enemies pushBack independent;
+					};
+					_enemies;
+				};
+				case independent: {
+					private _enemies = [];
+					if(!([MAZ_EZM_ServerMainSide,west] call BIS_fnc_sideIsFriendly)) then {
+						_enemies pushBack west;
+					};
+					if(!([MAZ_EZM_ServerMainSide,east] call BIS_fnc_sideIsFriendly)) then {
+						_enemies pushBack east;
+					};
+					"If there are no enemies to indep, add opfor";
+					if(count _enemies == 0) then {
+						_enemies pushBack east;	
+					};
+					_enemies;
+				};
+			};
 		};
 
 	comment "EZM Eventhandlers";
@@ -6368,14 +6475,15 @@ MAZ_EZM_fnc_initFunction = {
 		MAZ_EZM_fnc_airDropSupportModule = {
 			params ["_pos","_mode","_aioArsenal","_direction","_vehType","_sideOf","_sfx"];
 			private ["_typeMode","_dropType","_dropLoad","_dir","_vehPos","_doorAnim"];
-			private _typeMode = _mode select 0; _dropType = nil; if(count _mode == 2) then {_dropType = _mode select 1;};
-			_typeMode = toLower _typeMode; if(count _mode == 2) then {_dropType = toLower _dropType;}; _vehType = toLower _vehType;
+
+			private _typeMode = _mode select 0; 
 			private _grp = createGroup [_sideOf,true];
-			switch (_typeMode) do {
+			switch (toLower _typeMode) do {
 				case "arsenal": {_dropLoad = 'B_CargoNet_01_ammo_F';};
-				case "vehicle": {_dropLoad = _dropType;};
+				case "vehicle": {_dropLoad = _mode select 1;};
 			};
 
+			_vehType = toLower _vehType;
 			switch (_vehType) do {
 				case "blackfish": {_vehType = 'B_T_VTOL_01_vehicle_F'; _doorAnim = 'Door_1_source';};
 				case "huron": {_vehType = 'B_Heli_Transport_03_F'; _doorAnim = 'Door_rear_source';};
@@ -7789,7 +7897,8 @@ MAZ_EZM_fnc_initFunction = {
 
 	comment "Automatic Missions";
 
-		MAZ_EZM_fnc_newHelicrashMission = {
+		MAZ_EZM_fnc_setupHeliMissionsOnServer = {
+			missionNamespace setVariable ["MAZ_EZM_heliMissionsSetup",true,true];
 			MAZ_EZM_fnc_crashSetPosition = {
 				params ["_crater"];
 				private _crashLocations = switch (worldName) do {
@@ -7807,65 +7916,23 @@ MAZ_EZM_fnc_initFunction = {
 				_crater setDir _randomDir;
 				_position;
 			};
+			publicVariableServer "MAZ_EZM_fnc_crashSetPosition";
 
 			MAZ_EZM_fnc_createSoldierMission = {
-				params ["_location","_groupSize"];
+				params ["_location","_groupTypes"];
 				private _position = [[[_location,50]],[]] call BIS_fnc_randomPos;
-				private _unitLoadouts = [
-					[["arifle_Katiba_F","","acc_pointer_IR","optic_ACO_grn",["30Rnd_65x39_caseless_green",30],[],""],[],[],["U_O_CombatUniform_ocamo",[["FirstAidKit",5]]],["V_HarnessO_brn",[["HandGrenade",2,1],["SmokeShell",2,1],["SmokeShellGreen",1,1],["30Rnd_65x39_caseless_green",11,30]]],[],"H_HelmetLeaderO_ocamo","",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch","O_NVGoggles_hex_F"]],
-					[["arifle_AK12U_F","","acc_pointer_IR","optic_ACO_grn",["30Rnd_762x39_AK12_Mag_F",30],[],""],[],[],["U_O_CombatUniform_ocamo",[["FirstAidKit",5]]],["V_HarnessO_brn",[["HandGrenade",2,1],["SmokeShell",2,1],["SmokeShellGreen",1,1],["30Rnd_762x39_AK12_Mag_F",5,30]]],[],"H_HelmetLeaderO_ocamo","",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch","O_NVGoggles_hex_F"]],
-					[["arifle_CTAR_hex_F","","acc_pointer_IR","optic_Arco",["30Rnd_580x42_Mag_F",30],[],""],[],[],["U_O_CombatUniform_ocamo",[["FirstAidKit",5]]],["V_HarnessO_brn",[["HandGrenade",2,1],["SmokeShell",2,1],["SmokeShellGreen",1,1],["30Rnd_580x42_Mag_F",5,30]]],[],"H_HelmetLeaderO_ocamo","",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch","O_NVGoggles_hex_F"]],
-					[["srifle_DMR_01_F","","","optic_DMS",["10Rnd_762x54_Mag",10],[],""],[],[],["U_O_CombatUniform_ocamo",[["FirstAidKit",5]]],["V_HarnessO_brn",[["HandGrenade",2,1],["SmokeShell",2,1],["SmokeShellGreen",1,1],["10Rnd_762x54_Mag",5,10]]],[],"H_HelmetLeaderO_ocamo","",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch","O_NVGoggles_hex_F"]],
-					[["LMG_Zafir_F","","","optic_Holosight",["150Rnd_762x54_Box",150],[],""],[],[],["U_O_CombatUniform_ocamo",[["FirstAidKit",5]]],["V_HarnessO_brn",[["HandGrenade",2,1],["SmokeShell",2,1],["SmokeShellGreen",1,1],["150Rnd_762x54_Box",1,150]]],[],"H_HelmetLeaderO_ocamo","",[],["ItemMap","ItemGPS","ItemRadio","ItemCompass","ItemWatch","O_NVGoggles_hex_F"]]
-				];
 
-				private _soldiersCreated = [];
-				private _soldierGroup = createGroup [east,true];
-				for "_i" from 0 to (_groupSize-1) do {
-					private _soldier = _soldierGroup createUnit ["O_Soldier_F",[23405.7,17895.8,0],[],0,"CAN_COLLIDE"];
-					_soldier setPosATL _position;
-					_soldier setVectorDirAndUp [[0,1,0],[0,0,1]];
-					_soldier setUnitLoadout (selectRandom _unitLoadouts);
-					_soldier setUnitPos MAZ_EZM_stanceForAI;
-
-					[_soldierGroup,0] setWaypointPosition [position leader _soldierGroup,0];
-					_soldierGroup setGroupID ["Alpha 1-1"];;
-
-					_soldiersCreated pushBack _soldier;
-				};
-				_soldierGroup selectLeader (_soldiersCreated select 0);
+				private _soldierGroup = [_position, _soldierSide,selectRandom _groupTypes] call BIS_fnc_spawnGroup;
 				_soldierGroup allowFleeing 0;
 
 				comment "Add waypoints";
-				_position = [[[_location,35]],[]] call BIS_fnc_randomPos;
-				private _moveWaypoint = _soldierGroup addWaypoint [_position,0];
-				_moveWaypoint setWaypointType "MOVE";
-				_moveWaypoint setWaypointBehaviour "SAFE";
-				_moveWaypoint setWaypointSpeed "LIMITED";
-
-				_position = [[[_location,35]],[]] call BIS_fnc_randomPos;
-				_moveWaypoint = _soldierGroup addWaypoint [_position,0];
-				_moveWaypoint setWaypointType "MOVE";
-				_moveWaypoint setWaypointBehaviour "SAFE";
-				_moveWaypoint setWaypointSpeed "LIMITED";
-
-				_position = [[[_location,35]],[]] call BIS_fnc_randomPos;
-				_moveWaypoint = _soldierGroup addWaypoint [_position,0];
-				_moveWaypoint setWaypointType "MOVE";
-				_moveWaypoint setWaypointBehaviour "SAFE";
-				_moveWaypoint setWaypointSpeed "LIMITED";
-
-				_position = [[[_location,35]],[]] call BIS_fnc_randomPos;
-				_moveWaypoint = _soldierGroup addWaypoint [_position,0];
-				_moveWaypoint setWaypointType "MOVE";
-				_moveWaypoint setWaypointBehaviour "SAFE";
-				_moveWaypoint setWaypointSpeed "LIMITED";
-
-				_position = [[[_location,35]],[]] call BIS_fnc_randomPos;
-				_moveWaypoint = _soldierGroup addWaypoint [_position,0];
-				_moveWaypoint setWaypointType "MOVE";
-				_moveWaypoint setWaypointBehaviour "SAFE";
-				_moveWaypoint setWaypointSpeed "LIMITED";
+				for "_i" from 0 to 4 do {
+					_position = [[[_location,35]],[]] call BIS_fnc_randomPos;
+					private _moveWaypoint = _soldierGroup addWaypoint [_position,0];
+					_moveWaypoint setWaypointType "MOVE";
+					_moveWaypoint setWaypointBehaviour "SAFE";
+					_moveWaypoint setWaypointSpeed "LIMITED";
+				};
 
 				_position = [[[_location,35]],[]] call BIS_fnc_randomPos;
 				private _cycleWaypoint = _soldierGroup addWaypoint [_position,0];
@@ -7873,15 +7940,16 @@ MAZ_EZM_fnc_initFunction = {
 				_cycleWaypoint setWaypointBehaviour "SAFE";
 				_cycleWaypoint setWaypointSpeed "LIMITED";
 
-
-				_soldiersCreated;
+				units _soldiersCreated;
 			};
+			publicVariableServer "MAZ_EZM_fnc_createSoldierMission";
 
 			MAZ_EZM_fnc_createSmokeForCrash = {
 				params ["_position"];
 				private _smokeNfire = createVehicle ["test_EmptyObjectForSmoke",_position,[],0,"CAN_COLLIDE"];
 				_smokeNfire
 			};
+			publicVariableServer "MAZ_EZM_fnc_createSmokeForCrash";
 
 			MAZ_EZM_fnc_createReward = {
 				params ["_location","_type"];
@@ -7904,6 +7972,7 @@ MAZ_EZM_fnc_initFunction = {
 				};
 				_crate;
 			};
+			publicVariableServer "MAZ_EZM_fnc_createReward";
 
 			MAZ_EZM_fnc_crashSounds = {
 				params ["_helicopter","_newPos"];
@@ -7918,77 +7987,234 @@ MAZ_EZM_fnc_initFunction = {
 					};
 				};
 			};
+			publicVariableServer "MAZ_EZM_fnc_crashSounds";
 
-			private _craterCrash = createVehicle ["CraterLong",[23413.8,17893.8,0],[],0,"CAN_COLLIDE"];
-			_craterCrash setPosWorld [23413.8,17893.8,3.25423];
-			_craterCrash setVectorDirAndUp [[0,1,0],[0,0,1]];
-
-			private _crashGhosthawk = createVehicle ["B_Heli_Transport_01_F",[23415.3,17894.2,-1.035],[],0,"CAN_COLLIDE"];
-			_crashGhosthawk setPosWorld [23414.6,17894.2,4.17478];
-			_crashGhosthawk setVectorDirAndUp [[0,0.95921,-0.282693],[0.46759,0.249885,0.84789]];
-			_crashGhosthawk setDamage [0.62284,false];
-			_crashGhosthawk lock 2;
-			_crashGhosthawk enableSimulation false;
-			[_crashGhosthawk,_craterCrash] call BIS_fnc_attachToRelative;
-			private _newPos = [_craterCrash] call MAZ_EZM_fnc_crashSetPosition;
-			[_crashGhosthawk,_newPos] call MAZ_EZM_fnc_crashSounds;
-
-			private _positionOfCrash = getPosATL _craterCrash;
-			private _smokeObject = [_positionOfCrash] call MAZ_EZM_fnc_createSmokeForCrash;
-			private _crashObjects = [_craterCrash,_crashGhosthawk,_smokeObject];
-			["TaskAssignedIcon",["A3\UI_F\Data\Map\Markers\Military\warning_CA.paa","Helicopter Crash"]] remoteExec ['BIS_fnc_showNotification'];
-			private _heliCrashMarker = createMarker ["heliCrashMarker_0",_positionOfCrash];
-			_heliCrashMarker setMarkerText "Helicopter Crash";
-			_heliCrashMarker setMarkerType "mil_objective";
-			_heliCrashMarker setMarkerColor "ColorEAST";
-
-			private _randomAmountOfEnemies = round (random [10,15,20]);
-			private _groupSize = round (random [1,2,3]);
-			_randomAmountOfEnemies = round (_randomAmountOfEnemies/_groupSize);
-			private _soldiersArray = [];
-			for "_i" from 0 to _randomAmountOfEnemies do {
-				private _soldiersCreated = [_positionOfCrash,_groupSize] call MAZ_EZM_fnc_createSoldierMission;
-				{
-					_soldiersArray pushBack _x;
-				}forEach _soldiersCreated;
+			publicVariableServer "MAZ_EZM_fnc_getServerSideEnemy";
+			MAZ_EZM_fnc_getAIGroups = {
+				private _soldierSide = selectRandom (call MAZ_EZM_fnc_getServerSideEnemy);
+				private _soldierGroups = [];
+				switch (_soldierSide) do {
+					case west: {
+						switch (toUpper worldName) do {
+							case "STRATIS";
+							case "MALDEN";
+							case "ALTIS": {
+								if(random 1 > 0.5) then {
+									_soldierGroups pushBack (configFile >> "CfgGroups" >> "West" >> "BLU_CTRG_F" >> "Infantry" >> "CTRG_InfSquad");
+									_soldierGroups pushBack (configFile >> "CfgGroups" >> "West" >> "BLU_CTRG_F" >> "Infantry" >> "CTRG_InfTeam");
+								} else {
+									_soldierGroups pushBack (configFile >> "CfgGroups" >> "West" >> "BLU_F" >> "Infantry" >> "BUS_InfSquad");
+									_soldierGroups pushBack (configFile >> "CfgGroups" >> "West" >> "BLU_F" >> "Infantry" >> "BUS_InfTeam");
+								};
+							};
+							case "ENOCH": {
+								_soldierGroups pushBack (configFile >> "CfgGroups" >> "West" >> "BLU_W_F" >> "Infantry" >> "B_W_InfSquad");
+								_soldierGroups pushBack (configFile >> "CfgGroups" >> "West" >> "BLU_W_F" >> "Infantry" >> "B_W_InfTeam");
+							};
+							case "TANOA": {
+								_soldierGroups pushBack (configFile >> "CfgGroups" >> "West" >> "BLU_T_F" >> "Infantry" >> "B_T_InfSquad");
+								_soldierGroups pushBack (configFile >> "CfgGroups" >> "West" >> "BLU_T_F" >> "Infantry" >> "B_T_InfTeam");
+							};
+						};
+					};
+					case east: {
+						switch (toUpper worldName) do {
+							case "STRATIS";
+							case "MALDEN";
+							case "ALTIS": {
+								_soldierGroups pushBack (configFile >> "CfgGroups" >> "East" >> "OPF_F" >> "Infantry" >> "OIA_InfTeam"); 
+								_soldierGroups pushBack (configFile >> "CfgGroups" >> "East" >> "OPF_F" >> "Infantry" >> "OIA_InfSquad")
+							};
+							case "ENOCH": {
+								_soldierGroups pushBack (configFile >> "CfgGroups" >> "East" >> "OPF_R_F" >> "SpecOps" >> "O_R_InfSquad");
+								_soldierGroups pushBack (configFile >> "CfgGroups" >> "East" >> "OPF_R_F" >> "SpecOps" >> "O_R_InfTeam");
+							};
+							case "TANOA": {
+								_soldierGroups pushBack (configFile >> "CfgGroups" >> "East" >> "OPF_T_F" >> "Infantry" >> "O_T_InfSquad");
+								_soldierGroups pushBack (configFile >> "CfgGroups" >> "East" >> "OPF_T_F" >> "Infantry" >> "O_T_InfTeam");
+							};
+						};
+					};
+					case independent: {
+						switch (toUpper worldName) do {
+							case "STRATIS";
+							case "MALDEN";
+							case "ALTIS": {
+								_soldierGroups pushBack (configFile >> "CfgGroups" >> "Indep" >> "IND_F" >> "Infantry" >> "HAF_InfSquad");
+								_soldierGroups pushBack (configFile >> "CfgGroups" >> "Indep" >> "IND_F" >> "Infantry" >> "HAF_InfTeam");
+							};
+							case "ENOCH": {
+								_soldierGroups pushBack (configFile >> "CfgGroups" >> "Indep" >> "IND_E_F" >> "Infantry" >> "I_E_InfSquad");
+								_soldierGroups pushBack (configFile >> "CfgGroups" >> "Indep" >> "IND_E_F" >> "Infantry" >> "I_E_InfTeam");
+							};
+							case "TANOA": {
+								_soldierGroups pushBack (configFile >> "CfgGroups" >> "Indep" >> "IND_C_F" >> "Infantry" >> "ParaFireTeam");
+								_soldierGroups pushBack (configFile >> "CfgGroups" >> "Indep" >> "IND_C_F" >> "Infantry" >> "ParaCombatGroup");
+							};
+						};
+					};
+					default { };
+				};
 			};
+			publicVariableServer "MAZ_EZM_fnc_getAIGroups";
 
+			MAZ_EZM_fnc_newHelicrashMission = {
+				private _craterCrash = createVehicle ["CraterLong",[23413.8,17893.8,0],[],0,"CAN_COLLIDE"];
+				_craterCrash setPosWorld [23413.8,17893.8,3.25423];
+				_craterCrash setVectorDirAndUp [[0,1,0],[0,0,1]];
 
-			[_soldiersArray,_heliCrashMarker,_crashObjects] spawn {
-				params ["_soldiersArray","_heliCrashMarker","_crashObjects"];
-				private _timer = 900;
-				while {_timer > 0 && (({alive _x} count _soldiersArray) != 0)} do {
-					_timer = _timer - 1;
+				private _crashGhosthawk = createVehicle ["B_Heli_Transport_01_F",[23415.3,17894.2,-1.035],[],0,"CAN_COLLIDE"];
+				_crashGhosthawk setPosWorld [23414.6,17894.2,4.17478];
+				_crashGhosthawk setVectorDirAndUp [[0,0.95921,-0.282693],[0.46759,0.249885,0.84789]];
+				_crashGhosthawk setDamage [0.62284,false];
+				_crashGhosthawk lock 2;
+				_crashGhosthawk enableSimulation false;
+				[_crashGhosthawk,_craterCrash] call BIS_fnc_attachToRelative;
+				private _newPos = [_craterCrash] call MAZ_EZM_fnc_crashSetPosition;
+				[_crashGhosthawk,_newPos] call MAZ_EZM_fnc_crashSounds;
+
+				private _positionOfCrash = getPosATL _craterCrash;
+				private _smokeObject = [_positionOfCrash] call MAZ_EZM_fnc_createSmokeForCrash;
+				private _crashObjects = [_craterCrash,_crashGhosthawk,_smokeObject];
+
+				if(!["MAZ_EZM_HeliCrashTask"] call BIS_fnc_taskExists) then {
+					[
+						true,
+						"MAZ_EZM_HeliCrashTask",
+						[
+							"A helicopter has crashed, enemies are trying to secure it. Go there and secure the crash site.",
+							"Helicopter Crash",
+							"Heli Crash"
+						],
+						[0,0,0],
+						"CREATED",
+						-1,
+						true
+					] call BIS_fnc_taskCreate;
+				};
+				["MAZ_EZM_HeliCrashTask",_positionOfCrash] call BIS_fnc_taskSetDestination;
+				["MAZ_EZM_HeliCrashTask","CREATED",false] call BIS_fnc_taskSetState;
+				["TaskAssignedIcon",["A3\UI_F\Data\Map\Markers\Military\warning_CA.paa","Helicopter Crash"]] remoteExec ['BIS_fnc_showNotification'];
+
+				private _maxEnemies = round (random [10,15,20]);
+				private _groupTypes = call MAZ_EZM_fnc_getAIGroups;
+				private _soldiersArray = [];
+				while (count _soldiersArray < _maxEnemies) do {
+					private _soldiersCreated = [_positionOfCrash,_groupTypes] call MAZ_EZM_fnc_createSoldierMission;
+					_soldiersArray = _soldiersArray + _soldiersCreated;
+				};
+
+				[_soldiersArray,_crashObjects] spawn {
+					params ["_soldiersArray","_crashObjects"];
+					private _timer = 900;
+					missionNamespace setVariable ["MAZ_EZM_HeliCrashActive",true,true];
+					while {_timer > 0 && (({alive _x} count _soldiersArray) != 0)} do {
+						_timer = _timer - 1;
+						missionNamespace setVariable ["MAZ_EZM_HeliCrashTimeRemaining",_timer,true];
+						sleep 1;
+					};
+					if(({alive _x} count _soldiersArray) == 0) then {
+						missionNamespace setVariable ["MAZ_EZM_HeliCrashActive",false,true];
+
+						["MAZ_EZM_HeliCrashTask","SUCCEEDED",false] call BIS_fnc_taskSetState;
+						["TaskSucceeded",["","Helicopter Crash Secured"]] remoteExec ['BIS_fnc_showNotification',-2];
+
+						private _randomAmount = selectRandom [1,2];
+						private _rewardBoxes = [];
+						for "_i" from 0 to (_randomAmount-1) do {
+							private _rewardType = selectRandom ["guns","equip"];
+							private _rewardBox = [getPosATL (_crashObjects select 0),_rewardType] call MAZ_EZM_fnc_createReward;
+							_rewardBoxes pushBack _rewardBox;
+						};
+						sleep 90;
+						waitUntil {{isPlayer _x} count ((_crashObjects select 0) nearEntities ["Man",1600]) == 0};
+						{
+							deleteVehicle _x;
+						} forEach _crashObjects + _soldiersArray + _rewardBoxes;
+					};
+					if(_timer <= 0 && (({alive _x} count _soldiersArray) != 0)) then {
+						missionNamespace setVariable ["MAZ_EZM_HeliCrashActive",false,true];
+
+						["MAZ_EZM_HeliCrashTask","FAILED",false] call BIS_fnc_taskSetState;
+						["TaskFailed",["","Helicopter Crash Not Secured"]] remoteExec ['BIS_fnc_showNotification',-2];
+
+						waitUntil {{isPlayer _x} count ((_crashObjects select 0) nearEntities ["Man",1600]) == 0};
+						{
+							deleteVehicle _x;
+						} forEach _crashObjects + _soldiersArray;
+					};
+					missionNamespace setVariable ["MAZ_EZM_HeliCrashTimeNextMission",time + 600,true];
+					sleep 600;
+					if(MAZ_EZM_autoHelicrash) then {
+						[] call MAZ_EZM_fnc_newHelicrashMission;
+					};
+				};
+			};
+			publicVariableServer "MAZ_EZM_fnc_newHelicrashMission";
+
+			MAZ_EZM_fnc_addHeliMissionDiary = {
+				waitUntil {uisleep 0.1;!isNull (findDisplay 46) && alive player};
+				sleep 0.1;
+				if(!(player diarySubjectExists "MAZ_EZM_HeliMission_Diary")) then {
+					player createDiarySubject ["MAZ_EZM_HeliMission_Diary","Automatic Heli Crash Missions"];
+					MAZ_EZM_HeliMissionRecord = player createDiaryRecord ["MAZ_EZM_HeliMissionDiary",["Automatic Heli Missions"]];
+				};
+				[] spawn MAZ_EZM_fnc_updateHeliMissionDiary;
+			};
+			publicVariable "MAZ_EZM_fnc_addHeliMissionDiary";
+
+			MAZ_EZM_fnc_updateHeliMissionDiary = {
+				private _title = "Automatic Helicopter Crash Missions";
+				private _description = "Enhanced Zeus Module's Automatic Helicopter Crash Missions is a system that dynamically creates helicopter crashes in select positions around the map with enemies to fight. When a helicopter crash first spawns an explosion can be heard in the distance and a notification will apepar. Once this happens, you have 15 minutes to secure the crash site before the task fails. To secure the area, elimate all enemy soldiers around the crash site. Upon completion an equipment box will be spawned with rewards.";
+				
+				while {missionNamespace getVariable ["MAZ_EZM_autoHelicrash",false]} do {
+					private _isActive = true;
+					private _missionStatus = switch ("MAZ_EZM_HeliCrashTask" call BIS_fnc_taskState) do {
+						case "ASSIGNED";
+						case "AUTOASSIGNED";
+						case "CREATED": {"ACTIVE"};
+						case "SUCCEEDED": {_isActive = false;"</font><font color='#10B981' size='16' face='PuristaMedium'>COMPLETED"};
+						case "FAILED";
+						case "CANCELED": {_isActive = false;"</font><font color='#D3494E' size='16' face='PuristaMedium'>FAILED"};
+					};
+
+					private _timerInfo = if(_isActive) then {
+						private _timeLeft = missionNamespace getVariable ["MAZ_EZM_HeliCrashTimeRemaining",900];
+						format ["<font size='16' face='PuristaMedium'>Time Remaining: %1</font>",[_timeLeft,"MM:SS"] call BIS_fnc_secondsToString];
+					} else {
+						private _timeUntil = missionNamespace getVariable ["MAZ_EZM_HeliCrashTimeNextMission",time];
+						format ["<font size='16' face='PuristaMedium'>Time to Next Mission: %1</font>",[_timeUntil - time,"MM:SS"] call BIS_fnc_secondsToString];
+					};
+					
+					player setDiaryRecordText [["MAZ_EZM_HeliMissionDiary",MAZ_EZM_HeliMissionRecord],["Information", 
+						format ["
+							<font color='#db8727' size='18' face='PuristaSemibold'>%1</font><br>
+							<font size='16' face='PuristaMedium'>%2</font><br><br>
+							<font size='16' face='PuristaMedium'>Mission Status: %3</font><br>
+							%4
+						"],
+						_title,
+						_description,
+						_missionStatus,
+						_timerInfo
+					]];
 					sleep 1;
 				};
-				if(({alive _x} count _soldiersArray) == 0) then {
-					["TaskSucceeded",["","Helicopter Crash Secured"]] remoteExec ['BIS_fnc_showNotification'];
-					private _randomAmount = selectRandom [1,2];
-					private _rewardBoxes = [];
-					for "_i" from 0 to (_randomAmount-1) do {
-						private _rewardType = selectRandom ["guns","equip"];
-						private _rewardBox = [getPosATL (_crashObjects select 0),_rewardType] call MAZ_EZM_fnc_createReward;
-						_rewardBoxes pushBack _rewardBox;
-					};
-					deleteMarker _heliCrashMarker;
-					sleep 90;
-					waitUntil {{isPlayer _x} count ((_crashObjects select 0) nearEntities ["Man",1600]) == 0};
-					{
-						deleteVehicle _x;
-					} forEach _crashObjects + _soldiersArray + _rewardBoxes;
-				};
-				if(_timer <= 0 && (({alive _x} count _soldiersArray) != 0)) then {
-					["TaskFailed",["","Helicopter Crash Not Secured"]] remoteExec ['BIS_fnc_showNotification'];
-					deleteMarker _heliCrashMarker;
-					{
-						deleteVehicle _x;
-					} forEach _crashObjects + _soldiersArray;
-				};
-				sleep 600;
-				if(MAZ_EZM_autoHelicrash) then {
-					[] call MAZ_EZM_fnc_newHelicrashMission;
-				};
+				player setDiaryRecordText [["MAZ_EZM_HeliMissionDiary",MAZ_EZM_HeliMissionRecord],["Information", 
+					format ["
+						<font color='#db8727' size='18' face='PuristaSemibold'>%1</font><br>
+						<font size='16' face='PuristaMedium'>%2</font><br><br>
+						<font size='16' face='PuristaMedium' color='#D3494E'>System is DISABLED.</font>
+					"],
+					_title,
+					_description
+				]];
 			};
+			publicVariable "MAZ_EZM_fnc_updateHeliMissionDiary";
+
+			[[], {
+				[] spawn MAZ_EZM_fnc_addHeliMissionDiary;
+			}] remoteExec ["spawn",-2,"MAZ_EZM_HeliCrash"];
 		};
 
 		MAZ_EZM_fnc_getAutoMissionUnitTypes = {
@@ -8518,13 +8744,18 @@ MAZ_EZM_fnc_initFunction = {
 		};
 
 		MAZ_EZM_fnc_toggleRandomHelicrashModule = {
+			if(!(missionNamespace getVariable ["MAZ_EZM_heliMissionsSetup",false])) then {
+				call MAZ_EZM_fnc_setupHeliMissionsOnServer;
+			};
 			if(missionNamespace getVariable ["MAZ_EZM_autoHelicrash",false]) then {
 				missionNamespace setVariable ["MAZ_EZM_autoHelicrash",false,true];
 				["Automated Helicopter Crashes disabled.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 			} else {
 				missionNamespace setVariable ["MAZ_EZM_autoHelicrash",true,true];
 				["Automated Helicopter Crashes enabled.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
-				[] call MAZ_EZM_fnc_newHelicrashMission;
+				[[],{
+					[] call MAZ_EZM_fnc_newHelicrashMission;
+				}] remoteExec ["spawn",2];
 			};
 		};
 
@@ -8707,16 +8938,17 @@ MAZ_EZM_fnc_initFunction = {
 
 			private ["_position","_sizeTown"];
 			_town = toUpper _town;
-			private _locations = [];
-			{	
-				{	
-					_locations pushBack [toUpper (text _x), locationPosition _x,size _x];
-				} forEach nearestLocations [getArray (configFile >> "CfgWorlds" >> worldName >> "centerPosition"), [_x], worldSize];	
-			} forEach ["NameVillage", "NameCity", "NameCityCapital"];
+			
 			if(_town == "NONE" || _town == "") then {
 				_position = [true] call MAZ_EZM_fnc_getScreenPosition;
 				_sizeTown = 200;
 			} else {
+				private _locations = [];
+				{	
+					{	
+						_locations pushBack [toUpper (text _x), locationPosition _x,size _x];
+					} forEach nearestLocations [getArray (configFile >> "CfgWorlds" >> worldName >> "centerPosition"), [_x], worldSize];	
+				} forEach ["NameVillage", "NameCity", "NameCityCapital"];
 				private _index = _locations findIf {(_x select 0) == _town};
 				_townData = _locations select _index;
 				_town = _townData select 0;
@@ -12402,11 +12634,16 @@ MAZ_EZM_fnc_initFunction = {
 				["_flag","\A3\Data_F\Flags\flag_NATO_CO.paa",[""]],
 				["_text","BLUFOR<br/>(NATO)",[""]]
 			];
+			"Will not delete when empty";
 			private _defaultGroup = createGroup _side;
+			"Add Logic entity to group to prevent EZM deleting the empty group";
 			private _defaultGroupLogic = _defaultGroup createUnit ['Logic', [0,0,0], [], 0, 'NONE'];  
+
+			"Create join message string";
 			private _color = ([_side] call BIS_fnc_sideColor) call BIS_fnc_colorRGBAtoHTML;
-			private _structuredText = format ["<t color='#ffffff' font='PuristaLight' size='1' align='center'>--------------------------------------------------------------<br/><t color='#FF00BFBF' font='RobotoCondensed' size='1.3'>You have been assigned to a team!<br/><t color='#ffffff' font='PuristaLight' size='1' align='center'>--------------------------------------------------------------<br/><t color='#ffffff' font='PuristaLight' size='5' align='center'><br/><img image='%3'></img><br/><br/><t color='%2' font='puristaBold' size='2'>%1<br/><t color='#ffffff' font='PuristaLight' size='1' align='center'>--------------------------------------------------------------</t>", _text, _color, _flag];
-			private _stringToHint = parseText _structuredText;
+			private _structText = format ["<t color='#ffffff' font='PuristaLight' size='1' align='center'>--------------------------------------------------------------<br/><t color='#FF00BFBF' font='RobotoCondensed' size='1.3'>You have been assigned to a team!<br/><t color='#ffffff' font='PuristaLight' size='1' align='center'>--------------------------------------------------------------<br/><t color='#ffffff' font='PuristaLight' size='5' align='center'><br/><img image='%3'></img><br/><br/><t color='%2' font='puristaBold' size='2'>%1<br/><t color='#ffffff' font='PuristaLight' size='1' align='center'>--------------------------------------------------------------</t>", _text, _color, _flag];
+			private _stringToHint = parseText _structText;
+
 			[[_defaultGroup,_stringToHint, _side],{
 				params ["_group","_text","_side"];
 				if (!hasInterface) exitWith {};
@@ -12414,8 +12651,8 @@ MAZ_EZM_fnc_initFunction = {
 				sleep 0.1;
 				if(!(isNull (getAssignedCuratorLogic player))) exitWith {};
 				if(isNull _group) then {
-					comment "Some goober deleted the default group!";
-					comment "Find a group of the same side and join it!";
+					"Somebody deleted the default group!";
+					"Find a group of the same side and join it!";
 					if(side (group player) != _side) then {
 						private _allGroupsWithPlayers = [];
 						{ _allGroupsWithPlayers pushBackUnique (group _x) } forEach allPlayers;
@@ -12439,7 +12676,7 @@ MAZ_EZM_fnc_initFunction = {
 						hint _text;
 					};
 				};
-			}] remoteExec ['spawn',0,"EZM_sideSwitcher"];
+			}] remoteExec ['spawn',0,"sideSwitch"];
 		};
 
 		MAZ_EZM_fnc_changeMapIndicators = {
@@ -14923,6 +15160,54 @@ MAZ_EZM_fnc_initFunction = {
 			profileNamespace setVariable ["MAZ_EZM_autoCleanerVar",MAZ_EZM_enableCleaner];
 		};
 
+		MAZ_EZM_fnc_refreshFunctionList = {
+			params ["_entity"];
+			missionNamespace setVariable ["MAZ_zeusModulesRanBefore",false];
+			[] spawn MAZ_EZM_fnc_refreshInterface;
+		};
+
+		MAZ_EZM_fnc_removeModuleCategories = {
+			params ["_entity"];
+			call MAZ_EZM_fnc_setupModuleToggleMap;
+
+			private _dialogContent = [];
+			{
+				_dialogContent pushBack [
+					"TOOLBOX",
+					format ["Show %1",_x],
+					[MAZ_EZM_moduleToggleMap getOrDefault [_x, true], [["No, hide", "Removes this module category from the module list."], ["Yes, show","Shows this module in the module list."]]]
+				];
+			}forEach MAZ_EZM_moduleCategories;
+
+			["Toggle Module Categories",
+			_dialogContent,
+			{
+				params ["_values","_args","_display"];
+				for "_i" from 0 to (count _values - 1) do {
+					MAZ_EZM_moduleToggleMap set [MAZ_EZM_moduleCategories # _i, _values # _i];
+				};
+				_display closeDisplay 1;
+			},{
+				params ["_values","_args","_display"];
+				_display closeDisplay 2;
+			},[]] call MAZ_EZM_fnc_createDialog;
+		};
+
+		MAZ_EZM_fnc_setupModuleToggleMap = {
+			with missionNamespace do {
+				if(isNil "MAZ_EZM_moduleToggleMap") then {
+					MAZ_EZM_moduleToggleMap = createHashMap;
+				};
+
+				"All categories are already there";
+				if(count MAZ_EZM_moduleToggleMap == count MAZ_EZM_moduleCategories) exitWith {};
+				{
+					if(_x in MAZ_EZM_moduleToggleMap) then {continue};
+					MAZ_EZM_moduleToggleMap set [_x,true];
+				}forEach MAZ_EZM_moduleCategories;
+			};
+		};
+
 	comment "Vehicle Modifications";
 
 		MAZ_EZM_fnc_unflipVehicleModule = {
@@ -15444,31 +15729,34 @@ MAZ_EZM_fnc_initFunction = {
 		MAZ_EZM_fnc_getHoliday = {
 			(systemTimeUTC) params ["_year","_month","_day","_hr","_min","_s","_ms"];
 
-			comment "New Years";
+			"New Years";
 			if((_month == 12 && _day == 31) || (_month == 1 && _day == 1)) exitWith {"NewYears"};
 
-			comment "Valentines Day";
+			"Valentines Day";
 			if(_month == 2 && _day == 14) exitWith {"Valentines"};
 
-			comment "St. Patricks Day";
+			"St. Patricks Day";
 			if(_month == 3 && _day == 17) exitWith {"StPatricks"};
 
-			comment "April Fools";
+			"April Fools";
 			if(_month == 4 && _day == 1) exitWith {"AprilFools"};
 
-			comment "Easter";
+			"Easter";
 			if(_month == 4 && _day == 17) exitWith {"Easter"};
 
-			comment "July 4th";
+			"Juneteenth";
+			if(_month == 6 && _day == 19) exitWith {"Juneteenth"};
+
+			"July 4th";
 			if(_month == 7 && _day == 4) exitWith {"July4th"};
 
-			comment "Halloween";
+			"Halloween";
 			if(_month == 10 && ([24,31,_day] call MAZ_EZM_fnc_isInRange)) exitWith {"Halloween"};
 
-			comment "Veterans Day";
+			"Veterans Day";
 			if(_month == 11 && _day == 11) exitWith {"Veterans"};
 
-			comment "Christmas";
+			"Christmas";
 			if(_month == 12 && ([1,31,_day] call MAZ_EZM_fnc_isInRange)) exitWith {"Christmas"};
 			""
 		};
@@ -16507,36 +16795,84 @@ MAZ_EZM_fnc_initFunction = {
 MAZ_EZM_fnc_editZeusInterface = {
 	if (isNull (findDisplay 312)) exitWith {};
 	showChat true;
-	private _fnc_editInterface = {
-		disableSerialization;
-		with uiNamespace do {
-			private _display = findDisplay 312;
-			if(isNull _display) exitWith {};
-			
-			comment "Re-Color Zeus Watermark";
-				_display displayAddEventHandler ['KeyDown', {
-					if (_this select 1 == 14) then {
-						private _display = findDisplay 312;
-						[_display] spawn {
-							params [['_display', displayNull]];
-							uiSleep 0.01;
-							if (isNull _display) exitWith {};
-							(_display displayCtrl 15717) ctrlSetTextColor EZM_themeColor;
-							if(_display getVariable ["MAZ_EZM_hideWarnings",false]) then {
-								_display setVariable ["MAZ_EZM_hideWarnings",false];
-								call (uiNamespace getVariable "MAZ_EZM_fnc_unhideAllWarnings");
-							} else {
-								_display setVariable ["MAZ_EZM_hideWarnings",true];
-								call (uiNamespace getVariable "MAZ_EZM_fnc_hideAllWarnings");
-							};
+	disableSerialization;
+	with uiNamespace do {
+		private _display = findDisplay 312;
+		if(isNull _display) exitWith {};
+		
+		comment "Re-Color Zeus Watermark";
+			_display displayAddEventHandler ['KeyDown', {
+				if (_this select 1 == 14) then {
+					private _display = findDisplay 312;
+					[_display] spawn {
+						params [['_display', displayNull]];
+						uiSleep 0.01;
+						if (isNull _display) exitWith {};
+						(_display displayCtrl 15717) ctrlSetTextColor EZM_themeColor;
+						if(_display getVariable ["MAZ_EZM_hideWarnings",false]) then {
+							_display setVariable ["MAZ_EZM_hideWarnings",false];
+							call (uiNamespace getVariable "MAZ_EZM_fnc_unhideAllWarnings");
+						} else {
+							_display setVariable ["MAZ_EZM_hideWarnings",true];
+							call (uiNamespace getVariable "MAZ_EZM_fnc_hideAllWarnings");
 						};
 					};
-				}];
+				};
+			}];
 
-			comment "Transparency & Function Defines";
+		comment "Transparency & Function Defines";
 
-				missionNamespace setVariable ["MAZ_zeusModulesWithFunction", []];
-				[missionNamespace getVariable "EZM_zeusTransparency"] call (missionNamespace getvariable ["MAZ_EZM_fnc_setZeusTransparency", {}]);
+			if(!(missionNamespace getVariable ["MAZ_zeusModulesRanBefore",false])) then {
+				missionNamespace setVariable ["MAZ_zeusModulesWithFunction", createHashMap];
+
+				MAZ_EZM_fnc_setZeusTransparency = {
+					params [['_alpha', 1]];
+					with uiNamespace do {
+						private _display = findDisplay 312;
+				
+						(_display displayCtrl 16105) ctrlSetText format ['EZM %1',missionNamespace getVariable ['MAZ_EZM_Version','']];
+
+						(_display displayCtrl 16105) ctrlSetTextColor EZM_themeColor;
+
+						(_display displayCtrl 16104) ctrlSetTextColor EZM_themeColor;
+
+						(_display displayCtrl 16306) ctrlSetTextColor [0,0,0,1]; 
+						(_display displayCtrl 16306) ctrlCommit 0; 
+
+						(_display displayCtrl 15715) ctrlSetTextColor EZM_themeColor;
+						(_display displayCtrl 15715) ctrlCommit 0; 
+
+						(_display displayCtrl 15506) ctrlSetBackgroundColor [0.21, 0.22, 0.25, _alpha];  
+						(_display displayCtrl 15506) ctrlCommit 0;
+
+						(_display displayCtrl 280) ctrlSetBackgroundColor [0.25, 0.27, 0.29, _alpha * 0.5]; 
+						(_display displayCtrl 280) ctrlCommit 0;
+
+						{
+							(_display displayCtrl _x) ctrlSetBackgroundColor [0.18, 0.19, 0.21, _alpha]; 
+							(_display displayCtrl _x) ctrlCommit 0;
+						}forEach [15508,15518,15505,16304];
+
+						{
+							(_display displayCtrl _x) ctrlSetBackgroundColor [0.13, 0.13, 0.15, _alpha]; 
+							(_display displayCtrl _x) ctrlCommit 0; 
+						}forEach [646,283,15513,16104,16105];
+
+						(_display displayCtrl 152) ctrlSetTextColor EZM_themeColor; 
+						(_display displayCtrl 152) ctrlAddEventHandler ["MouseButtonClick", {
+							params ["_control"];
+							_control spawn {
+								uiSleep 0.07;
+								_this ctrlSetTextColor EZM_themeColor; 
+								_this ctrlCommit 0; 
+							};
+						}];
+						(_display displayCtrl 152) ctrlCommit 0; 
+
+						(_display displayCtrl 15515) ctrlSetTextColor EZM_themeColor;
+						(_display displayCtrl 15515) ctrlCommit 0;
+					};
+				};
 
 				MAZ_EZM_fnc_zeusAddCategory = {
 					params [
@@ -16587,15 +16923,29 @@ MAZ_EZM_fnc_editZeusInterface = {
 						default {"ModuleEmpty_F"};
 					};
 
-					comment "Setup functions";
-						private _functionArray = missionNamespace getVariable ['MAZ_zeusModulesWithFunction', []];
-						private _functionCount = count _functionArray; 
-						private _functionIndex = 7000 + (_functionCount + 1);
-						private _moduleTip = format ['%1\n\nFunction ID:\n%2', _moduleTip, str _functionIndex];
-						_functionArray pushBack [_functionIndex, _moduleFunction];
-						missionNamespace setVariable ['MAZ_zeusModulesWithFunction', _functionArray];
+					"Setup functions";
+						"Ignore adding functions to array if already created";
+						if (!(missionNamespace getVariable ["MAZ_zeusModulesRanBefore",false])) then {
+							private _functionMap = missionNamespace getVariable ["MAZ_zeusModulesWithFunction", createHashMap];
+							private _pathParents = [_parentCategory];
+							if(!isNil "_parentSubCategory") then {
+								_pathParents pushBack _parentSubCategory;
+							};
+							private _mapKey = str _side;
+							private _lastPath = [];
+							{
+								_lastPath pushBack _x;
+								_mapKey = format ["%1-%2",_mapKey,_parentTree tvText _lastPath];
+							}forEach _pathParents;
+							_mapKey = format ["%1-%2",_mapKey,_moduleName];
+							private _isDupe = _functionMap set [_mapKey, _moduleFunction, true];
+							if(_isDupe) then {
+								[format ["%1 is a duplicate module. One with the same name is already added.",_mapKey], "addItemFailed"] call MAZ_EZM_fnc_systemMessage;
+							};
+							missionNamespace setVariable ["MAZ_zeusModulesWithFunction", _functionMap];
+						};
 					
-					comment "Add modules";
+					"Add modules";
 						private _path = [_parentCategory];
 						if(!isNil "_parentSubCategory") then {_path pushBack _parentSubCategory};
 						private _cindex = _parentTree tvAdd [_path, _moduleName];
@@ -16606,7 +16956,6 @@ MAZ_EZM_fnc_editZeusInterface = {
 						_parentTree tvSetData [_path, _data];
 						_parentTree tvSetPictureColor [_path, _iconColor];
 						_parentTree tvSetColor [_path, _textColor];
-						_parentTree ctrlCommit 0;
 
 					_path;
 				};
@@ -16641,7 +16990,6 @@ MAZ_EZM_fnc_editZeusInterface = {
 					private _zeusDisplay = findDisplay 312;
 					if (isNull _zeusDisplay) exitWith {};
 					if (_zeusDisplay getVariable ['MAZ_zeusPreviewInitialized', false]) exitWith {};
-					private _idcs = [270,271,272,273,274];
 					{
 						private _ctrl = _zeusDisplay displayCtrl _x;
 						_ctrl ctrlAddEventHandler ['TreeMouseMove',{
@@ -16708,7 +17056,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 								} forEach MAZ_zeusPreviewCtrls;
 							};
 						}];
-					} forEach _idcs;
+					} forEach [270,271,272,273,274];
 					_zeusDisplay getVariable ['MAZ_zeusPreviewInitialized', true];
 				};
 
@@ -16755,8 +17103,52 @@ MAZ_EZM_fnc_editZeusInterface = {
 					}];
 				};
 
-			comment "Quality of Life Stuff";
+				MAZ_EZM_fnc_getModuleCategories = {
+					private _tree = uiNamespace getVariable "MAZ_zeusModulesTree";
+					if(isNil "_tree") exitWith {};
+					private _size = _tree tvCount [];
+					private _moduleCategories = [];
+					private _iToStart = 9999;
+					for "_i" from 0 to (_size - 1) do {
+						private _label = _tree tvText [_i];
+						if(_label == "Enhanced Zeus Modules") then {
+							_iToStart = _i + 2;
+						};
+						if(_iToStart <= _i) then {
+							_moduleCategories pushBack _label;
+						};
+					};
+					_moduleCategories;
+				};
 
+				MAZ_EZM_fnc_removeToggledCategories = {
+					with missionNamespace do {
+						call MAZ_EZM_fnc_setupModuleToggleMap;
+						private _tree = uiNamespace getVariable "MAZ_zeusModulesTree";
+						if(isNil "_tree") exitWith {};
+						private _size = _tree tvCount [];
+						private _moduleCategories = [];
+						private _iToStart = 9999;
+						for "_i" from 0 to (_size - 1) do {
+							private _label = _tree tvText [_i];
+							if(_label == "Enhanced Zeus Modules") then {
+								_iToStart = _i + 2;
+							};
+							if(_iToStart <= _i) then {
+								if(!(MAZ_EZM_moduleToggleMap getOrDefault [_label, true])) then {
+									_tree tvDelete [_i];
+								};
+							};
+						};
+					};
+				};
+			};
+
+			[missionNamespace getVariable "EZM_zeusTransparency"] call MAZ_EZM_fnc_setZeusTransparency;
+
+		comment "Quality of Life Stuff";
+
+			if(!(missionNamespace getVariable ["MAZ_zeusModulesRanBefore",false])) then {
 				MAZ_EZM_fnc_addCollapseExpandButtons = {
 					private _display = (findDisplay 312);
 					private _zeusSearchBar = _display displayCtrl 283;
@@ -16799,30 +17191,31 @@ MAZ_EZM_fnc_editZeusInterface = {
 					}];
 					_zeusExpand ctrlCommit 0;
 				};
-				call MAZ_EZM_fnc_addCollapseExpandButtons;
+
+				MAZ_EZM_factionNames = [
+					"$STR_A3_CFGFACTIONCLASSES_IND_F0",
+					"$STR_A3_CFGFACTIONCLASSES_CIV_F0",
+					"$STR_A3_CFGFACTIONCLASSES_OPF_F0",
+					"$STR_A3_CFGFACTIONCLASSES_OPF_T_F0",
+					"$STR_A3_CFGFACTIONCLASSES_BLU_CTRG_F0",
+					"$STR_A3_CFGFACTIONCLASSES_IND_G_F0",
+					"$STR_A3_CFGFACTIONCLASSES_BLU_GEN_F0",
+					"$STR_A3_CFGFACTIONCLASSES_CIV_IDAP_F0",
+					"$STR_A3_C_CFGFACTIONCLASSES_IND_E_F0",
+					"$STR_A3_CFGFACTIONCLASSES_BLU_F0",
+					"$STR_A3_CFGFACTIONCLASSES_BLU_T_F0",
+					"$STR_A3_C_CFGFACTIONCLASSES_BLU_W_F0",
+					"$STR_A3_CFGFACTIONCLASSES_IND_C_F0"
+				] apply {localize _x};
 
 				MAZ_EZM_fnc_removeFactionStuffFromEmpty = {
 					private _display = (findDisplay 312);
 					private _civilianUnitTree = (_display displayCtrl 274);
-					private _factionNames = [
-						"$STR_A3_CFGFACTIONCLASSES_IND_F0",
-						"$STR_A3_CFGFACTIONCLASSES_CIV_F0",
-						"$STR_A3_CFGFACTIONCLASSES_OPF_F0",
-						"$STR_A3_CFGFACTIONCLASSES_OPF_T_F0",
-						"$STR_A3_CFGFACTIONCLASSES_BLU_CTRG_F0",
-						"$STR_A3_CFGFACTIONCLASSES_IND_G_F0",
-						"$STR_A3_CFGFACTIONCLASSES_BLU_GEN_F0",
-						"$STR_A3_CFGFACTIONCLASSES_CIV_IDAP_F0",
-						"$STR_A3_C_CFGFACTIONCLASSES_IND_E_F0",
-						"$STR_A3_CFGFACTIONCLASSES_BLU_F0",
-						"$STR_A3_CFGFACTIONCLASSES_BLU_T_F0",
-						"$STR_A3_C_CFGFACTIONCLASSES_BLU_W_F0",
-						"$STR_A3_CFGFACTIONCLASSES_IND_C_F0"
-					] apply {localize _x};
+					
 					private _treePaths = [];
 					for '_n' from 0 to 40 do {
 						private _text = _civilianUnitTree tvText [_n];
-						if(_text in _factionNames) then {
+						if(_text in MAZ_EZM_factionNames) then {
 							_treePaths pushBack _n;
 						};
 					};
@@ -16830,7 +17223,6 @@ MAZ_EZM_fnc_editZeusInterface = {
 						_civilianUnitTree tvDelete [_x - _forEachIndex];
 					}forEach _treePaths;
 				};
-				call MAZ_EZM_fnc_removeFactionStuffFromEmpty;
 
 				MAZ_EZM_fnc_addSpawnWithoutCrewButton = {
 					private _display = (findDisplay 312);
@@ -16878,7 +17270,6 @@ MAZ_EZM_fnc_editZeusInterface = {
 						(_display displayCtrl _x) ctrlCommit 0;
 					} forEach [270,271,272,273,274,275,276,277,278,279,280,281,282];
 				};
-				call MAZ_EZM_fnc_addSpawnWithoutCrewButton;
 
 				comment "TODO : Move groups tree back once";
 				MAZ_EZM_fnc_moveTree = {
@@ -16940,9 +17331,11 @@ MAZ_EZM_fnc_editZeusInterface = {
 					};
 					_index
 				};
+			};
 
-			comment "Warning System";
+		comment "Warning System";
 
+			if(!(missionNamespace getVariable ["MAZ_zeusModulesRanBefore",false])) then {
 				MAZ_EZM_fnc_getActiveWarnings = {
 					private _count = 0;
 					{
@@ -17018,7 +17411,6 @@ MAZ_EZM_fnc_editZeusInterface = {
 					};
 					(findDisplay 312) setVariable ["MAZ_EZM_hideWarnings",false];
 				};
-				[] call MAZ_EZM_fnc_showAllWarnings;
 				
 				MAZ_EZM_fnc_hideAllWarnings = {
 					if(count (uiNamespace getVariable ["MAZ_EZM_activeWarnings",[]]) < 0) exitWith {};
@@ -17099,1276 +17491,1289 @@ MAZ_EZM_fnc_editZeusInterface = {
 						};
 					};
 				};
+			};
 
-				[] spawn {
-					while {!isNull (findDisplay 312)} do {
-						call MAZ_EZM_fnc_detectRespawnsUnavailable;
-						"call MAZ_EZM_fnc_detectLowServerPerformance";
-						sleep 5;
+		comment "Define Trees";
+		
+			MAZ_UnitsTree_BLUFOR	 = (_display displayCtrl 270);
+			MAZ_UnitsTree_OPFOR		 = (_display displayCtrl 271);
+			MAZ_UnitsTree_INDEP		 = (_display displayCtrl 272);
+			MAZ_UnitsTree_CIVILIAN	 = (_display displayCtrl 273);
+			MAZ_UnitsTree_EMPTY      = (_display displayCtrl 274);
+			MAZ_GroupsTree_BLUFOR	 = (_display displayCtrl 275);
+			MAZ_GroupsTree_OPFOR	 = (_display displayCtrl 276);
+			MAZ_GroupsTree_INDEP	 = (_display displayCtrl 277);
+			MAZ_GroupsTree_CIVILIAN	 = (_display displayCtrl 278);
+			MAZ_GroupsTree_EMPTY	 = (_display displayCtrl 279);
+			MAZ_zeusModulesTree 	 = (_display displayCtrl 280);
+
+			MAZ_EZM_AllTrees = [MAZ_UnitsTree_BLUFOR,MAZ_UnitsTree_OPFOR,MAZ_UnitsTree_INDEP,MAZ_UnitsTree_CIVILIAN,MAZ_UnitsTree_EMPTY,MAZ_GroupsTree_BLUFOR,MAZ_GroupsTree_OPFOR,MAZ_GroupsTree_INDEP,MAZ_GroupsTree_CIVILIAN,MAZ_GroupsTree_EMPTY,MAZ_zeusModulesTree];
+			
+			for '_n' from 0 to 32 do {
+				uiNamespace getVariable "MAZ_UnitsTree_BLUFOR" tvCollapse [_n];
+				uiNamespace getVariable "MAZ_UnitsTree_OPFOR" tvCollapse [_n];
+				uiNamespace getVariable "MAZ_UnitsTree_INDEP" tvCollapse [_n];
+				uiNamespace getVariable "MAZ_UnitsTree_CIVILIAN" tvCollapse [_n];
+				uiNamespace getVariable "MAZ_UnitsTree_EMPTY" tvCollapse [_n];
+				uiNamespace getVariable "MAZ_zeusModulesTree" tvCollapse [_n];
+				comment "
+					MAZ_GroupsTree_BLUFOR tvCollapse [_n];
+					MAZ_GroupsTree_OPFOR tvCollapse [_n];
+					MAZ_GroupsTree_INDEP tvCollapse [_n];
+					MAZ_GroupsTree_CIVILIAN tvCollapse [_n];
+				";
+			};
+
+			MAZ_zeusModulesTree ctrlSetTooltipColorBox [0,0,0,1];
+			MAZ_zeusModulesTree ctrlSetTooltipColorShade [0.1,0.1,0.1,0.9];
+			
+			{
+				_x ctrlAddEventhandler ["TreeSelChanged",{
+					params ["_control","_path"];
+					with uiNamespace do {
+						MAZ_EZM_SelectionPath = _path;
 					};
-				};
+				}];
+			} forEach [MAZ_UnitsTree_BLUFOR,MAZ_UnitsTree_OPFOR,MAZ_UnitsTree_INDEP,MAZ_UnitsTree_CIVILIAN,MAZ_UnitsTree_EMPTY,MAZ_zeusModulesTree];
 
-			comment "Define Trees";
+		comment "Add Divider";
+
+			[MAZ_zeusModulesTree,"------------------------------------------------------","",EZM_themeColor] call MAZ_EZM_fnc_zeusAddCategory;
+
+			MAZ_EZMLabelTree = [MAZ_zeusModulesTree,"Enhanced Zeus Modules",'\a3\ui_f_curator\Data\Displays\RscDisplayCurator\modeModules_ca.paa',EZM_themeColor] call MAZ_EZM_fnc_zeusAddCategory;
+			MAZ_zeusModulesTree tvSetPictureRightColor [[MAZ_EZMLabelTree], EZM_themeColor];
+			[
+				MAZ_zeusModulesTree,
+				MAZ_EZMLabelTree,
+				format ["ZAM Edition - %1",missionNamespace getVariable ['MAZ_EZM_Version','']],
+				"Framework originally created by: M9-SD & GamesByChris.\nExpanded and made public by: Expung3d to enhance Public Zeus.\n\nNeed help? Found a bug? Join our Discord:\nhttps://discord.gg/W4ew5HP",
+				"MAZ_EZM_fnc_hiddenEasterEggModule"
+			] call MAZ_EZM_fnc_zeusAddModule;
 			
-				MAZ_UnitsTree_BLUFOR	 = (_display displayCtrl 270);
-				MAZ_UnitsTree_OPFOR		 = (_display displayCtrl 271);
-				MAZ_UnitsTree_INDEP		 = (_display displayCtrl 272);
-				MAZ_UnitsTree_CIVILIAN	 = (_display displayCtrl 273);
-				MAZ_UnitsTree_EMPTY      = (_display displayCtrl 274);
-				MAZ_GroupsTree_BLUFOR	 = (_display displayCtrl 275);
-				MAZ_GroupsTree_OPFOR	 = (_display displayCtrl 276);
-				MAZ_GroupsTree_INDEP	 = (_display displayCtrl 277);
-				MAZ_GroupsTree_CIVILIAN	 = (_display displayCtrl 278);
-				MAZ_GroupsTree_EMPTY	 = (_display displayCtrl 279);
-				MAZ_zeusModulesTree 	 = (_display displayCtrl 280);
-				
-				for '_n' from 0 to 32 do {
-					uiNamespace getVariable "MAZ_UnitsTree_BLUFOR" tvCollapse [_n];
-					uiNamespace getVariable "MAZ_UnitsTree_OPFOR" tvCollapse [_n];
-					uiNamespace getVariable "MAZ_UnitsTree_INDEP" tvCollapse [_n];
-					uiNamespace getVariable "MAZ_UnitsTree_CIVILIAN" tvCollapse [_n];
-					uiNamespace getVariable "MAZ_UnitsTree_EMPTY" tvCollapse [_n];
-					uiNamespace getVariable "MAZ_zeusModulesTree" tvCollapse [_n];
-					comment "
-						MAZ_GroupsTree_BLUFOR tvCollapse [_n];
-						MAZ_GroupsTree_OPFOR tvCollapse [_n];
-						MAZ_GroupsTree_INDEP tvCollapse [_n];
-						MAZ_GroupsTree_CIVILIAN tvCollapse [_n];
-					";
-				};
+			[MAZ_zeusModulesTree,"------------------------------------------------------","",EZM_themeColor] call MAZ_EZM_fnc_zeusAddCategory;
+		
+		comment "AI Modifers";
+			MAZ_EditAITree = [
+				MAZ_zeusModulesTree,
+				"AI Modifiers",
+				'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\intel_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddCategory;
 
-				MAZ_zeusModulesTree ctrlSetTooltipColorBox [0,0,0,1];
-				MAZ_zeusModulesTree ctrlSetTooltipColorShade [0.1,0.1,0.1,0.9];
-				
-				{
-					_x ctrlAddEventhandler ["TreeSelChanged",{
-						params ["_control","_path"];
-						with uiNamespace do {
-							if (_path isEqualTo []) exitWith {};
-							MAZ_EZM_SelectionPath = _path;
-						};
-					}];
-				} forEach [MAZ_UnitsTree_BLUFOR,MAZ_UnitsTree_OPFOR,MAZ_UnitsTree_INDEP,MAZ_UnitsTree_CIVILIAN,MAZ_UnitsTree_EMPTY,MAZ_zeusModulesTree];
+			[
+				MAZ_zeusModulesTree,
+				MAZ_EditAITree,
+				"Garrison (Instant)",
+				"Places AI's group in randomized position in nearest building.",
+				"MAZ_EZM_fnc_garrisonInstantModule",
+				'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\run_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
 
-			comment "Add Divider";
+			[
+				MAZ_zeusModulesTree,
+				MAZ_EditAITree,
+				"Garrison (Search)",
+				"Places AI's group in randomized position in nearest building.",
+				"MAZ_EZM_fnc_garrisonSearchModule",
+				'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\getin_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
 
-				[MAZ_zeusModulesTree,"------------------------------------------------------","",EZM_themeColor] call MAZ_EZM_fnc_zeusAddCategory;
+			[
+				MAZ_zeusModulesTree,
+				MAZ_EditAITree,
+				"Un-Garrison",
+				"Removes AI from their garrisoned position.",
+				"MAZ_EZM_fnc_unGarrisonModule",
+				'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\getout_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
 
-				MAZ_EZMLabelTree = [MAZ_zeusModulesTree,"Enhanced Zeus Modules",'\a3\ui_f_curator\Data\Displays\RscDisplayCurator\modeModules_ca.paa',EZM_themeColor] call MAZ_EZM_fnc_zeusAddCategory;
-				MAZ_zeusModulesTree tvSetPictureRightColor [[MAZ_EZMLabelTree], EZM_themeColor];
-				[
-					MAZ_zeusModulesTree,
-					MAZ_EZMLabelTree,
-					format ["ZAM Edition - %1",missionNamespace getVariable ['MAZ_EZM_Version','']],
-					"Framework originally created by: M9-SD & GamesByChris.\nExpanded and made public by: Expung3d to enhance Public Zeus.\n\nNeed help? Found a bug? Join our Discord:\nhttps://discord.gg/W4ew5HP",
-					"MAZ_EZM_fnc_hiddenEasterEggModule"
-				] call MAZ_EZM_fnc_zeusAddModule;
-				
-				[MAZ_zeusModulesTree,"------------------------------------------------------","",EZM_themeColor] call MAZ_EZM_fnc_zeusAddCategory;
+			[
+				MAZ_zeusModulesTree,
+				MAZ_EditAITree,
+				"Edit AI Equipment",
+				"Remove or equip AI with NVGs or flashlights.",
+				"MAZ_EZM_fnc_removeNVGsAddFlashlightsModule",
+				"a3\ui_f\data\igui\cfg\actions\gear_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_EditAITree,
+				"Enable AI Lasers",
+				"Makes AI turn on their lasers and lights.",
+				"MAZ_EZM_fnc_toggleLightsModule",
+				"a3\ui_f_curator\data\cfgcurator\laser_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_EditAITree,
+				"Disable AI Lasers",
+				"Makes AI turn off their lasers and lights.",
+				"MAZ_EZM_fnc_toggleOffLightsModule",
+				"a3\ui_f\data\map\markers\military\dot_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_EditAITree,
+				"Make Hostage",
+				"Makes AI into a restrained hostage.",
+				"MAZ_EZM_fnc_makeHostageModule",
+				'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\help_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_EditAITree,
+				"Make HVT",
+				"Makes AI an HVT that, when killed, everyone will be notified.",
+				"MAZ_EZM_fnc_makeHVTModule",
+				"a3\modules_f_curator\data\portraitobjectiveneutralize_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
 			
-			comment "AI Modifers";
-				MAZ_EditAITree = [
-					MAZ_zeusModulesTree,
-					"AI Modifiers",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\intel_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddCategory;
+			[
+				MAZ_zeusModulesTree,
+				MAZ_EditAITree,
+				"Set Ambient Animation",
+				"Set Ambient Animations",
+				"MAZ_EZM_fnc_setAmbientAnimationModule",
+				"a3\ui_f_curator\data\rsccommon\rscattributepunishmentanimation\pushupslegs.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
 
+			[
+				MAZ_zeusModulesTree,
+				MAZ_EditAITree,
+				"Set Difficulty",
+				"Adjust all AI's difficulty.",
+				"MAZ_EZM_fnc_changeDifficultyModule",
+				'\A3\ui_f\data\IGUI\RscIngameUI\RscUnitInfo\SI_stand_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_EditAITree,
+				"Set Stance",
+				"Makes AI forced into stance mode. i.e. prone, crouch, standing, auto.",
+				"MAZ_EZM_fnc_changeStanceModule",
+				'\A3\ui_f\data\IGUI\RscIngameUI\RscUnitInfo\SI_stand_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_EditAITree,
+				"Suppressive Fire",
+				"Makes the AI suppress the position you select.",
+				"MAZ_EZM_fnc_suppressiveFireModule",
+				"a3\static_f_oldman\hmg_02\data\ui\icon_hmg_02_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_EditAITree,
+				"Toggle Unit Surrender",
+				"Makes AI surrender or un-surrender.",
+				"MAZ_EZM_fnc_toggleSurrenderModule",
+				'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\help_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+		comment "AI Supports";
+			MAZ_AISupportTree = [
+				MAZ_zeusModulesTree,
+				"AI Supports",
+				"a3\modules_f_curator\data\portraitradio_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddCategory;
+			
+			[
+				MAZ_zeusModulesTree,
+				MAZ_AISupportTree,
+				"Airdrop",
+				"Calls an airdrop to module position.",
+				"MAZ_EZM_fnc_callAirdropModule",
+				"a3\air_f_beta\parachute_01\data\ui\portrait_parachute_01_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_AISupportTree,
+				"Evac Helicopter",
+				"HOW TO USE:\n1: Place module on position to which a helicopter will fly and land to pickup players.\n2: Select secondary position that the helicopter will drop them off at.",
+				"MAZ_EZM_fnc_callEvacModule",
+				"a3\air_f\heli_light_01\data\ui\map_heli_light_01_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_AISupportTree,
+				"Call Reinforcements",
+				"HOW TO USE:\n1: Place module on position to which a helicopter will fly and drop off troops.\n2: Select reinforcements parameters in menu.\n3: Select secondary position that reinforcements will move to on foot.",
+				"MAZ_EZM_fnc_callReinforcements",
+				'\A3\ui_f\data\gui\rsc\rscdisplayarsenal\radio_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_AISupportTree,
+				"Mortar Area",
+				"Sends virtual fire support to the area with a radius of error and a delay between rounds.",
+				"MAZ_EZM_fnc_mortarAreaModule",
+				"a3\static_f\mortar_01\data\ui\map_mortar_01_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+		comment "Arsenal (s)";
+
+			MAZ_ArsenalTree = [
+				MAZ_zeusModulesTree,
+				"Arsenal Creator",
+				'\A3\ui_f\data\Logos\a_64_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddCategory;
+			
+			MAZ_zeusModulesTree tvSetTooltip [[MAZ_ArsenalTree], ""];
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_ArsenalTree,
+				"AIO Arsenal",
+				"All-In-One Arsenal (by M9-SD)\n\nDescription:\n There are two ways to use this module:\n(1) Place onto another object to make it an AIO arsenal.\n(2) Place on ground to spawn supply box AIO arsenal.\n\nIncludes the following options:\n- Full Arsenal\n- Quick Rearm\n- Copy Loadout\n- Empty Loadout\n- Save Respawn Loadout\n- Load Respawn Loadout\n- Delete Respawn Loadout\n- Edit Group Loadouts",
+				"MAZ_EZM_fnc_createAIOArsenalDialog",
+				'\A3\ui_f\data\Logos\a_64_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+			
+			[
+				MAZ_zeusModulesTree,
+				MAZ_ArsenalTree,
+				"Reset All Saved Loadouts",
+				"Delete All Saved Loadouts\n\nDescription:\n This module will remove the saved loadouts from all players.",
+				"MAZ_EZM_fnc_resetSavedLoadouts",
+				'\A3\ui_f\data\Logos\a_64_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+		comment "Automatic Missions";
+
+			MAZ_AutoMissionTree = [
+				MAZ_zeusModulesTree,
+				"Automatic Missions",
+				"a3\ui_f\data\map\markers\military\objective_ca.paa",
+				[1,1,1,1],
+				"Automated Missions that can be spawned on different maps."
+			] call MAZ_EZM_fnc_zeusAddCategory;
+			
+			[
+				MAZ_zeusModulesTree,
+				MAZ_AutoMissionTree,
+				"Toggle Automatic Heli Crash Missions",
+				"Toggles randomized helicopter crash missions.\nWill spawn and last for 15 minutes before despawning.\nAfter a mission despawns or is completed another will spawn in 10 minutes.",
+				"MAZ_EZM_fnc_toggleRandomHelicrashModule",
+				"a3\modules_f_curator\data\portraitobjectiveneutralize_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_AutoMissionTree,
+				"Toggle Automatic Convoy Missions",
+				"Toggles randomized convoy missions.\nPlayers must capture the truck moving within the convoy.\nWill spawn and last until killed or reaching its destination.\nAfter a mission despawns or is completed another will spawn in 10 minutes.",
+				"MAZ_EZM_fnc_toggleRandomConvoyModule",
+				"a3\modules_f_curator\data\portraitobjectivemove_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_AutoMissionTree,
+				"Auto Garrison Town",
+				"Automatically garrisons a named town or the town where the module is placed.",
+				"MAZ_EZM_fnc_createGarrisonTownDialog",
+				"a3\modules_f_curator\data\portraitobjectiveneutralize_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+		comment "Building Interiors";
+
+			MAZ_BuildingInteriorsTree = [
+				MAZ_zeusModulesTree,
+				"Building Interiors",
+				"a3\3den\data\cfg3den\group\iconcustomcomposition_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddCategory;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_BuildingInteriorsTree,
+				"Spawn Interior",
+				"Spawn random interior data onto selected building.",
+				"MAZ_EZM_fnc_createBuildingInteriorCall",
+				"a3\3den\data\cfg3den\group\iconcustomcomposition_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_BuildingInteriorsTree,
+				"Remove Interior",
+				"Removes interior from selected building.",
+				"MAZ_EZM_fnc_removeBuildingInteriorCall",
+				"a3\3den\data\cfg3den\group\iconcustomcomposition_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_BuildingInteriorsTree,
+				"Get Default Interior Data",
+				"Resets EZM interior data to the default. \nThis will remove any custom compositions you may have created!",
+				"MAZ_EZM_fnc_getDefaultInteriors",
+				"a3\3den\data\displays\display3den\toolbar\undo_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+		comment "Cinematics";
+			MAZ_Cinematics = [
+				MAZ_zeusModulesTree,
+				"Cinematics",
+				"a3\ui_f\data\gui\cfg\keyframeanimation\iconcamera_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddCategory;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_Cinematics,
+				"Circle Cinematic",
+				"Create a cinematic that circles around a specified area.",
+				"MAZ_EZM_fnc_circleCinematicDialog",
+				"a3\ui_f\data\igui\cfg\islandmap\iconcamera_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_Cinematics,
+				"Intro Cinematic",
+				"Create an introduction cinematic showcasing the scenario name, your name, and some optional text.\nCreated by: Bijx",
+				"HYPER_EZM_fnc_introCinematicModule",
+				"a3\ui_f\data\igui\cfg\islandmap\iconcamera_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+		comment "Clean Up Stuff";
+			MAZ_CleanUpTree = [
+				MAZ_zeusModulesTree,
+				"Clean-Up Tools",
+				"a3\3den\data\displays\display3den\panelleft\entitylist_delete_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddCategory;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_CleanUpTree,
+				"Delete Bodies",
+				"Similar to Delete Clutter except it does not delete destroyed buildings.",
+				"MAZ_EZM_fnc_deleteBodies",
+				"a3\3den\data\displays\display3den\panelleft\entitylist_delete_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_CleanUpTree,
+				"Delete Clutter",
+				"Deletes all clutter on the ground.",
+				"MAZ_EZM_fnc_deleteClutterModule",
+				"a3\3den\data\displays\display3den\panelleft\entitylist_delete_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_CleanUpTree,
+				"Delete Empty Groups",
+				"Deletes all empty groups.",
+				"MAZ_EZM_fnc_deleteEmptyGroupsModule",
+				"\a3\ui_f_curator\data\rsccommon\rscattributeformation\wedge_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+			
+			[
+				MAZ_zeusModulesTree,
+				MAZ_CleanUpTree,
+				"Delete Everything",
+				"Deletes all mission objects.",
+				"MAZ_EZM_fnc_deleteEverythingModule",
+				"a3\3den\data\displays\display3den\panelleft\entitylist_delete_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_CleanUpTree,
+				"Delete Markers",
+				"Deletes all markers.",
+				"MAZ_EZM_fnc_deleteMarkersModule",
+				"a3\3den\data\displays\display3den\panelright\submode_marker_icon_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_CleanUpTree,
+				"Delete Mines",
+				"Deletes all mines.",
+				"MAZ_EZM_fnc_deleteMinesModule",
+				"a3\ui_f_curator\data\cfgmarkers\minefieldap_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_CleanUpTree,
+				"Delete Protection Zones",
+				"Deletes all protection zones.",
+				"MAZ_EZM_fnc_deleteProtectionZonesModule"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_CleanUpTree,
+				"Delete Radius",
+				"Deletes all objects in a radius.",
+				"MAZ_EZM_fnc_deleteRadiusModule",
+				"a3\3den\data\displays\display3den\panelleft\entitylist_delete_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+		comment "Create/Delete Ships";
+			MAZ_DeleteShipTree = [
+				MAZ_zeusModulesTree,
+				"Create/Delete Ships",
+				"a3\ui_f\data\map\vehicleicons\iconship_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddCategory;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_DeleteShipTree,
+				"Create Carrier",
+				"Creates the USS Freedom at its position.\nIf placed on a boat the ship will face the direction of the boat.",
+				"MAZ_EZM_fnc_createCarrierModule"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_DeleteShipTree,
+				"Create Destroyer",
+				"Creates the USS Liberty at its position.\nIf placed on a boat the ship will face the direction of the boat.",
+				"MAZ_EZM_fnc_createDestroyerModule"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_DeleteShipTree,
+				"Delete All Carriers",
+				"Deletes all carriers on the map.",
+				"MAZ_EZM_fnc_deleteAllCarriersModule"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_DeleteShipTree,
+				"Delete All Destroyers",
+				"Deletes all destroyers on the map.",
+				"MAZ_EZM_fnc_deleteAllDestroyersModule"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+		comment "Developer Tools";
+
+			MAZ_DevToolsTree = [
+				MAZ_zeusModulesTree,
+				"Developer Tools",
+				"a3\ui_f\data\gui\rsc\rscdisplayarcademap\icon_debug_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddCategory;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_DevToolsTree,
+				"Animation Viewer",
+				"Opens the Animation Viewer.\nIf placed on a unit it will open using that unit and its current animation.",
+				"MAZ_EZM_fnc_openAnimViewerModule",
+				"a3\ui_f\data\gui\cfg\keyframeanimation\iconcamera_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_DevToolsTree,
+				"Open Debug Console",
+				"Opens the Debug Console.\nthis refers to the entity the console is placed onto.",
+				"MAZ_EZM_fnc_debugConsoleLocalModule",
+				"a3\3den\data\displays\display3den\entitymenu\findconfig_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_DevToolsTree,
+				"Find in Config Viewer",
+				"Opens the Config Viewer to the entity's config.",
+				"MAZ_EZM_fnc_showObjectConfig",
+				"a3\3den\data\displays\display3den\entitymenu\findconfig_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_DevToolsTree,
+				"Function Viewer",
+				"Opens the Function Viewer.",
+				"MAZ_EZM_fnc_functionViewer",
+				"a3\ui_f\data\gui\rsc\rscdisplayarcademap\icon_functions_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_DevToolsTree,
+				"GUI Editor",
+				"Opens the GUI Editor.",
+				"MAZ_EZM_fnc_openGUIEditor"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+		comment "Environment";
+
+			MAZ_EnvironmentTree = [
+				MAZ_zeusModulesTree,
+				"Environment",
+				"a3\modules_f_curator\data\portraitweather_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddCategory;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_EnvironmentTree,
+				"Change Time",
+				"Change the current time.",
+				"MAZ_EZM_fnc_changeTimeModule",
+				"a3\modules_f_curator\data\portraitskiptime_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_EnvironmentTree,
+				"Change Date",
+				"Change the current date.",
+				"MAZ_EZM_fnc_changeDateModule",
+				"a3\modules_f_curator\data\portraitskiptime_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_EnvironmentTree,
+				"Edit Weather Conditions",
+				"Edit the current meteorological atmospheric environment conditions.",
+				"MAZ_EZM_fnc_editWeatherConditionsModule",
+				"a3\modules_f_curator\data\portraitweather_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+		comment "Explosives";
+
+			MAZ_ExplosivesTree = [
+				MAZ_zeusModulesTree,
+				"Explosives",
+				'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\destroy_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddCategory;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_ExplosivesTree,
+				"Create Minefield",
+				"Create a minefield of specific mines in a radius.",
+				"MAZ_EZM_fnc_createMinefieldModule",
+				"a3\ui_f_curator\data\cfgmarkers\minefieldap_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_ExplosivesTree,
+				"Create IED",
+				"Create an IED that will detonate when a specific side gets close.",
+				"MAZ_EZM_fnc_createIEDModule",
+				"a3\ui_f_curator\data\cfgmarkers\minefieldap_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+		comment "Festive";
+
+			MAZ_FestiveTree = [
+				MAZ_zeusModulesTree,
+				"Festive Modules",
+				"a3\3den\data\displays\display3den\toolbar\help_updates_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddCategory;
+
+			call MAZ_EZM_holidayModulesAdd;
+
+		comment "Gameplay";
+
+			MAZ_GameplayTree = [
+				MAZ_zeusModulesTree,
+				"Gameplay",
+				'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\meet_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddCategory;
+			
+			[
+				MAZ_zeusModulesTree,
+				MAZ_GameplayTree,
+				"Create Countdown",
+				"Creates an on screen countdown for players of specified side.",
+				"MAZ_EZM_fnc_createCountdownModule",
+				"a3\ui_f\data\igui\cfg\actions\settimer_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_GameplayTree,
+				"Create Intel",
+				"Creates an intel object to be picked up by the players.\nCreated by: Bijx",
+				"HYPER_EZM_fnc_createIntel",
+				"a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_GameplayTree,
+				"Create AAN News Article",
+				"Creates a laptop which shows an AAN News Article when interacted on.\nCreated by: Bijx",
+				"HYPER_EZM_fnc_createAANIntel",
+				"a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+		comment "Markers";
+
+			[] call MAZ_EZM_fnc_drawEventhandlerAreaMarkers;
+			
+			MAZ_MarkersTree = [
+				MAZ_zeusModulesTree,
+				"Markers",
+				"a3\3den\data\displays\display3den\panelright\submode_marker_icon_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddCategory;
+			
+			[
+				MAZ_zeusModulesTree,
+				MAZ_MarkersTree,
+				"Create Area Marker",
+				"Creates an area marker on the map position.",
+				"MAZ_EZM_fnc_createAreaMarker",
+				"a3\ui_f\data\map\markerbrushes\fdiagonal_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_MarkersTree,
+				"Create AO Markers",
+				"Creates markers that darkens out everywhere except for the AO.",
+				"MAZ_EZM_fnc_createAOMarkerDialog",
+				"a3\ui_f\data\gui\rsc\rscdisplayarsenal\map_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_MarkersTree,
+				"Delete AO Markers",
+				"Deletes the spawned AO Markers.",
+				"MAZ_EZM_fnc_deleteAOMarkers",
+				"a3\ui_f\data\gui\rsc\rscdisplayarcademap\icon_exit_cross_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+		comment "Messages";
+
+			MAZ_MessagesTree = [
+				MAZ_zeusModulesTree,
+				"Messages",
+				"a3\3den\data\cfg3den\comment\texture_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddCategory;
+			
+			[
+				MAZ_zeusModulesTree,
+				MAZ_MessagesTree,
+				'3D Speak',
+				'Make an speak via 3D text above head.',
+				'MAZ_EZM_fnc_3DSpeakModule',
+				'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\talk3_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_MessagesTree,
+				"Send Subtitle Message",
+				"Sends a subtitle message to specific side players.",
+				"MAZ_EZM_fnc_sendSubtitleModule",
+				"a3\3den\data\cfg3den\comment\texture_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_MessagesTree,
+				'Voice Dialog Message',
+				'Play a voiced message from Arma 3.\n(Select voice lines from a menu.)',
+				'MAZ_EZM_fnc_moduleDialogMessage',
+				'\A3\ui_f\data\IGUI\Cfg\actions\talk_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+		comment "Object Modifiers";
+
+			MAZ_ObjectModTree = [
+				MAZ_zeusModulesTree,
+				"Object Modifiers",
+				"a3\3den\data\displays\display3den\toolbar\widget_local_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddCategory;
+			
+			[
+				MAZ_zeusModulesTree,
+				MAZ_ObjectModTree,
+				"Attach to Nearest",
+				"Attaches the object to the nearest object.",
+				"MAZ_EZM_fnc_attachToNearestModule"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_ObjectModTree,
+				"Detach",
+				"Detaches the object from anything it's attached to.",
+				"MAZ_EZM_fnc_detachModule"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_ObjectModTree,
+				"Edit Object Attributes",
+				"Edit object attributes through an advanced menu.\nEdit textures, edit init fields, god mode, enable/disable sim, etc.",
+				"MAZ_EZM_fnc_editObjectAttributesModule",
+				"a3\3den\data\cfgwaypoints\scripted_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_ObjectModTree,
+				"Replace w/ Simple Object",
+				"Replaces the object it's placed on with a simple object to improve performance.",
+				"MAZ_EZM_fnc_replaceWithSimpleObject",
+				"a3\3den\data\cfgwaypoints\scripted_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+			
+			[
+				MAZ_zeusModulesTree,
+				MAZ_ObjectModTree,
+				"Set Color to Black",
+				"Changes textures of an object / unit to black if possible.",
+				"HYPER_EZM_fnc_setColorBlack",
+				"a3\ui_f\data\gui\rsc\rscdisplaygarage\texturesources_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_ObjectModTree,
+				"Toggle Simulation",
+				"Enables or disables simulation on the object.",
+				"MAZ_EZM_fnc_toggleSimulationModule",
+				'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\danger_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_ObjectModTree,
+				"Toggle God Mode",
+				"Makes the object god moded or un-god moded.",
+				"MAZ_EZM_fnc_toggleInvincibleModule",
+				'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\kill_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_ObjectModTree,
+				"Toggle Object Hidden",
+				"Toggles whether the object is hidden.",
+				"MAZ_EZM_fnc_toggleHideObjectModule",
+				'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\scout_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_ObjectModTree,
+				"Un-Hide All Objects",
+				"Un-Hides all hidden objects.",
+				"MAZ_EZM_fnc_unHideObjectAllModule",
+				'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\whiteboard_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+		comment "Player Modifiers";
+			MAZ_PlayerModTree = [
+				MAZ_zeusModulesTree,
+				"Player Modifiers",
+				"a3\ui_f\data\gui\rsc\rscdisplaymain\menu_singleplayer_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddCategory;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_PlayerModTree,
+				"Change Side",
+				"Change the side of the selected player.",
+				"MAZ_EZM_fnc_changeSideModule",
+				'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\meet_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+			
+			[
+				MAZ_zeusModulesTree,
+				MAZ_PlayerModTree,
+				"Disarm",
+				"Removes the weapons from a player.",
+				"MAZ_EZM_fnc_disarmModule",
+				'\a3\3den\data\displays\display3den\entitymenu\arsenal_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+			
+			[
+				MAZ_zeusModulesTree,
+				MAZ_PlayerModTree,
+				"Heal / Revive",
+				"Heal and/or revive the selected player.",
+				"MAZ_EZM_fnc_healAndReviveModule",
+				'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\heal_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_PlayerModTree,
+				"Heal / Revive All",
+				"Heal and/or revive all players.",
+				"MAZ_EZM_fnc_healAndReviveAllModule",
+				'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\heal_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_PlayerModTree,
+				"Kill Player",
+				"Kills the player its placed on.",
+				"MAZ_EZM_fnc_killUnit",
+				"a3\ui_f_curator\data\cfgmarkers\kia_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_PlayerModTree,
+				"Force Eject",
+				"Eject players from the selected vehicle.",
+				"MAZ_EZM_fnc_forceEjectModule",
+				'\A3\ui_f\data\IGUI\Cfg\actions\eject_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_PlayerModTree,
+				"Toggle Mute Server",
+				"Toggles every player's voice chat (Global, Side, Group, Command).",
+				"MAZ_EZM_fnc_muteServerModule",
+				'\A3\ui_f\data\IGUI\RscIngameUI\RscDisplayChannel\MuteVON_crossed_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_PlayerModTree,
+				"Reset Player Loadout",
+				"Removes a player's loadout.",
+				"MAZ_EZM_fnc_resetLoadout",
+				"a3\ui_f\data\igui\cfg\actions\obsolete\ui_action_gear_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+		comment "Server Settings";
+
+			MAZ_ServerSettingsTree = [
+				MAZ_zeusModulesTree,
+				"Server Settings",
+				"a3\3den\data\displays\display3den\statusbar\server_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddCategory;
+
+			private _maxPlayable = (playableSlotsNumber west) + (playableSlotsNumber east) + (playableSlotsNumber independent) + (playableSlotsNumber civilian) + (playableSlotsNumber sideLogic);
+			if(_maxPlayable > 18) then {
 				[
 					MAZ_zeusModulesTree,
-					MAZ_EditAITree,
-					"Garrison (Instant)",
-					"Places AI's group in randomized position in nearest building.",
-					"MAZ_EZM_fnc_garrisonInstantModule",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\run_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_EditAITree,
-					"Garrison (Search)",
-					"Places AI's group in randomized position in nearest building.",
-					"MAZ_EZM_fnc_garrisonSearchModule",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\getin_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_EditAITree,
-					"Un-Garrison",
-					"Removes AI from their garrisoned position.",
-					"MAZ_EZM_fnc_unGarrisonModule",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\getout_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_EditAITree,
-					"Edit AI Equipment",
-					"Remove or equip AI with NVGs or flashlights.",
-					"MAZ_EZM_fnc_removeNVGsAddFlashlightsModule",
-					"a3\ui_f\data\igui\cfg\actions\gear_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_EditAITree,
-					"Enable AI Lasers",
-					"Makes AI turn on their lasers and lights.",
-					"MAZ_EZM_fnc_toggleLightsModule",
-					"a3\ui_f_curator\data\cfgcurator\laser_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_EditAITree,
-					"Disable AI Lasers",
-					"Makes AI turn off their lasers and lights.",
-					"MAZ_EZM_fnc_toggleOffLightsModule",
-					"a3\ui_f\data\map\markers\military\dot_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_EditAITree,
-					"Make Hostage",
-					"Makes AI into a restrained hostage.",
-					"MAZ_EZM_fnc_makeHostageModule",
+					MAZ_ServerSettingsTree,
+					"48+2 Team Switcher",
+					"Makes all players on the selected side when they join making everyone in the server the same side.\nPrimarily for 48+2 servers.",
+					"MAZ_EZM_fnc_482SideSwitchInit",
 					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\help_ca.paa'
 				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_EditAITree,
-					"Make HVT",
-					"Makes AI an HVT that, when killed, everyone will be notified.",
-					"MAZ_EZM_fnc_makeHVTModule",
-					"a3\modules_f_curator\data\portraitobjectiveneutralize_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-				
-				[
-					MAZ_zeusModulesTree,
-					MAZ_EditAITree,
-					"Set Ambient Animation",
-					"Set Ambient Animations",
-					"MAZ_EZM_fnc_setAmbientAnimationModule",
-					"a3\ui_f_curator\data\rsccommon\rscattributepunishmentanimation\pushupslegs.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_EditAITree,
-					"Set Difficulty",
-					"Adjust all AI's difficulty.",
-					"MAZ_EZM_fnc_changeDifficultyModule",
-					'\A3\ui_f\data\IGUI\RscIngameUI\RscUnitInfo\SI_stand_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_EditAITree,
-					"Set Stance",
-					"Makes AI forced into stance mode. i.e. prone, crouch, standing, auto.",
-					"MAZ_EZM_fnc_changeStanceModule",
-					'\A3\ui_f\data\IGUI\RscIngameUI\RscUnitInfo\SI_stand_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_EditAITree,
-					"Suppressive Fire",
-					"Makes the AI suppress the position you select.",
-					"MAZ_EZM_fnc_suppressiveFireModule",
-					"a3\static_f_oldman\hmg_02\data\ui\icon_hmg_02_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_EditAITree,
-					"Toggle Unit Surrender",
-					"Makes AI surrender or un-surrender.",
-					"MAZ_EZM_fnc_toggleSurrenderModule",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\help_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-			comment "AI Supports";
-				MAZ_AISupportTree = [
-					MAZ_zeusModulesTree,
-					"AI Supports",
-					"a3\modules_f_curator\data\portraitradio_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddCategory;
-				
-				[
-					MAZ_zeusModulesTree,
-					MAZ_AISupportTree,
-					"Airdrop",
-					"Calls an airdrop to module position.",
-					"MAZ_EZM_fnc_callAirdropModule",
-					"a3\air_f_beta\parachute_01\data\ui\portrait_parachute_01_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_AISupportTree,
-					"Evac Helicopter",
-					"HOW TO USE:\n1: Place module on position to which a helicopter will fly and land to pickup players.\n2: Select secondary position that the helicopter will drop them off at.",
-					"MAZ_EZM_fnc_callEvacModule",
-					"a3\air_f\heli_light_01\data\ui\map_heli_light_01_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_AISupportTree,
-					"Call Reinforcements",
-					"HOW TO USE:\n1: Place module on position to which a helicopter will fly and drop off troops.\n2: Select reinforcements parameters in menu.\n3: Select secondary position that reinforcements will move to on foot.",
-					"MAZ_EZM_fnc_callReinforcements",
-					'\A3\ui_f\data\gui\rsc\rscdisplayarsenal\radio_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_AISupportTree,
-					"Mortar Area",
-					"Sends virtual fire support to the area with a radius of error and a delay between rounds.",
-					"MAZ_EZM_fnc_mortarAreaModule",
-					"a3\static_f\mortar_01\data\ui\map_mortar_01_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-			comment "Arsenal (s)";
-
-				MAZ_ArsenalTree = [
-					MAZ_zeusModulesTree,
-					"Arsenal Creator",
-					'\A3\ui_f\data\Logos\a_64_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddCategory;
-				
-				MAZ_zeusModulesTree tvSetTooltip [[MAZ_ArsenalTree], ""];
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ArsenalTree,
-					"AIO Arsenal",
-					"All-In-One Arsenal (by M9-SD)\n\nDescription:\n There are two ways to use this module:\n(1) Place onto another object to make it an AIO arsenal.\n(2) Place on ground to spawn supply box AIO arsenal.\n\nIncludes the following options:\n- Full Arsenal\n- Quick Rearm\n- Copy Loadout\n- Empty Loadout\n- Save Respawn Loadout\n- Load Respawn Loadout\n- Delete Respawn Loadout\n- Edit Group Loadouts",
-					"MAZ_EZM_fnc_createAIOArsenalDialog",
-					'\A3\ui_f\data\Logos\a_64_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-				
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ArsenalTree,
-					"Reset All Saved Loadouts",
-					"Delete All Saved Loadouts\n\nDescription:\n This module will remove the saved loadouts from all players.",
-					"MAZ_EZM_fnc_resetSavedLoadouts",
-					'\A3\ui_f\data\Logos\a_64_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-			comment "Automatic Missions";
-
-				MAZ_AutoMissionTree = [
-					MAZ_zeusModulesTree,
-					"Automatic Missions",
-					"a3\ui_f\data\map\markers\military\objective_ca.paa",
-					[1,1,1,1],
-					"Automated Missions that can be spawned on different maps."
-				] call MAZ_EZM_fnc_zeusAddCategory;
-				
-				[
-					MAZ_zeusModulesTree,
-					MAZ_AutoMissionTree,
-					"Toggle Automatic Heli Crash Missions",
-					"Toggles randomized helicopter crash missions.\nWill spawn and last for 15 minutes before despawning.\nAfter a mission despawns or is completed another will spawn in 10 minutes.",
-					"MAZ_EZM_fnc_toggleRandomHelicrashModule",
-					"a3\modules_f_curator\data\portraitobjectiveneutralize_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_AutoMissionTree,
-					"Toggle Automatic Convoy Missions",
-					"Toggles randomized convoy missions.\nPlayers must capture the truck moving within the convoy.\nWill spawn and last until killed or reaching its destination.\nAfter a mission despawns or is completed another will spawn in 10 minutes.",
-					"MAZ_EZM_fnc_toggleRandomConvoyModule",
-					"a3\modules_f_curator\data\portraitobjectivemove_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_AutoMissionTree,
-					"Auto Garrison Town",
-					"Automatically garrisons a named town or the town where the module is placed.",
-					"MAZ_EZM_fnc_createGarrisonTownDialog",
-					"a3\modules_f_curator\data\portraitobjectiveneutralize_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-			comment "Building Interiors";
-
-				MAZ_BuildingInteriorsTree = [
-					MAZ_zeusModulesTree,
-					"Building Interiors",
-					"a3\3den\data\cfg3den\group\iconcustomcomposition_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddCategory;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_BuildingInteriorsTree,
-					"Spawn Interior",
-					"Spawn random interior data onto selected building.",
-					"MAZ_EZM_fnc_createBuildingInteriorCall",
-					"a3\3den\data\cfg3den\group\iconcustomcomposition_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_BuildingInteriorsTree,
-					"Remove Interior",
-					"Removes interior from selected building.",
-					"MAZ_EZM_fnc_removeBuildingInteriorCall",
-					"a3\3den\data\cfg3den\group\iconcustomcomposition_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_BuildingInteriorsTree,
-					"Get Default Interior Data",
-					"Resets EZM interior data to the default. \nThis will remove any custom compositions you may have created!",
-					"MAZ_EZM_fnc_getDefaultInteriors",
-					"a3\3den\data\displays\display3den\toolbar\undo_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-			comment "Cinematics";
-				MAZ_Cinematics = [
-					MAZ_zeusModulesTree,
-					"Cinematics",
-					"a3\ui_f\data\gui\cfg\keyframeanimation\iconcamera_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddCategory;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_Cinematics,
-					"Circle Cinematic",
-					"Create a cinematic that circles around a specified area.",
-					"MAZ_EZM_fnc_circleCinematicDialog",
-					"a3\ui_f\data\igui\cfg\islandmap\iconcamera_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_Cinematics,
-					"Intro Cinematic",
-					"Create an introduction cinematic showcasing the scenario name, your name, and some optional text.\nCreated by: Bijx",
-					"HYPER_EZM_fnc_introCinematicModule",
-					"a3\ui_f\data\igui\cfg\islandmap\iconcamera_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-			comment "Clean Up Stuff";
-				MAZ_CleanUpTree = [
-					MAZ_zeusModulesTree,
-					"Clean-Up Tools",
-					"a3\3den\data\displays\display3den\panelleft\entitylist_delete_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddCategory;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_CleanUpTree,
-					"Delete Bodies",
-					"Similar to Delete Clutter except it does not delete destroyed buildings.",
-					"MAZ_EZM_fnc_deleteBodies",
-					"a3\3den\data\displays\display3den\panelleft\entitylist_delete_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_CleanUpTree,
-					"Delete Clutter",
-					"Deletes all clutter on the ground.",
-					"MAZ_EZM_fnc_deleteClutterModule",
-					"a3\3den\data\displays\display3den\panelleft\entitylist_delete_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_CleanUpTree,
-					"Delete Empty Groups",
-					"Deletes all empty groups.",
-					"MAZ_EZM_fnc_deleteEmptyGroupsModule",
-					"\a3\ui_f_curator\data\rsccommon\rscattributeformation\wedge_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-				
-				[
-					MAZ_zeusModulesTree,
-					MAZ_CleanUpTree,
-					"Delete Everything",
-					"Deletes all mission objects.",
-					"MAZ_EZM_fnc_deleteEverythingModule",
-					"a3\3den\data\displays\display3den\panelleft\entitylist_delete_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_CleanUpTree,
-					"Delete Markers",
-					"Deletes all markers.",
-					"MAZ_EZM_fnc_deleteMarkersModule",
-					"a3\3den\data\displays\display3den\panelright\submode_marker_icon_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_CleanUpTree,
-					"Delete Mines",
-					"Deletes all mines.",
-					"MAZ_EZM_fnc_deleteMinesModule",
-					"a3\ui_f_curator\data\cfgmarkers\minefieldap_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_CleanUpTree,
-					"Delete Protection Zones",
-					"Deletes all protection zones.",
-					"MAZ_EZM_fnc_deleteProtectionZonesModule"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_CleanUpTree,
-					"Delete Radius",
-					"Deletes all objects in a radius.",
-					"MAZ_EZM_fnc_deleteRadiusModule",
-					"a3\3den\data\displays\display3den\panelleft\entitylist_delete_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-			comment "Create/Delete Ships";
-				MAZ_DeleteShipTree = [
-					MAZ_zeusModulesTree,
-					"Create/Delete Ships",
-					"a3\ui_f\data\map\vehicleicons\iconship_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddCategory;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_DeleteShipTree,
-					"Create Carrier",
-					"Creates the USS Freedom at its position.\nIf placed on a boat the ship will face the direction of the boat.",
-					"MAZ_EZM_fnc_createCarrierModule"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_DeleteShipTree,
-					"Create Destroyer",
-					"Creates the USS Liberty at its position.\nIf placed on a boat the ship will face the direction of the boat.",
-					"MAZ_EZM_fnc_createDestroyerModule"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_DeleteShipTree,
-					"Delete All Carriers",
-					"Deletes all carriers on the map.",
-					"MAZ_EZM_fnc_deleteAllCarriersModule"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_DeleteShipTree,
-					"Delete All Destroyers",
-					"Deletes all destroyers on the map.",
-					"MAZ_EZM_fnc_deleteAllDestroyersModule"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-			comment "Developer Tools";
-
-				MAZ_DevToolsTree = [
-					MAZ_zeusModulesTree,
-					"Developer Tools",
-					"a3\ui_f\data\gui\rsc\rscdisplayarcademap\icon_debug_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddCategory;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_DevToolsTree,
-					"Animation Viewer",
-					"Opens the Animation Viewer.\nIf placed on a unit it will open using that unit and its current animation.",
-					"MAZ_EZM_fnc_openAnimViewerModule",
-					"a3\ui_f\data\gui\cfg\keyframeanimation\iconcamera_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_DevToolsTree,
-					"Open Debug Console",
-					"Opens the Debug Console.\nthis refers to the entity the console is placed onto.",
-					"MAZ_EZM_fnc_debugConsoleLocalModule",
-					"a3\3den\data\displays\display3den\entitymenu\findconfig_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_DevToolsTree,
-					"Find in Config Viewer",
-					"Opens the Config Viewer to the entity's config.",
-					"MAZ_EZM_fnc_showObjectConfig",
-					"a3\3den\data\displays\display3den\entitymenu\findconfig_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_DevToolsTree,
-					"Function Viewer",
-					"Opens the Function Viewer.",
-					"MAZ_EZM_fnc_functionViewer",
-					"a3\ui_f\data\gui\rsc\rscdisplayarcademap\icon_functions_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_DevToolsTree,
-					"GUI Editor",
-					"Opens the GUI Editor.",
-					"MAZ_EZM_fnc_openGUIEditor"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-			comment "Environment";
-
-				MAZ_EnvironmentTree = [
-					MAZ_zeusModulesTree,
-					"Environment",
-					"a3\modules_f_curator\data\portraitweather_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddCategory;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_EnvironmentTree,
-					"Change Time",
-					"Change the current time.",
-					"MAZ_EZM_fnc_changeTimeModule",
-					"a3\modules_f_curator\data\portraitskiptime_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_EnvironmentTree,
-					"Change Date",
-					"Change the current date.",
-					"MAZ_EZM_fnc_changeDateModule",
-					"a3\modules_f_curator\data\portraitskiptime_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_EnvironmentTree,
-					"Edit Weather Conditions",
-					"Edit the current meteorological atmospheric environment conditions.",
-					"MAZ_EZM_fnc_editWeatherConditionsModule",
-					"a3\modules_f_curator\data\portraitweather_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-			comment "Explosives";
-
-				MAZ_ExplosivesTree = [
-					MAZ_zeusModulesTree,
-					"Explosives",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\destroy_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddCategory;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ExplosivesTree,
-					"Create Minefield",
-					"Create a minefield of specific mines in a radius.",
-					"MAZ_EZM_fnc_createMinefieldModule",
-					"a3\ui_f_curator\data\cfgmarkers\minefieldap_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ExplosivesTree,
-					"Create IED",
-					"Create an IED that will detonate when a specific side gets close.",
-					"MAZ_EZM_fnc_createIEDModule",
-					"a3\ui_f_curator\data\cfgmarkers\minefieldap_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-			comment "Festive";
-
-				MAZ_FestiveTree = [
-					MAZ_zeusModulesTree,
-					"Festive Modules",
-					"a3\3den\data\displays\display3den\toolbar\help_updates_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddCategory;
-
-				call MAZ_EZM_holidayModulesAdd;
-
-			comment "Gameplay";
-
-				MAZ_GameplayTree = [
-					MAZ_zeusModulesTree,
-					"Gameplay",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\meet_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddCategory;
-				
-				[
-					MAZ_zeusModulesTree,
-					MAZ_GameplayTree,
-					"Create Countdown",
-					"Creates an on screen countdown for players of specified side.",
-					"MAZ_EZM_fnc_createCountdownModule",
-					"a3\ui_f\data\igui\cfg\actions\settimer_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_GameplayTree,
-					"Create Intel",
-					"Creates an intel object to be picked up by the players.\nCreated by: Bijx",
-					"HYPER_EZM_fnc_createIntel",
-					"a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_GameplayTree,
-					"Create AAN News Article",
-					"Creates a laptop which shows an AAN News Article when interacted on.\nCreated by: Bijx",
-					"HYPER_EZM_fnc_createAANIntel",
-					"a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-			comment "Markers";
-
-				[] call MAZ_EZM_fnc_drawEventhandlerAreaMarkers;
-				
-				MAZ_MarkersTree = [
-					MAZ_zeusModulesTree,
-					"Markers",
-					"a3\3den\data\displays\display3den\panelright\submode_marker_icon_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddCategory;
-				
-				[
-					MAZ_zeusModulesTree,
-					MAZ_MarkersTree,
-					"Create Area Marker",
-					"Creates an area marker on the map position.",
-					"MAZ_EZM_fnc_createAreaMarker",
-					"a3\ui_f\data\map\markerbrushes\fdiagonal_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_MarkersTree,
-					"Create AO Markers",
-					"Creates markers that darkens out everywhere except for the AO.",
-					"MAZ_EZM_fnc_createAOMarkerDialog",
-					"a3\ui_f\data\gui\rsc\rscdisplayarsenal\map_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_MarkersTree,
-					"Delete AO Markers",
-					"Deletes the spawned AO Markers.",
-					"MAZ_EZM_fnc_deleteAOMarkers",
-					"a3\ui_f\data\gui\rsc\rscdisplayarcademap\icon_exit_cross_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-			comment "Messages";
-
-				MAZ_MessagesTree = [
-					MAZ_zeusModulesTree,
-					"Messages",
-					"a3\3den\data\cfg3den\comment\texture_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddCategory;
-				
-				[
-					MAZ_zeusModulesTree,
-					MAZ_MessagesTree,
-					'3D Speak',
-					'Make an speak via 3D text above head.',
-					'MAZ_EZM_fnc_3DSpeakModule',
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\talk3_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_MessagesTree,
-					"Send Subtitle Message",
-					"Sends a subtitle message to specific side players.",
-					"MAZ_EZM_fnc_sendSubtitleModule",
-					"a3\3den\data\cfg3den\comment\texture_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_MessagesTree,
-					'Voice Dialog Message',
-					'Play a voiced message from Arma 3.\n(Select voice lines from a menu.)',
-					'MAZ_EZM_fnc_moduleDialogMessage',
-					'\A3\ui_f\data\IGUI\Cfg\actions\talk_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-			comment "Object Modifiers";
-
-				MAZ_ObjectModTree = [
-					MAZ_zeusModulesTree,
-					"Object Modifiers",
-					"a3\3den\data\displays\display3den\toolbar\widget_local_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddCategory;
-				
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ObjectModTree,
-					"Attach to Nearest",
-					"Attaches the object to the nearest object.",
-					"MAZ_EZM_fnc_attachToNearestModule"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ObjectModTree,
-					"Detach",
-					"Detaches the object from anything it's attached to.",
-					"MAZ_EZM_fnc_detachModule"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ObjectModTree,
-					"Edit Object Attributes",
-					"Edit object attributes through an advanced menu.\nEdit textures, edit init fields, god mode, enable/disable sim, etc.",
-					"MAZ_EZM_fnc_editObjectAttributesModule",
-					"a3\3den\data\cfgwaypoints\scripted_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ObjectModTree,
-					"Replace w/ Simple Object",
-					"Replaces the object it's placed on with a simple object to improve performance.",
-					"MAZ_EZM_fnc_replaceWithSimpleObject",
-					"a3\3den\data\cfgwaypoints\scripted_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-				
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ObjectModTree,
-					"Set Color to Black",
-					"Changes textures of an object / unit to black if possible.",
-					"HYPER_EZM_fnc_setColorBlack",
-					"a3\ui_f\data\gui\rsc\rscdisplaygarage\texturesources_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ObjectModTree,
-					"Toggle Simulation",
-					"Enables or disables simulation on the object.",
-					"MAZ_EZM_fnc_toggleSimulationModule",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\danger_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ObjectModTree,
-					"Toggle God Mode",
-					"Makes the object god moded or un-god moded.",
-					"MAZ_EZM_fnc_toggleInvincibleModule",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\kill_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ObjectModTree,
-					"Toggle Object Hidden",
-					"Toggles whether the object is hidden.",
-					"MAZ_EZM_fnc_toggleHideObjectModule",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\scout_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ObjectModTree,
-					"Un-Hide All Objects",
-					"Un-Hides all hidden objects.",
-					"MAZ_EZM_fnc_unHideObjectAllModule",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\whiteboard_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-			comment "Player Modifiers";
-				MAZ_PlayerModTree = [
-					MAZ_zeusModulesTree,
-					"Player Modifiers",
-					"a3\ui_f\data\gui\rsc\rscdisplaymain\menu_singleplayer_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddCategory;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_PlayerModTree,
-					"Change Side",
-					"Change the side of the selected player.",
-					"MAZ_EZM_fnc_changeSideModule",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\meet_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-				
-				[
-					MAZ_zeusModulesTree,
-					MAZ_PlayerModTree,
-					"Disarm",
-					"Removes the weapons from a player.",
-					"MAZ_EZM_fnc_disarmModule",
-					'\a3\3den\data\displays\display3den\entitymenu\arsenal_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-				
-				[
-					MAZ_zeusModulesTree,
-					MAZ_PlayerModTree,
-					"Heal / Revive",
-					"Heal and/or revive the selected player.",
-					"MAZ_EZM_fnc_healAndReviveModule",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\heal_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_PlayerModTree,
-					"Heal / Revive All",
-					"Heal and/or revive all players.",
-					"MAZ_EZM_fnc_healAndReviveAllModule",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\heal_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_PlayerModTree,
-					"Kill Player",
-					"Kills the player its placed on.",
-					"MAZ_EZM_fnc_killUnit",
-					"a3\ui_f_curator\data\cfgmarkers\kia_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_PlayerModTree,
-					"Force Eject",
-					"Eject players from the selected vehicle.",
-					"MAZ_EZM_fnc_forceEjectModule",
-					'\A3\ui_f\data\IGUI\Cfg\actions\eject_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_PlayerModTree,
-					"Toggle Mute Server",
-					"Toggles every player's voice chat (Global, Side, Group, Command).",
-					"MAZ_EZM_fnc_muteServerModule",
-					'\A3\ui_f\data\IGUI\RscIngameUI\RscDisplayChannel\MuteVON_crossed_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_PlayerModTree,
-					"Reset Player Loadout",
-					"Removes a player's loadout.",
-					"MAZ_EZM_fnc_resetLoadout",
-					"a3\ui_f\data\igui\cfg\actions\obsolete\ui_action_gear_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-			comment "Server Settings";
-
-				MAZ_ServerSettingsTree = [
-					MAZ_zeusModulesTree,
-					"Server Settings",
-					"a3\3den\data\displays\display3den\statusbar\server_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddCategory;
-
-				private _maxPlayable = (playableSlotsNumber west) + (playableSlotsNumber east) + (playableSlotsNumber independent) + (playableSlotsNumber civilian) + (playableSlotsNumber sideLogic);
-				if(_maxPlayable > 18) then {
-					[
-						MAZ_zeusModulesTree,
-						MAZ_ServerSettingsTree,
-						"48+2 Team Switcher",
-						"Makes all players on the selected side when they join making everyone in the server the same side.\nPrimarily for 48+2 servers.",
-						"MAZ_EZM_fnc_482SideSwitchInit",
-						'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\help_ca.paa'
-					] call MAZ_EZM_fnc_zeusAddModule;
-				};
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ServerSettingsTree,
-					"Change Side Relations",
-					"Change the relations of different sides towards Independent factions.",
-					"MAZ_EZM_fnc_changeSideRelationsModule",
-					"a3\ui_f\data\gui\cfg\communicationmenu\attack_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ServerSettingsTree,
-					"Change Map Indicators",
-					"Change the shown map indicators.",
-					"MAZ_EZM_fnc_changeMapIndicators"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ServerSettingsTree,
-					"Disable Mortars",
-					"Disable or enable mortars for all players.",
-					"MAZ_EZM_fnc_disableMortarsModule",
-					'\A3\ui_f\data\GUI\Cfg\CommunicationMenu\mortar_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-				
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ServerSettingsTree,
-					"Set Respawn Timer",
-					"Set the respawn timer.",
-					"MAZ_EZM_fnc_setRespawnTimerModule",
-					"a3\ui_f\data\igui\cfg\actions\settimer_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-				
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ServerSettingsTree,
-					"Remove Team-Killers",
-					"Removes the Team-Killer status from all players.",
-					"MAZ_EZM_fnc_noTeamKillersModule",
-					"a3\ui_f_curator\data\cfgmarkers\kia_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ServerSettingsTree,
-					"Toggle Server Protections",
-					"Prevents known trolls and malicious scripters from joining the server.\nAlerts players if an unauthorized person has access to Zeus.\nAlerts players when someone rejoins with a different name.",
-					"MAZ_EZM_fnc_toggleServerProtections",
-					"a3\ui_f\data\igui\cfg\holdactions\holdaction_secure_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-			comment "Sounds";
-
-				MAZ_SoundsTree = [
-					MAZ_zeusModulesTree,
-					"Sounds",
-					'\A3\ui_f\data\IGUI\RscIngameUI\RscDisplayChannel\MuteVON_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddCategory;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_SoundsTree,
-					'Jukebox',
-					'Music Player:\n\nThis module will open the Jukebox GUI and play music for everyone.\nView and preview all music in arma 3.\nClick the green (top left) to play the selected song for everyone.',
-					'M9sd_fnc_moduleOpenJUKEBOX',
-					'a3\modules_f_curator\data\portraitmusic_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-				
-				[
-					MAZ_zeusModulesTree,
-					MAZ_SoundsTree,
-					'Sound Board 2.0',
-					'Open the Sound Board GUI and play any sound from the game files.\nYou can preview sounds to play them only on your client,\nor you can play them on all clients.',
-					'M9sd_fnc_moduleSoundBoard2',
-					'a3\modules_f_curator\data\portraitSound_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
+			};
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_ServerSettingsTree,
+				"Change Side Relations",
+				"Change the relations of different sides towards Independent factions.",
+				"MAZ_EZM_fnc_changeSideRelationsModule",
+				"a3\ui_f\data\gui\cfg\communicationmenu\attack_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_ServerSettingsTree,
+				"Change Map Indicators",
+				"Change the shown map indicators.",
+				"MAZ_EZM_fnc_changeMapIndicators"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_ServerSettingsTree,
+				"Disable Mortars",
+				"Disable or enable mortars for all players.",
+				"MAZ_EZM_fnc_disableMortarsModule",
+				'\A3\ui_f\data\GUI\Cfg\CommunicationMenu\mortar_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
 			
-			comment "Special Effects";
-
-				MAZ_SpecialFXTree = [
-					MAZ_zeusModulesTree,
-					"Special Effects",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\destroy_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddCategory;
-				
-				[
-					MAZ_zeusModulesTree,
-					MAZ_SpecialFXTree,
-					"Particle Effect",
-					"Creates a particle effect of your choosing.\nSmoke and Fire effects of various sizes.",
-					"MAZ_EZM_fnc_createParticleEffectModule",
-					"a3\ui_f\data\igui\cfg\actions\obsolete\ui_action_fire_in_flame_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_SpecialFXTree,
-					"Earthquake",
-					"Creates an earthquake.",
-					"MAZ_EZM_fnc_earthquakeEffectModule",
-					"a3\modules_f\data\editterrainobject\icon_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_SpecialFXTree,
-					"Toggle Lamps",
-					"Disables or enables lamps in a radius.",
-					"MAZ_EZM_fnc_toggleLampsModule",
-					"a3\3den\data\displays\display3den\toolbar\flashlight_off_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_SpecialFXTree,
-					"Tracers",
-					"Creates tracer effects in at the position.",
-					"MAZ_EZM_fnc_tracerModuleDialog",
-					"a3\modules_f_curator\data\portraittracers_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-			comment "Terrain Object Modifiers";
-				MAZ_terrainObjectModTree = [
-					MAZ_zeusModulesTree,
-					"Terrain Object Modifiers",
-					"a3\ui_f\data\igui\rscingameui\rscunitinfo\icon_terrain_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddCategory;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_terrainObjectModTree,
-					"Edit Building Doors",
-					"Allows you to open and close doors on buildings.",
-					"MAZ_EZM_fnc_openDoorsModule",
-					"\a3\ui_f\data\igui\cfg\actions\open_door_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_terrainObjectModTree,
-					"God Mode Fences",
-					"Allows you to god mode fences in a radius.\nPlayers will no longer be able to ram through walls that aren't half destroyed.",
-					"MAZ_EZM_fnc_godModeFencesModule",
-					"a3\modules_f\data\editterrainobject\texturechecked_wall_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_terrainObjectModTree,
-					"Hide Terrain Objects (Radius)",
-					"Hide terrain objects in a given radius.",
-					"MAZ_EZM_fnc_hideTerrainRadiusModule",
-					"a3\modules_f\data\hideterrainobjects\icon_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
+			[
+				MAZ_zeusModulesTree,
+				MAZ_ServerSettingsTree,
+				"Set Respawn Timer",
+				"Set the respawn timer.",
+				"MAZ_EZM_fnc_setRespawnTimerModule",
+				"a3\ui_f\data\igui\cfg\actions\settimer_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
 			
-			comment "Teleportation";
-				MAZ_TeleportTree = [
-					MAZ_zeusModulesTree,
-					"Teleportation",
-					"a3\ui_f\data\igui\cfg\simpletasks\types\move_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddCategory;
-				
-				[
-					MAZ_zeusModulesTree,
-					MAZ_TeleportTree,
-					"Teleport Self",
-					"Teleport your character to the modules position.",
-					"MAZ_EZM_fnc_teleportSelfModule"
-				] call MAZ_EZM_fnc_zeusAddModule;
+			[
+				MAZ_zeusModulesTree,
+				MAZ_ServerSettingsTree,
+				"Remove Team-Killers",
+				"Removes the Team-Killer status from all players.",
+				"MAZ_EZM_fnc_noTeamKillersModule",
+				"a3\ui_f_curator\data\cfgmarkers\kia_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
 
-				[
-					MAZ_zeusModulesTree,
-					MAZ_TeleportTree,
-					"Teleport All Players",
-					"Teleport all players to the modules position.",
-					"MAZ_EZM_fnc_teleportAllPlayersModule",
-					"a3\ui_f\data\gui\rsc\rscdisplaymain\menu_multiplayer_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
+			[
+				MAZ_zeusModulesTree,
+				MAZ_ServerSettingsTree,
+				"Toggle Server Protections",
+				"Prevents known trolls and malicious scripters from joining the server.\nAlerts players if an unauthorized person has access to Zeus.\nAlerts players when someone rejoins with a different name.",
+				"MAZ_EZM_fnc_toggleServerProtections",
+				"a3\ui_f\data\igui\cfg\holdactions\holdaction_secure_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
 
-				[
-					MAZ_zeusModulesTree,
-					MAZ_TeleportTree,
-					"Teleport One Player",
-					"Teleport specific player to the modules position.",
-					"MAZ_EZM_fnc_teleportPlayerModule",
-					"a3\ui_f\data\gui\rsc\rscdisplaymain\menu_singleplayer_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
+		comment "Sounds";
 
-				[
-					MAZ_zeusModulesTree,
-					MAZ_TeleportTree,
-					"Teleport Side",
-					"Teleport specific side to the modules position.",
-					"MAZ_EZM_fnc_teleportSideModule",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\meet_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
+			MAZ_SoundsTree = [
+				MAZ_zeusModulesTree,
+				"Sounds",
+				'\A3\ui_f\data\IGUI\RscIngameUI\RscDisplayChannel\MuteVON_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddCategory;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_SoundsTree,
+				'Jukebox',
+				'Music Player:\n\nThis module will open the Jukebox GUI and play music for everyone.\nView and preview all music in arma 3.\nClick the green (top left) to play the selected song for everyone.',
+				'M9sd_fnc_moduleOpenJUKEBOX',
+				'a3\modules_f_curator\data\portraitmusic_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
 			
-			comment "Utilities";
-				MAZ_UtilitiesTree = [
-					MAZ_zeusModulesTree,
-					"Utilities",
-					"a3\3den\data\cfgwaypoints\scripted_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddCategory;
-				
-				[
-					MAZ_zeusModulesTree,
-					MAZ_UtilitiesTree,
-					"Add Objects to Interface",
-					"Adds all objects to your zeus interface.",
-					"MAZ_EZM_fnc_addObjectsToInterfaceModule",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\download_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
+			[
+				MAZ_zeusModulesTree,
+				MAZ_SoundsTree,
+				'Sound Board 2.0',
+				'Open the Sound Board GUI and play any sound from the game files.\nYou can preview sounds to play them only on your client,\nor you can play them on all clients.',
+				'M9sd_fnc_moduleSoundBoard2',
+				'a3\modules_f_curator\data\portraitSound_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+		
+		comment "Special Effects";
 
-				[
-					MAZ_zeusModulesTree,
-					MAZ_UtilitiesTree,
-					"Add Objects to Interface (Radius)",
-					"Adds all objects to your zeus interface within a radius.",
-					"MAZ_EZM_fnc_addObjectsToInterfaceRadiusModule",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\download_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-				
-				[
-					MAZ_zeusModulesTree,
-					MAZ_UtilitiesTree,
-					"Toggle Auto-Add to Interface",
-					"Adds all objects to your zeus interface when you open it.",
-					"MAZ_EZM_fnc_toggleAutoAddToInterface",
-					'\A3\3den\data\cfgwaypoints\cycle_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
+			MAZ_SpecialFXTree = [
+				MAZ_zeusModulesTree,
+				"Special Effects",
+				'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\destroy_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddCategory;
+			
+			[
+				MAZ_zeusModulesTree,
+				MAZ_SpecialFXTree,
+				"Particle Effect",
+				"Creates a particle effect of your choosing.\nSmoke and Fire effects of various sizes.",
+				"MAZ_EZM_fnc_createParticleEffectModule",
+				"a3\ui_f\data\igui\cfg\actions\obsolete\ui_action_fire_in_flame_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
 
-				[
-					MAZ_zeusModulesTree,
-					MAZ_UtilitiesTree,
-					"Toggle Auto-Cleaner System",
-					"Automatically deletes destroyed objects when they're out of player view.",
-					"MAZ_EZM_fnc_toggleCleaner",
-					"a3\3den\data\displays\display3den\panelleft\entitylist_delete_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
+			[
+				MAZ_zeusModulesTree,
+				MAZ_SpecialFXTree,
+				"Earthquake",
+				"Creates an earthquake.",
+				"MAZ_EZM_fnc_earthquakeEffectModule",
+				"a3\modules_f\data\editterrainobject\icon_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
 
-			comment "Vehicle Modifiers";
-				MAZ_VehicleModTree = [
-					MAZ_zeusModulesTree,
-					"Vehicle Modifiers",
-					"a3\ui_f\data\igui\cfg\vehicletoggles\engineiconon_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddCategory;
+			[
+				MAZ_zeusModulesTree,
+				MAZ_SpecialFXTree,
+				"Toggle Lamps",
+				"Disables or enables lamps in a radius.",
+				"MAZ_EZM_fnc_toggleLampsModule",
+				"a3\3den\data\displays\display3den\toolbar\flashlight_off_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
 
-				[
-					MAZ_zeusModulesTree,
-					MAZ_VehicleModTree,
-					"Unflip Vehicle",
-					"Unflip the vehicle the module is placed on.",
-					"MAZ_EZM_fnc_unflipVehicleModule"
-				] call MAZ_EZM_fnc_zeusAddModule;
+			[
+				MAZ_zeusModulesTree,
+				MAZ_SpecialFXTree,
+				"Tracers",
+				"Creates tracer effects in at the position.",
+				"MAZ_EZM_fnc_tracerModuleDialog",
+				"a3\modules_f_curator\data\portraittracers_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
 
-				[
-					MAZ_zeusModulesTree,
-					MAZ_VehicleModTree,
-					"Rearm",
-					"Rearm the vehicle.",
-					"MAZ_EZM_fnc_rearmVehicleModule",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\rearm_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
+		comment "Terrain Object Modifiers";
+			MAZ_terrainObjectModTree = [
+				MAZ_zeusModulesTree,
+				"Terrain Object Modifiers",
+				"a3\ui_f\data\igui\rscingameui\rscunitinfo\icon_terrain_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddCategory;
 
-				[
-					MAZ_zeusModulesTree,
-					MAZ_VehicleModTree,
-					"Refuel",
-					"Refuel the vehicle.",
-					"MAZ_EZM_fnc_refuelVehicleModule",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\refuel_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
+			[
+				MAZ_zeusModulesTree,
+				MAZ_terrainObjectModTree,
+				"Edit Building Doors",
+				"Allows you to open and close doors on buildings.",
+				"MAZ_EZM_fnc_openDoorsModule",
+				"\a3\ui_f\data\igui\cfg\actions\open_door_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
 
-				[
-					MAZ_zeusModulesTree,
-					MAZ_VehicleModTree,
-					"Repair",
-					"Repair the vehicle.",
-					"MAZ_EZM_fnc_repairVehicleModule",
-					'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\repair_ca.paa'
-				] call MAZ_EZM_fnc_zeusAddModule;
-				
-				[
-					MAZ_zeusModulesTree,
-					MAZ_VehicleModTree,
-					"Set Plate Number",
-					"Set the license plate number of a car.",
-					"HYPER_EZM_fnc_setPlateNumber",
-					"a3\ui_f\data\igui\cfg\simpletasks\types\car_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
+			[
+				MAZ_zeusModulesTree,
+				MAZ_terrainObjectModTree,
+				"God Mode Fences",
+				"Allows you to god mode fences in a radius.\nPlayers will no longer be able to ram through walls that aren't half destroyed.",
+				"MAZ_EZM_fnc_godModeFencesModule",
+				"a3\modules_f\data\editterrainobject\texturechecked_wall_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
 
-			comment "Zeus";
+			[
+				MAZ_zeusModulesTree,
+				MAZ_terrainObjectModTree,
+				"Hide Terrain Objects (Radius)",
+				"Hide terrain objects in a given radius.",
+				"MAZ_EZM_fnc_hideTerrainRadiusModule",
+				"a3\modules_f\data\hideterrainobjects\icon_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+		
+		comment "Teleportation";
+			MAZ_TeleportTree = [
+				MAZ_zeusModulesTree,
+				"Teleportation",
+				"a3\ui_f\data\igui\cfg\simpletasks\types\move_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddCategory;
+			
+			[
+				MAZ_zeusModulesTree,
+				MAZ_TeleportTree,
+				"Teleport Self",
+				"Teleport your character to the modules position.",
+				"MAZ_EZM_fnc_teleportSelfModule"
+			] call MAZ_EZM_fnc_zeusAddModule;
 
-				MAZ_ZeusTree = [
-					MAZ_zeusModulesTree,
-					"Zeus Settings",
-					"a3\ui_f_curator\data\logos\arma3_zeus_icon_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddCategory;
+			[
+				MAZ_zeusModulesTree,
+				MAZ_TeleportTree,
+				"Teleport All Players",
+				"Teleport all players to the modules position.",
+				"MAZ_EZM_fnc_teleportAllPlayersModule",
+				"a3\ui_f\data\gui\rsc\rscdisplaymain\menu_multiplayer_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
 
+			[
+				MAZ_zeusModulesTree,
+				MAZ_TeleportTree,
+				"Teleport One Player",
+				"Teleport specific player to the modules position.",
+				"MAZ_EZM_fnc_teleportPlayerModule",
+				"a3\ui_f\data\gui\rsc\rscdisplaymain\menu_singleplayer_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_TeleportTree,
+				"Teleport Side",
+				"Teleport specific side to the modules position.",
+				"MAZ_EZM_fnc_teleportSideModule",
+				'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\meet_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+		
+		comment "Utilities";
+			MAZ_UtilitiesTree = [
+				MAZ_zeusModulesTree,
+				"Utilities",
+				"a3\3den\data\cfgwaypoints\scripted_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddCategory;
+			
+			[
+				MAZ_zeusModulesTree,
+				MAZ_UtilitiesTree,
+				"Add Objects to Interface",
+				"Adds all objects to your zeus interface.",
+				"MAZ_EZM_fnc_addObjectsToInterfaceModule",
+				'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\download_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_UtilitiesTree,
+				"Add Objects to Interface (Radius)",
+				"Adds all objects to your zeus interface within a radius.",
+				"MAZ_EZM_fnc_addObjectsToInterfaceRadiusModule",
+				'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\download_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			'[
+				MAZ_zeusModulesTree,
+				MAZ_UtilitiesTree,
+				"Hide/Show Module Categories",
+				"Lets you adjust which module categories are visible in the modules menu. Can help with performance on ultra-potato PCs.",
+				"MAZ_EZM_fnc_removeModuleCategories"
+			] call MAZ_EZM_fnc_zeusAddModule';
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_UtilitiesTree,
+				"Refresh Functions Array",
+				"Reloads the Zeus interface and refreshes the functions array.",
+				"MAZ_EZM_fnc_refreshFunctionList",
+				'\A3\3den\data\cfgwaypoints\cycle_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+			
+			[
+				MAZ_zeusModulesTree,
+				MAZ_UtilitiesTree,
+				"Toggle Auto-Add to Interface",
+				"Adds all objects to your zeus interface when you open it.",
+				"MAZ_EZM_fnc_toggleAutoAddToInterface",
+				'\A3\3den\data\cfgwaypoints\cycle_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_UtilitiesTree,
+				"Toggle Auto-Cleaner System",
+				"Automatically deletes destroyed objects when they're out of player view.",
+				"MAZ_EZM_fnc_toggleCleaner",
+				"a3\3den\data\displays\display3den\panelleft\entitylist_delete_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+		comment "Vehicle Modifiers";
+			MAZ_VehicleModTree = [
+				MAZ_zeusModulesTree,
+				"Vehicle Modifiers",
+				"a3\ui_f\data\igui\cfg\vehicletoggles\engineiconon_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddCategory;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_VehicleModTree,
+				"Unflip Vehicle",
+				"Unflip the vehicle the module is placed on.",
+				"MAZ_EZM_fnc_unflipVehicleModule"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_VehicleModTree,
+				"Rearm",
+				"Rearm the vehicle.",
+				"MAZ_EZM_fnc_rearmVehicleModule",
+				'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\rearm_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_VehicleModTree,
+				"Refuel",
+				"Refuel the vehicle.",
+				"MAZ_EZM_fnc_refuelVehicleModule",
+				'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\refuel_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_VehicleModTree,
+				"Repair",
+				"Repair the vehicle.",
+				"MAZ_EZM_fnc_repairVehicleModule",
+				'\A3\ui_f\data\IGUI\Cfg\simpleTasks\types\repair_ca.paa'
+			] call MAZ_EZM_fnc_zeusAddModule;
+			
+			[
+				MAZ_zeusModulesTree,
+				MAZ_VehicleModTree,
+				"Set Plate Number",
+				"Set the license plate number of a car.",
+				"HYPER_EZM_fnc_setPlateNumber",
+				"a3\ui_f\data\igui\cfg\simpletasks\types\car_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+		comment "Zeus";
+
+			MAZ_ZeusTree = [
+				MAZ_zeusModulesTree,
+				"Zeus Settings",
+				"a3\ui_f_curator\data\logos\arma3_zeus_icon_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddCategory;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_ZeusTree,
+				"Toggle Game Mod Rights",
+				"Change the Game Moderator rights.",
+				"MAZ_EZM_fnc_toggleGameModerator",
+				"a3\3den\data\attributes\taskstates\canceled_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_ZeusTree,
+				"Edit Zeus Interface",
+				"Change the Zeus interface colors and opacity.",
+				"MAZ_EZM_fnc_editZeusInterfaceColors",
+				"a3\modules_f_curator\data\iconpostprocess_ca.paa"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			if(typeOf player != "C_Man_French_universal_F") then {
 				[
 					MAZ_zeusModulesTree,
 					MAZ_ZeusTree,
-					"Toggle Game Mod Rights",
-					"Change the Game Moderator rights.",
-					"MAZ_EZM_fnc_toggleGameModerator",
-					"a3\3den\data\attributes\taskstates\canceled_ca.paa"
-				] call MAZ_EZM_fnc_zeusAddModule;
-
-				[
-					MAZ_zeusModulesTree,
-					MAZ_ZeusTree,
-					"Edit Zeus Interface",
+					"Create Zeus Unit",
 					"Change the Zeus interface colors and opacity.",
-					"MAZ_EZM_fnc_editZeusInterfaceColors",
-					"a3\modules_f_curator\data\iconpostprocess_ca.paa"
+					"MAZ_EZM_fnc_askAboutZeusUnit",
+					"a3\ui_f\data\map\vehicleicons\iconmancommander_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
+			};
 
-				if(typeOf player != "C_Man_French_universal_F") then {
-					[
-						MAZ_zeusModulesTree,
-						MAZ_ZeusTree,
-						"Create Zeus Unit",
-						"Change the Zeus interface colors and opacity.",
-						"MAZ_EZM_fnc_askAboutZeusUnit",
-						"a3\ui_f\data\map\vehicleicons\iconmancommander_ca.paa"
-					] call MAZ_EZM_fnc_zeusAddModule;
-				};
-
-			comment "Zeus Preview";
-				[] call MAZ_EZM_fnc_zeusPreviewImage;
-				[] call MAZ_EZM_fnc_addZeusPreviewEvents;
+		comment "End";
 			
-			comment "End";
+			call MAZ_EZM_fnc_zeusPreviewImage;
+			call MAZ_EZM_fnc_addZeusPreviewEvents;
+			call MAZ_EZM_fnc_addCollapseExpandButtons;
+			call MAZ_EZM_fnc_removeFactionStuffFromEmpty;
+			call MAZ_EZM_fnc_addSpawnWithoutCrewButton;
+			call MAZ_EZM_fnc_showAllWarnings;
 
-				comment "Select respawns if no respawns";
-				private _serverMainSide = west;
-				private _sideCount = [0,0,0];
-				private _max = 0;
-				{
-					private _side = side (group _x);
-					private _index = switch (_side) do {
-						case west: {0};
-						case east: {1};
-						case independent: {2};
-						default {0};
-					};
-					_sideCount set [_index, (_sideCount select _index) + 1];
-				}forEach allPlayers;
-				{
-					if(_x > _max) then {
-						_serverMainSide = switch (_forEachIndex) do {
-							case 0: {west};
-							case 1: {east};
-							case 2: {independent};
-						};
-					};
-				}forEach _sideCount;
-				if(count (_serverMainSide call BIS_fnc_getRespawnPositions) == 0) then {
-					private _respawnIndex = switch (_serverMainSide) do {
-						case WEST: {1};
-						case EAST: {4};
-						case INDEPENDENT: {3};
-						case CIVILIAN: {2};
-					};
-					[((findDisplay 312) displayCtrl 152)] call (missionNamespace getVariable "MAZ_EZM_fnc_emulateModeClick");
-					private _respawnLocalText = localize "$STR_A3_RSCRESPAWNCONTROLS_RESPAWN";
-					private _index = [uiNamespace getVariable "MAZ_zeusModulesTree",_respawnLocalText,[]] call (uiNamespace getVariable "MAZ_EZM_fnc_findTree");
-					(uiNamespace getVariable "MAZ_zeusModulesTree") tvExpand [_index];
-					(uiNamespace getVariable "MAZ_zeusModulesTree") tvSetCurSel [_index];
+			'MAZ_EZM_moduleCategories = call MAZ_EZM_fnc_getModuleCategories;
+			missionNamespace setVariable ["MAZ_EZM_moduleCategories", MAZ_EZM_moduleCategories];
+			call MAZ_EZM_fnc_removeToggledCategories';
+
+			{
+				_x ctrlCommit 0;
+			}forEach MAZ_EZM_AllTrees;
+
+			comment "Select respawns if no respawns";
+			private _serverMainSide = west;
+			if("west" in missionName) then {_serverMainSide = west;};
+			if("east" in missionName) then {_serverMainSide = east;};
+			if("guer" in missionName) then {_serverMainSide = independent;};
+			MAZ_EZM_ServerMainSide = _serverMainSide;
+
+			if(count (_serverMainSide call BIS_fnc_getRespawnPositions) == 0) then {
+				private _respawnIndex = switch (_serverMainSide) do {
+					case WEST: {1};
+					case EAST: {4};
+					case INDEPENDENT: {3};
+					case CIVILIAN: {2};
 				};
-		};
-		call MAZ_EZM_fnc_addNewFactionsToZeusInterface;
-		call MAZ_EZM_fnc_addNewModulesToZeusInterface;
-		call MAZ_EZM_fnc_sortFactionModules;
+				[((findDisplay 312) displayCtrl 152)] call (missionNamespace getVariable "MAZ_EZM_fnc_emulateModeClick");
+				private _respawnLocalText = localize "$STR_A3_RSCRESPAWNCONTROLS_RESPAWN";
+				private _index = [uiNamespace getVariable "MAZ_zeusModulesTree",_respawnLocalText,[]] call (uiNamespace getVariable "MAZ_EZM_fnc_findTree");
+				(uiNamespace getVariable "MAZ_zeusModulesTree") tvExpand [_index];
+				(uiNamespace getVariable "MAZ_zeusModulesTree") tvSetCurSel [_index];
+			};
+			
+			[] spawn {
+				while {!isNull (findDisplay 312)} do {
+					call MAZ_EZM_fnc_detectRespawnsUnavailable;
+					"call MAZ_EZM_fnc_detectLowServerPerformance";
+					sleep 5;
+				};
+			};
 	};
-	[] call _fnc_editInterface;
+	call MAZ_EZM_fnc_addNewFactionsToZeusInterface;
+	call MAZ_EZM_fnc_addNewModulesToZeusInterface;
+	call MAZ_EZM_fnc_sortFactionModules;
+	missionNamespace setVariable ["MAZ_zeusModulesRanBefore",true];
 };
 
 MAZ_EZM_editZeusLogic = {
@@ -18402,7 +18807,6 @@ MAZ_EZM_editZeusLogic = {
 			player setUnitLoadout _zeusLoadout;
 		};
 	}];
-	[] call MAZ_EZM_fnc_addToInterface;
 
 	if((_zeusLogic getVariable ["MAZ_zeusEH_modulePlaced",-200]) != -200) then {
 		_zeusLogic removeEventHandler ['CuratorObjectPlaced',(_zeusLogic getVariable 'MAZ_zeusEH_modulePlaced')];
@@ -18489,6 +18893,12 @@ MAZ_EZM_editZeusLogic = {
 			};
 			if(((typeOf _entity) isKindOf "Air" || (typeOf _entity) isKindOf "Ship") && alive _entity) exitWith {
 				[_entity] spawn MAZ_EZM_fnc_createVehicleAttributesDialog;
+				true
+			};
+
+			"All other objects";
+			if((typeOf _entity) isKindOf "Static") exitWith {
+				[_entity] spawn MAZ_EZM_fnc_createObjectInitDialog;
 				true
 			};
 			false
@@ -18819,6 +19229,7 @@ MAZ_EZM_addZeusKeybinds_312 = {
 	}];
 	MAZ_EZM_rightClickContextMenuUpEH = (findDisplay 312) displayAddEventHandler ["MouseButtonUp", {
 		params ["_displayOrControl", "_button", "_xPos", "_yPos", "_shift", "_ctrl", "_alt"];
+		if (!((uiNamespace getVariable ["MAZ_EZM_SelectionPath", []]) isEqualTo [])) exitWith {};
 		if(_button == 1 && (!_ctrl && !_shift && !_alt)) then {
 			if (isNil "MAZ_EZM_mousePressTimeContext") then {MAZ_EZM_mousePressTimeContext = time;};
 			if (isNil "MAZ_EZM_mouseMovementContext") then {MAZ_EZM_mouseMovementContext = getMousePosition};
@@ -19078,7 +19489,9 @@ MAZ_EZM_fnc_initMainLoop = {
 		[] spawn MAZ_EZM_addZeusKeybinds_312;
 		call MAZ_EZM_fnc_editZeusInterface;
 		call MAZ_EZM_fnc_addRespawnModules;
+
 		playSound "beep_target";
+		call MAZ_EZM_fnc_addToInterface;
 		[missionNamespace, "EZM_onZeusInterfaceOpened", [findDisplay 312]] call BIS_fnc_callScriptedEventHandler;
 		waitUntil {uiSleep 0.1; (isNull (findDisplay 312))};
 		[missionNamespace, "EZM_onZeusInterfaceClosed", [displayNull]] call BIS_fnc_callScriptedEventHandler;
@@ -19128,20 +19541,16 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 };
 
 private _changelog = [
-	"Added Set Color to Black module to Object Modifiers",
-	"Added Set Plate Number module to Vehicle Modifiers",
-	"Added default Zeus group to prevent Zeus from hearing other people in group",
-	"Added infinite depth to the Context Menu system",
-	"Changed the Zeus unit type to a universal character that can equip any uniform",
-	"Changed Soundboard to V2.0",
-	"Changed the Soundboard module to the newest version from M9-SD",
-	"Changed EZM to close the pause menu if ran from the pause menu",
-	"Changed EZM plug to not run for Zeus",
-	"Fixed an issue where using the delete clutter module would do nothing",
-	"Fixed SIDES element not having spacing",
-	"Fixed 48+2 Side Switcher wasn't working",
-	"Fixed issue where vehicles would spawn higher than they should",
-	"Removed all getPos commands in favor of faster getPosATL"
+	"Added Juneteenth as a holiday",
+	"Added total overhaul of automatic heli crash system. Runs on server, differnt factions, and diary entry.",
+	"Added new module Refresh Functions Array to Utilities.",
+	"Added Init boxes to all the attribute dialogs.",
+	"Fixed Airdrops module when using Vehicle instead of Arsenal.",
+	"Fixed Auto Garrison always putting OPFOR.",
+	"Fixed the 48+2 Side Switcher remoteExec kick, for real this time.",
+	"Fixed performance of checking default side of mission.",
+	"Changed how the editZeusInterface function loads to increase performance.",
+	"Changed Context Menu to not open when a module is selected."
 ];
 
 private _changelogString = "";
