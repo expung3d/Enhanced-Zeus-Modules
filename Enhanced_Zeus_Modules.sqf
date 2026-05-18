@@ -5459,23 +5459,23 @@ MAZ_EZM_fnc_initFunction = {
 		};
 
 		MAZ_EZM_fnc_getServerSideEnemy = {
+			private _enemies = [];
 			switch (MAZ_EZM_ServerMainSide) do {
 				case west: {
-					private _enemies = [east];
+					_enemies pushBack east;
 					if(!([MAZ_EZM_ServerMainSide,independent] call BIS_fnc_sideIsFriendly)) then {
 						_enemies pushBack independent;
 					};
 					_enemies;
 				};
 				case east: {
-					private _enemies = [west];
+					_enemies pushBack west;
 					if(!([MAZ_EZM_ServerMainSide,independent] call BIS_fnc_sideIsFriendly)) then {
 						_enemies pushBack independent;
 					};
 					_enemies;
 				};
 				case independent: {
-					private _enemies = [];
 					if(!([MAZ_EZM_ServerMainSide,west] call BIS_fnc_sideIsFriendly)) then {
 						_enemies pushBack west;
 					};
@@ -5489,6 +5489,7 @@ MAZ_EZM_fnc_initFunction = {
 					_enemies;
 				};
 			};
+			_enemies
 		};
 
 	comment "EZM Eventhandlers";
@@ -7925,10 +7926,10 @@ MAZ_EZM_fnc_initFunction = {
 			publicVariableServer "MAZ_EZM_fnc_crashSetPosition";
 
 			MAZ_EZM_fnc_createSoldierMission = {
-				params ["_location","_groupTypes"];
+				params ["_location","_side","_groupTypes"];
 				private _position = [[[_location,50]],[]] call BIS_fnc_randomPos;
 
-				private _soldierGroup = [_position, _soldierSide,selectRandom _groupTypes] call BIS_fnc_spawnGroup;
+				private _soldierGroup = [_position, _side,selectRandom _groupTypes] call BIS_fnc_spawnGroup;
 				_soldierGroup allowFleeing 0;
 
 				comment "Add waypoints";
@@ -7946,7 +7947,7 @@ MAZ_EZM_fnc_initFunction = {
 				_cycleWaypoint setWaypointBehaviour "SAFE";
 				_cycleWaypoint setWaypointSpeed "LIMITED";
 
-				units _soldiersCreated;
+				(units _soldierGroup);
 			};
 			publicVariableServer "MAZ_EZM_fnc_createSoldierMission";
 
@@ -8059,8 +8060,9 @@ MAZ_EZM_fnc_initFunction = {
 							};
 						};
 					};
-					default { };
+					default {[]};
 				};
+				[_soldierSide,_soldierGroups]
 			};
 			publicVariableServer "MAZ_EZM_fnc_getAIGroups";
 
@@ -8083,7 +8085,7 @@ MAZ_EZM_fnc_initFunction = {
 				private _smokeObject = [_positionOfCrash] call MAZ_EZM_fnc_createSmokeForCrash;
 				private _crashObjects = [_craterCrash,_crashGhosthawk,_smokeObject];
 
-				if(!["MAZ_EZM_HeliCrashTask"] call BIS_fnc_taskExists) then {
+				if(!(["MAZ_EZM_HeliCrashTask"] call BIS_fnc_taskExists)) then {
 					[
 						true,
 						"MAZ_EZM_HeliCrashTask",
@@ -8095,19 +8097,19 @@ MAZ_EZM_fnc_initFunction = {
 						[0,0,0],
 						"CREATED",
 						-1,
-						true
+						false
 					] call BIS_fnc_taskCreate;
 				};
 				["MAZ_EZM_HeliCrashTask",_positionOfCrash] call BIS_fnc_taskSetDestination;
 				["MAZ_EZM_HeliCrashTask","CREATED",false] call BIS_fnc_taskSetState;
 				["TaskAssignedIcon",["A3\UI_F\Data\Map\Markers\Military\warning_CA.paa","Helicopter Crash"]] remoteExec ['BIS_fnc_showNotification'];
-
+				
 				private _maxEnemies = round (random [10,15,20]);
-				private _groupTypes = call MAZ_EZM_fnc_getAIGroups;
+				(call MAZ_EZM_fnc_getAIGroups) params ["_enemySide","_groupTypes"];
 				private _soldiersArray = [];
-				while (count _soldiersArray < _maxEnemies) do {
-					private _soldiersCreated = [_positionOfCrash,_groupTypes] call MAZ_EZM_fnc_createSoldierMission;
-					_soldiersArray = _soldiersArray + _soldiersCreated;
+				while {(count _soldiersArray) < _maxEnemies} do {
+					private _soldiersCreated = [_positionOfCrash,_enemySide,_groupTypes] call MAZ_EZM_fnc_createSoldierMission;
+					_soldiersArray append _soldiersCreated;
 				};
 
 				[_soldiersArray,_crashObjects] spawn {
@@ -8115,10 +8117,21 @@ MAZ_EZM_fnc_initFunction = {
 					private _timer = 900;
 					missionNamespace setVariable ["MAZ_EZM_HeliCrashActive",true,true];
 					while {_timer > 0 && (({alive _x} count _soldiersArray) != 0)} do {
+						if(!(missionNamespace getVariable ["MAZ_EZM_autoHelicrash",false])) then {break};
 						_timer = _timer - 1;
 						missionNamespace setVariable ["MAZ_EZM_HeliCrashTimeRemaining",_timer,true];
 						sleep 1;
 					};
+
+					if(!(missionNamespace getVariable ["MAZ_EZM_autoHelicrash",false])) exitWith {
+						["MAZ_EZM_HeliCrashTask","CANCELED",false] call BIS_fnc_taskSetState;
+						["TaskCanceled",["","Helicopter Crashes Disabled"]] remoteExec ['BIS_fnc_showNotification',-2];
+						{
+							deleteVehicle _x;
+						} forEach _crashObjects + _soldiersArray;
+					};
+
+
 					if(({alive _x} count _soldiersArray) == 0) then {
 						missionNamespace setVariable ["MAZ_EZM_HeliCrashActive",false,true];
 
@@ -8132,11 +8145,14 @@ MAZ_EZM_fnc_initFunction = {
 							private _rewardBox = [getPosATL (_crashObjects select 0),_rewardType] call MAZ_EZM_fnc_createReward;
 							_rewardBoxes pushBack _rewardBox;
 						};
-						sleep 90;
-						waitUntil {{isPlayer _x} count ((_crashObjects select 0) nearEntities ["Man",1600]) == 0};
-						{
-							deleteVehicle _x;
-						} forEach _crashObjects + _soldiersArray + _rewardBoxes;
+						[_crashObjects,_soldiersArray,_rewardBoxes] spawn {
+							params ["_crashObjects"];
+							sleep 90;
+							waitUntil {{isPlayer _x} count ((_crashObjects select 0) nearEntities ["Man",1600]) == 0};
+							{
+								deleteVehicle _x;
+							} forEach _this;
+						};
 					};
 					if(_timer <= 0 && (({alive _x} count _soldiersArray) != 0)) then {
 						missionNamespace setVariable ["MAZ_EZM_HeliCrashActive",false,true];
@@ -8144,14 +8160,17 @@ MAZ_EZM_fnc_initFunction = {
 						["MAZ_EZM_HeliCrashTask","FAILED",false] call BIS_fnc_taskSetState;
 						["TaskFailed",["","Helicopter Crash Not Secured"]] remoteExec ['BIS_fnc_showNotification',-2];
 
-						waitUntil {{isPlayer _x} count ((_crashObjects select 0) nearEntities ["Man",1600]) == 0};
-						{
-							deleteVehicle _x;
-						} forEach _crashObjects + _soldiersArray;
+						[_crashObjects,_soldiersArray] spawn {
+							params ["_crashObjects"];
+							waitUntil {{isPlayer _x} count ((_crashObjects select 0) nearEntities ["Man",1600]) == 0};
+							{
+								deleteVehicle _x;
+							} forEach _this;
+						};
 					};
 					missionNamespace setVariable ["MAZ_EZM_HeliCrashTimeNextMission",time + 600,true];
 					sleep 600;
-					if(MAZ_EZM_autoHelicrash) then {
+					if(missionNamespace getVariable ["MAZ_EZM_autoHelicrash",false]) then {
 						[] call MAZ_EZM_fnc_newHelicrashMission;
 					};
 				};
@@ -8162,12 +8181,62 @@ MAZ_EZM_fnc_initFunction = {
 				waitUntil {uisleep 0.1;!isNull (findDisplay 46) && alive player};
 				sleep 0.1;
 				if(!(player diarySubjectExists "MAZ_EZM_HeliMission_Diary")) then {
-					player createDiarySubject ["MAZ_EZM_HeliMission_Diary","Automatic Heli Crash Missions"];
-					MAZ_EZM_HeliMissionRecord = player createDiaryRecord ["MAZ_EZM_HeliMissionDiary",["Automatic Heli Missions"]];
+					player createDiarySubject ["MAZ_EZM_HeliMission_Diary","Heli Crashes"];
+					MAZ_EZM_HeliMissionRecord = player createDiaryRecord ["MAZ_EZM_HeliMission_Diary",["Automatic Heli Missions",""]];
 				};
 				[] spawn MAZ_EZM_fnc_updateHeliMissionDiary;
 			};
-			publicVariable "MAZ_EZM_fnc_addHeliMissionDiary";
+			publicVariableServer "MAZ_EZM_fnc_addHeliMissionDiary";
+
+			"Same params as BIS_fnc_secondsToString
+			0: time in seconds
+			1: format str
+			2: optional. bool to return array
+			";
+			MAZ_EZM_fnc_secStr = {
+				private ["_sec", "_format", "_asArray", "_time", "_min", "_hour", "_sec", "_msec"];
+				_sec = _this param [0, 0, [0]];
+				_format = _this param [1, "HH:MM:SS", [""]];
+				_asArray = _this param [2, false, [true]];
+				_time = "";
+
+				_hour = 0;
+				if (_format in ["HH", "HH:MM", "HH:MM:SS", "HH:MM:SS.MS"]) then {
+					_hour = floor (_sec / 3600);
+					_sec = _sec % 3600;
+				};
+				_min =  floor (_sec / 60);
+				_sec = _sec % 60;
+				_msec = floor ((_sec % 1) * 1000);
+				_sec = floor (_sec);
+
+				_hour = (if (_hour <= 9) then {"0"} else {""}) + (str _hour);
+				_min = (if (_min <= 9) then {"0"} else {""}) + (str _min);
+				_sec = (if (_sec <= 9) then {"0"} else {""}) + (str _sec);
+				if (_msec <= 99) then {
+					if (_msec <= 9) then 
+					{
+						_msec = "00" + (str _msec);
+					} 
+					else 
+					{
+						_msec = "0" + (str _msec);
+					};
+				};
+
+				switch _format do {
+					case "HH": {_time = _hour;};
+					case "HH:MM": {_time = format ["%1:%2", _hour, _min];};
+					case "HH:MM:SS": {_time = format ["%1:%2:%3", _hour, _min, _sec];};
+					case "HH:MM:SS.MS": {_time = format ["%1:%2:%3.%4", _hour, _min, _sec, _msec];};
+					case "MM": {_time = _min;};
+					case "MM:SS": {_time = format ["%1:%2", _min, _sec];};
+					case "MM:SS.MS": {_time = format ["%1:%2.%3", _min, _sec, _msec];};
+					case "SS.MS": {_time = format ["%1.%2", _sec, _msec];};
+				};
+				_time;
+			};
+			publicVariable "MAZ_EZM_fnc_secStr";
 
 			MAZ_EZM_fnc_updateHeliMissionDiary = {
 				private _title = "Automatic Helicopter Crash Missions";
@@ -8186,39 +8255,42 @@ MAZ_EZM_fnc_initFunction = {
 
 					private _timerInfo = if(_isActive) then {
 						private _timeLeft = missionNamespace getVariable ["MAZ_EZM_HeliCrashTimeRemaining",900];
-						format ["<font size='16' face='PuristaMedium'>Time Remaining: %1</font>",[_timeLeft,"MM:SS"] call BIS_fnc_secondsToString];
+						format ["<font size='16' face='PuristaMedium'>Time Remaining: %1</font>",[_timeLeft,"MM:SS"] call MAZ_EZM_fnc_secStr];
 					} else {
 						private _timeUntil = missionNamespace getVariable ["MAZ_EZM_HeliCrashTimeNextMission",time];
-						format ["<font size='16' face='PuristaMedium'>Time to Next Mission: %1</font>",[_timeUntil - time,"MM:SS"] call BIS_fnc_secondsToString];
+						format ["<font size='16' face='PuristaMedium'>Time to Next Mission: %1</font>",[_timeUntil - time,"MM:SS"] call MAZ_EZM_fnc_secStr];
 					};
 					
-					player setDiaryRecordText [["MAZ_EZM_HeliMissionDiary",MAZ_EZM_HeliMissionRecord],["Information", 
+					player setDiaryRecordText [["MAZ_EZM_HeliMission_Diary",MAZ_EZM_HeliMissionRecord],["Information", 
 						format ["
-							<font color='#db8727' size='18' face='PuristaSemibold'>%1</font><br>
-							<font size='16' face='PuristaMedium'>%2</font><br><br>
-							<font size='16' face='PuristaMedium'>Mission Status: %3</font><br>
+							<font color='#db8727' size='18' face='PuristaSemibold'>%1</font><br/>
+							<font size='16' face='PuristaMedium'>%2</font> <br/> <br/>
+							<font size='14' face='PuristaMedium'>Mission Status: %3</font> <br/>
 							%4
-						"],
+						",
 						_title,
 						_description,
 						_missionStatus,
 						_timerInfo
+						]
 					]];
 					sleep 1;
 				};
-				player setDiaryRecordText [["MAZ_EZM_HeliMissionDiary",MAZ_EZM_HeliMissionRecord],["Information", 
+				player setDiaryRecordText [["MAZ_EZM_HeliMission_Diary",MAZ_EZM_HeliMissionRecord],["Information", 
 					format ["
-						<font color='#db8727' size='18' face='PuristaSemibold'>%1</font><br>
-						<font size='16' face='PuristaMedium'>%2</font><br><br>
+						<font color='#db8727' size='18' face='PuristaSemibold'>%1</font> <br/>
+						<font size='16' face='PuristaMedium'>%2</font> <br/> <br/>
 						<font size='16' face='PuristaMedium' color='#D3494E'>System is DISABLED.</font>
-					"],
+					",
 					_title,
 					_description
+					]
 				]];
 			};
 			publicVariable "MAZ_EZM_fnc_updateHeliMissionDiary";
 
 			[[], {
+				waitUntil {!isNil "MAZ_EZM_fnc_addHeliMissionDiary"};
 				[] spawn MAZ_EZM_fnc_addHeliMissionDiary;
 			}] remoteExec ["spawn",-2,"MAZ_EZM_HeliCrash"];
 		};
@@ -8760,6 +8832,7 @@ MAZ_EZM_fnc_initFunction = {
 				missionNamespace setVariable ["MAZ_EZM_autoHelicrash",true,true];
 				["Automated Helicopter Crashes enabled.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
 				[[],{
+					waitUntil {!isNil "MAZ_EZM_fnc_newHelicrashMission"};
 					[] call MAZ_EZM_fnc_newHelicrashMission;
 				}] remoteExec ["spawn",2];
 			};
@@ -18754,7 +18827,9 @@ MAZ_EZM_fnc_editZeusInterface = {
 			if("west" in missionName) then {_serverMainSide = west;};
 			if("east" in missionName) then {_serverMainSide = east;};
 			if("guer" in missionName) then {_serverMainSide = independent;};
-			MAZ_EZM_ServerMainSide = _serverMainSide;
+			if(missionNamespace getVariable ["MAZ_EZM_ServerMainSide",civilian] == civilian) then {
+				missionNamespace setVariable ["MAZ_EZM_ServerMainSide",_serverMainSide,true];
+			};
 
 			if(count (_serverMainSide call BIS_fnc_getRespawnPositions) == 0) then {
 				private _respawnIndex = switch (_serverMainSide) do {
