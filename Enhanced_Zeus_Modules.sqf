@@ -19738,7 +19738,7 @@ call MAZ_EZM_fnc_askAboutZeusUnit;
 ";
 
 "
-	TODO Expung3d:
+	Wishlist Expung3d:
 		- EZM Eventhandlers
 		- Add Dead Soldier compositions to all factions 
 		- NATO+ 
