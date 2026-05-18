@@ -8076,7 +8076,7 @@ MAZ_EZM_fnc_initFunction = {
 				_crashGhosthawk setVectorDirAndUp [[0,0.95921,-0.282693],[0.46759,0.249885,0.84789]];
 				_crashGhosthawk setDamage [0.62284,false];
 				_crashGhosthawk lock 2;
-				_crashGhosthawk enableSimulation false;
+				_crashGhosthawk enableSimulationGlobal false;
 				[_crashGhosthawk,_craterCrash] call BIS_fnc_attachToRelative;
 				private _newPos = [_craterCrash] call MAZ_EZM_fnc_crashSetPosition;
 				[_crashGhosthawk,_newPos] call MAZ_EZM_fnc_crashSounds;
@@ -8114,12 +8114,10 @@ MAZ_EZM_fnc_initFunction = {
 
 				[_soldiersArray,_crashObjects] spawn {
 					params ["_soldiersArray","_crashObjects"];
-					private _timer = 900;
 					missionNamespace setVariable ["MAZ_EZM_HeliCrashActive",true,true];
-					while {_timer > 0 && (({alive _x} count _soldiersArray) != 0)} do {
+					missionNamespace setVariable ["MAZ_EZM_HeliCrashTimeRemaining",time + 900,true];
+					while {(time < (missionNamespace getVariable "MAZ_EZM_HeliCrashTimeRemaining")) && (({alive _x} count _soldiersArray) != 0)} do {
 						if(!(missionNamespace getVariable ["MAZ_EZM_autoHelicrash",false])) then {break};
-						_timer = _timer - 1;
-						missionNamespace setVariable ["MAZ_EZM_HeliCrashTimeRemaining",_timer,true];
 						sleep 1;
 					};
 
@@ -8154,7 +8152,7 @@ MAZ_EZM_fnc_initFunction = {
 							} forEach _this;
 						};
 					};
-					if(_timer <= 0 && (({alive _x} count _soldiersArray) != 0)) then {
+					if((time >= (missionNamespace getVariable "MAZ_EZM_HeliCrashTimeRemaining")) && (({alive _x} count _soldiersArray) != 0)) then {
 						missionNamespace setVariable ["MAZ_EZM_HeliCrashActive",false,true];
 
 						["MAZ_EZM_HeliCrashTask","FAILED",false] call BIS_fnc_taskSetState;
@@ -8169,7 +8167,7 @@ MAZ_EZM_fnc_initFunction = {
 						};
 					};
 					missionNamespace setVariable ["MAZ_EZM_HeliCrashTimeNextMission",time + 600,true];
-					sleep 600;
+					waitUntil {sleep 1;time > missionNamespace getVariable "MAZ_EZM_HeliCrashTimeNextMission"};
 					if(missionNamespace getVariable ["MAZ_EZM_autoHelicrash",false]) then {
 						[] call MAZ_EZM_fnc_newHelicrashMission;
 					};
@@ -8186,7 +8184,7 @@ MAZ_EZM_fnc_initFunction = {
 				};
 				[] spawn MAZ_EZM_fnc_updateHeliMissionDiary;
 			};
-			publicVariableServer "MAZ_EZM_fnc_addHeliMissionDiary";
+			publicVariable "MAZ_EZM_fnc_addHeliMissionDiary";
 
 			"Same params as BIS_fnc_secondsToString
 			0: time in seconds
@@ -8254,8 +8252,8 @@ MAZ_EZM_fnc_initFunction = {
 					};
 
 					private _timerInfo = if(_isActive) then {
-						private _timeLeft = missionNamespace getVariable ["MAZ_EZM_HeliCrashTimeRemaining",900];
-						format ["<font size='16' face='PuristaMedium'>Time Remaining: %1</font>",[_timeLeft,"MM:SS"] call MAZ_EZM_fnc_secStr];
+						private _timeLeft = missionNamespace getVariable ["MAZ_EZM_HeliCrashTimeRemaining",time];
+						format ["<font size='16' face='PuristaMedium'>Time Remaining: %1</font>",[_timeLeft - time,"MM:SS"] call MAZ_EZM_fnc_secStr];
 					} else {
 						private _timeUntil = missionNamespace getVariable ["MAZ_EZM_HeliCrashTimeNextMission",time];
 						format ["<font size='16' face='PuristaMedium'>Time to Next Mission: %1</font>",[_timeUntil - time,"MM:SS"] call MAZ_EZM_fnc_secStr];
