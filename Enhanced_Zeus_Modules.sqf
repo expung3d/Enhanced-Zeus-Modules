@@ -5159,7 +5159,7 @@ MAZ_EZM_fnc_initFunction = {
 							[
 								parseText (format ["
 								<t size='1.3' align='center' color='#00BFBF'>You've Been Flagged as a Troll</t><br/>
-								<t size='1.0' align='center'>If you'd like to appeal this decision, contact Expung3d in the ZAM discord.</t><br/>
+								<t size='1.0' align='center'>If you'd like to connect to the server, ask the Zeus to disable Server Protections.</t><br/>
 								<t size='1.0' align='center'>Reason: %1</t>",_reason]), 
 								"EZM Server Protection System", 
 								true, 
