@@ -7930,6 +7930,7 @@ MAZ_EZM_fnc_initFunction = {
 				private _position = [[[_location,50]],[]] call BIS_fnc_randomPos;
 
 				private _soldierGroup = [_position, _side,selectRandom _groupTypes] call BIS_fnc_spawnGroup;
+				(units _soldierGroup) apply {_x setUnitPos "UP"};
 				_soldierGroup allowFleeing 0;
 
 				comment "Add waypoints";
