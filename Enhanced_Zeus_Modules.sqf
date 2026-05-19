@@ -3,7 +3,7 @@ if(!isNull (findDisplay 312) && {!isNil "this"} && {!isNull this}) then {
 };
 
 [] spawn {
-MAZ_EZM_Version = "V2.1.7";
+MAZ_EZM_Version = "V2.1.8";
 MAZ_EZM_autoAdd = profileNamespace getVariable ["MAZ_EZM_autoAddVar",true];
 MAZ_EZM_spawnWithCrew = true;
 MAZ_EZM_nvgsOnlyAtNight = true;
@@ -10765,7 +10765,8 @@ MAZ_EZM_fnc_initFunction = {
 				_input = [(ctrlText ((ctrlParent (_this select 0)) displayCtrl 12284))] call MAZ_EZM_fnc_removeComments; 
 				_input = format ["this = _this select 0; %1",_input];
 
-				private _return = [_target] call (compile _input);
+				private _code = compile _input;
+				private _return = [_code] apply {[_target] call _code} param [0, ""];
 				[(ctrlParent (_this select 0)) displayCtrl 12284] call MAZ_EZM_fnc_saveExpression; 
 				(parsingNamespace getVariable ["BIS_RscDebugConsoleExpressionResultCtrl", controlNull]) ctrlSetText (str _return); 
 			}]; 
