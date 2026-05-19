@@ -61,4 +61,4 @@ We appreciate anyone who tries to contribute to EZM. If you'd like to contribute
 To see more information about contributing to this project, check out the [contribution guidelines](https://github.com/expung3d/Enhanced-Zeus-Modules/blob/main/CONTRIBUTING.md).
 
 ## License
-Enhanced Zeus Modules is licensed under the MIT license. ([EULA](https://github.com/expung3d/Enhanced-Zeus-Modules/blob/main/LICENSE)).
+Enhanced Zeus Modules is licensed under the [MIT license](https://github.com/expung3d/Enhanced-Zeus-Modules/blob/main/LICENSE).
