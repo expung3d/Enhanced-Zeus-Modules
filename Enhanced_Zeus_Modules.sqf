@@ -12393,7 +12393,12 @@ MAZ_EZM_fnc_initFunction = {
 			if(isPlayer _entity) then {
 				[[],{
 					player setDamage 0;
-					["#rev",1,player] call BIS_fnc_reviveOnState;
+					if(lifeState player == "INCAPACITATED") then {
+						["#rev",1,player] call BIS_fnc_reviveOnState;
+						if(vehicle player == player) then {
+							player switchMove "unconsciousOutProne";
+						};
+					};
 				}] remoteExec ['spawn',_entity];
 			} else {
 				_entity setDamage 0; 
