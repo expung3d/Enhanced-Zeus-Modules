@@ -8068,6 +8068,7 @@ MAZ_EZM_fnc_initFunction = {
 			publicVariableServer "MAZ_EZM_fnc_getAIGroups";
 
 			MAZ_EZM_fnc_newHelicrashMission = {
+				if(!(missionNamespace getVariable ["MAZ_EZM_autoHelicrash",false])) exitWith {};
 				private _craterCrash = createVehicle ["CraterLong",[23413.8,17893.8,0],[],0,"CAN_COLLIDE"];
 				_craterCrash setPosWorld [23413.8,17893.8,3.25423];
 				_craterCrash setVectorDirAndUp [[0,1,0],[0,0,1]];
@@ -8168,7 +8169,7 @@ MAZ_EZM_fnc_initFunction = {
 						};
 					};
 					missionNamespace setVariable ["MAZ_EZM_HeliCrashTimeNextMission",time + 600,true];
-					waitUntil {sleep 1;time > missionNamespace getVariable "MAZ_EZM_HeliCrashTimeNextMission"};
+					waitUntil {sleep 1; (time > missionNamespace getVariable "MAZ_EZM_HeliCrashTimeNextMission") || (!(missionNamespace getVariable ["MAZ_EZM_autoHelicrash",false]))};
 					if(missionNamespace getVariable ["MAZ_EZM_autoHelicrash",false]) then {
 						[] call MAZ_EZM_fnc_newHelicrashMission;
 					};
