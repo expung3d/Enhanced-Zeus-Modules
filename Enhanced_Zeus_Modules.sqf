@@ -19661,16 +19661,11 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 };
 
 private _changelog = [
-	"Added Juneteenth as a holiday",
-	"Added total overhaul of automatic heli crash system. Runs on server, differnt factions, and diary entry.",
-	"Added new module Refresh Functions Array to Utilities.",
-	"Added Init boxes to all the attribute dialogs.",
-	"Fixed Airdrops module when using Vehicle instead of Arsenal.",
-	"Fixed Auto Garrison always putting OPFOR.",
-	"Fixed the 48+2 Side Switcher remoteExec kick, for real this time.",
-	"Fixed performance of checking default side of mission.",
-	"Changed how the editZeusInterface function loads to increase performance.",
-	"Changed Context Menu to not open when a module is selected."
+	"Fixed issue where the auto heli system could stay suspended longer than needed.",
+	"Fixed script error relating to init boxes on vehicles and groups.",
+	"Fixed issue where empty groups that were remote weren't being deleted.",
+	"Fixed issue where init boxes would not execute on OK selection.",
+	"Changed the Heal / Revive module to make the player immediately exit the incapacitated animation."
 ];
 
 private _changelogString = "";
