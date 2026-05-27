@@ -12,7 +12,7 @@ jobs:
       - name: Fetch Latest Release Data
         id: get_release
         run: |
-          if["${{ github.event_name }}" = "release"]; then
+          if [ "${{ github.event_name }}" = "release" ]; then
             echo "url=${{ github.event.release.html_url }}" >> $GITHUB_OUTPUT
             echo "name=${{ github.event.release.name }}" >> $GITHUB_OUTPUT
             echo "body=${{ github.event.release.body }}" >> $GITHUB_OUTPUT
@@ -32,9 +32,14 @@ jobs:
           RELEASE_NAME="${{ steps.get_release.outputs.name }}"
           RELEASE_CHANGES="${{ steps.get_release.outputs.body }}"
 
-          MESSAGE="# [$RELEASE_NAME]($RELEASE_URL): LIVE ON GITHUB\n$RELEASE_CHANGES\n\n$ROLE_PING"
+          MESSAGE="# [$RELEASE_NAME]($RELEASE_URL): LIVE ON GITHUB
+          $RELEASE_CHANGES
+          
+          $ROLE_PING"
+
+          PAYLOAD=$(jq -n --arg content "$MESSAGE" '{content: $content}')
 
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"$MESSAGE\"}" \
+               -d "$PAYLOAD" \
                $DISCORD_WEBHOOK
