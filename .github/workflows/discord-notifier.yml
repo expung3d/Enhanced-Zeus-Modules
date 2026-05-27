@@ -42,9 +42,7 @@ jobs:
             --arg name "${{ steps.get_release.outputs.name }}" \
             --arg url "${{ steps.get_release.outputs.url }}" \
             --arg body "${{ steps.get_release.outputs.body }} \
-            '{
-              content: "# [\($name)](\($url)): LIVE ON GITHUB\n\($body)\n\nROLE_PING"
-            }')
+            '{content: ("# [" + $name + "](" + $url + "): LIVE ON GITHUB\n" + $body + "\n\nROLE_PING")}')
 
 
           curl -H "Content-Type: application/json" \
