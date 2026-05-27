@@ -3,19 +3,34 @@ name: Discord Release Notifier
 on:
   release:
     types: [published]
+  workflow_dispatch: 
 
 jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
+      - name: Fetch Latest Release Data
+        id: get_release
+        run: |
+          if["${{ github.event_name }}" = "release"]; then
+            echo "url=${{ github.event.release.html_url }}" >> $GITHUB_OUTPUT
+            echo "name=${{ github.event.release.name }}" >> $GITHUB_OUTPUT
+            echo "body=${{ github.event.release.body }}" >> $GITHUB_OUTPUT
+          else
+            RELEASE_DATA=$(curl -s https://github.com/expung3d/Enhanced-Zeus-Modules/releases/latest)
+            echo "url=$(echo "$RELEASE_DATA" | jq -r .html_url)" >> $GITHUB_OUTPUT
+            echo "name=$(echo "$RELEASE_DATA" | jq -r .name)" >> $GITHUB_OUTPUT
+            echo "body=$(echo "$RELEASE_DATA" | jq -r .body)" >> $GITHUB_OUTPUT
+          fi
+          
       - name: Send Discord Notification
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
           ROLE_PING="<@&1175233382100246628>"
-          RELEASE_URL="${{ github.event.release.html_url }}"
-          RELEASE_NAME="${{ github.event.release.name }}"
-          RELEASE_CHANGES="${{ github.event.release.body }}"
+          RELEASE_URL="${{ steps.get_release.outputs.url }}"
+          RELEASE_NAME="${{ steps.get_release.outputs.name }}"
+          RELEASE_CHANGES="${{ steps.get_release.outputs.body }}"
 
           MESSAGE="# [$RELEASE_NAME]($RELEASE_URL): LIVE ON GITHUB\n$RELEASE_CHANGES\n\n$ROLE_PING"
 
