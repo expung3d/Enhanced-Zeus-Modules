@@ -2828,7 +2828,7 @@ comment "Attributes Dialog Functions";
 
 		MAZ_EZM_applyAttributeChangesToMan = {
 			params ["_unit","_attributes"];
-			_attributes params ["_name","_rank","_stance","_health","_skill","_respawn"];
+			_attributes params ["_name","_rank","_stance","_health","_skill","_respawn","_init"];
 			[_unit,_name] remoteExec ['setName'];
 			[_unit,_rank] remoteExec ["setRank"];
 			[_unit,_stance] remoteExec ["setUnitPos"];
@@ -2838,6 +2838,11 @@ comment "Attributes Dialog Functions";
 			};
 
 			[_unit,_respawn] call MAZ_EZM_fnc_applyUnitRespawn;
+
+			if(_init != "") then {
+				private _input = "this = _this;" + _init;
+				_unit call (compile _input);
+			};
 		};
 
 		MAZ_EZM_fnc_applySkillsToUnit = {
@@ -2878,14 +2883,19 @@ comment "Attributes Dialog Functions";
 
 		MAZ_EZM_fnc_applyAttributeChangesToPlayer = {
 			params ["_unit","_values"];
-			_values params ["_rank","_respawnType"];
+			_values params ["_rank","_respawnType","_init"];
 			_unit setRank _rank;
 			[_unit,_respawnType] call MAZ_EZM_fnc_applyUnitRespawn;
+
+			if(_init != "") then {
+				private _input = "this = _this;" + _init;
+				_unit call (compile _input);
+			};
 		};
 
 		MAZ_EZM_fnc_applyAttributeChangesToGroup = {
 			params ["_group","_attributes"];
-			_attributes params ["_name","_skill","_form","_beh","_comMode","_sped","_stance"];
+			_attributes params ["_name","_skill","_form","_beh","_comMode","_sped","_stance","_init"];
 			_group setGroupIdGlobal [_name];
 			[_group,_form] remoteExec ["setFormation"];
 			[_group,_beh] remoteExec ["setBehaviour"];
@@ -2895,6 +2905,11 @@ comment "Attributes Dialog Functions";
 				[_x,_skill] remoteExec ["setSkill"];
 				[_x,_stance] remoteExec ["setUnitPos"];
 			}forEach (units _group);
+
+			if(_init != "") then {
+				private _input = "this = _this;" + _init;
+				_group call (compile _input);
+			};
 		};
 
 		MAZ_EZM_fnc_applyDamagesToVehicle = {
@@ -2931,7 +2946,7 @@ comment "Attributes Dialog Functions";
 
 		MAZ_EZM_fnc_applyAttributeChangesToLandVehicle = {
 			params ["_vehicle","_attributes"];
-			_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],"_respawn"];
+			_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],"_respawn","_init"];
 			_vehicle setDamage (1-_health);
 			[_vehicle,_fuel] remoteExec ["setFuel"];
 			[_vehicle,_lockState] remoteExec ["lock"];
@@ -2939,11 +2954,16 @@ comment "Attributes Dialog Functions";
 			[_vehicle,_lightState] remoteExec ["setPilotLight"];
 
 			[_vehicle,_respawn] call MAZ_EZM_fnc_applyUnitRespawn;
+
+			if(_init != "") then {
+				private _input = "this = _this;" + _init;
+				_vehicle call (compile _input);
+			};
 		};
 
 		MAZ_EZM_fnc_applyAttributeChangesToVehicle = {
 			params ["_vehicle","_attributes"];
-			_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],["_colLightState",isCollisionLightOn _vehicle],"_respawn"];
+			_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],["_colLightState",isCollisionLightOn _vehicle],"_respawn","_init"];
 			_vehicle setDamage (1-_health);
 			[_vehicle,_fuel] remoteExec ["setFuel"];
 			[_vehicle,_lockState] remoteExec ["lock"];
@@ -2952,6 +2972,11 @@ comment "Attributes Dialog Functions";
 			[_vehicle,_colLightState] remoteExec ["setCollisionLight"];
 
 			[_vehicle,_respawn] call MAZ_EZM_fnc_applyUnitRespawn;
+
+			if(_init != "") then {
+				private _input = "this = _this;" + _init;
+				_vehicle call (compile _input);
+			};
 		};
 
 		MAZ_EZM_fnc_applyAttributeChangesToMarker = {
