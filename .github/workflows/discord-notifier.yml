@@ -45,9 +45,9 @@ jobs:
             '{
               content: $role,
               embeds: [{
-                title: ($name + ": LIVE ON GITHUB"),
+                title: ($name + " - LIVE ON GITHUB"),
                 url: $url,
-                description: (if ($body | length) > 1500 then ($body[0:1500] + "\n\n*... More changes are listed on the release page.*") else $body end),
+                description: (if (($body // "") | length) > 1500 then ($body[0:1500] + "\n\n*... More changes are listed on the release page.*") else $body end),
                 color: 5818712,
                 footer: {
                   text: "GitHub Releases"
