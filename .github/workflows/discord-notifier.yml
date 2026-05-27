@@ -20,7 +20,7 @@ jobs:
             echo "${{ github.event.release.body }}" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
           else
-            RELEASE_DATA=$(curl -s https://github.com/expung3d/Enhanced-Zeus-Modules/releases/latest)
+            RELEASE_DATA=$(curl -s "https://api.github.com/repos/expung3d/Enhanced-Zeus-Modules/releases/latest")
             echo "url=$(echo "$RELEASE_DATA" | jq -r .html_url)" >> $GITHUB_OUTPUT
             echo "name=$(echo "$RELEASE_DATA" | jq -r .name)" >> $GITHUB_OUTPUT
             
