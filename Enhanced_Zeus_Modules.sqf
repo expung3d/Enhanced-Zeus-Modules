@@ -2266,7 +2266,7 @@ comment "Attributes Dialog Functions";
 						"INIT",
 						"Debug Console:",
 						[
-							_entity
+							_group
 						]
 					]
 				],{
@@ -2360,7 +2360,7 @@ comment "Attributes Dialog Functions";
 						"INIT",
 						"Debug Console:",
 						[
-							_entity
+							_vehicle
 						]
 					],
 					[ 
@@ -2493,7 +2493,7 @@ comment "Attributes Dialog Functions";
 						"INIT",
 						"Debug Console:",
 						[
-							_entity
+							_vehicle
 						]
 					],
 					[ 
@@ -10323,7 +10323,11 @@ MAZ_EZM_fnc_initFunction = {
 			private _totalEmptyGroupsDeleted = 0;
 			{
 				if(count (units _x) == 0) then {
-					deleteGroup _x;
+					if(local _x) then {
+						deleteGroup _x;
+					} else {
+						[_x] remoteExec ["deleteGroup"];
+					};
 					_totalEmptyGroupsDeleted = _totalEmptyGroupsDeleted + 1;
 				};
 			}forEach allGroups;
