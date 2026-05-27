@@ -45,7 +45,7 @@ jobs:
             '{
               content: "PING_ROLE",
               embeds: [{
-                title: $name + "LIVE ON GITHUB",
+                title: ($name + "LIVE ON GITHUB"),
                 url: $url,
                 description: $body,
                 color: 5818712,
