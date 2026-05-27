@@ -52,7 +52,7 @@ jobs:
                 footer: {
                   text: "GitHub Releases"
                 },
-                timestamp: (now | strflocaltime("$Y-$m-$dT%H:%M:%SZ"))
+                timestamp: (now | strflocaltime("%Y-%m-%dT%H:%M:%SZ"))
               }]
             }'
           )
