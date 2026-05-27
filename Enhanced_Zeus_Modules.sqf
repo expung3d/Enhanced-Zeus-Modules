@@ -3,7 +3,7 @@ if(!isNull (findDisplay 312) && {!isNil "this"} && {!isNull this}) then {
 };
 
 [] spawn {
-MAZ_EZM_Version = "V2.1.7";
+MAZ_EZM_Version = "V2.1.8";
 MAZ_EZM_autoAdd = profileNamespace getVariable ["MAZ_EZM_autoAddVar",true];
 MAZ_EZM_spawnWithCrew = true;
 MAZ_EZM_nvgsOnlyAtNight = true;
@@ -2266,7 +2266,7 @@ comment "Attributes Dialog Functions";
 						"INIT",
 						"Debug Console:",
 						[
-							_entity
+							_group
 						]
 					]
 				],{
@@ -2360,7 +2360,7 @@ comment "Attributes Dialog Functions";
 						"INIT",
 						"Debug Console:",
 						[
-							_entity
+							_vehicle
 						]
 					],
 					[ 
@@ -2493,7 +2493,7 @@ comment "Attributes Dialog Functions";
 						"INIT",
 						"Debug Console:",
 						[
-							_entity
+							_vehicle
 						]
 					],
 					[ 
@@ -2828,7 +2828,7 @@ comment "Attributes Dialog Functions";
 
 		MAZ_EZM_applyAttributeChangesToMan = {
 			params ["_unit","_attributes"];
-			_attributes params ["_name","_rank","_stance","_health","_skill","_respawn"];
+			_attributes params ["_name","_rank","_stance","_health","_skill","_respawn","_init"];
 			[_unit,_name] remoteExec ['setName'];
 			[_unit,_rank] remoteExec ["setRank"];
 			[_unit,_stance] remoteExec ["setUnitPos"];
@@ -2838,6 +2838,11 @@ comment "Attributes Dialog Functions";
 			};
 
 			[_unit,_respawn] call MAZ_EZM_fnc_applyUnitRespawn;
+
+			if(_init != "") then {
+				private _input = "this = _this;" + _init;
+				_unit call (compile _input);
+			};
 		};
 
 		MAZ_EZM_fnc_applySkillsToUnit = {
@@ -2878,14 +2883,19 @@ comment "Attributes Dialog Functions";
 
 		MAZ_EZM_fnc_applyAttributeChangesToPlayer = {
 			params ["_unit","_values"];
-			_values params ["_rank","_respawnType"];
+			_values params ["_rank","_respawnType","_init"];
 			_unit setRank _rank;
 			[_unit,_respawnType] call MAZ_EZM_fnc_applyUnitRespawn;
+
+			if(_init != "") then {
+				private _input = "this = _this;" + _init;
+				_unit call (compile _input);
+			};
 		};
 
 		MAZ_EZM_fnc_applyAttributeChangesToGroup = {
 			params ["_group","_attributes"];
-			_attributes params ["_name","_skill","_form","_beh","_comMode","_sped","_stance"];
+			_attributes params ["_name","_skill","_form","_beh","_comMode","_sped","_stance","_init"];
 			_group setGroupIdGlobal [_name];
 			[_group,_form] remoteExec ["setFormation"];
 			[_group,_beh] remoteExec ["setBehaviour"];
@@ -2895,6 +2905,11 @@ comment "Attributes Dialog Functions";
 				[_x,_skill] remoteExec ["setSkill"];
 				[_x,_stance] remoteExec ["setUnitPos"];
 			}forEach (units _group);
+
+			if(_init != "") then {
+				private _input = "this = _this;" + _init;
+				_group call (compile _input);
+			};
 		};
 
 		MAZ_EZM_fnc_applyDamagesToVehicle = {
@@ -2931,7 +2946,7 @@ comment "Attributes Dialog Functions";
 
 		MAZ_EZM_fnc_applyAttributeChangesToLandVehicle = {
 			params ["_vehicle","_attributes"];
-			_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],"_respawn"];
+			_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],"_respawn","_init"];
 			_vehicle setDamage (1-_health);
 			[_vehicle,_fuel] remoteExec ["setFuel"];
 			[_vehicle,_lockState] remoteExec ["lock"];
@@ -2939,11 +2954,16 @@ comment "Attributes Dialog Functions";
 			[_vehicle,_lightState] remoteExec ["setPilotLight"];
 
 			[_vehicle,_respawn] call MAZ_EZM_fnc_applyUnitRespawn;
+
+			if(_init != "") then {
+				private _input = "this = _this;" + _init;
+				_vehicle call (compile _input);
+			};
 		};
 
 		MAZ_EZM_fnc_applyAttributeChangesToVehicle = {
 			params ["_vehicle","_attributes"];
-			_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],["_colLightState",isCollisionLightOn _vehicle],"_respawn"];
+			_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],["_colLightState",isCollisionLightOn _vehicle],"_respawn","_init"];
 			_vehicle setDamage (1-_health);
 			[_vehicle,_fuel] remoteExec ["setFuel"];
 			[_vehicle,_lockState] remoteExec ["lock"];
@@ -2952,6 +2972,11 @@ comment "Attributes Dialog Functions";
 			[_vehicle,_colLightState] remoteExec ["setCollisionLight"];
 
 			[_vehicle,_respawn] call MAZ_EZM_fnc_applyUnitRespawn;
+
+			if(_init != "") then {
+				private _input = "this = _this;" + _init;
+				_vehicle call (compile _input);
+			};
 		};
 
 		MAZ_EZM_fnc_applyAttributeChangesToMarker = {
@@ -8068,6 +8093,7 @@ MAZ_EZM_fnc_initFunction = {
 			publicVariableServer "MAZ_EZM_fnc_getAIGroups";
 
 			MAZ_EZM_fnc_newHelicrashMission = {
+				if(!(missionNamespace getVariable ["MAZ_EZM_autoHelicrash",false])) exitWith {};
 				private _craterCrash = createVehicle ["CraterLong",[23413.8,17893.8,0],[],0,"CAN_COLLIDE"];
 				_craterCrash setPosWorld [23413.8,17893.8,3.25423];
 				_craterCrash setVectorDirAndUp [[0,1,0],[0,0,1]];
@@ -8168,7 +8194,7 @@ MAZ_EZM_fnc_initFunction = {
 						};
 					};
 					missionNamespace setVariable ["MAZ_EZM_HeliCrashTimeNextMission",time + 600,true];
-					waitUntil {sleep 1;time > missionNamespace getVariable "MAZ_EZM_HeliCrashTimeNextMission"};
+					waitUntil {sleep 1; (time > missionNamespace getVariable "MAZ_EZM_HeliCrashTimeNextMission") || (!(missionNamespace getVariable ["MAZ_EZM_autoHelicrash",false]))};
 					if(missionNamespace getVariable ["MAZ_EZM_autoHelicrash",false]) then {
 						[] call MAZ_EZM_fnc_newHelicrashMission;
 					};
@@ -10322,7 +10348,11 @@ MAZ_EZM_fnc_initFunction = {
 			private _totalEmptyGroupsDeleted = 0;
 			{
 				if(count (units _x) == 0) then {
-					deleteGroup _x;
+					if(local _x) then {
+						deleteGroup _x;
+					} else {
+						[_x] remoteExec ["deleteGroup"];
+					};
 					_totalEmptyGroupsDeleted = _totalEmptyGroupsDeleted + 1;
 				};
 			}forEach allGroups;
@@ -10767,7 +10797,8 @@ MAZ_EZM_fnc_initFunction = {
 				_input = [(ctrlText ((ctrlParent (_this select 0)) displayCtrl 12284))] call MAZ_EZM_fnc_removeComments; 
 				_input = format ["this = _this select 0; %1",_input];
 
-				private _return = [_target] call (compile _input);
+				private _code = compile _input;
+				private _return = [_code] apply {[_target] call _code} param [0, ""];
 				[(ctrlParent (_this select 0)) displayCtrl 12284] call MAZ_EZM_fnc_saveExpression; 
 				(parsingNamespace getVariable ["BIS_RscDebugConsoleExpressionResultCtrl", controlNull]) ctrlSetText (str _return); 
 			}]; 
@@ -12392,7 +12423,12 @@ MAZ_EZM_fnc_initFunction = {
 			if(isPlayer _entity) then {
 				[[],{
 					player setDamage 0;
-					["#rev",1,player] call BIS_fnc_reviveOnState;
+					if(lifeState player == "INCAPACITATED") then {
+						["#rev",1,player] call BIS_fnc_reviveOnState;
+						if(vehicle player == player) then {
+							player switchMove "unconsciousOutProne";
+						};
+					};
 				}] remoteExec ['spawn',_entity];
 			} else {
 				_entity setDamage 0; 
@@ -19625,16 +19661,11 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 };
 
 private _changelog = [
-	"Added Juneteenth as a holiday",
-	"Added total overhaul of automatic heli crash system. Runs on server, differnt factions, and diary entry.",
-	"Added new module Refresh Functions Array to Utilities.",
-	"Added Init boxes to all the attribute dialogs.",
-	"Fixed Airdrops module when using Vehicle instead of Arsenal.",
-	"Fixed Auto Garrison always putting OPFOR.",
-	"Fixed the 48+2 Side Switcher remoteExec kick, for real this time.",
-	"Fixed performance of checking default side of mission.",
-	"Changed how the editZeusInterface function loads to increase performance.",
-	"Changed Context Menu to not open when a module is selected."
+	"Fixed issue where the auto heli system could stay suspended longer than needed.",
+	"Fixed script error relating to init boxes on vehicles and groups.",
+	"Fixed issue where empty groups that were remote weren't being deleted.",
+	"Fixed issue where init boxes would not execute on OK selection.",
+	"Changed the Heal / Revive module to make the player immediately exit the incapacitated animation."
 ];
 
 private _changelogString = "";
