@@ -1,0 +1,25 @@
+name: Discord Release Notifier
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord Notification
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          ROLE_PING="<@&1175233382100246628>"
+          RELEASE_URL="${{ github.event.release.html_url }}"
+          RELEASE_NAME="${{ github.event.release.name }}"
+          RELEASE_CHANGES="${{ github.event.release.body }}"
+
+          MESSAGE="# [$RELEASE_NAME]($RELEASE_URL): LIVE ON GITHUB\n$RELEASE_CHANGES\n\n$ROLE_PING"
+
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d "{\"content\": \"$MESSAGE\"}" \
+               $DISCORD_WEBHOOK
