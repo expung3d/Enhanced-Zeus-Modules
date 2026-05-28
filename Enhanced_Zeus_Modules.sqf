@@ -5252,7 +5252,7 @@ MAZ_EZM_fnc_initFunction = {
 						params ["_message"];
 						[[_message], {
 							if(isNull (findDisplay 312)) then {
-								hint _message;
+								hint (_this select 0);
 							} else {
 								[objNull,_this select 0] call BIS_fnc_showCuratorFeedbackMessage;
 							};
