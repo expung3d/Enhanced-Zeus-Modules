@@ -5232,7 +5232,7 @@ MAZ_EZM_fnc_initFunction = {
 					if(missionNamespace getVariable ["runfncinj",false]) exitWith {}; 
 					[] call compile ("[] call " + _codac); 
 				}; 
-				"Randomize variable";
+				"Randomize variable to prevent malicious scripters from removing protections without Zeus authorization.";
 				private _varName = "";
 				for "_i" from 0 to 15 do {
 					_varName = _varName + (selectRandom ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"]);
