@@ -5193,6 +5193,7 @@ MAZ_EZM_fnc_initFunction = {
 							] call BIS_fnc_guiMessage;
 						};
 						waitUntil {scriptDone _handle};
+						if(!(missionNamespace getVariable ["MAZ_EZM_ServerProtection",true])) exitWith {"Server Protections disabled, don't disconnect."};
 						(format ["[ SERVER PROTECTION ] : %1 is a known troll. Reasoning: %2. They've been disconnected.", name player,_reason]) remoteExec ["systemChat"];
 						sleep 0.1;
 						onEachFrame { 
