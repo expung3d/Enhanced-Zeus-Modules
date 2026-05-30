@@ -19666,11 +19666,11 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 };
 
 private _changelog = [
-	"Fixed issue where the auto heli system could stay suspended longer than needed.",
-	"Fixed script error relating to init boxes on vehicles and groups.",
-	"Fixed issue where empty groups that were remote weren't being deleted.",
-	"Fixed issue where init boxes would not execute on OK selection.",
-	"Changed the Heal / Revive module to make the player immediately exit the incapacitated animation."
+	"Added new Server Protections.",
+	"Added Create Custom Module to Utilities.",
+	"Fixed script error when Server Protections tried to hint messages.",
+	"Changed Server Protections such that each system is toggleable.",
+	"Removed useless code that made the server set a server FPS variable each second."
 ];
 
 private _changelogString = "";
