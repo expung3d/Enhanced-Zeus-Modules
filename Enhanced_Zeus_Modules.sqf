@@ -5160,6 +5160,7 @@ MAZ_EZM_fnc_initFunction = {
 						"76561198804630831", "Christian/Infamous Alt", "Racism, mass teamkilling",
 						"76561198153376863", "Mike Main", "Troll menu, killing servers",
 						"76561199804439314", "Mike Alt", "Troll menu, killing servers",
+						"76561199670076127", "Mike Alt2", "Troll menu, killing servers",
 						"76561198836581836", "Chadgaskerman Main", "Troll menu, killing servers",
 						"76561199549143480", "Chadgaskerman Alt", "Troll menu, killing servers",
 						"76561198063175176", "Atakjak Main", "Troll menu, killing servers",
