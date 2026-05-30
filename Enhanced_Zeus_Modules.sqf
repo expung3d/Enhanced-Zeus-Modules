@@ -5392,15 +5392,6 @@ MAZ_EZM_fnc_initFunction = {
 			missionNamespace setVariable ["MAZ_EZM_CuratorWhitelist",_wl,true];
 
 			call MAZ_EZM_fnc_serverProtection;
-
-			[[], {
-				MAZ_EZM_broadcastServerFPS = true;
-				MAZ_EZM_serverFPS = 100;
-				while {MAZ_EZM_broadcastServerFPS} do {
-					MAZ_EZM_serverFPS = floor diag_fps;
-					sleep 1;
-				};
-			}] remoteExec ["spawn",2];
 		};
 
 		MAZ_EZM_fnc_fixDynamicGroups = {
@@ -19787,6 +19778,8 @@ call MAZ_EZM_fnc_askAboutZeusUnit;
 		- Cinematics
 		- Play video module
 		- Fix IR Strobes not deleting https://forums.bohemia.net/forums/topic/160424-ir-strobe-deletevehicle-issues/
+		
+		- Allow people to create Custom Modules that save to profileNamespace
 
 	TODO M9-SD:
 		- skip time transition module
