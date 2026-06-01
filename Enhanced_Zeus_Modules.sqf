@@ -4563,6 +4563,7 @@ comment "Dynamic Faction Addons";
 	};
 
 	MAZ_EZM_fnc_refreshInterface = {
+		missionNamespace setVariable ["MAZ_zeusModulesRanBefore",false];
 		(findDisplay 312) closeDisplay 0;
 		waitUntil {isNull (findDisplay 312)};
 		sleep 0.1;
@@ -4706,25 +4707,24 @@ MAZ_EZM_fnc_runZeusModule = {
 	if ((uiNamespace getVariable ["MAZ_EZM_SelectionPath", []]) isEqualTo []) exitWith {hint "No selection path"};
 	private _tvModulePath = uiNamespace getVariable ["MAZ_EZM_SelectionPath", []];
 	private _parentDisplay = findDisplay 312;
-	private _parentInfo = switch (_entityType) do {
+	private _parentTree = switch (_entityType) do {
 		case "ModuleEmpty_F": {
-			[uiNamespace getVariable ["MAZ_zeusModulesTree", _parentDisplay displayCtrl 280], sideLogic];
+			uiNamespace getVariable ["MAZ_zeusModulesTree", _parentDisplay displayCtrl 280];
 		};
 		case "B_Soldier_VR_F": {
-			[uiNamespace getVariable ["MAZ_UnitsTree_BLUFOR", _parentDisplay displayCtrl 270], west];
+			uiNamespace getVariable ["MAZ_UnitsTree_BLUFOR", _parentDisplay displayCtrl 270];
 		};
 		case "O_Soldier_VR_F": {
-			[uiNamespace getVariable ["MAZ_UnitsTree_OPFOR", _parentDisplay displayCtrl 271], east];
+			uiNamespace getVariable ["MAZ_UnitsTree_OPFOR", _parentDisplay displayCtrl 271];
 		};
 		case "I_Soldier_VR_F": {
-			[uiNamespace getVariable ["MAZ_UnitsTree_INDEP", _parentDisplay displayCtrl 272], independent];
+			uiNamespace getVariable ["MAZ_UnitsTree_INDEP", _parentDisplay displayCtrl 272];
 		};
 		case "C_Soldier_VR_F": {
-			[uiNamespace getVariable ["MAZ_UnitsTree_CIVILIAN", _parentDisplay displayCtrl 273], civilian];
+			uiNamespace getVariable ["MAZ_UnitsTree_CIVILIAN", _parentDisplay displayCtrl 273];
 		};
 	};
-	_parentInfo params ["_parentTree","_parentSide"];
-	[_parentTree, _tvModulePath, _parentSide] call MAZ_EZM_fnc_runZeusFunction;
+	[_parentTree, _tvModulePath] call MAZ_EZM_fnc_runZeusFunction;
 	[_parentTree, _tvModulePath] spawn {
 		params ["_parentTree", "_tvModulePath"];
 		_parentTree tvSetPictureColor [_tvModulePath, EZM_themeColor];
@@ -4734,25 +4734,16 @@ MAZ_EZM_fnc_runZeusModule = {
 };
 
 MAZ_EZM_fnc_runZeusFunction = {
-	params ["_control", "_selectionPath", "_parentSide"];
-	private _moduleName = _control tvText _selectionPath;
-	_functionMap = missionNamespace getVariable ["MAZ_zeusModulesWithFunction", createHashMap];
-	_selectionPath = +_selectionPath;
-	_selectionPath deleteAt [-1];
+	params ["_control", "_selectionPath"];
+	private _tooltip = _control tvTooltip _selectionPath;
+	private _tooltipArray = _tooltip splitString "\n";
+	private _tooltipArrayIndex = parseNumber (_tooltipArray select (count _tooltipArray - 1));
+	if (_tooltipArrayIndex in [-1,0]) exitWith {};
 
-	private _mapKey = str _parentSide;
-	private _lastPath = [];
-	{
-		_lastPath pushBack _x;
-		_mapKey = format ["%1-%2",_mapKey,_control tvText _lastPath];
-	}forEach _selectionPath;
-	
-	_mapKey = format ["%1-%2",_mapKey,_moduleName];
-	private _functionName = _functionMap getOrDefault [_mapKey,""];
-	
-	if (_functionName == "") exitWith {
-		[format ["No function defined for %1",_mapKey],"addItemFailed"] call MAZ_EZM_fnc_systemMessage;
-	};
+	_functionMap = missionNamespace getVariable ["MAZ_zeusModulesWithFunction", createHashMap];
+	private _functionName = _functionMap getOrDefault [_tooltipArrayIndex,""];
+
+	if(_functionName == "") exitWith {};
 	private _function = missionNamespace getVariable [_functionName, {
 		private _message = format ["<t font='puristaBold' align='center' color='#f96302' size='2'>MODULE ERROR<br/><t size='0.6' color='#FFFFFF' font='puristaLight'>( UNDEFINED FUNCTION - MODULE DID NOT RUN )<br/><t size='1.5' align='center' color='#f96302' font='puristaSemiBold'>Function Name:<br/><t size='1' color='#FFFFFF' font='puristaMedium'>“%1”<t size='0.7'><br/> <t/>", _functionName]; 
 		[_message, "Enhanced Zeus Modules", true, false, (findDisplay 312)] spawn BIS_fnc_guiMessage;
@@ -15283,7 +15274,6 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_refreshFunctionList = {
 			params ["_entity"];
-			missionNamespace setVariable ["MAZ_zeusModulesRanBefore",false];
 			[] spawn MAZ_EZM_fnc_refreshInterface;
 		};
 
@@ -17048,22 +17038,23 @@ MAZ_EZM_fnc_editZeusInterface = {
 						"Ignore adding functions to array if already created";
 						if (!(missionNamespace getVariable ["MAZ_zeusModulesRanBefore",false])) then {
 							private _functionMap = missionNamespace getVariable ["MAZ_zeusModulesWithFunction", createHashMap];
-							private _pathParents = [_parentCategory];
-							if(!isNil "_parentSubCategory") then {
-								_pathParents pushBack _parentSubCategory;
-							};
-							private _mapKey = str _side;
-							private _lastPath = [];
-							{
-								_lastPath pushBack _x;
-								_mapKey = format ["%1-%2",_mapKey,_parentTree tvText _lastPath];
-							}forEach _pathParents;
-							_mapKey = format ["%1-%2",_mapKey,_moduleName];
-							private _isDupe = _functionMap set [_mapKey, _moduleFunction, true];
-							if(_isDupe) then {
-								[format ["%1 is a duplicate module. One with the same name is already added.",_mapKey], "addItemFailed"] call MAZ_EZM_fnc_systemMessage;
-							};
+
+							private _functionCount = count _functionMap; 
+							private _functionIndex = 7000 + (_functionCount + 1);
+							_moduleTip = format ['%1\n\nFunction ID:\n%2', _moduleTip, str _functionIndex];
+							_functionMap set [_functionIndex, _moduleFunction];
 							missionNamespace setVariable ["MAZ_zeusModulesWithFunction", _functionMap];
+						} else {
+							"Get the function ID";
+							private _functionMap = missionNamespace getVariable ["MAZ_zeusModulesWithFunction", createHashMap];
+							private _keysWithFunction = (keys _functionMap) select {(_functionMap get _x) == _moduleFunction};
+
+							"Check if function ID exists";
+							if(count _keysWithFunction == 0) then {
+								[format ["Module %1 does not have a function set up. Go to Utilities and refresh your module functions.", _moduleName],"addItemFailed"] call MAZ_EZM_fnc_systemMessage;
+							} else {
+								_moduleTip = format ['%1\n\nFunction ID:\n%2', _moduleTip, str (_keysWithFunction # 0)];
+							};
 						};
 					
 					"Add modules";
@@ -19669,6 +19660,7 @@ private _changelog = [
 	"Added new Server Protections.",
 	"Added Create Custom Module to Utilities.",
 	"Fixed script error when Server Protections tried to hint messages.",
+	"Fixed issues where some functions were not assigned to modules correctly.",
 	"Changed Server Protections such that each system is toggleable.",
 	"Removed useless code that made the server set a server FPS variable each second."
 ];
