@@ -5309,7 +5309,7 @@ MAZ_EZM_fnc_initFunction = {
 
 					private _isGodMode = false;
 					while {uiSleep 1; true} do {
-						if !(missionNamespace getVariable ["MAZ_EZM_ServerProtection",true]) then {sleep 5; continue};
+						if (!(missionNamespace getVariable ["MAZ_EZM_ServerProtection",true])) then {sleep 5; continue};
 						call _fnc_checkForCheaters;
 					};
 				};
@@ -19708,6 +19708,13 @@ MAZ_EZM_fnc_askAboutZeusUnit = {
 				private _textCtrl = _controlGroup controlsGroupCtrl 214;
 				((ctrlText _textCtrl) != "");
 			}
+		],
+		[
+			"EDIT",
+			"Join our Discord",
+			[
+				"discord.gg/W4ew5HP"
+			]
 		]
 	],{
 		params ["_values","_args","_display"];
