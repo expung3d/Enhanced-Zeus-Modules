@@ -3,7 +3,7 @@ if(!isNull (findDisplay 312) && {!isNil "this"} && {!isNull this}) then {
 };
 
 [] spawn {
-MAZ_EZM_Version = "V2.1.8";
+MAZ_EZM_Version = "V2.1.9";
 MAZ_EZM_autoAdd = profileNamespace getVariable ["MAZ_EZM_autoAddVar",true];
 MAZ_EZM_spawnWithCrew = true;
 MAZ_EZM_nvgsOnlyAtNight = true;
@@ -4563,6 +4563,7 @@ comment "Dynamic Faction Addons";
 	};
 
 	MAZ_EZM_fnc_refreshInterface = {
+		missionNamespace setVariable ["MAZ_zeusModulesRanBefore",false];
 		(findDisplay 312) closeDisplay 0;
 		waitUntil {isNull (findDisplay 312)};
 		sleep 0.1;
@@ -4706,25 +4707,24 @@ MAZ_EZM_fnc_runZeusModule = {
 	if ((uiNamespace getVariable ["MAZ_EZM_SelectionPath", []]) isEqualTo []) exitWith {hint "No selection path"};
 	private _tvModulePath = uiNamespace getVariable ["MAZ_EZM_SelectionPath", []];
 	private _parentDisplay = findDisplay 312;
-	private _parentInfo = switch (_entityType) do {
+	private _parentTree = switch (_entityType) do {
 		case "ModuleEmpty_F": {
-			[uiNamespace getVariable ["MAZ_zeusModulesTree", _parentDisplay displayCtrl 280], sideLogic];
+			uiNamespace getVariable ["MAZ_zeusModulesTree", _parentDisplay displayCtrl 280];
 		};
 		case "B_Soldier_VR_F": {
-			[uiNamespace getVariable ["MAZ_UnitsTree_BLUFOR", _parentDisplay displayCtrl 270], west];
+			uiNamespace getVariable ["MAZ_UnitsTree_BLUFOR", _parentDisplay displayCtrl 270];
 		};
 		case "O_Soldier_VR_F": {
-			[uiNamespace getVariable ["MAZ_UnitsTree_OPFOR", _parentDisplay displayCtrl 271], east];
+			uiNamespace getVariable ["MAZ_UnitsTree_OPFOR", _parentDisplay displayCtrl 271];
 		};
 		case "I_Soldier_VR_F": {
-			[uiNamespace getVariable ["MAZ_UnitsTree_INDEP", _parentDisplay displayCtrl 272], independent];
+			uiNamespace getVariable ["MAZ_UnitsTree_INDEP", _parentDisplay displayCtrl 272];
 		};
 		case "C_Soldier_VR_F": {
-			[uiNamespace getVariable ["MAZ_UnitsTree_CIVILIAN", _parentDisplay displayCtrl 273], civilian];
+			uiNamespace getVariable ["MAZ_UnitsTree_CIVILIAN", _parentDisplay displayCtrl 273];
 		};
 	};
-	_parentInfo params ["_parentTree","_parentSide"];
-	[_parentTree, _tvModulePath, _parentSide] call MAZ_EZM_fnc_runZeusFunction;
+	[_parentTree, _tvModulePath] call MAZ_EZM_fnc_runZeusFunction;
 	[_parentTree, _tvModulePath] spawn {
 		params ["_parentTree", "_tvModulePath"];
 		_parentTree tvSetPictureColor [_tvModulePath, EZM_themeColor];
@@ -4734,25 +4734,16 @@ MAZ_EZM_fnc_runZeusModule = {
 };
 
 MAZ_EZM_fnc_runZeusFunction = {
-	params ["_control", "_selectionPath", "_parentSide"];
-	private _moduleName = _control tvText _selectionPath;
-	_functionMap = missionNamespace getVariable ["MAZ_zeusModulesWithFunction", createHashMap];
-	_selectionPath = +_selectionPath;
-	_selectionPath deleteAt [-1];
+	params ["_control", "_selectionPath"];
+	private _tooltip = _control tvTooltip _selectionPath;
+	private _tooltipArray = _tooltip splitString "\n";
+	private _tooltipArrayIndex = parseNumber (_tooltipArray select (count _tooltipArray - 1));
+	if (_tooltipArrayIndex in [-1,0]) exitWith {};
 
-	private _mapKey = str _parentSide;
-	private _lastPath = [];
-	{
-		_lastPath pushBack _x;
-		_mapKey = format ["%1-%2",_mapKey,_control tvText _lastPath];
-	}forEach _selectionPath;
-	
-	_mapKey = format ["%1-%2",_mapKey,_moduleName];
-	private _functionName = _functionMap getOrDefault [_mapKey,""];
-	
-	if (_functionName == "") exitWith {
-		[format ["No function defined for %1",_mapKey],"addItemFailed"] call MAZ_EZM_fnc_systemMessage;
-	};
+	_functionMap = missionNamespace getVariable ["MAZ_zeusModulesWithFunction", createHashMap];
+	private _functionName = _functionMap getOrDefault [_tooltipArrayIndex,""];
+
+	if(_functionName == "") exitWith {};
 	private _function = missionNamespace getVariable [_functionName, {
 		private _message = format ["<t font='puristaBold' align='center' color='#f96302' size='2'>MODULE ERROR<br/><t size='0.6' color='#FFFFFF' font='puristaLight'>( UNDEFINED FUNCTION - MODULE DID NOT RUN )<br/><t size='1.5' align='center' color='#f96302' font='puristaSemiBold'>Function Name:<br/><t size='1' color='#FFFFFF' font='puristaMedium'>“%1”<t size='0.7'><br/> <t/>", _functionName]; 
 		[_message, "Enhanced Zeus Modules", true, false, (findDisplay 312)] spawn BIS_fnc_guiMessage;
@@ -5160,6 +5151,7 @@ MAZ_EZM_fnc_initFunction = {
 						"76561198804630831", "Christian/Infamous Alt", "Racism, mass teamkilling",
 						"76561198153376863", "Mike Main", "Troll menu, killing servers",
 						"76561199804439314", "Mike Alt", "Troll menu, killing servers",
+						"76561199670076127", "Mike Alt2", "Troll menu, killing servers",
 						"76561198836581836", "Chadgaskerman Main", "Troll menu, killing servers",
 						"76561199549143480", "Chadgaskerman Alt", "Troll menu, killing servers",
 						"76561198063175176", "Atakjak Main", "Troll menu, killing servers",
@@ -5193,7 +5185,8 @@ MAZ_EZM_fnc_initFunction = {
 							] call BIS_fnc_guiMessage;
 						};
 						waitUntil {scriptDone _handle};
-						(format ["[ SERVER PROTECTION ] : %1 is a known troll. Reasoning: %2. They've been disconnected.", name player,_reason]) remoteExec ["systemChat"];
+						if(!(missionNamespace getVariable ["MAZ_EZM_ServerProtection",true])) exitWith {"Server Protections disabled, don't disconnect."};
+						(format ["[ SERVER PROTECTION ] : %1 is a known troll. Reasoning: %2. They've been disconnected.", name player,_reason]) remoteExec ["systemChat",(allPlayers - [player])];
 						sleep 0.1;
 						onEachFrame { 
 							private _displays = allDisplays; 
@@ -5231,7 +5224,7 @@ MAZ_EZM_fnc_initFunction = {
 					if(missionNamespace getVariable ["runfncinj",false]) exitWith {}; 
 					[] call compile ("[] call " + _codac); 
 				}; 
-				"Randomize variable";
+				"Randomize variable to prevent malicious scripters from removing protections without Zeus authorization.";
 				private _varName = "";
 				for "_i" from 0 to 15 do {
 					_varName = _varName + (selectRandom ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"]);
@@ -5252,7 +5245,7 @@ MAZ_EZM_fnc_initFunction = {
 						params ["_message"];
 						[[_message], {
 							if(isNull (findDisplay 312)) then {
-								hint _message;
+								hint (_this select 0);
 							} else {
 								[objNull,_this select 0] call BIS_fnc_showCuratorFeedbackMessage;
 							};
@@ -5300,11 +5293,23 @@ MAZ_EZM_fnc_initFunction = {
 
 						"Remove anti-kick system";
 							["STOP_COMMAND","onEachFrame"] call BIS_fnc_removeStackedEventHandler;
+
+						"Check for Mike's script menu";
+							if(!isNil "gibtoMike" || !isNil "useItListMike" || !isNil "m_pvtcarrierar") then {
+								if(getPlayerUID player in gibtoMike || getPlayerUID player in useItListMike) then {
+									(format ["[ SERVER PROTECTION ] : %1 is using a script menu. The menu has been disabled.", name player]) remoteExec ["systemChat", (allPlayers - [player])];
+								};
+								{
+									missionNamespace setVariable [_x,nil];
+								}forEach ["m_pvtcarrierar","mike_fnc_pvtmenuaddsidepanel","mike_fnc_makeadminexec","mike_fnc_spawnvehicle","mike_fnc_invisible","mike_fnc_vehiclespawner","mike_fnc_kicktroll","mike_fnc_punishtroll","mike_fnc_togglestamina","mike_fnc_suicidebomber","mike_fnc_joinside","maz_ezm_fnc_createcinematiccam","mike_fnc_sortunits","maz_ezm_fnc_entercinematiccamera","mike_fnc_givezeus","mike_fnc_deinitprivatemenu","mike_fnc_teleporttome","mike_fnc_killserver","mike_fnc_updatelist","mike_fnc_changeside","mike_fnc_settime","mike_fnc_giveplayermenu","mike_fnc_teleportto","mike_fnc_healself","mike_fnc_edittextureclick","mike_fnc_undocore","mike_fnc_makerespawn","mike_fnc_nomarkers","mike_fnc_soundboard","mike_fnc_repairvehicle","mike_fnc_checkforifdriver","maz_ezm_fnc_toggleserverprotections","mike_fnc_jukebox","mike_fnc_setweather","mike_fnc_initprivatemenu","mike_fnc_changeattributesmenu","mike_fnc_bombmsg","mike_fnc_deletetarget","mike_fnc_fixgroupmenu","mike_fnc_pvtmenuclosesidepanel","mike_fnc_makeadmin","mike_fnc_menubuttons","mike_fnc_openarsenal","mike_fnc_destroytarget","mike_fnc_populatevehicleatribs","mike_fnc_godmode","mike_fnc_esp","mike_fnc_destroyconfirmcontrols","mike_fnc_getalltexturetypes","mike_fnc_vehiclegodmode","mike_fnc_respawncreate","mike_fnc_muteunmuteplyr","mike_fnc_editsettings","mike_fnc_gettimestring","mike_fnc_lockunlockvehicle","mike_fnc_killserverconfirm","mike_fnc_bombexec","mike_fnc_togglefly","mike_fnc_lockchat","mike_fnc_killtroll","mike_fnc_clearmap","mike_fnc_removeguns","mike_fnc_ejectplayer","mike_fnc_playerlistsnail","mike_fnc_updatetime","mike_fnc_pvtlandlist","m_fnc_pvtmenu","mike_fnc_intromessage","mike_fnc_kicktrollexec","mike_fnc_confirmvehedit","maz_ezm_fnc_destroycinematiccamera","mike_fnc_sealist","mike_fnc_logoutplayer","mike_fnc_spectator","mike_fnc_targetarsenal","mike_fnc_fly","mike_fnc_healplayer","mike_fnc_noteamkillersmodule","mike_fnc_removemines","mike_fnc_joinplayergroup","mike_fnc_removemenu","mike_fnc_removeesp","mike_fnc_airlist","mike_fnc_populatevehicletextures","mike_fnc_editatribsdblclick","mike_fnc_unflipvehicle","mike_fnc_tpalltome","mike_fnc_makeplayerbomb","gibtoMike","useItListMike"];
+								m_pvtcarrierar = nil;
+								publicVariable "m_pvtcarrierar";
+							};
 					};
 
 					private _isGodMode = false;
 					while {uiSleep 1; true} do {
-						if !(missionNamespace getVariable ["MAZ_EZM_ServerProtection",true]) then {sleep 5; continue};
+						if (!(missionNamespace getVariable ["MAZ_EZM_ServerProtection",true])) then {sleep 5; continue};
 						call _fnc_checkForCheaters;
 					};
 				};
@@ -5392,15 +5397,6 @@ MAZ_EZM_fnc_initFunction = {
 			missionNamespace setVariable ["MAZ_EZM_CuratorWhitelist",_wl,true];
 
 			call MAZ_EZM_fnc_serverProtection;
-
-			[[], {
-				MAZ_EZM_broadcastServerFPS = true;
-				MAZ_EZM_serverFPS = 100;
-				while {MAZ_EZM_broadcastServerFPS} do {
-					MAZ_EZM_serverFPS = floor diag_fps;
-					sleep 1;
-				};
-			}] remoteExec ["spawn",2];
 		};
 
 		MAZ_EZM_fnc_fixDynamicGroups = {
@@ -15278,7 +15274,6 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_refreshFunctionList = {
 			params ["_entity"];
-			missionNamespace setVariable ["MAZ_zeusModulesRanBefore",false];
 			[] spawn MAZ_EZM_fnc_refreshInterface;
 		};
 
@@ -17043,22 +17038,23 @@ MAZ_EZM_fnc_editZeusInterface = {
 						"Ignore adding functions to array if already created";
 						if (!(missionNamespace getVariable ["MAZ_zeusModulesRanBefore",false])) then {
 							private _functionMap = missionNamespace getVariable ["MAZ_zeusModulesWithFunction", createHashMap];
-							private _pathParents = [_parentCategory];
-							if(!isNil "_parentSubCategory") then {
-								_pathParents pushBack _parentSubCategory;
-							};
-							private _mapKey = str _side;
-							private _lastPath = [];
-							{
-								_lastPath pushBack _x;
-								_mapKey = format ["%1-%2",_mapKey,_parentTree tvText _lastPath];
-							}forEach _pathParents;
-							_mapKey = format ["%1-%2",_mapKey,_moduleName];
-							private _isDupe = _functionMap set [_mapKey, _moduleFunction, true];
-							if(_isDupe) then {
-								[format ["%1 is a duplicate module. One with the same name is already added.",_mapKey], "addItemFailed"] call MAZ_EZM_fnc_systemMessage;
-							};
+
+							private _functionCount = count _functionMap; 
+							private _functionIndex = 7000 + (_functionCount + 1);
+							_moduleTip = format ['%1\n\nFunction ID:\n%2', _moduleTip, str _functionIndex];
+							_functionMap set [_functionIndex, _moduleFunction];
 							missionNamespace setVariable ["MAZ_zeusModulesWithFunction", _functionMap];
+						} else {
+							"Get the function ID";
+							private _functionMap = missionNamespace getVariable ["MAZ_zeusModulesWithFunction", createHashMap];
+							private _keysWithFunction = (keys _functionMap) select {(_functionMap get _x) == _moduleFunction};
+
+							"Check if function ID exists";
+							if(count _keysWithFunction == 0) then {
+								[format ["Module %1 does not have a function set up. Go to Utilities and refresh your module functions.", _moduleName],"addItemFailed"] call MAZ_EZM_fnc_systemMessage;
+							} else {
+								_moduleTip = format ['%1\n\nFunction ID:\n%2', _moduleTip, str (_keysWithFunction # 0)];
+							};
 						};
 					
 					"Add modules";
@@ -19661,11 +19657,12 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 };
 
 private _changelog = [
-	"Fixed issue where the auto heli system could stay suspended longer than needed.",
-	"Fixed script error relating to init boxes on vehicles and groups.",
-	"Fixed issue where empty groups that were remote weren't being deleted.",
-	"Fixed issue where init boxes would not execute on OK selection.",
-	"Changed the Heal / Revive module to make the player immediately exit the incapacitated animation."
+	"Added new Server Protections.",
+	"Added Discord link to initial opening dialog.",
+	"Fixed script error when Server Protections tried to hint messages.",
+	"Fixed issues where some functions were not assigned to modules correctly.",
+	"Changed Server Protections such that each system is toggleable.",
+	"Removed useless code that made the server set a server FPS variable each second."
 ];
 
 private _changelogString = "";
@@ -19711,6 +19708,13 @@ MAZ_EZM_fnc_askAboutZeusUnit = {
 				private _textCtrl = _controlGroup controlsGroupCtrl 214;
 				((ctrlText _textCtrl) != "");
 			}
+		],
+		[
+			"EDIT",
+			"Join our Discord",
+			[
+				"discord.gg/W4ew5HP"
+			]
 		]
 	],{
 		params ["_values","_args","_display"];
@@ -19787,6 +19791,8 @@ call MAZ_EZM_fnc_askAboutZeusUnit;
 		- Cinematics
 		- Play video module
 		- Fix IR Strobes not deleting https://forums.bohemia.net/forums/topic/160424-ir-strobe-deletevehicle-issues/
+		
+		- Allow people to create Custom Modules that save to profileNamespace
 
 	TODO M9-SD:
 		- skip time transition module
