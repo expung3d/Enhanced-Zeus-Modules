@@ -19658,7 +19658,7 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 
 private _changelog = [
 	"Added new Server Protections.",
-	"Added Create Custom Module to Utilities.",
+	"Added Discord link to initial opening dialog.",
 	"Fixed script error when Server Protections tried to hint messages.",
 	"Fixed issues where some functions were not assigned to modules correctly.",
 	"Changed Server Protections such that each system is toggleable.",
