@@ -415,7 +415,7 @@ comment "Dialog Creation";
 
 		_listBox ctrlAddEventHandler ["lbSelChanged", {
 			params ["_control", "_lbCurSel", "_lbSelection"];
-			[ctrlParent _control,_lbSelection] call (_control getVariable "MAZ_EZM_onChange");
+			[ctrlParent _control,_lbCurSel] call (_control getVariable "MAZ_EZM_onChange");
 		}];
 
 		for "_i" from 0 to (count _listNames - 1) do {
@@ -4595,7 +4595,9 @@ comment "Custom Module Addons";
 
 			MAZ_CustomTree = [
 				MAZ_zeusModulesTree,
-				"Custom Modules"
+				"Custom Modules",
+				"\a3\ui_f_curator\Data\Displays\RscDisplayCurator\modeModules_ca.paa",
+				EZM_themeColor
 			] call MAZ_EZM_fnc_zeusAddCategory;
 			
 			{
@@ -4615,16 +4617,17 @@ comment "Custom Module Addons";
 	};
 
 	MAZ_EZM_fnc_addNewCustomModuleCall = {
-		call MAZ_EZM_fnc_addNewCustomModule;
+		[] spawn MAZ_EZM_fnc_addNewCustomModule;
 	};
 
 	MAZ_EZM_fnc_addNewCustomModule = {
-		params [["_moduleName",""],["_moduleDesc",""],["_moduleImg",""],["_moduleFncName",""],["_moduleFnc",""],["_edit",false],["_editIndex",-1]];
+		params [["_moduleName",""],["_moduleDesc",""],["_moduleImg","\a3\ui_f_curator\Data\Displays\RscDisplayCurator\modeModules_ca.paa"],["_moduleFncName",""],["_moduleFnc",""],["_edit",false],["_editIndex",-1]];
+		sleep 0.1;
 		private _customModules = profileNamespace getVariable ["EZM_CustomModules",[]];
 		private _imagesData = [""];
 		{
 			private _image = _x select 2;
-			_images pushBackUnique (toLower _image);
+			_imagesData pushBackUnique (toLower _image);
 		}forEach _customModules;
 
 		private _imagesDisplay = _imagesData apply {[toLower _x,"",_x,[1,1,1,1]]};
@@ -4634,17 +4637,17 @@ comment "Custom Module Addons";
 				[
 					"EDIT",
 					"Module Name",
-					_moduleName
+					[_moduleName]
 				],
 				[
 					"EDIT",
 					"Module Description",
-					_moduleDesc
+					[_moduleDesc]
 				],
 				[
 					"EDIT",
 					"Module Image",
-					_moduleImg
+					[_moduleImg]
 				],
 				[
 					"LIST",
@@ -4657,18 +4660,21 @@ comment "Custom Module Addons";
 					],
 					{true},
 					{
-						params ["_display","_value"];
-						private _menuData = _display getVariable "MAZ_moduleMenuInfo";
-						private _controls = _menuData select 0;
+						params ["_display","_index"];
+						(_display getVariable "MAZ_moduleMenuInfo") params ["_controls","_onConfirm","_onCancel","_args"];
+
 						private _imageEditGroup = _controls select 2 select 0;
 						private _imageEdit = _imageEditGroup controlsGroupCtrl 214;
-						_imageEdit ctrlSetText _value;
+						private _imageListGroup = _controls select 3 select 0;
+						private _imageList = _imageListGroup controlsGroupCtrl 213;
+						_imageEdit ctrlSetText (_imageList lbText _index);
+						_imageEdit ctrlSetTextSelection [0,0];
 					}
 				],
 				[
 					"EDIT",
 					"Module Function Name",
-					_moduleFncName
+					[_moduleFncName]
 				],
 				[
 					"EDIT:MULTI",
@@ -4683,6 +4689,8 @@ comment "Custom Module Addons";
 				params ["_values","_args","_display"];
 				_values params ["_moduleName","_moduleDesc","_moduleImage","","_moduleFncName","_moduleFncCode"];
 				_args params ["_edit","_editIndex"];
+				_values deleteAt 3;
+				_values set [4, compile _moduleFncCode];
 				private _customModules = profileNamespace getVariable ["EZM_CustomModules",[]];
 				if(_edit) then {
 					_customModules set [_editIndex,_values];
@@ -4707,7 +4715,7 @@ comment "Custom Module Addons";
 		private _moduleData = [];
 		private _moduleText = [];
 		{
-			_moduleData pushBack _forEachIndex;
+			_moduleData pushBack (str _forEachIndex);
 			_moduleText pushBack [_x select 0, _x select 1, _x select 2, [1,1,1,1]];
 		}forEach _customModules;
 
@@ -4733,8 +4741,13 @@ comment "Custom Module Addons";
 				private _moduleData = +_module;
 				_moduleData pushBack true;
 				_moduleData pushBack _index;
+
 				_display closeDisplay 1;
-				_moduleData call MAZ_EZM_fnc_addNewCustomModule;
+				
+				private _functionStr = str (_moduleData select 4);
+				_functionStr = [_functionStr,1,(count _functionStr) - 2] call BIS_fnc_trimString;
+				_moduleData set [4,_functionStr];
+				_moduleData spawn MAZ_EZM_fnc_addNewCustomModule;
 			},
 			{
 				params ["_values","_args","_display"];
@@ -13017,35 +13030,35 @@ MAZ_EZM_fnc_initFunction = {
 						"TOOLBOX:ENABLED",
 						["Enable Troll Kick List?", "The troll kick list will disconnect players who are consistently disruptive to gameplay.\mUsers are added by community consensus."],
 						[
-							MAZ_EZM_ServerProtection getOrDefault ["KickList",true]
+							MAZ_EZM_ServerProtections getOrDefault ["KickList",true]
 						]
 					],
 					[
 						"TOOLBOX:ENABLED",
 						["Enable Anti-Cheat?", "Anti-Cheat detects users with modified player statuses, cheat menus, and removes anti-kick scripts."],
 						[
-							MAZ_EZM_ServerProtection getOrDefault ["AntiCheat",true]
+							MAZ_EZM_ServerProtections getOrDefault ["AntiCheat",true]
 						]
 					],
 					[
 						"TOOLBOX:ENABLED",
 						["Enable Name Change Detection?", "Name change detection will alert players in the server when a player disconnects from the server and reconnects under a new name."],
 						[
-							MAZ_EZM_ServerProtection getOrDefault ["NameChange",true]
+							MAZ_EZM_ServerProtections getOrDefault ["NameChange",true]
 						]
 					],
 					[
 						"TOOLBOX:ENABLED",
 						["Enable Detect Zeuses?", "Detect Zeuses will alert the Zeus when another user who is not whitelisted for Zeus access gains an assigned curator."],
 						[
-							MAZ_EZM_ServerProtection getOrDefault ["DetectZeus",true]
+							MAZ_EZM_ServerProtections getOrDefault ["DetectZeus",true]
 						]
 					],
 					[
 						"TOOLBOX:ENABLED",
 						["Enable Developer Help?", "Developer help gives 5 ZAM developers a debug console.\mThis debug console is used to live-debug issues with EZM and other ZAM scripts.\nReport malicious scripters in the ZAM discord."],
 						[
-							MAZ_EZM_ServerProtection getOrDefault ["DevHelp",true]
+							MAZ_EZM_ServerProtections getOrDefault ["DevHelp",true]
 						]
 					],
 					[
@@ -19902,9 +19915,9 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 };
 
 private _changelog = [
-	"Added new Server Protections.",
-	"Added Discord link to initial opening dialog.",
-	"Fixed script error when Server Protections tried to hint messages.",
+	"Added Server Protection individual system toggles.",
+	"Added Custom Module support. Look in Developer Tools.",
+	"Fixed an error with the onChanged dialog event for LIST types where no index would be returned.",
 	"Fixed issues where some functions were not assigned to modules correctly.",
 	"Changed Server Protections such that each system is toggleable.",
 	"Removed useless code that made the server set a server FPS variable each second."
