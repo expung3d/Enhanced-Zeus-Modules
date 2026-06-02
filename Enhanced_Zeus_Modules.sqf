@@ -4624,7 +4624,7 @@ comment "Custom Module Addons";
 		params [["_moduleName",""],["_moduleDesc",""],["_moduleImg","\a3\ui_f_curator\Data\Displays\RscDisplayCurator\modeModules_ca.paa"],["_moduleFncName",""],["_moduleFnc",""],["_edit",false],["_editIndex",-1]];
 		sleep 0.1;
 		private _customModules = profileNamespace getVariable ["EZM_CustomModules",[]];
-		private _imagesData = [""];
+		private _imagesData = ["","\a3\ui_f_curator\Data\Displays\RscDisplayCurator\modeModules_ca.paa"];
 		{
 			private _image = _x select 2;
 			_imagesData pushBackUnique (toLower _image);
@@ -4683,13 +4683,21 @@ comment "Custom Module Addons";
 						_moduleFnc,
 						5
 					]
+				],
+				[
+					"TOOLBOX:YESNO",
+					["Refresh Interface?","Refreshing the interface after module creation will reassign module functions automatically."],
+					[
+						true
+					]
 				]
 			], 
 			{
 				params ["_values","_args","_display"];
-				_values params ["_moduleName","_moduleDesc","_moduleImage","","_moduleFncName","_moduleFncCode"];
+				_values params ["_moduleName","_moduleDesc","_moduleImage","","_moduleFncName","_moduleFncCode","_refresh"];
 				_args params ["_edit","_editIndex"];
 				_values deleteAt 3;
+				_values deleteAt 5;
 				_values set [4, compile _moduleFncCode];
 				private _customModules = profileNamespace getVariable ["EZM_CustomModules",[]];
 				if(_edit) then {
@@ -4699,6 +4707,9 @@ comment "Custom Module Addons";
 				};
 				profileNamespace setVariable ["EZM_CustomModules",_customModules];
 				saveProfileNamespace;
+				if(_refresh) then {
+					[] spawn MAZ_EZM_fnc_refreshInterface;
+				};
 				_display closeDisplay 1;
 			},
 			{
@@ -4731,12 +4742,29 @@ comment "Custom Module Addons";
 						0,
 						6
 					]
+				],
+				[
+					"TOOLBOX:YESNO",
+					["Delete Module?", "Deletes the Module from your profile. This cannot be undone.\nYour interface will be refreshed to remove the Module."],
+					[
+						false
+					]
 				]
 			],
 			{
 				params ["_values","_args","_display"];
 				private _index = parseNumber (_values select 0);
 				private _customModules = profileNamespace getVariable ["EZM_CustomModules",[]];
+
+				"Delete module";
+				if(_values select 1) exitWith {
+					_customModules deleteAt _index;
+					profileNamespace setVariable ["EZM_CustomModules",_customModules];
+					saveProfileNamespace;
+					_display closeDisplay 1;
+					[] spawn MAZ_EZM_fnc_refreshInterface;
+				};
+
 				private _module = _customModules select _index;
 				private _moduleData = +_module;
 				_moduleData pushBack true;
@@ -19917,10 +19945,7 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 private _changelog = [
 	"Added Server Protection individual system toggles.",
 	"Added Custom Module support. Look in Developer Tools.",
-	"Fixed an error with the onChanged dialog event for LIST types where no index would be returned.",
-	"Fixed issues where some functions were not assigned to modules correctly.",
-	"Changed Server Protections such that each system is toggleable.",
-	"Removed useless code that made the server set a server FPS variable each second."
+	"Fixed an error with the onChanged dialog event for LIST types where no index would be returned."
 ];
 
 private _changelogString = "";
