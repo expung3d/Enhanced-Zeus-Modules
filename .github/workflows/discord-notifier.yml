@@ -1,0 +1,71 @@
+name: Discord Release Notifier
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Latest Release Data
+        id: get_release
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "url=${{ github.event.release.html_url }}" >> $GITHUB_OUTPUT
+            echo "name=${{ github.event.release.name }}" >> $GITHUB_OUTPUT
+            
+            echo "body<<EOF" >> $GITHUB_OUTPUT
+            echo "${{ github.event.release.body }}" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            RELEASE_DATA=$(curl -s "https://api.github.com/repos/expung3d/Enhanced-Zeus-Modules/releases/latest")
+            echo "url=$(echo "$RELEASE_DATA" | jq -r .html_url)" >> $GITHUB_OUTPUT
+            echo "name=$(echo "$RELEASE_DATA" | jq -r .name)" >> $GITHUB_OUTPUT
+            
+            echo "body<<EOF" >> $GITHUB_OUTPUT
+            echo "$RELEASE_DATA" | jq -r .body >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Send Discord Notification
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          ROLE_PING: "<@&1175233382100246628>"
+          RELEASE_URL: ${{ steps.get_release.outputs.url }}
+          RELEASE_NAME: ${{ steps.get_release.outputs.name }}
+          RELEASE_CHANGES: ${{ steps.get_release.outputs.body }}
+        run: |
+          PAYLOAD=$(jq -n \
+            --arg role "<@&1175233382100246628>" \
+            --arg name "${{ steps.get_release.outputs.name }}" \
+            --arg url "${{ steps.get_release.outputs.url }}" \
+            --arg body "${{ steps.get_release.outputs.body }}" \
+            '{
+              content: $role,
+              embeds: [{
+                title: ($name + " - LIVE ON GITHUB"),
+                url: $url,
+                description: "",
+                color: 5818712,
+                fields: [{
+                  name: "Change Log",
+                  value: (if (($body // "") | length) > 1500 then ($body[0:1500] + "\n\n*... More changes are listed on the release page.*") else $body end)
+                },
+                {
+                  name: "Update Reminder",
+                  value: ("Please update your existing version by running the [installer](https://github.com/M9-SD/EZM-Updater/releases).")
+                }],
+                footer: {
+                  text: "GitHub Releases"
+                },
+                timestamp: (now | strflocaltime("%Y-%m-%dT%H:%M:%SZ"))
+              }]
+            }'
+          )
+
+
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d "$PAYLOAD" \
+               $DISCORD_WEBHOOK
