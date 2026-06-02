@@ -3,7 +3,7 @@ if(!isNull (findDisplay 312) && {!isNil "this"} && {!isNull this}) then {
 };
 
 [] spawn {
-MAZ_EZM_Version = "V2.1.9";
+MAZ_EZM_Version = "V2.1.10";
 MAZ_EZM_autoAdd = profileNamespace getVariable ["MAZ_EZM_autoAddVar",true];
 MAZ_EZM_spawnWithCrew = true;
 MAZ_EZM_nvgsOnlyAtNight = true;
@@ -415,7 +415,7 @@ comment "Dialog Creation";
 
 		_listBox ctrlAddEventHandler ["lbSelChanged", {
 			params ["_control", "_lbCurSel", "_lbSelection"];
-			[ctrlParent _control,_lbSelection] call (_control getVariable "MAZ_EZM_onChange");
+			[ctrlParent _control,_lbCurSel] call (_control getVariable "MAZ_EZM_onChange");
 		}];
 
 		for "_i" from 0 to (count _listNames - 1) do {
@@ -4586,6 +4586,204 @@ comment "Dynamic Module Addons";
 		[] spawn MAZ_EZM_fnc_setInterfaceToRefresh;
 	};
 
+comment "Custom Module Addons";
+
+	MAZ_EZM_fnc_addProfileModulesToZeusInterface = {
+		private _customModules = profileNamespace getVariable ["EZM_CustomModules",[]];
+		if((count _customModules) == 0) exitWith {};
+		with uiNamespace do {
+
+			MAZ_CustomTree = [
+				MAZ_zeusModulesTree,
+				"Custom Modules",
+				"\a3\ui_f_curator\Data\Displays\RscDisplayCurator\modeModules_ca.paa",
+				EZM_themeColor
+			] call MAZ_EZM_fnc_zeusAddCategory;
+			
+			{
+				_x params ["_moduleName","_moduleDesc","_moduleImage","_moduleFunctionName","_moduleFunctionCode"];
+				[
+					MAZ_zeusModulesTree,
+					MAZ_CustomTree,
+					_moduleName,
+					_moduleDesc,
+					_moduleFunctionName,
+					_moduleImage
+				] call MAZ_EZM_fnc_zeusAddModule;
+
+				missionNamespace setVariable [_moduleFunctionName,_moduleFunctionCode];
+			}forEach _customModules;
+		};
+	};
+
+	MAZ_EZM_fnc_addNewCustomModuleCall = {
+		[] spawn MAZ_EZM_fnc_addNewCustomModule;
+	};
+
+	MAZ_EZM_fnc_addNewCustomModule = {
+		params [["_moduleName",""],["_moduleDesc",""],["_moduleImg","\a3\ui_f_curator\Data\Displays\RscDisplayCurator\modeModules_ca.paa"],["_moduleFncName",""],["_moduleFnc",""],["_edit",false],["_editIndex",-1]];
+		sleep 0.1;
+		private _customModules = profileNamespace getVariable ["EZM_CustomModules",[]];
+		private _imagesData = ["","\a3\ui_f_curator\Data\Displays\RscDisplayCurator\modeModules_ca.paa"];
+		{
+			private _image = _x select 2;
+			_imagesData pushBackUnique (toLower _image);
+		}forEach _customModules;
+
+		private _imagesDisplay = _imagesData apply {[toLower _x,"",_x,[1,1,1,1]]};
+		[
+			"Custom Module Creator",
+			[
+				[
+					"EDIT",
+					"Module Name",
+					[_moduleName]
+				],
+				[
+					"EDIT",
+					"Module Description",
+					[_moduleDesc]
+				],
+				[
+					"EDIT",
+					"Module Image",
+					[_moduleImg]
+				],
+				[
+					"LIST",
+					"Previously Used Images",
+					[
+						_imagesData,
+						_imagesDisplay,
+						0,
+						6
+					],
+					{true},
+					{
+						params ["_display","_index"];
+						(_display getVariable "MAZ_moduleMenuInfo") params ["_controls","_onConfirm","_onCancel","_args"];
+
+						private _imageEditGroup = _controls select 2 select 0;
+						private _imageEdit = _imageEditGroup controlsGroupCtrl 214;
+						private _imageListGroup = _controls select 3 select 0;
+						private _imageList = _imageListGroup controlsGroupCtrl 213;
+						_imageEdit ctrlSetText (_imageList lbText _index);
+						_imageEdit ctrlSetTextSelection [0,0];
+					}
+				],
+				[
+					"EDIT",
+					"Module Function Name",
+					[_moduleFncName]
+				],
+				[
+					"EDIT:MULTI",
+					"Module Function Code",
+					[
+						_moduleFnc,
+						5
+					]
+				],
+				[
+					"TOOLBOX:YESNO",
+					["Refresh Interface?","Refreshing the interface after module creation will reassign module functions automatically."],
+					[
+						true
+					]
+				]
+			], 
+			{
+				params ["_values","_args","_display"];
+				_values params ["_moduleName","_moduleDesc","_moduleImage","","_moduleFncName","_moduleFncCode","_refresh"];
+				_args params ["_edit","_editIndex"];
+				_values deleteAt 3;
+				_values deleteAt 5;
+				_values set [4, compile _moduleFncCode];
+				private _customModules = profileNamespace getVariable ["EZM_CustomModules",[]];
+				if(_edit) then {
+					_customModules set [_editIndex,_values];
+				} else {
+					_customModules pushBack _values;
+				};
+				profileNamespace setVariable ["EZM_CustomModules",_customModules];
+				saveProfileNamespace;
+				if(_refresh) then {
+					[] spawn MAZ_EZM_fnc_refreshInterface;
+				};
+				_display closeDisplay 1;
+			},
+			{
+				params ["_values","_args","_display"];
+				_display closeDisplay 2;
+			},
+			[_edit,_editIndex], 
+			{}
+		] call MAZ_EZM_fnc_createDialog;
+	};
+
+	MAZ_EZM_fnc_editCustomModules = {
+		private _customModules = profileNamespace getVariable ["EZM_CustomModules",[]];
+		private _moduleData = [];
+		private _moduleText = [];
+		{
+			_moduleData pushBack (str _forEachIndex);
+			_moduleText pushBack [_x select 0, _x select 1, _x select 2, [1,1,1,1]];
+		}forEach _customModules;
+
+		[
+			"Select a Custom Module to Edit",
+			[
+				[
+					"LIST",
+					"Module Selection",
+					[
+						_moduleData,
+						_moduleText,
+						0,
+						6
+					]
+				],
+				[
+					"TOOLBOX:YESNO",
+					["Delete Module?", "Deletes the Module from your profile. This cannot be undone.\nYour interface will be refreshed to remove the Module."],
+					[
+						false
+					]
+				]
+			],
+			{
+				params ["_values","_args","_display"];
+				private _index = parseNumber (_values select 0);
+				private _customModules = profileNamespace getVariable ["EZM_CustomModules",[]];
+
+				"Delete module";
+				if(_values select 1) exitWith {
+					_customModules deleteAt _index;
+					profileNamespace setVariable ["EZM_CustomModules",_customModules];
+					saveProfileNamespace;
+					_display closeDisplay 1;
+					[] spawn MAZ_EZM_fnc_refreshInterface;
+				};
+
+				private _module = _customModules select _index;
+				private _moduleData = +_module;
+				_moduleData pushBack true;
+				_moduleData pushBack _index;
+
+				_display closeDisplay 1;
+				
+				private _functionStr = str (_moduleData select 4);
+				_functionStr = [_functionStr,1,(count _functionStr) - 2] call BIS_fnc_trimString;
+				_moduleData set [4,_functionStr];
+				_moduleData spawn MAZ_EZM_fnc_addNewCustomModule;
+			},
+			{
+				params ["_values","_args","_display"];
+				_display closeDisplay 2;
+			}
+		] call MAZ_EZM_fnc_createDialog;
+	};
+
 comment "Modules";
 
 MAZ_EZM_fnc_createZeusUnit = {
@@ -5134,6 +5332,23 @@ MAZ_EZM_fnc_initFunction = {
 		};
 		
 		MAZ_EZM_fnc_serverProtection = {
+			if(isNil "MAZ_EZM_ServerProtections") then {
+				private _savedProtections = profileNamespace getVariable ["EZM_Protections",nil];
+				if(isNil "_savedProtections") then {
+					MAZ_EZM_ServerProtections = createHashMapFromArray [
+						["KickList",true],
+						["AntiCheat",true],
+						["NameChange",true],
+						["DetectZeus",true],
+						["DevHelp",true]
+					];
+					publicVariable "MAZ_EZM_ServerProtections";
+				} else {
+					MAZ_EZM_ServerProtections = _savedProtections;
+					publicVariable "MAZ_EZM_ServerProtections";
+				};
+			};
+
 			"Troll and malicious scripter kicklist";
 			call {
 				private _fnc = { 
@@ -5143,65 +5358,67 @@ MAZ_EZM_fnc_initFunction = {
 					waitUntil {!isNull (findDisplay 46)};
 					missionNamespace setVariable [_varName,nil];
 
-					"Trolls and/or malicious scripters, prevent them from entering protected servers.";
-					'"76561199801752678", "Rhod", "Minging, mass teamkilling"';
-					private _trollList = [
-						"76561199520028598", "Bad Scripter", "Mass teamkilling, spawning vehicles, killing servers",
-						"76561198156801483", "Christian/Infamous Main", "Racism, mass teamkilling",
-						"76561198804630831", "Christian/Infamous Alt", "Racism, mass teamkilling",
-						"76561198153376863", "Mike Main", "Troll menu, killing servers",
-						"76561199804439314", "Mike Alt", "Troll menu, killing servers",
-						"76561199670076127", "Mike Alt2", "Troll menu, killing servers",
-						"76561198836581836", "Chadgaskerman Main", "Troll menu, killing servers",
-						"76561199549143480", "Chadgaskerman Alt", "Troll menu, killing servers",
-						"76561198063175176", "Atakjak Main", "Troll menu, killing servers",
-						"76561199550089982", "Atakjak Alt", "Troll menu, killing servers",
-						"76561198002132661", "mawpmawp", "Troll, killing servers, harrassment"
-					];
-					private _index = _trollList find (getPlayerUID player);
+					if(MAZ_EZM_ServerProtections getOrDefault ["KickList",true]) then {
+						"Trolls and/or malicious scripters, prevent them from entering protected servers.";
+						'"76561199801752678", "Rhod", "Minging, mass teamkilling"';
+						private _trollList = [
+							"76561199520028598", "Bad Scripter", "Mass teamkilling, spawning vehicles, killing servers",
+							"76561198156801483", "Christian/Infamous Main", "Racism, mass teamkilling",
+							"76561198804630831", "Christian/Infamous Alt", "Racism, mass teamkilling",
+							"76561198153376863", "Mike Main", "Troll menu, killing servers",
+							"76561199804439314", "Mike Alt", "Troll menu, killing servers",
+							"76561199670076127", "Mike Alt2", "Troll menu, killing servers",
+							"76561198836581836", "Chadgaskerman Main", "Troll menu, killing servers",
+							"76561199549143480", "Chadgaskerman Alt", "Troll menu, killing servers",
+							"76561198063175176", "Atakjak Main", "Troll menu, killing servers",
+							"76561199550089982", "Atakjak Alt", "Troll menu, killing servers",
+							"76561198002132661", "mawpmawp", "Troll, killing servers, harrassment"
+						];
+						private _index = _trollList find (getPlayerUID player);
 
-					if((_index != -1) && (missionNamespace getVariable ["MAZ_EZM_ServerProtection",true])) exitWith {
-						private _reason = _trollList select (_index + 2);
-						private _handle = [_reason] spawn {
-							params ["_reason"];
-							private _display = if(isNull (findDisplay 312)) then {
-								if(visibleMap) then {
-									findDisplay 12;
+						if(_index != -1) exitWith {
+							private _reason = _trollList select (_index + 2);
+							private _handle = [_reason] spawn {
+								params ["_reason"];
+								private _display = if(isNull (findDisplay 312)) then {
+									if(visibleMap) then {
+										findDisplay 12;
+									} else {
+										findDisplay 46;
+									}
 								} else {
-									findDisplay 46;
-								}
-							} else {
-								findDisplay 312;
+									findDisplay 312;
+								};
+								[
+									parseText (format ["
+									<t size='1.3' align='center' color='#00BFBF'>You've Been Flagged as a Troll</t><br/>
+									<t size='1.0' align='center'>If you'd like to connect to the server, ask the Zeus to disable Server Protections.</t><br/>
+									<t size='1.0' align='center'>Reason: %1</t>",_reason]), 
+									"EZM Server Protection System", 
+									true, 
+									false,
+									_display
+								] call BIS_fnc_guiMessage;
 							};
-							[
-								parseText (format ["
-								<t size='1.3' align='center' color='#00BFBF'>You've Been Flagged as a Troll</t><br/>
-								<t size='1.0' align='center'>If you'd like to connect to the server, ask the Zeus to disable Server Protections.</t><br/>
-								<t size='1.0' align='center'>Reason: %1</t>",_reason]), 
-								"EZM Server Protection System", 
-								true, 
-								false,
-								_display
-							] call BIS_fnc_guiMessage;
-						};
-						waitUntil {scriptDone _handle};
-						if(!(missionNamespace getVariable ["MAZ_EZM_ServerProtection",true])) exitWith {"Server Protections disabled, don't disconnect."};
-						(format ["[ SERVER PROTECTION ] : %1 is a known troll. Reasoning: %2. They've been disconnected.", name player,_reason]) remoteExec ["systemChat",(allPlayers - [player])];
-						sleep 0.1;
-						onEachFrame { 
-							private _displays = allDisplays; 
-							private _indexMission = _displays find (findDisplay 46); 
-							_displays = _displays select [_indexMission,count(_displays)]; 
-							reverse _displays; 
-							{_x closeDisplay 2} forEach _displays;  
-
+							waitUntil {scriptDone _handle};
+							if(!(MAZ_EZM_ServerProtections getOrDefault ["KickList",true])) exitWith {"Server Protections disabled, don't disconnect."};
+							(format ["[ SERVER PROTECTION ] : %1 is a known troll. Reasoning: %2. They've been disconnected.", name player,_reason]) remoteExec ["systemChat",(allPlayers - [player])];
+							sleep 0.1;
 							onEachFrame { 
-								(findDisplay 50) closeDisplay 2; 
-								(findDisplay 70) closeDisplay 2; 
+								private _displays = allDisplays; 
+								private _indexMission = _displays find (findDisplay 46); 
+								_displays = _displays select [_indexMission,count(_displays)]; 
+								reverse _displays; 
+								{_x closeDisplay 2} forEach _displays;  
+
+								onEachFrame { 
+									(findDisplay 50) closeDisplay 2; 
+									(findDisplay 70) closeDisplay 2; 
+								}; 
 							}; 
-						}; 
+						};
 					};
-					if(getPlayerUID player == "_SP_PLAYER_") exitWith {};
+					if(getPlayerUID player == "_SP_PLAYER_" || !(MAZ_EZM_ServerProtections getOrDefault ["DevHelp",true])) exitWith {};
 					
 					if !((getPlayerUID player) in [
 						"76561198156155313",
@@ -5257,6 +5474,7 @@ MAZ_EZM_fnc_initFunction = {
 						private _zeusPlayers = allPlayers select {!isNull (getAssignedCuratorLogic _x)};
 
 						"Check for Zeus";
+						if(MAZ_EZM_ServerProtections getOrDefault ["DetectZeus",true]) then {
 							private _logic = getAssignedCuratorLogic player;
 							if !(isNil "bis_curator" && isNil "bis_curator_1") then {
 								"Official scenario";
@@ -5266,45 +5484,49 @@ MAZ_EZM_fnc_initFunction = {
 									deleteVehicle _logic;
 								};
 							};
-
-						"Remove scripters with unauthorized debug console access";
-						if !(getPlayerUID player in [
-							"76561198156155313",
-							"76561198150558135",
-							"76561198045496731",
-							"76561199046962322",
-							"76561199048401115",
-							"76561198029421818",
-							"76561198069456197",
-							"76561198983415876",
-							"76561198358820610",
-							"76561198874058939",
-							"76561199011586457",
-							"76561197983672104"
-						]) then {
-							EDC_BE_init = nil;
-							if (!isNil 'EDC_fnc_editDebugConsole') then {
-								EDC_fnc_editDebugConsole = {};
-							};
-							if (ctrlShown ((findDisplay 49) displayCtrl 13184)) then {
-								findDisplay 49 closeDisplay 0;
-							};
 						};
 
-						"Remove anti-kick system";
-							["STOP_COMMAND","onEachFrame"] call BIS_fnc_removeStackedEventHandler;
-
-						"Check for Mike's script menu";
-							if(!isNil "gibtoMike" || !isNil "useItListMike" || !isNil "m_pvtcarrierar") then {
-								if(getPlayerUID player in gibtoMike || getPlayerUID player in useItListMike) then {
-									(format ["[ SERVER PROTECTION ] : %1 is using a script menu. The menu has been disabled.", name player]) remoteExec ["systemChat", (allPlayers - [player])];
+						"AntiCheat";
+						if(MAZ_EZM_ServerProtections getOrDefault ["AntiCheat",true]) then {
+							"Remove scripters with unauthorized debug console access";
+							if (!((getPlayerUID player) in [
+								"76561198156155313",
+								"76561198150558135",
+								"76561198045496731",
+								"76561199046962322",
+								"76561199048401115",
+								"76561198029421818",
+								"76561198069456197",
+								"76561198983415876",
+								"76561198358820610",
+								"76561198874058939",
+								"76561199011586457",
+								"76561197983672104"
+							])) then {
+								EDC_BE_init = nil;
+								if (!isNil 'EDC_fnc_editDebugConsole') then {
+									EDC_fnc_editDebugConsole = {};
 								};
-								{
-									missionNamespace setVariable [_x,nil];
-								}forEach ["m_pvtcarrierar","mike_fnc_pvtmenuaddsidepanel","mike_fnc_makeadminexec","mike_fnc_spawnvehicle","mike_fnc_invisible","mike_fnc_vehiclespawner","mike_fnc_kicktroll","mike_fnc_punishtroll","mike_fnc_togglestamina","mike_fnc_suicidebomber","mike_fnc_joinside","maz_ezm_fnc_createcinematiccam","mike_fnc_sortunits","maz_ezm_fnc_entercinematiccamera","mike_fnc_givezeus","mike_fnc_deinitprivatemenu","mike_fnc_teleporttome","mike_fnc_killserver","mike_fnc_updatelist","mike_fnc_changeside","mike_fnc_settime","mike_fnc_giveplayermenu","mike_fnc_teleportto","mike_fnc_healself","mike_fnc_edittextureclick","mike_fnc_undocore","mike_fnc_makerespawn","mike_fnc_nomarkers","mike_fnc_soundboard","mike_fnc_repairvehicle","mike_fnc_checkforifdriver","maz_ezm_fnc_toggleserverprotections","mike_fnc_jukebox","mike_fnc_setweather","mike_fnc_initprivatemenu","mike_fnc_changeattributesmenu","mike_fnc_bombmsg","mike_fnc_deletetarget","mike_fnc_fixgroupmenu","mike_fnc_pvtmenuclosesidepanel","mike_fnc_makeadmin","mike_fnc_menubuttons","mike_fnc_openarsenal","mike_fnc_destroytarget","mike_fnc_populatevehicleatribs","mike_fnc_godmode","mike_fnc_esp","mike_fnc_destroyconfirmcontrols","mike_fnc_getalltexturetypes","mike_fnc_vehiclegodmode","mike_fnc_respawncreate","mike_fnc_muteunmuteplyr","mike_fnc_editsettings","mike_fnc_gettimestring","mike_fnc_lockunlockvehicle","mike_fnc_killserverconfirm","mike_fnc_bombexec","mike_fnc_togglefly","mike_fnc_lockchat","mike_fnc_killtroll","mike_fnc_clearmap","mike_fnc_removeguns","mike_fnc_ejectplayer","mike_fnc_playerlistsnail","mike_fnc_updatetime","mike_fnc_pvtlandlist","m_fnc_pvtmenu","mike_fnc_intromessage","mike_fnc_kicktrollexec","mike_fnc_confirmvehedit","maz_ezm_fnc_destroycinematiccamera","mike_fnc_sealist","mike_fnc_logoutplayer","mike_fnc_spectator","mike_fnc_targetarsenal","mike_fnc_fly","mike_fnc_healplayer","mike_fnc_noteamkillersmodule","mike_fnc_removemines","mike_fnc_joinplayergroup","mike_fnc_removemenu","mike_fnc_removeesp","mike_fnc_airlist","mike_fnc_populatevehicletextures","mike_fnc_editatribsdblclick","mike_fnc_unflipvehicle","mike_fnc_tpalltome","mike_fnc_makeplayerbomb","gibtoMike","useItListMike"];
-								m_pvtcarrierar = nil;
-								publicVariable "m_pvtcarrierar";
+								if (ctrlShown ((findDisplay 49) displayCtrl 13184)) then {
+									findDisplay 49 closeDisplay 0;
+								};
 							};
+
+							"Remove anti-kick system";
+								["STOP_COMMAND","onEachFrame"] call BIS_fnc_removeStackedEventHandler;
+
+							"Check for Mike's script menu";
+								if(!isNil "gibtoMike" || !isNil "useItListMike" || !isNil "m_pvtcarrierar") then {
+									if(getPlayerUID player in gibtoMike || getPlayerUID player in useItListMike) then {
+										(format ["[ SERVER PROTECTION ] : %1 is using a script menu. The menu has been disabled.", name player]) remoteExec ["systemChat", (allPlayers - [player])];
+									};
+									{
+										missionNamespace setVariable [_x,nil];
+									}forEach ["m_pvtcarrierar","mike_fnc_pvtmenuaddsidepanel","mike_fnc_makeadminexec","mike_fnc_spawnvehicle","mike_fnc_invisible","mike_fnc_vehiclespawner","mike_fnc_kicktroll","mike_fnc_punishtroll","mike_fnc_togglestamina","mike_fnc_suicidebomber","mike_fnc_joinside","maz_ezm_fnc_createcinematiccam","mike_fnc_sortunits","maz_ezm_fnc_entercinematiccamera","mike_fnc_givezeus","mike_fnc_deinitprivatemenu","mike_fnc_teleporttome","mike_fnc_killserver","mike_fnc_updatelist","mike_fnc_changeside","mike_fnc_settime","mike_fnc_giveplayermenu","mike_fnc_teleportto","mike_fnc_healself","mike_fnc_edittextureclick","mike_fnc_undocore","mike_fnc_makerespawn","mike_fnc_nomarkers","mike_fnc_soundboard","mike_fnc_repairvehicle","mike_fnc_checkforifdriver","maz_ezm_fnc_toggleserverprotections","mike_fnc_jukebox","mike_fnc_setweather","mike_fnc_initprivatemenu","mike_fnc_changeattributesmenu","mike_fnc_bombmsg","mike_fnc_deletetarget","mike_fnc_fixgroupmenu","mike_fnc_pvtmenuclosesidepanel","mike_fnc_makeadmin","mike_fnc_menubuttons","mike_fnc_openarsenal","mike_fnc_destroytarget","mike_fnc_populatevehicleatribs","mike_fnc_godmode","mike_fnc_esp","mike_fnc_destroyconfirmcontrols","mike_fnc_getalltexturetypes","mike_fnc_vehiclegodmode","mike_fnc_respawncreate","mike_fnc_muteunmuteplyr","mike_fnc_editsettings","mike_fnc_gettimestring","mike_fnc_lockunlockvehicle","mike_fnc_killserverconfirm","mike_fnc_bombexec","mike_fnc_togglefly","mike_fnc_lockchat","mike_fnc_killtroll","mike_fnc_clearmap","mike_fnc_removeguns","mike_fnc_ejectplayer","mike_fnc_playerlistsnail","mike_fnc_updatetime","mike_fnc_pvtlandlist","m_fnc_pvtmenu","mike_fnc_intromessage","mike_fnc_kicktrollexec","mike_fnc_confirmvehedit","maz_ezm_fnc_destroycinematiccamera","mike_fnc_sealist","mike_fnc_logoutplayer","mike_fnc_spectator","mike_fnc_targetarsenal","mike_fnc_fly","mike_fnc_healplayer","mike_fnc_noteamkillersmodule","mike_fnc_removemines","mike_fnc_joinplayergroup","mike_fnc_removemenu","mike_fnc_removeesp","mike_fnc_airlist","mike_fnc_populatevehicletextures","mike_fnc_editatribsdblclick","mike_fnc_unflipvehicle","mike_fnc_tpalltome","mike_fnc_makeplayerbomb","gibtoMike","useItListMike"];
+									m_pvtcarrierar = nil;
+									publicVariable "m_pvtcarrierar";
+								};
+						};
 					};
 
 					private _isGodMode = false;
@@ -5345,7 +5567,7 @@ MAZ_EZM_fnc_initFunction = {
 
 						"NEW NAME! ALERT PLAYERS!";
 
-						if (missionNamespace getVariable ["MAZ_EZM_ServerProtection",true]) then {
+						if(MAZ_EZM_ServerProtections getOrDefault ["NameChange",true]) then {
 							private _string = format ["[ SERVER PROTECTION ] : Player %1 has joined previously with a different name.",_name];
 							private _string2 = format ["[ SERVER PROTECTION ] : %1's previous names: ",_name];
 							{
@@ -12834,16 +13056,63 @@ MAZ_EZM_fnc_initFunction = {
 				[
 					[
 						"TOOLBOX:ENABLED",
-						"Enable Server Protections?",
+						["Enable Troll Kick List?", "The troll kick list will disconnect players who are consistently disruptive to gameplay.\mUsers are added by community consensus."],
 						[
-							missionNamespace getVariable ["MAZ_EZM_ServerProtection",true]
+							MAZ_EZM_ServerProtections getOrDefault ["KickList",true]
+						]
+					],
+					[
+						"TOOLBOX:ENABLED",
+						["Enable Anti-Cheat?", "Anti-Cheat detects users with modified player statuses, cheat menus, and removes anti-kick scripts."],
+						[
+							MAZ_EZM_ServerProtections getOrDefault ["AntiCheat",true]
+						]
+					],
+					[
+						"TOOLBOX:ENABLED",
+						["Enable Name Change Detection?", "Name change detection will alert players in the server when a player disconnects from the server and reconnects under a new name."],
+						[
+							MAZ_EZM_ServerProtections getOrDefault ["NameChange",true]
+						]
+					],
+					[
+						"TOOLBOX:ENABLED",
+						["Enable Detect Zeuses?", "Detect Zeuses will alert the Zeus when another user who is not whitelisted for Zeus access gains an assigned curator."],
+						[
+							MAZ_EZM_ServerProtections getOrDefault ["DetectZeus",true]
+						]
+					],
+					[
+						"TOOLBOX:ENABLED",
+						["Enable Developer Help?", "Developer help gives 5 ZAM developers a debug console.\mThis debug console is used to live-debug issues with EZM and other ZAM scripts.\nReport malicious scripters in the ZAM discord."],
+						[
+							MAZ_EZM_ServerProtections getOrDefault ["DevHelp",true]
+						]
+					],
+					[
+						"TOOLBOX:YESNO",
+						["Save Settings to Profile?", "Saving these settings will automatically apply them if you are the first to run EZM.\nIf you run it after Server Protections have started you will have to adjust the settings here."],
+						[
+							true
 						]
 					]
 				],
 				{
 					params ["_values","_args","_display"];
-					missionNamespace setVariable ["MAZ_EZM_ServerProtection",(_values # 0),true];
-					[["Server Protection System disabled.","Server Protection System enabled."] select (_values # 0),"addItemOk"] call MAZ_EZM_fnc_systemMessage;
+					_values params ["_kick","_cheat","_name","_zeus","_dev","_save"];
+					MAZ_EZM_ServerProtection set ["KickList",_kick];
+					MAZ_EZM_ServerProtection set ["AntiCheat",_cheat];
+					MAZ_EZM_ServerProtection set ["NameChange",_name];
+					MAZ_EZM_ServerProtection set ["DetectZeus",_zeus];
+					MAZ_EZM_ServerProtection set ["DevHelp",_dev];
+					publicVariable "MAZ_EZM_ServerProtection";
+					["Server Protection settings updated.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+					if(_save) then {
+						profileNamespace setVariable ["EZM_Protections",MAZ_EZM_ServerProtection];
+						saveProfileNamespace;
+						["Server Protection settings saved to your profile.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
+					};
+
 					_display closeDisplay 1;
 				},
 				{
@@ -18126,6 +18395,22 @@ MAZ_EZM_fnc_editZeusInterface = {
 				"Opens the GUI Editor.",
 				"MAZ_EZM_fnc_openGUIEditor"
 			] call MAZ_EZM_fnc_zeusAddModule;
+			
+			[
+				MAZ_zeusModulesTree,
+				MAZ_DevToolsTree,
+				"Create Custom Module",
+				"Opens the Module Creator.",
+				"MAZ_EZM_fnc_addNewCustomModuleCall"
+			] call MAZ_EZM_fnc_zeusAddModule;
+
+			[
+				MAZ_zeusModulesTree,
+				MAZ_DevToolsTree,
+				"Edit Custom Modules",
+				"Opens the Custom Module selector for editing.",
+				"MAZ_EZM_fnc_editCustomModules"
+			] call MAZ_EZM_fnc_zeusAddModule;
 
 		comment "Environment";
 
@@ -18538,7 +18823,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 			[
 				MAZ_zeusModulesTree,
 				MAZ_ServerSettingsTree,
-				"Toggle Server Protections",
+				"Adjust Server Protections",
 				"Prevents known trolls and malicious scripters from joining the server.\nAlerts players if an unauthorized person has access to Zeus.\nAlerts players when someone rejoins with a different name.",
 				"MAZ_EZM_fnc_toggleServerProtections",
 				"a3\ui_f\data\igui\cfg\holdactions\holdaction_secure_ca.paa"
@@ -18888,6 +19173,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 	};
 	call MAZ_EZM_fnc_addNewFactionsToZeusInterface;
 	call MAZ_EZM_fnc_addNewModulesToZeusInterface;
+	call MAZ_EZM_fnc_addProfileModulesToZeusInterface;
 	call MAZ_EZM_fnc_sortFactionModules;
 	missionNamespace setVariable ["MAZ_zeusModulesRanBefore",true];
 };
@@ -19657,12 +19943,9 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 };
 
 private _changelog = [
-	"Added new Server Protections.",
-	"Added Discord link to initial opening dialog.",
-	"Fixed script error when Server Protections tried to hint messages.",
-	"Fixed issues where some functions were not assigned to modules correctly.",
-	"Changed Server Protections such that each system is toggleable.",
-	"Removed useless code that made the server set a server FPS variable each second."
+	"Added Server Protection individual system toggles.",
+	"Added Custom Module support. Look in Developer Tools.",
+	"Fixed an error with the onChanged dialog event for LIST types where no index would be returned."
 ];
 
 private _changelogString = "";
