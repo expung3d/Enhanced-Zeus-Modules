@@ -2300,6 +2300,11 @@ comment "Attributes Dialog Functions";
 						[[fuel _vehicle,3] call BIS_fnc_cutDecimals,0,1,true]
 					],
 					[
+						"SLIDER",
+						"Max Speed:",
+						[(_vehicle getVariable ["EZM_maxSpeed",2 * (getNumber (configOf _vehicle >> "maxSpeed"))]),0,2 * (getNumber (configOf _vehicle >> "maxSpeed")),true]
+					],
+					[
 						"ICONS",
 						"Vehicle Lock:",
 						[
@@ -2946,12 +2951,14 @@ comment "Attributes Dialog Functions";
 
 		MAZ_EZM_fnc_applyAttributeChangesToLandVehicle = {
 			params ["_vehicle","_attributes"];
-			_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],"_respawn","_init"];
+			_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_maxSpeed",2 * (getNumber (configOf _vehicle >> "maxSpeed"))],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],"_respawn","_init"];
 			_vehicle setDamage (1-_health);
 			[_vehicle,_fuel] remoteExec ["setFuel"];
 			[_vehicle,_lockState] remoteExec ["lock"];
 			[_vehicle,_engineState] remoteExec ["engineOn"];
 			[_vehicle,_lightState] remoteExec ["setPilotLight"];
+			_vehicle limitSpeed _maxSpeed;
+			_vehicle setVariable ["EZM_maxSpeed",_maxSpeed,true];
 
 			[_vehicle,_respawn] call MAZ_EZM_fnc_applyUnitRespawn;
 
