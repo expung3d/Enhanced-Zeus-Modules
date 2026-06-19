@@ -3,7 +3,7 @@ if(!isNull (findDisplay 312) && {!isNil "this"} && {!isNull this}) then {
 };
 
 [] spawn {
-MAZ_EZM_Version = "V2.1.10";
+MAZ_EZM_Version = "V2.1.11";
 MAZ_EZM_autoAdd = profileNamespace getVariable ["MAZ_EZM_autoAddVar",true];
 MAZ_EZM_spawnWithCrew = true;
 MAZ_EZM_nvgsOnlyAtNight = true;
@@ -5399,7 +5399,7 @@ MAZ_EZM_fnc_initFunction = {
 								[
 									parseText (format ["
 									<t size='1.3' align='center' color='#00BFBF'>You've Been Flagged as a Troll</t><br/>
-									<t size='1.0' align='center'>If you'd like to connect to the server, ask the Zeus to disable Server Protections.</t><br/>
+									<t size='1.0' align='center'>If you'd like to connect to the server, ask the Zeus to disable the Kick List in Server Protections.</t><br/>
 									<t size='1.0' align='center'>Reason: %1</t>",_reason]), 
 									"EZM Server Protection System", 
 									true, 
@@ -5740,6 +5740,51 @@ MAZ_EZM_fnc_initFunction = {
 				};
 			};
 			_enemies
+		};
+
+		MAZ_EZM_fnc_updateNewestVersion = {
+			if(isNil "MAZ_EZM_UpdatedVersion") then {
+				MAZ_EZM_UpdatedVersion = MAZ_EZM_Version;
+				publicVariable "MAZ_EZM_UpdatedVersion";
+
+				"EZM is ran by a version older than this system's implementation.";
+				if(!isNil "MAZ_EZM_shamelesslyPlugged") then {
+
+				};
+			} else {
+				private _newerVersion = [MAZ_EZM_Version,MAZ_EZM_UpdatedVersion] call MAZ_EZM_fnc_getNewestVersion;
+				if(_newerVersion == MAZ_EZM_Version) then {
+					MAZ_EZM_UpdatedVersion = MAZ_EZM_Version;
+					publicVariable "MAZ_EZM_UpdatedVersion";
+				};
+			};
+		};
+		call MAZ_EZM_fnc_updateNewestVersion;
+
+		MAZ_EZM_fnc_getNewestVersion = {
+			params ["_version1","_version2"];
+			private _versionArr = _version1 splitString ".";
+			private _versionUpToDateArr = _version2 splitString ".";
+			private _isOutOfDate = false;
+			{
+				if(parseNumber _x < parseNumber (_versionUpToDateArr select _forEachIndex)) then {
+					_isOutOfDate = true;
+					break;
+				};
+			}forEach _versionArr;
+			(_this select _isOutOfDate)
+		};
+
+		MAZ_EZM_fnc_isOutOfDate = {
+			private _newerVersion = [MAZ_EZM_Version,MAZ_EZM_UpdatedVersion] call MAZ_EZM_fnc_getNewestVersion;
+			(_newerVersion != MAZ_EZM_Version)
+		};
+
+		MAZ_EZM_fnc_updateAlert = {
+			if(call MAZ_EZM_fnc_isOutOfDate) then {
+				private _string = format ["Your EZM version is out of date! You're currently on %1, the most updated version is %2. Go to zamarma.com to download the EZM installer and update.",MAZ_EZM_Version,MAZ_EZM_UpdatedVersion];
+				MAZ_EZM_outOfDateWarn = [_string] call MAZ_EZM_fnc_addWarningElement;
+			};
 		};
 
 	comment "EZM Eventhandlers";
@@ -19182,6 +19227,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 	call MAZ_EZM_fnc_addNewModulesToZeusInterface;
 	call MAZ_EZM_fnc_addProfileModulesToZeusInterface;
 	call MAZ_EZM_fnc_sortFactionModules;
+	call MAZ_EZM_fnc_updateAlert;
 	missionNamespace setVariable ["MAZ_zeusModulesRanBefore",true];
 };
 
@@ -19950,9 +19996,8 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 };
 
 private _changelog = [
-	"Added Server Protection individual system toggles.",
-	"Added Custom Module support. Look in Developer Tools.",
-	"Fixed an error with the onChanged dialog event for LIST types where no index would be returned."
+	"Added version checker to see if a newer version was ran and alert the Zeus to update.",
+	"Removed Create Zeus Unit option from 3DEN and Singleplayer"
 ];
 
 private _changelogString = "";
@@ -19965,7 +20010,8 @@ MAZ_EZM_fnc_askAboutZeusUnit = {
 		[
 			"TOOLBOX:YESNO",
 			["Create Zeus Unit?","Whether to create a new controllable unit for your player."],
-			[true]
+			[true],
+			{getPlayerUID player != "_SP_PLAYER_" && isMultiplayer}
 		],
 		[
 			"TOOLBOX:YESNO",
