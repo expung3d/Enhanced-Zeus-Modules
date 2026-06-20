@@ -2,6 +2,11 @@ if(!isNull (findDisplay 312) && {!isNil "this"} && {!isNull this}) then {
 	deleteVehicle this;
 };
 
+if(isNull (getAssignedCuratorLogic player)) exitWith {
+	["You do not have an assigned curator. One is required to use EZM. Please assign a curator to yourself and try again.","Enhanced Zeus Modules - Initialization Error",true,false,[] call BIS_fnc_dispayMission,false,false] call BIS_fnc_guiMessage;
+	playSound "addItemFailed";
+};
+
 [] spawn {
 MAZ_EZM_Version = "V2.1.11";
 MAZ_EZM_autoAdd = profileNamespace getVariable ["MAZ_EZM_autoAddVar",true];
