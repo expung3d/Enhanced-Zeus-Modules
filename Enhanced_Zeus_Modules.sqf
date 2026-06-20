@@ -19959,48 +19959,6 @@ MAZ_EZM_fnc_initMainLoop = {
 	};
 };
 
-if(isNil "MAZ_EZM_shamelesslyPlugged") then {
-	call MAZ_EZM_fnc_ezmShamelessPlug;
-	if(getAssignedCuratorLogic player == (missionNamespace getVariable ["bis_curator",objNull])) then {
-		missionNamespace setVariable ["MAZ_EZM_disableModerator",true,true];
-		["Game Moderator has been disabled. If you'd like to enable it go to the Zeus Settings modules section."] call MAZ_EZM_fnc_systemMessage;
-	};
-	[[], {
-		waitUntil {alive player && !isNull (findDisplay 46)};
-		private _mod = missionNamespace getVariable ["bis_curator_1",objNull];
-		private _time = time + 2;
-		waitUntil {uiSleep 0.1; !isNull (getAssignedCuratorLogic player) || time > _time};
-		private _curator = getAssignedCuratorLogic player;
-		if(isNull _curator) exitWith {};
-		if(_curator != _mod) exitWith {};
-		private _loaded = false;
-		if(missionNamespace getVariable ["MAZ_EZM_disableModerator",false]) then {
-			(format ["%1 connected as Game Moderator, their slot is disabled.",name player]) remoteExec ["systemChat"];
-		} else {
-			(format ["%1 connected as Game Moderator, their slot is enabled.",name player]) remoteExec ["systemChat"];
-		};
-		while{true} do {
-			waitUntil {!(isNull (findDisplay 312)) || _loaded};
-			_loaded = true;
-			if(missionNamespace getVariable ["MAZ_EZM_disableModerator",false]) then {
-				while{!isNull (findDisplay 312)} do {
-					(findDisplay 312) closeDisplay 0;
-				};
-				if(isNull (["GetDisplay"] call BIS_fnc_EGSpectator) || isNull (["GetCamera"] call BIS_fnc_EGSpectator) || !(["IsSpectating"] call BIS_fnc_EGSpectator)) then {
-					["Terminate"] call BIS_fnc_EGSpectator;
-					["Initialize",[player]] call BIS_fnc_EGSpectator;
-				};
-			} else {
-				if(["Terminate"] call BIS_fnc_EGSpectator) then {
-					openCuratorInterface;
-				};
-			};
-			sleep 1;
-		};
-	}] remoteExec ['spawn',-2,"EZM_Moderator_JIP"];
-	missionNamespace setVariable ["MAZ_EZM_shamelesslyPlugged",true,true];
-};
-
 private _changelog = [
 	"Added version checker to see if a newer version was ran and alert the Zeus to update.",
 	"Fixed EZM running without an assigned curator.",
@@ -20017,13 +19975,13 @@ MAZ_EZM_fnc_askAboutZeusUnit = {
 		[
 			"TOOLBOX:YESNO",
 			["Create Zeus Unit?","Whether to create a new controllable unit for your player."],
-			[true],
+			[(getPlayerUID player != "_SP_PLAYER_" && isMultiplayer)],
 			{getPlayerUID player != "_SP_PLAYER_" && isMultiplayer}
 		],
 		[
 			"TOOLBOX:YESNO",
 			["Join a Side Channel?","Whether you will be set as a certain side and be able to hear their side chat."],
-			[true],
+			[(getPlayerUID player != "_SP_PLAYER_" && isMultiplayer)],
 			{true},
 			{
 				params ["_display","_value"];
@@ -20062,6 +20020,48 @@ MAZ_EZM_fnc_askAboutZeusUnit = {
 	],{
 		params ["_values","_args","_display"];
 		_values params ["_createZeusUnit","_joinSide","_sideToJoin"];
+		
+		if(isNil "MAZ_EZM_shamelesslyPlugged") then {
+			call MAZ_EZM_fnc_ezmShamelessPlug;
+			if(getAssignedCuratorLogic player == (missionNamespace getVariable ["bis_curator",objNull])) then {
+				missionNamespace setVariable ["MAZ_EZM_disableModerator",true,true];
+				["Game Moderator has been disabled. If you'd like to enable it go to the Zeus Settings modules section."] call MAZ_EZM_fnc_systemMessage;
+			};
+			[[], {
+				waitUntil {alive player && !isNull (findDisplay 46)};
+				private _mod = missionNamespace getVariable ["bis_curator_1",objNull];
+				private _time = time + 2;
+				waitUntil {uiSleep 0.1; !isNull (getAssignedCuratorLogic player) || time > _time};
+				private _curator = getAssignedCuratorLogic player;
+				if(isNull _curator) exitWith {};
+				if(_curator != _mod) exitWith {};
+				private _loaded = false;
+				if(missionNamespace getVariable ["MAZ_EZM_disableModerator",false]) then {
+					(format ["%1 connected as Game Moderator, their slot is disabled.",name player]) remoteExec ["systemChat"];
+				} else {
+					(format ["%1 connected as Game Moderator, their slot is enabled.",name player]) remoteExec ["systemChat"];
+				};
+				while{true} do {
+					waitUntil {!(isNull (findDisplay 312)) || _loaded};
+					_loaded = true;
+					if(missionNamespace getVariable ["MAZ_EZM_disableModerator",false]) then {
+						while{!isNull (findDisplay 312)} do {
+							(findDisplay 312) closeDisplay 0;
+						};
+						if(isNull (["GetDisplay"] call BIS_fnc_EGSpectator) || isNull (["GetCamera"] call BIS_fnc_EGSpectator) || !(["IsSpectating"] call BIS_fnc_EGSpectator)) then {
+							["Terminate"] call BIS_fnc_EGSpectator;
+							["Initialize",[player]] call BIS_fnc_EGSpectator;
+						};
+					} else {
+						if(["Terminate"] call BIS_fnc_EGSpectator) then {
+							openCuratorInterface;
+						};
+					};
+					sleep 1;
+				};
+			}] remoteExec ['spawn',-2,"EZM_Moderator_JIP"];
+			missionNamespace setVariable ["MAZ_EZM_shamelesslyPlugged",true,true];
+		};
 		
 		if(_createZeusUnit) then {
 			[_joinSide,_sideToJoin] spawn MAZ_EZM_fnc_createZeusUnit;
