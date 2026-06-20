@@ -11566,7 +11566,7 @@ MAZ_EZM_fnc_initFunction = {
 		};
 
 	comment "Gameplay";
-	
+
 		HYPER_EZM_fnc_handleCreateIntelDetails = {
 			params ["_values", "_target"];
 			_values params ["_title","_authorName","_timestamp","_timezone","_subtitle","_image","_bodyText","_bodyTextLocked"];
@@ -19960,6 +19960,7 @@ MAZ_EZM_fnc_initMainLoop = {
 
 private _changelog = [
 	"Added version checker to see if a newer version was ran and alert the Zeus to update.",
+	"Added a max speed slider to vehicles.",
 	"Fixed EZM running without an assigned curator.",
 	"Changed shameless plug to look nicer and include version info.",
 	"Changed shameless plug to only run AFTER EZM is confirmed.",
