@@ -5607,10 +5607,11 @@ MAZ_EZM_fnc_initFunction = {
 				waitUntil {alive player};
 				[
 					[
-						["This Server is Utilizing EZM.","<t align = 'center' shadow = '1' size = '0.7' font='PuristaBold'>%1</t><br/>",15],
-						["This is a scripted server.","<t align = 'center' shadow = '1' size = '0.65'>%1</t><br/>",5],
-						["Things will not perform as they do normally.","<t align = 'center' shadow = '1' size = '0.55'>%1</t><br/>",5],
-						["Get EZM on www.zamarma.com or Github","<t align = 'center' shadow = '1' size = '0.55'>%1</t>",60]
+						["This Server is Utilizing EZM","<t align = 'center' shadow = '1' size = '0.7' font='PuristaSemiBold'>%1</t>",0],
+						[format ["%1",MAZ_EZM_UpdatedVersion],"<t align = 'center' shadow = '1' size = '0.4' font='PuristaMedium' valign='bottom'>%1</t><br/>",15],
+						["This is a scripted server.","<t align = 'center' shadow = '1' size = '0.65' font='PuristaMedium'>%1</t><br/>",5],
+						["Things will not perform as they do normally.","<t align = 'center' shadow = '1' size = '0.55' font='PuristaMedium'>%1</t><br/>",5],
+						["Get EZM from www.zamarma.com.","<t align = 'center' shadow = '1' size = '0.55' font='PuristaMedium'>%1</t>",60]
 					],
 					safeZoneX + safeZoneW / 1.5,
 					safeZoneY + safeZoneH / 1.3
@@ -5758,7 +5759,7 @@ MAZ_EZM_fnc_initFunction = {
 				};
 			} else {
 				private _newerVersion = [MAZ_EZM_Version,MAZ_EZM_UpdatedVersion] call MAZ_EZM_fnc_getNewestVersion;
-				if(_newerVersion == MAZ_EZM_Version) then {
+				if(_newerVersion == MAZ_EZM_Version && _newerVersion != MAZ_EZM_UpdatedVersion) then {
 					MAZ_EZM_UpdatedVersion = MAZ_EZM_Version;
 					publicVariable "MAZ_EZM_UpdatedVersion";
 				};
@@ -20002,7 +20003,8 @@ if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 
 private _changelog = [
 	"Added version checker to see if a newer version was ran and alert the Zeus to update.",
-	"Removed Create Zeus Unit option from 3DEN and Singleplayer"
+	"Fixed EZM running without an assigned curator.",
+	"Removed Create Zeus Unit option from 3DEN and Singleplayer."
 ];
 
 private _changelogString = "";
