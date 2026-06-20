@@ -2,8 +2,13 @@ if(!isNull (findDisplay 312) && {!isNil "this"} && {!isNull this}) then {
 	deleteVehicle this;
 };
 
+if(isNull (getAssignedCuratorLogic player)) exitWith {
+	["You do not have an assigned curator. One is required to use EZM. Please assign a curator to yourself and try again.","Enhanced Zeus Modules - Initialization Error",true,false,[] call BIS_fnc_dispayMission,false,false] call BIS_fnc_guiMessage;
+	playSound "addItemFailed";
+};
+
 [] spawn {
-MAZ_EZM_Version = "V2.1.10";
+MAZ_EZM_Version = "V2.1.11";
 MAZ_EZM_autoAdd = profileNamespace getVariable ["MAZ_EZM_autoAddVar",true];
 MAZ_EZM_spawnWithCrew = true;
 MAZ_EZM_nvgsOnlyAtNight = true;
@@ -2300,6 +2305,11 @@ comment "Attributes Dialog Functions";
 						[[fuel _vehicle,3] call BIS_fnc_cutDecimals,0,1,true]
 					],
 					[
+						"SLIDER",
+						"Max Speed:",
+						[(_vehicle getVariable ["EZM_maxSpeed",2 * (getNumber (configOf _vehicle >> "maxSpeed"))]),0,2 * (getNumber (configOf _vehicle >> "maxSpeed")),true]
+					],
+					[
 						"ICONS",
 						"Vehicle Lock:",
 						[
@@ -2946,12 +2956,14 @@ comment "Attributes Dialog Functions";
 
 		MAZ_EZM_fnc_applyAttributeChangesToLandVehicle = {
 			params ["_vehicle","_attributes"];
-			_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],"_respawn","_init"];
+			_attributes params [["_health",damage _vehicle],["_fuel",fuel _vehicle],["_maxSpeed",2 * (getNumber (configOf _vehicle >> "maxSpeed"))],["_lockState",locked _vehicle],["_engineState",isEngineOn _vehicle],["_lightState",isLightOn _vehicle],"_respawn","_init"];
 			_vehicle setDamage (1-_health);
 			[_vehicle,_fuel] remoteExec ["setFuel"];
 			[_vehicle,_lockState] remoteExec ["lock"];
 			[_vehicle,_engineState] remoteExec ["engineOn"];
 			[_vehicle,_lightState] remoteExec ["setPilotLight"];
+			_vehicle limitSpeed _maxSpeed;
+			_vehicle setVariable ["EZM_maxSpeed",_maxSpeed,true];
 
 			[_vehicle,_respawn] call MAZ_EZM_fnc_applyUnitRespawn;
 
@@ -5392,7 +5404,7 @@ MAZ_EZM_fnc_initFunction = {
 								[
 									parseText (format ["
 									<t size='1.3' align='center' color='#00BFBF'>You've Been Flagged as a Troll</t><br/>
-									<t size='1.0' align='center'>If you'd like to connect to the server, ask the Zeus to disable Server Protections.</t><br/>
+									<t size='1.0' align='center'>If you'd like to connect to the server, ask the Zeus to disable the Kick List in Server Protections.</t><br/>
 									<t size='1.0' align='center'>Reason: %1</t>",_reason]), 
 									"EZM Server Protection System", 
 									true, 
@@ -5595,10 +5607,11 @@ MAZ_EZM_fnc_initFunction = {
 				waitUntil {alive player};
 				[
 					[
-						["This Server is Utilizing EZM.","<t align = 'center' shadow = '1' size = '0.7' font='PuristaBold'>%1</t><br/>",15],
-						["This is a scripted server.","<t align = 'center' shadow = '1' size = '0.65'>%1</t><br/>",5],
-						["Things will not perform as they do normally.","<t align = 'center' shadow = '1' size = '0.55'>%1</t><br/>",5],
-						["Get EZM on www.zamarma.com or Github","<t align = 'center' shadow = '1' size = '0.55'>%1</t>",60]
+						["This Server is Utilizing EZM","<t align = 'center' shadow = '1' size = '0.7' font='PuristaSemiBold'>%1</t>",0],
+						[format ["%1",MAZ_EZM_UpdatedVersion],"<t align = 'center' shadow = '1' size = '0.4' font='PuristaMedium' valign='bottom'>%1</t><br/>",15],
+						["This is a scripted server.","<t align = 'center' shadow = '1' size = '0.65' font='PuristaMedium'>%1</t><br/>",5],
+						["Things will not perform as they do normally.","<t align = 'center' shadow = '1' size = '0.55' font='PuristaMedium'>%1</t><br/>",5],
+						["Get EZM from www.zamarma.com.","<t align = 'center' shadow = '1' size = '0.55' font='PuristaMedium'>%1</t>",60]
 					],
 					safeZoneX + safeZoneW / 1.5,
 					safeZoneY + safeZoneH / 1.3
@@ -5733,6 +5746,51 @@ MAZ_EZM_fnc_initFunction = {
 				};
 			};
 			_enemies
+		};
+
+		MAZ_EZM_fnc_updateNewestVersion = {
+			if(isNil "MAZ_EZM_UpdatedVersion") then {
+				MAZ_EZM_UpdatedVersion = MAZ_EZM_Version;
+				publicVariable "MAZ_EZM_UpdatedVersion";
+
+				"EZM is ran by a version older than this system's implementation.";
+				if(!isNil "MAZ_EZM_shamelesslyPlugged") then {
+
+				};
+			} else {
+				private _newerVersion = [MAZ_EZM_Version,MAZ_EZM_UpdatedVersion] call MAZ_EZM_fnc_getNewestVersion;
+				if(_newerVersion == MAZ_EZM_Version && _newerVersion != MAZ_EZM_UpdatedVersion) then {
+					MAZ_EZM_UpdatedVersion = MAZ_EZM_Version;
+					publicVariable "MAZ_EZM_UpdatedVersion";
+				};
+			};
+		};
+		call MAZ_EZM_fnc_updateNewestVersion;
+
+		MAZ_EZM_fnc_getNewestVersion = {
+			params ["_version1","_version2"];
+			private _versionArr = _version1 splitString ".";
+			private _versionUpToDateArr = _version2 splitString ".";
+			private _isOutOfDate = false;
+			{
+				if(parseNumber _x < parseNumber (_versionUpToDateArr select _forEachIndex)) then {
+					_isOutOfDate = true;
+					break;
+				};
+			}forEach _versionArr;
+			(_this select _isOutOfDate)
+		};
+
+		MAZ_EZM_fnc_isOutOfDate = {
+			private _newerVersion = [MAZ_EZM_Version,MAZ_EZM_UpdatedVersion] call MAZ_EZM_fnc_getNewestVersion;
+			(_newerVersion != MAZ_EZM_Version)
+		};
+
+		MAZ_EZM_fnc_updateAlert = {
+			if(call MAZ_EZM_fnc_isOutOfDate) then {
+				private _string = format ["Your EZM version is out of date! You're currently on %1, the most updated version is %2. Go to zamarma.com to download the EZM installer and update.",MAZ_EZM_Version,MAZ_EZM_UpdatedVersion];
+				MAZ_EZM_outOfDateWarn = [_string] call MAZ_EZM_fnc_addWarningElement;
+			};
 		};
 
 	comment "EZM Eventhandlers";
@@ -11509,7 +11567,6 @@ MAZ_EZM_fnc_initFunction = {
 
 	comment "Gameplay";
 
-	
 		HYPER_EZM_fnc_handleCreateIntelDetails = {
 			params ["_values", "_target"];
 			_values params ["_title","_authorName","_timestamp","_timezone","_subtitle","_image","_bodyText","_bodyTextLocked"];
@@ -19175,6 +19232,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 	call MAZ_EZM_fnc_addNewModulesToZeusInterface;
 	call MAZ_EZM_fnc_addProfileModulesToZeusInterface;
 	call MAZ_EZM_fnc_sortFactionModules;
+	call MAZ_EZM_fnc_updateAlert;
 	missionNamespace setVariable ["MAZ_zeusModulesRanBefore",true];
 };
 
@@ -19900,52 +19958,13 @@ MAZ_EZM_fnc_initMainLoop = {
 	};
 };
 
-if(isNil "MAZ_EZM_shamelesslyPlugged") then {
-	call MAZ_EZM_fnc_ezmShamelessPlug;
-	if(getAssignedCuratorLogic player == (missionNamespace getVariable ["bis_curator",objNull])) then {
-		missionNamespace setVariable ["MAZ_EZM_disableModerator",true,true];
-		["Game Moderator has been disabled. If you'd like to enable it go to the Zeus Settings modules section."] call MAZ_EZM_fnc_systemMessage;
-	};
-	[[], {
-		waitUntil {alive player && !isNull (findDisplay 46)};
-		private _mod = missionNamespace getVariable ["bis_curator_1",objNull];
-		private _time = time + 2;
-		waitUntil {uiSleep 0.1; !isNull (getAssignedCuratorLogic player) || time > _time};
-		private _curator = getAssignedCuratorLogic player;
-		if(isNull _curator) exitWith {};
-		if(_curator != _mod) exitWith {};
-		private _loaded = false;
-		if(missionNamespace getVariable ["MAZ_EZM_disableModerator",false]) then {
-			(format ["%1 connected as Game Moderator, their slot is disabled.",name player]) remoteExec ["systemChat"];
-		} else {
-			(format ["%1 connected as Game Moderator, their slot is enabled.",name player]) remoteExec ["systemChat"];
-		};
-		while{true} do {
-			waitUntil {!(isNull (findDisplay 312)) || _loaded};
-			_loaded = true;
-			if(missionNamespace getVariable ["MAZ_EZM_disableModerator",false]) then {
-				while{!isNull (findDisplay 312)} do {
-					(findDisplay 312) closeDisplay 0;
-				};
-				if(isNull (["GetDisplay"] call BIS_fnc_EGSpectator) || isNull (["GetCamera"] call BIS_fnc_EGSpectator) || !(["IsSpectating"] call BIS_fnc_EGSpectator)) then {
-					["Terminate"] call BIS_fnc_EGSpectator;
-					["Initialize",[player]] call BIS_fnc_EGSpectator;
-				};
-			} else {
-				if(["Terminate"] call BIS_fnc_EGSpectator) then {
-					openCuratorInterface;
-				};
-			};
-			sleep 1;
-		};
-	}] remoteExec ['spawn',-2,"EZM_Moderator_JIP"];
-	missionNamespace setVariable ["MAZ_EZM_shamelesslyPlugged",true,true];
-};
-
 private _changelog = [
-	"Added Server Protection individual system toggles.",
-	"Added Custom Module support. Look in Developer Tools.",
-	"Fixed an error with the onChanged dialog event for LIST types where no index would be returned."
+	"Added version checker to see if a newer version was ran and alert the Zeus to update.",
+	"Added a max speed slider to vehicles.",
+	"Fixed EZM running without an assigned curator.",
+	"Changed shameless plug to look nicer and include version info.",
+	"Changed shameless plug to only run AFTER EZM is confirmed.",
+	"Removed Create Zeus Unit option from 3DEN and Singleplayer."
 ];
 
 private _changelogString = "";
@@ -19958,12 +19977,13 @@ MAZ_EZM_fnc_askAboutZeusUnit = {
 		[
 			"TOOLBOX:YESNO",
 			["Create Zeus Unit?","Whether to create a new controllable unit for your player."],
-			[true]
+			[(getPlayerUID player != "_SP_PLAYER_" && isMultiplayer)],
+			{getPlayerUID player != "_SP_PLAYER_" && isMultiplayer}
 		],
 		[
 			"TOOLBOX:YESNO",
 			["Join a Side Channel?","Whether you will be set as a certain side and be able to hear their side chat."],
-			[true],
+			[(getPlayerUID player != "_SP_PLAYER_" && isMultiplayer)],
 			{true},
 			{
 				params ["_display","_value"];
@@ -19976,7 +19996,7 @@ MAZ_EZM_fnc_askAboutZeusUnit = {
 			west,
 			{
 				params ["_display"];
-				_display getVariable ["MAZ_EZM_showSides",true];
+				_display getVariable ["MAZ_EZM_showSides",(getPlayerUID player != "_SP_PLAYER_" && isMultiplayer)];
 			}
 		],
 		[
@@ -20002,6 +20022,48 @@ MAZ_EZM_fnc_askAboutZeusUnit = {
 	],{
 		params ["_values","_args","_display"];
 		_values params ["_createZeusUnit","_joinSide","_sideToJoin"];
+
+		if(isNil "MAZ_EZM_shamelesslyPlugged") then {
+			call MAZ_EZM_fnc_ezmShamelessPlug;
+			if(getAssignedCuratorLogic player == (missionNamespace getVariable ["bis_curator",objNull])) then {
+				missionNamespace setVariable ["MAZ_EZM_disableModerator",true,true];
+				["Game Moderator has been disabled. If you'd like to enable it go to the Zeus Settings modules section."] call MAZ_EZM_fnc_systemMessage;
+			};
+			[[], {
+				waitUntil {alive player && !isNull (findDisplay 46)};
+				private _mod = missionNamespace getVariable ["bis_curator_1",objNull];
+				private _time = time + 2;
+				waitUntil {uiSleep 0.1; !isNull (getAssignedCuratorLogic player) || time > _time};
+				private _curator = getAssignedCuratorLogic player;
+				if(isNull _curator) exitWith {};
+				if(_curator != _mod) exitWith {};
+				private _loaded = false;
+				if(missionNamespace getVariable ["MAZ_EZM_disableModerator",false]) then {
+					(format ["%1 connected as Game Moderator, their slot is disabled.",name player]) remoteExec ["systemChat"];
+				} else {
+					(format ["%1 connected as Game Moderator, their slot is enabled.",name player]) remoteExec ["systemChat"];
+				};
+				while{true} do {
+					waitUntil {!(isNull (findDisplay 312)) || _loaded};
+					_loaded = true;
+					if(missionNamespace getVariable ["MAZ_EZM_disableModerator",false]) then {
+						while{!isNull (findDisplay 312)} do {
+							(findDisplay 312) closeDisplay 0;
+						};
+						if(isNull (["GetDisplay"] call BIS_fnc_EGSpectator) || isNull (["GetCamera"] call BIS_fnc_EGSpectator) || !(["IsSpectating"] call BIS_fnc_EGSpectator)) then {
+							["Terminate"] call BIS_fnc_EGSpectator;
+							["Initialize",[player]] call BIS_fnc_EGSpectator;
+						};
+					} else {
+						if(["Terminate"] call BIS_fnc_EGSpectator) then {
+							openCuratorInterface;
+						};
+					};
+					sleep 1;
+				};
+			}] remoteExec ['spawn',-2,"EZM_Moderator_JIP"];
+			missionNamespace setVariable ["MAZ_EZM_shamelesslyPlugged",true,true];
+		};
 		
 		if(_createZeusUnit) then {
 			[_joinSide,_sideToJoin] spawn MAZ_EZM_fnc_createZeusUnit;
@@ -20019,7 +20081,7 @@ MAZ_EZM_fnc_askAboutZeusUnit = {
 		_display closeDisplay 2;
 	},[],{
 		params ["_display"];
-		_display setVariable ["MAZ_EZM_showSides",true];
+		_display setVariable ["MAZ_EZM_showSides",(getPlayerUID player != "_SP_PLAYER_" && isMultiplayer)];
 	}] call MAZ_EZM_fnc_createDialog;
 };
 
