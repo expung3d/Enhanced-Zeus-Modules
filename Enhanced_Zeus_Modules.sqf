@@ -11566,7 +11566,6 @@ MAZ_EZM_fnc_initFunction = {
 		};
 
 	comment "Gameplay";
-
 	
 		HYPER_EZM_fnc_handleCreateIntelDetails = {
 			params ["_values", "_target"];
@@ -19962,6 +19961,8 @@ MAZ_EZM_fnc_initMainLoop = {
 private _changelog = [
 	"Added version checker to see if a newer version was ran and alert the Zeus to update.",
 	"Fixed EZM running without an assigned curator.",
+	"Changed shameless plug to look nicer and include version info.",
+	"Changed shameless plug to only run AFTER EZM is confirmed.",
 	"Removed Create Zeus Unit option from 3DEN and Singleplayer."
 ];
 
@@ -19994,7 +19995,7 @@ MAZ_EZM_fnc_askAboutZeusUnit = {
 			west,
 			{
 				params ["_display"];
-				_display getVariable ["MAZ_EZM_showSides",true];
+				_display getVariable ["MAZ_EZM_showSides",(getPlayerUID player != "_SP_PLAYER_" && isMultiplayer)];
 			}
 		],
 		[
@@ -20020,7 +20021,7 @@ MAZ_EZM_fnc_askAboutZeusUnit = {
 	],{
 		params ["_values","_args","_display"];
 		_values params ["_createZeusUnit","_joinSide","_sideToJoin"];
-		
+
 		if(isNil "MAZ_EZM_shamelesslyPlugged") then {
 			call MAZ_EZM_fnc_ezmShamelessPlug;
 			if(getAssignedCuratorLogic player == (missionNamespace getVariable ["bis_curator",objNull])) then {
@@ -20079,7 +20080,7 @@ MAZ_EZM_fnc_askAboutZeusUnit = {
 		_display closeDisplay 2;
 	},[],{
 		params ["_display"];
-		_display setVariable ["MAZ_EZM_showSides",true];
+		_display setVariable ["MAZ_EZM_showSides",(getPlayerUID player != "_SP_PLAYER_" && isMultiplayer)];
 	}] call MAZ_EZM_fnc_createDialog;
 };
 
