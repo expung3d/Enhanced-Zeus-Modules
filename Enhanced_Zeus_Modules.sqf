@@ -20004,6 +20004,7 @@ MAZ_EZM_fnc_initMainLoop = {
 };
 
 private _changelog = [
+	"Added an overhaul to the Reinforcements system.",
 	"Added the ability to set a LIST, COMBO control have a default of the data string.",
 	"Fixed an issue where the EZM Update warning could appear multiple times.",
 	"Fixed an issue where sliders weren't using the correct value when a value was typed into the text box as a percentage.",
