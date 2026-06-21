@@ -5791,7 +5791,7 @@ MAZ_EZM_fnc_initFunction = {
 				private _string = format ["Your EZM version is out of date! You're currently on %1, the most updated version is %2.\nGo to zamarma.com to download the EZM installer and update.",MAZ_EZM_Version,MAZ_EZM_UpdatedVersion];
 				with uiNamespace do {
 					if(isNil "MAZ_EZM_outOfDateWarn") then {
-						MAZ_EZM_outOfDateWarn = [_string] call MAZ_EZM_fnc_addWarningElement;
+						MAZ_EZM_outOfDateWarn = [_string,"a3\ui_f\data\igui\rsctitles\rscegprogress\downloadicon_ca.paa",EZM_themeColor] call MAZ_EZM_fnc_addWarningElement;
 					};
 				};
 			};
