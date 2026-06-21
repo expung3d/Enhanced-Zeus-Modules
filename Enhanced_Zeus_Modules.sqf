@@ -7355,7 +7355,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_spawnReinforcements = {
 			private _fnc_processParams = {
-				params ["_pos","_side","_groupType","_dir","_endPos"];
+				params ["_pos","_side","_groupType","_dir","_endPos","_notifF","_notifE"];
 				private _factionData = [_side] call MAZ_EZM_fnc_getAllFactionGroups;
 				private _groupCfg = [_factionData,parseNumber _groupType] call MAZ_EZM_fnc_getGroupDataFromIndex;
 				_side = switch (getNumber(_groupCfg >> "side")) do {
@@ -7370,14 +7370,22 @@ MAZ_EZM_fnc_initFunction = {
 				};
 				private _startPos = _pos getPos [5000,_dir];
 
-				[_startPos,_heliType,_pos,_side,_groupCfg,_dir,_endPos]
+				[_startPos,_heliType,_pos,_side,_groupCfg,_dir,_endPos,_notifF,_notifE]
 			};
 
-			(_this call _fnc_processParams) params ["_startPos","_heliType","_pos","_side","_groupType","_dir","_endPos"];
+			(_this call _fnc_processParams) params ["_startPos","_heliType","_pos","_side","_groupType","_dir","_endPos","_notifF","_notifE"];
 			_startPos set [2,150];
 			private _grp = createGroup [_side,true];
 			private _result = [_startPos,_dir+180,_heliType,_grp] call BIS_fnc_spawnVehicle;
 			private _spawnedVeh = _result # 0;
+
+			if(_notifF) then {
+				["TaskUpdatedIcon",["a3\ui_f\data\gui\cfg\communicationmenu\attack_ca.paa",format ["Friendly reinforcements are being sent to %1.",mapGridPosition _endPos]]] remoteExec ['BIS_fnc_showNotification',_side];
+			};
+			if(_notifE) then {
+				private _sides = [west,east,independent,civilian] - [_side];
+				["TaskUpdatedIcon",["a3\ui_f\data\gui\cfg\communicationmenu\attack_ca.paa",format ["Enemy reinforcements are being sent to %1.",mapGridPosition _endPos]]] remoteExec ['BIS_fnc_showNotification',_sides];
+			};
 
 			waitUntil{!isNull driver _spawnedVeh};
 			_grp setBehaviour "CARELESS";
@@ -7575,9 +7583,20 @@ MAZ_EZM_fnc_initFunction = {
 				]
 			}forEach MAZ_EZM_Reinf_Groups;
 
+			_content pushBack [
+				"TOOLBOX:YESNO",
+				"Notify Friendlies?",
+				[true]
+			];
+			_content pushBack [
+				"TOOLBOX:YESNO",
+				"Notify Enemies?",
+				[false]
+			];
+
 			["Spawn Reinforcements",_content,{
 				params ["_values","_args","_display"];
-				_values params ["_side","_dir","_blu","_red","_grn",""];
+				_values params ["_side","_dir","_blu","_red","_grn","","_notifF","_notifE"];
 				_args params ["_position"];
 
 				if(_side == civilian) exitWith {
@@ -7585,7 +7604,7 @@ MAZ_EZM_fnc_initFunction = {
 				};
 				private _group = [_red,_blu,_grn] select (_side call BIS_fnc_sideID);
 
-				private _reinforcementsParams = [_position,_side,_group,_dir,[]];
+				private _reinforcementsParams = [_position,_side,_group,_dir,[],_notifF,_notifE];
 				
 				_display closeDisplay 1;
 
