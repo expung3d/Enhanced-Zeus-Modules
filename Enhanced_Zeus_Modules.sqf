@@ -6511,6 +6511,7 @@ MAZ_EZM_fnc_initFunction = {
 							} forEach allUnits;
 						}] remoteExec ["spawn"];
 						[format ["Difficulty set to %1.",_overrideValue]] call MAZ_EZM_fnc_systemMessage;
+						_display closeDisplay 1;
 					};
 					private _skill = switch (_value) do {
 						case "easy": {0};
@@ -6523,6 +6524,7 @@ MAZ_EZM_fnc_initFunction = {
 						} forEach allUnits;
 					}] remoteExec ["spawn"];
 					[format ["Difficulty set to %1.",toUpper _value],"addItemOk"] call MAZ_EZM_fnc_systemMessage;
+					_display closeDisplay 1;
 				};
 				private _advancedValues = _values select [3,8];
 				[_advancedValues, {
