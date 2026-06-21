@@ -7522,7 +7522,12 @@ MAZ_EZM_fnc_initFunction = {
 				[
 					"SIDES",
 					"Reinforcements Side",
-					east
+					east,
+					{true},
+					{
+						params ["_display","_value"];
+						_display setVariable ["MAZ_EZM_Reinf_Side",_value];
+					}
 				],
 				[
 					"COMBO",
@@ -7540,15 +7545,20 @@ MAZ_EZM_fnc_initFunction = {
 				]
 			],{
 				params ["_values","_pos","_display"];
-				_values params ["_side","_dir"];
-				if(_side == civilian) exitWith {
-					["You can't reinforce with a civilian group!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;
-				};
-				[_side,_dir] spawn MAZ_EZM_fnc_callReinforcementsChooseGroup;
 				_display closeDisplay 1;
+				_values spawn {
+					sleep 0.1;
+					_this params ["_side","_dir"];
+					if(_side == civilian) exitWith {
+						["You can't reinforce with a civilian group!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;
+					};
+					[_side,_dir] spawn MAZ_EZM_fnc_callReinforcementsChooseGroup;
+				};
 			},{
 				params ["_values","_args","_display"];
 				_display closeDisplay 2;
+			},{
+				_display setVariable ["MAZ_EZM_Reinf_Side",EAST];
 			}] call MAZ_EZM_fnc_createDialog;
 		};
 
@@ -7577,7 +7587,7 @@ MAZ_EZM_fnc_initFunction = {
 				_args params ["_pos","_side","_dir"];
 				_values params ["_groupType"];
 				_display closeDisplay 1;
-				
+
 				private _reinforcementsParams = [_pos,_side,_groupType,_dir,[]];
 				private _helipadMarker = createVehicle ["Land_HelipadEmpty_F",_pos,[],0,"CAN_COLLIDE"];
 				_helipadMarker setPosATL _pos;
@@ -7590,11 +7600,12 @@ MAZ_EZM_fnc_initFunction = {
 				},_helipadMarker,_reinforcementsParams] call MAZ_EZM_fnc_selectSecondaryPosition;
 			},{
 				params ["_values","_args","_display"];
-				[] spawn {
-					sleep 0.1;
-					[] spawn MAZ_EZM_fnc_callReinforcements;
-				};
 				_display closeDisplay 2;
+				_display spawn {
+					waitUntil {isNull _this};
+					sleep 0.1;
+					call MAZ_EZM_fnc_callReinforcements;
+				};
 			},[[true] call MAZ_EZM_fnc_getScreenPosition,_side,_dir]] call MAZ_EZM_fnc_createDialog;
 		};
 
