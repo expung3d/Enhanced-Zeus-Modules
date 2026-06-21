@@ -285,7 +285,7 @@ comment "Dialog Creation";
 		_data params [
 			["_comboData",[],[[]]],
 			["_comboNames",[],[[]]],
-			["_defaultIndex",0,[0]]
+			["_default",0,[0,""]]
 		];
 		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
 
@@ -312,8 +312,14 @@ comment "Dialog Creation";
 			_combo lbSetColor [_index,_textColor];
 			_combo lbSetData [_index,_data];
 			
-			if(_i == _defaultIndex) then {
-				_combo lbSetCurSel _i;
+			if(_default isEqualType 0) then {
+				if(_i == _default) then {
+					_combo lbSetCurSel _i;
+				};
+			} else {
+				if(_data == _default) then {
+					_combo lbSetCurSel _i;
+				};
 			};
 		};
 
@@ -400,7 +406,7 @@ comment "Dialog Creation";
 		_data params [
 			["_listData",[],[[]]],
 			["_listNames",[],[[]]],
-			["_defaultIndex",0,[0]],
+			["_default",0,[0,""]],
 			["_height",6,[6]]
 		];
 		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
@@ -435,8 +441,14 @@ comment "Dialog Creation";
 			_listBox lbSetColor [_index,_textColor];
 			_listBox lbSetData [_index,_data];
 			
-			if(_i == _defaultIndex) then {
-				_listBox lbSetCurSel _i;
+			if(_default isEqualType 0) then {
+				if(_i == _default) then {
+					_listBox lbSetCurSel _i;
+				};
+			} else {
+				if(_data == _default) then {
+					_listBox lbSetCurSel _i;
+				};
 			};
 		};
 
@@ -6576,7 +6588,7 @@ MAZ_EZM_fnc_initFunction = {
 							"Forced Crouching",
 							"Forced Prone"
 						],
-						0
+						MAZ_EZM_stanceForAI
 					]
 				]
 			],{
@@ -19965,9 +19977,11 @@ MAZ_EZM_fnc_initMainLoop = {
 };
 
 private _changelog = [
+	"Added the ability to set a LIST, COMBO control have a default of the data string.",
 	"Fixed an issue where the EZM Update warning could appear multiple times.",
 	"Fixed an issue where sliders weren't using the correct value when a value was typed into the text box as a percentage.",
-	"Fixed an incorrect module description for 'Create Zeus Unit'."
+	"Fixed an incorrect module description for 'Create Zeus Unit'.",
+	"Changed Set Stance module to default to the current saved setting for AI stance."
 ];
 
 private _changelogString = "";
