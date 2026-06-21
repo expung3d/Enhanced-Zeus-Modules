@@ -5788,8 +5788,12 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_updateAlert = {
 			if(call MAZ_EZM_fnc_isOutOfDate) then {
-				private _string = format ["Your EZM version is out of date! You're currently on %1, the most updated version is %2. Go to zamarma.com to download the EZM installer and update.",MAZ_EZM_Version,MAZ_EZM_UpdatedVersion];
-				MAZ_EZM_outOfDateWarn = [_string] call MAZ_EZM_fnc_addWarningElement;
+				private _string = format ["Your EZM version is out of date! You're currently on %1, the most updated version is %2.\nGo to zamarma.com to download the EZM installer and update.",MAZ_EZM_Version,MAZ_EZM_UpdatedVersion];
+				with uiNamespace do {
+					if(isNil "MAZ_EZM_outOfDateWarn") then {
+						MAZ_EZM_outOfDateWarn = [_string] call MAZ_EZM_fnc_addWarningElement;
+					};
+				};
 			};
 		};
 
