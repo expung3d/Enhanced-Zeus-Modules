@@ -7368,16 +7368,11 @@ MAZ_EZM_fnc_initFunction = {
 					case east: {"O_Heli_Light_02_unarmed_F"};
 					case independent: {"I_Heli_Transport_02_F"};
 				};
-				_dir = switch (parseNumber _dir) do {
-					case 0: {0};
-					case 1: {180};
-					case 2: {90};
-					case 3: {270};
-				};
 				private _startPos = _pos getPos [5000,_dir];
 
 				[_startPos,_heliType,_pos,_side,_groupCfg,_dir,_endPos]
 			};
+
 			(_this call _fnc_processParams) params ["_startPos","_heliType","_pos","_side","_groupType","_dir","_endPos"];
 			_startPos set [2,150];
 			private _grp = createGroup [_side,true];
@@ -7517,8 +7512,35 @@ MAZ_EZM_fnc_initFunction = {
 			_out
 		};
 
+		MAZ_EZM_fnc_setupFactionGroups = {
+			if(!isNil "MAZ_EZM_Reinf_Groups") exitWith {};
+
+			private _groups = [];
+			{
+				private _factionGroups = [_x] call MAZ_EZM_fnc_getAllFactionGroups;
+
+				private _listData = [[],[],0];
+				{
+					_x params ["_name","_flag","_icon","_groups"];
+					private _groupName = "";
+					{
+						_x params ["_groupName","_cfg"];
+						(_listData select 1) pushBack [format ["%1 (%2)",_name,_groupName],"",_flag];
+					}forEach _groups;
+				}forEach _factionGroups;
+
+				_groups pushBack _listData;
+			}forEach [west,east,independent];
+
+			_groups pushBack [[],["You cannot reinforce with civilians."],0];
+
+			MAZ_EZM_Reinf_Groups = _groups;
+		};
+
 		MAZ_EZM_fnc_callReinforcements = {
-			["Spawn Reinforcements (Choose Side)",[
+			call MAZ_EZM_fnc_setupFactionGroups;
+
+			private _content = [
 				[
 					"SIDES",
 					"Reinforcements Side",
@@ -7530,67 +7552,45 @@ MAZ_EZM_fnc_initFunction = {
 					}
 				],
 				[
-					"COMBO",
-					"Direction of Reinforcements",
+					"SLIDER",
+					["Direction of Reinforcements","The direction in degrees that the reinforcements will infil from.\n0 = N\n45 = NE\n90 = E\n135 = SE\n180 = S\n225 = SW\n270 = W\n315 = NW"],
 					[
-						[],
-						[
-							"N",
-							"S",
-							"E",
-							"W"
-						],
+						0,
+						360,
 						0
 					]
 				]
-			],{
-				params ["_values","_pos","_display"];
-				_display closeDisplay 1;
-				_values spawn {
-					sleep 0.1;
-					_this params ["_side","_dir"];
-					if(_side == civilian) exitWith {
-						["You can't reinforce with a civilian group!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;
-					};
-					[_side,_dir] spawn MAZ_EZM_fnc_callReinforcementsChooseGroup;
-				};
-			},{
-				params ["_values","_args","_display"];
-				_display closeDisplay 2;
-			},{
-				_display setVariable ["MAZ_EZM_Reinf_Side",EAST];
-			}] call MAZ_EZM_fnc_createDialog;
-		};
+			];
 
-		MAZ_EZM_fnc_callReinforcementsChooseGroup = {
-			params ["_side","_dir"];
-			sleep 0.1;
-			private _factions = [_side] call MAZ_EZM_fnc_getAllFactionGroups;
-			private _listData = [[],[],0];
+			private _sides = ["west","east","independent","civilian"];
 			{
-				_x params ["_name","_flag","_icon","_groups"];
-				private _groupName = "";
-				{
-					_x params ["_groupName","_cfg"];
-					(_listData select 1) pushBack [format ["%1 (%2)",_name,_groupName],"",_flag];
-				}forEach _groups;
-			}forEach _factions;
-			
-			["Spawn Reinforcements (Group Select)",[
-				[
+				_content pushBack [
 					"LIST",
-					"Reinforcements Type",
-					_listData
+					"Group Selection",
+					_x,
+					format ['
+						params ["_display"];
+						(_display getVariable ["MAZ_EZM_Reinf_Side",east]) == %1
+					',_sides select _forEachIndex]
 				]
-			],{
+			}forEach MAZ_EZM_Reinf_Groups;
+
+			["Spawn Reinforcements",_content,{
 				params ["_values","_args","_display"];
-				_args params ["_pos","_side","_dir"];
-				_values params ["_groupType"];
+				_values params ["_side","_dir","_blu","_red","_grn",""];
+				_args params ["_position"];
+
+				if(_side == civilian) exitWith {
+					["You can't reinforce with a civilian group!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;
+				};
+				private _group = [_red,_blu,_grn] select (_side call BIS_fnc_sideID);
+
+				private _reinforcementsParams = [_position,_side,_group,_dir,[]];
+				
 				_display closeDisplay 1;
 
-				private _reinforcementsParams = [_pos,_side,_groupType,_dir,[]];
-				private _helipadMarker = createVehicle ["Land_HelipadEmpty_F",_pos,[],0,"CAN_COLLIDE"];
-				_helipadMarker setPosATL _pos;
+				private _helipadMarker = createVehicle ["Land_HelipadEmpty_F",_position,[],0,"CAN_COLLIDE"];
+				_helipadMarker setPosATL _position;
 
 				["Reinforcements Destination on Foot",{
 					params ["_objects","_position","_args","_shift","_ctrl","_alt"];
@@ -7601,12 +7601,9 @@ MAZ_EZM_fnc_initFunction = {
 			},{
 				params ["_values","_args","_display"];
 				_display closeDisplay 2;
-				_display spawn {
-					waitUntil {isNull _this};
-					sleep 0.1;
-					call MAZ_EZM_fnc_callReinforcements;
-				};
-			},[[true] call MAZ_EZM_fnc_getScreenPosition,_side,_dir]] call MAZ_EZM_fnc_createDialog;
+			},[[true] call MAZ_EZM_fnc_getScreenPosition],{
+				_display setVariable ["MAZ_EZM_Reinf_Side",EAST];
+			}] call MAZ_EZM_fnc_createDialog;
 		};
 
 		MAZ_EZM_fnc_mortarAreaModule = {
