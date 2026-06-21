@@ -5909,7 +5909,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_setAmbientAnimationModule = {
 			params ["_entity"];   
-			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};   
+			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["This module must be placed on an AI unit.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};   
 			["Apply Ambient Animation",[   
 				[   
 					"LIST",   
@@ -6075,7 +6075,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_garrisonInstantModule = {
 			params ["_entity"];
-			if(isNull _entity || !((typeOf _entity) isKindOf "CAManBase")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(isNull _entity || !((typeOf _entity) isKindOf "CAManBase")) exitWith {["This module must be placed on an AI unit.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 			[_entity] spawn {
 				params ["_entity"];
 				private _group = group _entity;
@@ -6161,7 +6161,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_garrisonSearchModule = {
 			params ["_entity"];
-			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["This module must be placed on an AI unit.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 			[_entity] spawn {
 				params ["_entity"];
 				private _group = group _entity;
@@ -6302,7 +6302,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_unGarrisonModule = {
 			params ["_entity"];
-			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["This module must be placed on an AI unit.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 			[_entity] spawn {
 				_object =  _this select 0;
 				_groupUnderCursor = group _object;
@@ -6369,7 +6369,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_makeHostageModule = {
 			params ["_entity"];
-			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["This module must be placed on an AI unit.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 
 			[_entity,true] remoteExec ["setCaptive"];
 			[_entity,"Move"] remoteExec ["disableAI"];
@@ -6429,7 +6429,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_makeHVTModule = {
 			params ["_entity"];
-			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["This module must be placed on an AI unit.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 
 			[[_entity],{
 				params ["_nearestMan"];
@@ -6611,7 +6611,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_toggleSurrenderModule = {
 			params ["_entity"];
-			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["This module must be placed on an AI unit.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 
 			private _isSurrendered = _entity getVariable ['EZM_isSurrendered',false];
 			if(_isSurrendered) then {
@@ -12703,7 +12703,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_disarmModule = {
 			params ["_entity"];
-			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["This module must be placed on an AI unit.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 			_entity remoteExec ['removeAllWeapons'];
 
 			["Weapons have been removed from the unit.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
@@ -12711,7 +12711,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_healAndReviveModule = {
 			params ["_entity"];
-			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["This module must be placed on a person.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 
 			if(isPlayer _entity) then {
 				[[],{
@@ -12740,7 +12740,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_changeSideModule = {
 			params ["_entity"];
-			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["This module must be placed on a person.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 			["Change Unit Side",[
 				[
 					"SIDES",
@@ -12803,7 +12803,7 @@ MAZ_EZM_fnc_initFunction = {
 		
 		MAZ_EZM_fnc_resetLoadout = {
 			params ["_entity"];
-			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["This module must be placed on a person.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 			_entity setUnitLoadout (configFile >> "EmptyLoadout");
 			comment '
 			TODO : Version 2.20
@@ -12823,7 +12823,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_killUnit = {
 			params ["_entity"];
-			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["This module must be placed on a person.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 			_entity setDamage 1;
 		};
 
