@@ -8,7 +8,7 @@ if(isNull (getAssignedCuratorLogic player)) exitWith {
 };
 
 [] spawn {
-MAZ_EZM_Version = "V2.1.11";
+MAZ_EZM_Version = "V2.1.12";
 MAZ_EZM_autoAdd = profileNamespace getVariable ["MAZ_EZM_autoAddVar",true];
 MAZ_EZM_spawnWithCrew = true;
 MAZ_EZM_nvgsOnlyAtNight = true;
@@ -285,7 +285,7 @@ comment "Dialog Creation";
 		_data params [
 			["_comboData",[],[[]]],
 			["_comboNames",[],[[]]],
-			["_defaultIndex",0,[0]]
+			["_default",0,[0,""]]
 		];
 		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
 
@@ -312,8 +312,14 @@ comment "Dialog Creation";
 			_combo lbSetColor [_index,_textColor];
 			_combo lbSetData [_index,_data];
 			
-			if(_i == _defaultIndex) then {
-				_combo lbSetCurSel _i;
+			if(_default isEqualType 0) then {
+				if(_i == _default) then {
+					_combo lbSetCurSel _i;
+				};
+			} else {
+				if(_data == _default) then {
+					_combo lbSetCurSel _i;
+				};
 			};
 		};
 
@@ -400,7 +406,7 @@ comment "Dialog Creation";
 		_data params [
 			["_listData",[],[[]]],
 			["_listNames",[],[[]]],
-			["_defaultIndex",0,[0]],
+			["_default",0,[0,""]],
 			["_height",6,[6]]
 		];
 		private _rowControlGroup = [_display] call MAZ_EZM_fnc_createRowBase;
@@ -435,8 +441,14 @@ comment "Dialog Creation";
 			_listBox lbSetColor [_index,_textColor];
 			_listBox lbSetData [_index,_data];
 			
-			if(_i == _defaultIndex) then {
-				_listBox lbSetCurSel _i;
+			if(_default isEqualType 0) then {
+				if(_i == _default) then {
+					_listBox lbSetCurSel _i;
+				};
+			} else {
+				if(_data == _default) then {
+					_listBox lbSetCurSel _i;
+				};
 			};
 		};
 
@@ -683,7 +695,7 @@ comment "Dialog Creation";
 			private _isPercent = _ctrlGroup getVariable ["MAZ_EZM_isPercent",false];
 			private _sliderCtrl = _ctrlGroup controlsGroupCtrl 215;
 			if(_isPercent) then {
-				_sliderCtrl sliderSetPosition (round (_num/100));
+				_sliderCtrl sliderSetPosition (_num/100);
 			} else {
 				_sliderCtrl sliderSetPosition _num;
 			};
@@ -5788,8 +5800,12 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_updateAlert = {
 			if(call MAZ_EZM_fnc_isOutOfDate) then {
-				private _string = format ["Your EZM version is out of date! You're currently on %1, the most updated version is %2. Go to zamarma.com to download the EZM installer and update.",MAZ_EZM_Version,MAZ_EZM_UpdatedVersion];
-				MAZ_EZM_outOfDateWarn = [_string] call MAZ_EZM_fnc_addWarningElement;
+				private _string = format ["Your EZM version is out of date! You're currently on %1, the most updated version is %2.\nGo to zamarma.com to download the EZM installer and update.",MAZ_EZM_Version,MAZ_EZM_UpdatedVersion];
+				with uiNamespace do {
+					if(isNil "MAZ_EZM_outOfDateWarn") then {
+						MAZ_EZM_outOfDateWarn = [_string,"a3\ui_f\data\igui\rsctitles\rscegprogress\downloadicon_ca.paa",EZM_themeColor] call MAZ_EZM_fnc_addWarningElement;
+					};
+				};
 			};
 		};
 
@@ -5893,7 +5909,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_setAmbientAnimationModule = {
 			params ["_entity"];   
-			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};   
+			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["This module must be placed on an AI unit.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};   
 			["Apply Ambient Animation",[   
 				[   
 					"LIST",   
@@ -6059,7 +6075,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_garrisonInstantModule = {
 			params ["_entity"];
-			if(isNull _entity || !((typeOf _entity) isKindOf "CAManBase")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(isNull _entity || !((typeOf _entity) isKindOf "CAManBase")) exitWith {["This module must be placed on an AI unit.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 			[_entity] spawn {
 				params ["_entity"];
 				private _group = group _entity;
@@ -6145,7 +6161,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_garrisonSearchModule = {
 			params ["_entity"];
-			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["This module must be placed on an AI unit.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 			[_entity] spawn {
 				params ["_entity"];
 				private _group = group _entity;
@@ -6286,7 +6302,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_unGarrisonModule = {
 			params ["_entity"];
-			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["This module must be placed on an AI unit.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 			[_entity] spawn {
 				_object =  _this select 0;
 				_groupUnderCursor = group _object;
@@ -6353,7 +6369,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_makeHostageModule = {
 			params ["_entity"];
-			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["This module must be placed on an AI unit.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 
 			[_entity,true] remoteExec ["setCaptive"];
 			[_entity,"Move"] remoteExec ["disableAI"];
@@ -6413,7 +6429,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_makeHVTModule = {
 			params ["_entity"];
-			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["This module must be placed on an AI unit.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 
 			[[_entity],{
 				params ["_nearestMan"];
@@ -6511,6 +6527,7 @@ MAZ_EZM_fnc_initFunction = {
 							} forEach allUnits;
 						}] remoteExec ["spawn"];
 						[format ["Difficulty set to %1.",_overrideValue]] call MAZ_EZM_fnc_systemMessage;
+						_display closeDisplay 1;
 					};
 					private _skill = switch (_value) do {
 						case "easy": {0};
@@ -6523,6 +6540,7 @@ MAZ_EZM_fnc_initFunction = {
 						} forEach allUnits;
 					}] remoteExec ["spawn"];
 					[format ["Difficulty set to %1.",toUpper _value],"addItemOk"] call MAZ_EZM_fnc_systemMessage;
+					_display closeDisplay 1;
 				};
 				private _advancedValues = _values select [3,8];
 				[_advancedValues, {
@@ -6570,7 +6588,7 @@ MAZ_EZM_fnc_initFunction = {
 							"Forced Crouching",
 							"Forced Prone"
 						],
-						0
+						MAZ_EZM_stanceForAI
 					]
 				]
 			],{
@@ -6593,7 +6611,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_toggleSurrenderModule = {
 			params ["_entity"];
-			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["This module must be placed on an AI unit.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 
 			private _isSurrendered = _entity getVariable ['EZM_isSurrendered',false];
 			if(_isSurrendered) then {
@@ -7337,7 +7355,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_spawnReinforcements = {
 			private _fnc_processParams = {
-				params ["_pos","_side","_groupType","_dir","_endPos"];
+				params ["_pos","_side","_groupType","_dir","_endPos","_notifF","_notifE"];
 				private _factionData = [_side] call MAZ_EZM_fnc_getAllFactionGroups;
 				private _groupCfg = [_factionData,parseNumber _groupType] call MAZ_EZM_fnc_getGroupDataFromIndex;
 				_side = switch (getNumber(_groupCfg >> "side")) do {
@@ -7350,21 +7368,24 @@ MAZ_EZM_fnc_initFunction = {
 					case east: {"O_Heli_Light_02_unarmed_F"};
 					case independent: {"I_Heli_Transport_02_F"};
 				};
-				_dir = switch (parseNumber _dir) do {
-					case 0: {0};
-					case 1: {180};
-					case 2: {90};
-					case 3: {270};
-				};
 				private _startPos = _pos getPos [5000,_dir];
 
-				[_startPos,_heliType,_pos,_side,_groupCfg,_dir,_endPos]
+				[_startPos,_heliType,_pos,_side,_groupCfg,_dir,_endPos,_notifF,_notifE]
 			};
-			(_this call _fnc_processParams) params ["_startPos","_heliType","_pos","_side","_groupType","_dir","_endPos"];
+
+			(_this call _fnc_processParams) params ["_startPos","_heliType","_pos","_side","_groupType","_dir","_endPos","_notifF","_notifE"];
 			_startPos set [2,150];
 			private _grp = createGroup [_side,true];
 			private _result = [_startPos,_dir+180,_heliType,_grp] call BIS_fnc_spawnVehicle;
 			private _spawnedVeh = _result # 0;
+
+			if(_notifF) then {
+				["TaskUpdatedIcon",["a3\ui_f\data\gui\cfg\communicationmenu\attack_ca.paa",format ["Friendly reinforcements are being sent to %1.",mapGridPosition _endPos]]] remoteExec ['BIS_fnc_showNotification',_side];
+			};
+			if(_notifE) then {
+				private _sides = [west,east,independent,civilian] - [_side];
+				["TaskUpdatedIcon",["a3\ui_f\data\gui\cfg\communicationmenu\attack_ca.paa",format ["Enemy reinforcements are being sent to %1.",mapGridPosition _endPos]]] remoteExec ['BIS_fnc_showNotification',_sides];
+			};
 
 			waitUntil{!isNull driver _spawnedVeh};
 			_grp setBehaviour "CARELESS";
@@ -7499,70 +7520,96 @@ MAZ_EZM_fnc_initFunction = {
 			_out
 		};
 
+		MAZ_EZM_fnc_setupFactionGroups = {
+			if(!isNil "MAZ_EZM_Reinf_Groups") exitWith {};
+
+			private _groups = [];
+			{
+				private _factionGroups = [_x] call MAZ_EZM_fnc_getAllFactionGroups;
+
+				private _listData = [[],[],0];
+				{
+					_x params ["_name","_flag","_icon","_groups"];
+					private _groupName = "";
+					{
+						_x params ["_groupName","_cfg"];
+						(_listData select 1) pushBack [format ["%1 (%2)",_name,_groupName],"",_flag];
+					}forEach _groups;
+				}forEach _factionGroups;
+
+				_groups pushBack _listData;
+			}forEach [west,east,independent];
+
+			_groups pushBack [[],["You cannot reinforce with civilians."],0];
+
+			MAZ_EZM_Reinf_Groups = _groups;
+		};
+
 		MAZ_EZM_fnc_callReinforcements = {
-			["Spawn Reinforcements (Choose Side)",[
+			call MAZ_EZM_fnc_setupFactionGroups;
+
+			private _content = [
 				[
 					"SIDES",
 					"Reinforcements Side",
-					east
+					east,
+					{true},
+					{
+						params ["_display","_value"];
+						_display setVariable ["MAZ_EZM_Reinf_Side",_value];
+					}
 				],
 				[
-					"COMBO",
-					"Direction of Reinforcements",
+					"SLIDER",
+					["Direction of Reinforcements","The direction in degrees that the reinforcements will infil from.\n0 = N\n45 = NE\n90 = E\n135 = SE\n180 = S\n225 = SW\n270 = W\n315 = NW"],
 					[
-						[],
-						[
-							"N",
-							"S",
-							"E",
-							"W"
-						],
+						0,
+						360,
 						0
 					]
 				]
-			],{
-				params ["_values","_pos","_display"];
-				_values params ["_side","_dir"];
+			];
+
+			private _sides = ["west","east","independent","civilian"];
+			{
+				_content pushBack [
+					"LIST",
+					"Group Selection",
+					_x,
+					format ['
+						params ["_display"];
+						(_display getVariable ["MAZ_EZM_Reinf_Side",east]) == %1
+					',_sides select _forEachIndex]
+				]
+			}forEach MAZ_EZM_Reinf_Groups;
+
+			_content pushBack [
+				"TOOLBOX:YESNO",
+				"Notify Friendlies?",
+				[true]
+			];
+			_content pushBack [
+				"TOOLBOX:YESNO",
+				"Notify Enemies?",
+				[false]
+			];
+
+			["Spawn Reinforcements",_content,{
+				params ["_values","_args","_display"];
+				_values params ["_side","_dir","_blu","_red","_grn","","_notifF","_notifE"];
+				_args params ["_position"];
+
 				if(_side == civilian) exitWith {
 					["You can't reinforce with a civilian group!","addItemFailed"] call MAZ_EZM_fnc_systemMessage;
 				};
-				[_side,_dir] spawn MAZ_EZM_fnc_callReinforcementsChooseGroup;
-				_display closeDisplay 1;
-			},{
-				params ["_values","_args","_display"];
-				_display closeDisplay 2;
-			}] call MAZ_EZM_fnc_createDialog;
-		};
+				private _group = [_red,_blu,_grn] select (_side call BIS_fnc_sideID);
 
-		MAZ_EZM_fnc_callReinforcementsChooseGroup = {
-			params ["_side","_dir"];
-			sleep 0.1;
-			private _factions = [_side] call MAZ_EZM_fnc_getAllFactionGroups;
-			private _listData = [[],[],0];
-			{
-				_x params ["_name","_flag","_icon","_groups"];
-				private _groupName = "";
-				{
-					_x params ["_groupName","_cfg"];
-					(_listData select 1) pushBack [format ["%1 (%2)",_name,_groupName],"",_flag];
-				}forEach _groups;
-			}forEach _factions;
-			
-			["Spawn Reinforcements (Group Select)",[
-				[
-					"LIST",
-					"Reinforcements Type",
-					_listData
-				]
-			],{
-				params ["_values","_args","_display"];
-				_args params ["_pos","_side","_dir"];
-				_values params ["_groupType"];
-				_display closeDisplay 1;
+				private _reinforcementsParams = [_position,_side,_group,_dir,[],_notifF,_notifE];
 				
-				private _reinforcementsParams = [_pos,_side,_groupType,_dir,[]];
-				private _helipadMarker = createVehicle ["Land_HelipadEmpty_F",_pos,[],0,"CAN_COLLIDE"];
-				_helipadMarker setPosATL _pos;
+				_display closeDisplay 1;
+
+				private _helipadMarker = createVehicle ["Land_HelipadEmpty_F",_position,[],0,"CAN_COLLIDE"];
+				_helipadMarker setPosATL _position;
 
 				["Reinforcements Destination on Foot",{
 					params ["_objects","_position","_args","_shift","_ctrl","_alt"];
@@ -7572,12 +7619,10 @@ MAZ_EZM_fnc_initFunction = {
 				},_helipadMarker,_reinforcementsParams] call MAZ_EZM_fnc_selectSecondaryPosition;
 			},{
 				params ["_values","_args","_display"];
-				[] spawn {
-					sleep 0.1;
-					[] spawn MAZ_EZM_fnc_callReinforcements;
-				};
 				_display closeDisplay 2;
-			},[[true] call MAZ_EZM_fnc_getScreenPosition,_side,_dir]] call MAZ_EZM_fnc_createDialog;
+			},[[true] call MAZ_EZM_fnc_getScreenPosition],{
+				_display setVariable ["MAZ_EZM_Reinf_Side",EAST];
+			}] call MAZ_EZM_fnc_createDialog;
 		};
 
 		MAZ_EZM_fnc_mortarAreaModule = {
@@ -12685,7 +12730,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_disarmModule = {
 			params ["_entity"];
-			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["This module must be placed on an AI unit.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 			_entity remoteExec ['removeAllWeapons'];
 
 			["Weapons have been removed from the unit.","addItemOk"] call MAZ_EZM_fnc_systemMessage;
@@ -12693,7 +12738,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_healAndReviveModule = {
 			params ["_entity"];
-			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["This module must be placed on a person.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 
 			if(isPlayer _entity) then {
 				[[],{
@@ -12722,7 +12767,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_changeSideModule = {
 			params ["_entity"];
-			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["This module must be placed on a person.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 			["Change Unit Side",[
 				[
 					"SIDES",
@@ -12785,7 +12830,7 @@ MAZ_EZM_fnc_initFunction = {
 		
 		MAZ_EZM_fnc_resetLoadout = {
 			params ["_entity"];
-			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["This module must be placed on a person.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 			_entity setUnitLoadout (configFile >> "EmptyLoadout");
 			comment '
 			TODO : Version 2.20
@@ -12805,7 +12850,7 @@ MAZ_EZM_fnc_initFunction = {
 
 		MAZ_EZM_fnc_killUnit = {
 			params ["_entity"];
-			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["Unit is not suitable.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
+			if(isNull _entity || !((typeOf _entity) isKindOf "Man")) exitWith {["This module must be placed on a person.","addItemFailed"] call MAZ_EZM_fnc_systemMessage;};
 			_entity setDamage 1;
 		};
 
@@ -19174,7 +19219,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_ZeusTree,
 					"Create Zeus Unit",
-					"Change the Zeus interface colors and opacity.",
+					"Create a Zeus Unit to control as a player.",
 					"MAZ_EZM_fnc_askAboutZeusUnit",
 					"a3\ui_f\data\map\vehicleicons\iconmancommander_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -19959,12 +20004,12 @@ MAZ_EZM_fnc_initMainLoop = {
 };
 
 private _changelog = [
-	"Added version checker to see if a newer version was ran and alert the Zeus to update.",
-	"Added a max speed slider to vehicles.",
-	"Fixed EZM running without an assigned curator.",
-	"Changed shameless plug to look nicer and include version info.",
-	"Changed shameless plug to only run AFTER EZM is confirmed.",
-	"Removed Create Zeus Unit option from 3DEN and Singleplayer."
+	"Added an overhaul to the Reinforcements system.",
+	"Added the ability to set a LIST, COMBO control have a default of the data string.",
+	"Fixed an issue where the EZM Update warning could appear multiple times.",
+	"Fixed an issue where sliders weren't using the correct value when a value was typed into the text box as a percentage.",
+	"Fixed an incorrect module description for 'Create Zeus Unit'.",
+	"Changed Set Stance module to default to the current saved setting for AI stance."
 ];
 
 private _changelogString = "";
