@@ -19180,7 +19180,7 @@ MAZ_EZM_fnc_editZeusInterface = {
 					MAZ_zeusModulesTree,
 					MAZ_ZeusTree,
 					"Create Zeus Unit",
-					"Change the Zeus interface colors and opacity.",
+					"Create a Zeus Unit to control as a player.",
 					"MAZ_EZM_fnc_askAboutZeusUnit",
 					"a3\ui_f\data\map\vehicleicons\iconmancommander_ca.paa"
 				] call MAZ_EZM_fnc_zeusAddModule;
@@ -19965,12 +19965,9 @@ MAZ_EZM_fnc_initMainLoop = {
 };
 
 private _changelog = [
-	"Added version checker to see if a newer version was ran and alert the Zeus to update.",
-	"Added a max speed slider to vehicles.",
-	"Fixed EZM running without an assigned curator.",
-	"Changed shameless plug to look nicer and include version info.",
-	"Changed shameless plug to only run AFTER EZM is confirmed.",
-	"Removed Create Zeus Unit option from 3DEN and Singleplayer."
+	"Fixed an issue where the EZM Update warning could appear multiple times.",
+	"Fixed an issue where sliders weren't using the correct value when a value was typed into the text box as a percentage.",
+	"Fixed an incorrect module description for 'Create Zeus Unit'."
 ];
 
 private _changelogString = "";
