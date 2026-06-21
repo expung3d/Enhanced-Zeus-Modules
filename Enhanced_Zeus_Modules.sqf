@@ -683,7 +683,7 @@ comment "Dialog Creation";
 			private _isPercent = _ctrlGroup getVariable ["MAZ_EZM_isPercent",false];
 			private _sliderCtrl = _ctrlGroup controlsGroupCtrl 215;
 			if(_isPercent) then {
-				_sliderCtrl sliderSetPosition (round (_num/100));
+				_sliderCtrl sliderSetPosition (_num/100);
 			} else {
 				_sliderCtrl sliderSetPosition _num;
 			};
