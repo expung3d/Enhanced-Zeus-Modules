@@ -8,7 +8,7 @@ if(isNull (getAssignedCuratorLogic player)) exitWith {
 };
 
 [] spawn {
-MAZ_EZM_Version = "V2.1.11";
+MAZ_EZM_Version = "V2.1.12";
 MAZ_EZM_autoAdd = profileNamespace getVariable ["MAZ_EZM_autoAddVar",true];
 MAZ_EZM_spawnWithCrew = true;
 MAZ_EZM_nvgsOnlyAtNight = true;
