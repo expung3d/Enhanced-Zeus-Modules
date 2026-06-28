@@ -4558,6 +4558,7 @@ comment "Dynamic Faction Addons";
 		params [["_refreshTime",10]];
 		private _refresh = missionNamespace getVariable "MAZ_EZM_refreshTime";
 		if(isNil "_refresh") then {
+			missionNamespace setVariable ["MAZ_zeusModulesRanBefore",false];
 			private _refreshOnClose = ["onZeusInterfaceClosed", {
 				private _refresh = missionNamespace getVariable "MAZ_EZM_refreshTime";
 				if(!isNil "_refresh") then {
@@ -4573,7 +4574,6 @@ comment "Dynamic Faction Addons";
 					sleep 0.1;
 				};
 				if(!(missionNamespace getVariable ["MAZ_EZM_refresh",false])) then {
-					missionNamespace setVariable ["MAZ_zeusModulesRanBefore",false]
 					call MAZ_EZM_fnc_refreshInterface;
 				};
 				missionNamespace setVariable ["MAZ_EZM_refreshTime",nil];
