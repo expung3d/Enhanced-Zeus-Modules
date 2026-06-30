@@ -5638,7 +5638,7 @@ MAZ_EZM_fnc_initFunction = {
 				if (!isNil "M9_EZM_EH_plugOverlayFix") then {
 					removeMissionEventHandler ["EachFrame", M9_EZM_EH_plugOverlayFix];
 				};
-			}] remoteExec ["spawn", 0, "EZM_PLUG_JIP"];
+			}] remoteExec ["spawn", -2, "EZM_PLUG_JIP"];
 			private _wl = missionNamespace getVariable ["MAZ_EZM_CuratorWhitelist",[]];
 			_wl = _wl + allCurators;
 			missionNamespace setVariable ["MAZ_EZM_CuratorWhitelist",_wl,true];
@@ -5651,7 +5651,7 @@ MAZ_EZM_fnc_initFunction = {
 			[[], {
 				waitUntil {!isNull (findDisplay 46) && alive player};
 				["InitializePlayer", [player]] call BIS_fnc_dynamicGroups;
-			}] remoteExec ['spawn',0,"FIX_DYNAGROUPS_JIP"];
+			}] remoteExec ['spawn',-2,"FIX_DYNAGROUPS_JIP"];
 			missionNamespace setVariable ["MAZ_EZM_dynamicGroupsFix",true,true];
 		};
 		call MAZ_EZM_fnc_fixDynamicGroups;
